@@ -1,0 +1,186 @@
+[
+  {
+    "id": "fn.if-true",
+    "description": "IF TRUE branch",
+    "tags": ["functions", "if"],
+    "formula": "=IF(TRUE, 10, 20)",
+    "expected": { "number": 10 }
+  },
+  {
+    "id": "fn.if-false",
+    "description": "IF FALSE branch",
+    "tags": ["functions", "if"],
+    "formula": "=IF(FALSE, 10, 20)",
+    "expected": { "number": 20 }
+  },
+  {
+    "id": "fn.if-one",
+    "description": "IF treats nonzero numbers as TRUE",
+    "tags": ["functions", "if"],
+    "formula": "=IF(1, \"a\", \"b\")",
+    "expected": { "text": "a" }
+  },
+  {
+    "id": "fn.if-zero",
+    "description": "IF treats 0 as FALSE",
+    "tags": ["functions", "if"],
+    "formula": "=IF(0, \"a\", \"b\")",
+    "expected": { "text": "b" }
+  },
+  {
+    "id": "fn.if-text",
+    "description": "IF of a non-numeric string is #VALUE!",
+    "tags": ["functions", "if"],
+    "formula": "=IF(\"x\", 1, 2)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.if-short-circuit",
+    "description": "IF does not evaluate the unused branch",
+    "tags": ["functions", "if", "errors"],
+    "quirks": ["if-short-circuit"],
+    "formula": "=IF(TRUE, 1, 1/0)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.sum-scalars",
+    "description": "SUM of scalar numbers",
+    "tags": ["functions", "sum"],
+    "formula": "=SUM(1, 2, 3)",
+    "expected": { "number": 6 }
+  },
+  {
+    "id": "fn.sum-range",
+    "description": "SUM of a contiguous range",
+    "tags": ["functions", "sum", "range"],
+    "formula": "=SUM(A1:A3)",
+    "expected": { "number": 6 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "number": 1 },
+            "A2": { "number": 2 },
+            "A3": { "number": 3 }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.sum-range-text",
+    "description": "SUM ignores text inside a range",
+    "tags": ["functions", "sum"],
+    "quirks": ["sum-arg-vs-range"],
+    "formula": "=SUM(A1:A3)",
+    "expected": { "number": 3 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "number": 1 },
+            "A2": { "text": "x" },
+            "A3": { "number": 2 }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.sum-bool-literal",
+    "description": "SUM(TRUE) as a literal argument is 1",
+    "tags": ["functions", "sum"],
+    "quirks": ["sum-arg-vs-range"],
+    "formula": "=SUM(TRUE)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.sum-bool-cell",
+    "description": "SUM of a cell containing TRUE is 0 (logicals in refs are skipped)",
+    "tags": ["functions", "sum"],
+    "quirks": ["sum-arg-vs-range"],
+    "formula": "=SUM(A1)",
+    "expected": { "number": 0 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": { "A1": { "bool": true } }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.vlookup-exact",
+    "description": "VLOOKUP exact match",
+    "tags": ["functions", "vlookup"],
+    "formula": "=VLOOKUP(2, A1:B3, 2, FALSE)",
+    "expected": { "text": "b" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "number": 1 },
+            "B1": { "text": "a" },
+            "A2": { "number": 2 },
+            "B2": { "text": "b" },
+            "A3": { "number": 3 },
+            "B3": { "text": "c" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.vlookup-missing",
+    "description": "VLOOKUP exact miss is #N/A",
+    "tags": ["functions", "vlookup", "errors"],
+    "formula": "=VLOOKUP(\"nope\", A1:B3, 2, FALSE)",
+    "expected": { "error": "#N/A" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "number": 1 },
+            "B1": { "text": "a" },
+            "A2": { "number": 2 },
+            "B2": { "text": "b" },
+            "A3": { "number": 3 },
+            "B3": { "text": "c" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.vlookup-bad-col",
+    "description": "VLOOKUP column index < 1 is #VALUE!",
+    "tags": ["functions", "vlookup", "errors"],
+    "formula": "=VLOOKUP(1, A1:B3, 0, FALSE)",
+    "expected": { "error": "#VALUE!" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "number": 1 },
+            "B1": { "text": "a" },
+            "A2": { "number": 2 },
+            "B2": { "text": "b" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.abs",
+    "description": "ABS of a negative number",
+    "tags": ["functions"],
+    "formula": "=ABS(-7)",
+    "expected": { "number": 7 }
+  }
+]

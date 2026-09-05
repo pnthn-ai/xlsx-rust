@@ -1,0 +1,18 @@
+name: verify
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Test workspace
+        run: cargo test --workspace
+      - name: Correctness gate (fixture oracle, no Excel required)
+        run: cargo run -p xlsx-verify -- --format text
+      - name: Machine-readable report
+        run: cargo run -p xlsx-verify -- --format json --output /tmp/xlsx-verify.json

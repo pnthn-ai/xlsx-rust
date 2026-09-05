@@ -1,0 +1,79 @@
+[
+  {
+    "id": "cmp.num-eq",
+    "description": "Numeric equality",
+    "tags": ["comparisons"],
+    "formula": "=1=1",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "cmp.num-ne",
+    "description": "Numeric inequality",
+    "tags": ["comparisons"],
+    "formula": "=1=2",
+    "expected": { "bool": false }
+  },
+  {
+    "id": "cmp.num-lt",
+    "description": "Numeric less-than",
+    "tags": ["comparisons"],
+    "formula": "=1<2",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "cmp.text-eq-casefold",
+    "description": "Text equality is case-insensitive",
+    "tags": ["comparisons"],
+    "quirks": ["case-insensitive-text"],
+    "formula": "=\"A\"=\"a\"",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "cmp.num-eq-text",
+    "description": "\"2\"=2 is FALSE — equality does not coerce text to number",
+    "tags": ["comparisons", "coercion"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=\"2\"=2",
+    "expected": { "bool": false }
+  },
+  {
+    "id": "cmp.text-gt-number",
+    "description": "Any text is greater than any number",
+    "tags": ["comparisons"],
+    "quirks": ["type-comparison-ranking"],
+    "formula": "=\"abc\">1",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "cmp.false-gt-number",
+    "description": "Logical values rank above numbers, so FALSE>100 is TRUE",
+    "tags": ["comparisons"],
+    "quirks": ["type-comparison-ranking"],
+    "formula": "=FALSE>100",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "cmp.true-eq-one",
+    "description": "TRUE=1 is TRUE",
+    "tags": ["comparisons", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=TRUE=1",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "cmp.false-eq-zero",
+    "description": "FALSE=0 is TRUE",
+    "tags": ["comparisons", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=FALSE=0",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "cmp.ieee-fuzzy",
+    "description": "0.1+0.2=0.3 is TRUE under Excel's 15-digit comparison",
+    "tags": ["comparisons"],
+    "quirks": ["ieee-vs-excel-precision"],
+    "formula": "=0.1+0.2=0.3",
+    "expected": { "bool": true }
+  }
+]
