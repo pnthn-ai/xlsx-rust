@@ -38,22 +38,32 @@ pub fn xnpv(rate: f64, values: &[f64], dates: &[i32]) -> Result<f64, ExcelError>
             return Err(ExcelError::Num);
         }
         let mut sum = 0.0;
-        for (i, &v) in values.iter().enumerate() {
-            if !v.is_finite() {
+        let mut i = 0;
+        while i < values.len() {
+            if !values[i].is_finite() {
                 return Err(ExcelError::Num);
             }
             let days = dates[i] - d0;
             if days < 0 {
                 return Err(ExcelError::Num);
             }
+            let mut flow = values[i];
+            i += 1;
+            while i < values.len() && dates[i] - d0 == days {
+                if !values[i].is_finite() {
+                    return Err(ExcelError::Num);
+                }
+                flow += values[i];
+                i += 1;
+            }
             if days == 0 {
-                sum += v;
+                sum += flow;
             } else {
                 let log_term = k * (days as f64);
                 if !log_term.is_finite() || log_term.abs() > 700.0 {
                     return Err(ExcelError::Num);
                 }
-                sum += v * log_term.exp();
+                sum += flow * log_term.exp();
             }
             if !sum.is_finite() {
                 return Err(ExcelError::Num);
