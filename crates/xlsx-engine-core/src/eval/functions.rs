@@ -48,6 +48,8 @@ pub(crate) fn dispatch(
         "INT" => fn_unary_num(ev, args, ctx, |n| ExcelValue::Number(n.floor())),
         "TRUNC" => fn_trunc(ev, args, ctx),
         "ROUND" => fn_round(ev, args, ctx),
+        "ROUNDUP" => fn_round_dir(ev, args, ctx, RoundDir::Up),
+        "ROUNDDOWN" => fn_round_dir(ev, args, ctx, RoundDir::Down),
         "MOD" => fn_mod(ev, args, ctx),
         "SQRT" => fn_unary_num(ev, args, ctx, |n| {
             if n < 0.0 {
@@ -468,6 +470,36 @@ fn fn_round(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelVal
         Err(e) => return Ok(ExcelValue::Error(e)),
     };
     Ok(ExcelValue::Number(excel_round_half_away(n, digits)))
+}
+
+#[derive(Clone, Copy)]
+enum RoundDir {
+    Up,
+    Down,
+}
+
+fn fn_round_dir(
+    ev: &Evaluator,
+    args: &[Expr],
+    ctx: &mut Ctx<'_>,
+    dir: RoundDir,
+) -> Result<ExcelValue, EvalError> {
+    if args.len() != 2 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let n = match coerce::to_number(&ev.eval_scalar(&args[0], ctx)?) {
+        Ok(n) => n,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let digits = match coerce::to_number(&ev.eval_scalar(&args[1], ctx)?) {
+        Ok(d) => d.trunc() as i32,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let out = match dir {
+        RoundDir::Up => super::round::roundup(n, digits),
+        RoundDir::Down => super::round::rounddown(n, digits),
+    };
+    Ok(ExcelValue::Number(out))
 }
 
 fn fn_mod(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {

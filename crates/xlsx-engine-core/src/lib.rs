@@ -15,6 +15,10 @@ pub mod eval;
 pub mod parse;
 
 pub use ast::{BinOp, Expr, UnaryOp};
+pub use eval::round::{
+    rounddown as excel_rounddown, rounddown_naive as excel_rounddown_naive,
+    roundup as excel_roundup, roundup_naive as excel_roundup_naive,
+};
 pub use eval::{eval_formula_in, Evaluator};
 pub use parse::parse;
 
