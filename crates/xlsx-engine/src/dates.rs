@@ -418,6 +418,7 @@ pub fn networkdays_count(
         }
     }
     Ok((sign * work) as f64)
+}
 
 pub fn serial_as_1900_int(serial: f64, system: DateSystem) -> Result<i32, ExcelError> {
     if !serial.is_finite() || serial < 0.0 {

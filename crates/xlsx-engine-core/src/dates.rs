@@ -232,9 +232,6 @@ fn civil_from_unix_days(z: i32) -> (i32, u32, u32) {
     (y, m, d)
 }
 
-    Err(ExcelError::Num)
-}
-
 /// Excel `EOMONTH(start_date, months)`: last civil day of the month that is
 /// `months` months before or after `start_date`.
 ///

@@ -736,8 +736,6 @@ mod tests {
 
     #[test]
     fn sumif_gt_and_reshape() {
-    fn sumifs_and_same_shape_and_no_reshape() {
-    fn averageif_gt_reshape_and_div0() {
         let mut wb = Workbook::default();
         wb.set_value("Sheet1", "A1", ExcelValue::Number(1.0))
             .unwrap();
@@ -761,6 +759,76 @@ mod tests {
         );
         assert_eq!(
             eval_formula_in(&wb, "=SUMIF({1,2,3},\">1\")").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
+        );
+    }
+    #[test]
+    fn sumifs_and_same_shape_and_no_reshape() {
+        let mut wb = Workbook::default();
+        wb.set_value("Sheet1", "A1", ExcelValue::Number(1.0))
+            .unwrap();
+        wb.set_value("Sheet1", "A2", ExcelValue::Number(6.0))
+            .unwrap();
+        wb.set_value("Sheet1", "A3", ExcelValue::Number(3.0))
+            .unwrap();
+        wb.set_value("Sheet1", "B1", ExcelValue::Text("x".into()))
+            .unwrap();
+        wb.set_value("Sheet1", "B2", ExcelValue::Text("x".into()))
+            .unwrap();
+        wb.set_value("Sheet1", "B3", ExcelValue::Text("y".into()))
+            .unwrap();
+        wb.set_value("Sheet1", "C1", ExcelValue::Number(10.0))
+            .unwrap();
+        wb.set_value("Sheet1", "C2", ExcelValue::Number(20.0))
+            .unwrap();
+        wb.set_value("Sheet1", "C3", ExcelValue::Number(30.0))
+            .unwrap();
+        assert_eq!(
+            eval_formula_in(&wb, "=SUMIFS(C1:C3,A1:A3,\">2\",B1:B3,\"x\")").unwrap(),
+            ExcelValue::Number(20.0)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=SUMIFS(C1,A1:A3,\">2\")").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=SUMIFS({1,2,3},A1:A3,\">1\")").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
+        );
+    }
+    #[test]
+    fn averageif_gt_reshape_and_div0() {
+        let mut wb = Workbook::default();
+        wb.set_value("Sheet1", "A1", ExcelValue::Number(1.0))
+            .unwrap();
+        wb.set_value("Sheet1", "A2", ExcelValue::Number(6.0))
+            .unwrap();
+        wb.set_value("Sheet1", "A3", ExcelValue::Number(3.0))
+            .unwrap();
+        wb.set_value("Sheet1", "B1", ExcelValue::Number(10.0))
+            .unwrap();
+        wb.set_value("Sheet1", "B2", ExcelValue::Number(20.0))
+            .unwrap();
+        wb.set_value("Sheet1", "B3", ExcelValue::Number(30.0))
+            .unwrap();
+        assert_eq!(
+            eval_formula_in(&wb, "=AVERAGEIF(A1:A3,\">2\")").unwrap(),
+            ExcelValue::Number(4.5)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=AVERAGEIF(A1:A3,\">2\",B1)").unwrap(),
+            ExcelValue::Number(25.0)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=AVERAGEIF(A1:A3,\">100\")").unwrap(),
+            ExcelValue::Error(ExcelError::Div0)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=AVERAGEIF({1,2,3},\">1\")").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
+        );
+    }
+    #[test]
     fn sumproduct_arrays_and_bool_coercion() {
         let wb = Workbook::default();
         assert_eq!(
@@ -777,6 +845,10 @@ mod tests {
         );
         assert_eq!(
             eval_formula_in(&wb, "=SUMPRODUCT({1,2},{1,2,3})").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
+        );
+    }
+    #[test]
     fn text_number_and_date_subset() {
         let wb = Workbook::default();
         assert_eq!(
@@ -805,42 +877,10 @@ mod tests {
         );
         assert_eq!(
             eval_formula_in(&wb, "=TEXT(1)").unwrap(),
-        wb.set_value("Sheet1", "B1", ExcelValue::Text("x".into()))
-            .unwrap();
-        wb.set_value("Sheet1", "B2", ExcelValue::Text("x".into()))
-            .unwrap();
-        wb.set_value("Sheet1", "B3", ExcelValue::Text("y".into()))
-            .unwrap();
-        wb.set_value("Sheet1", "C1", ExcelValue::Number(10.0))
-            .unwrap();
-        wb.set_value("Sheet1", "C2", ExcelValue::Number(20.0))
-            .unwrap();
-        wb.set_value("Sheet1", "C3", ExcelValue::Number(30.0))
-            .unwrap();
-        assert_eq!(
-            eval_formula_in(&wb, "=SUMIFS(C1:C3,A1:A3,\">2\",B1:B3,\"x\")").unwrap(),
-            ExcelValue::Number(20.0)
-        );
-        assert_eq!(
-            eval_formula_in(&wb, "=SUMIFS(C1,A1:A3,\">2\")").unwrap(),
             ExcelValue::Error(ExcelError::Value)
         );
-        assert_eq!(
-            eval_formula_in(&wb, "=SUMIFS({1,2,3},A1:A3,\">1\")").unwrap(),
-            eval_formula_in(&wb, "=AVERAGEIF(A1:A3,\">2\")").unwrap(),
-            ExcelValue::Number(4.5)
-        );
-        assert_eq!(
-            eval_formula_in(&wb, "=AVERAGEIF(A1:A3,\">2\",B1)").unwrap(),
-            ExcelValue::Number(25.0)
-        );
-        assert_eq!(
-            eval_formula_in(&wb, "=AVERAGEIF(A1:A3,\">100\")").unwrap(),
-            ExcelValue::Error(ExcelError::Div0)
-        );
-        assert_eq!(
-            eval_formula_in(&wb, "=AVERAGEIF({1,2,3},\">1\")").unwrap(),
-            ExcelValue::Error(ExcelError::Value)
+    }
+    #[test]
     fn unique_literal_and_exactly_once() {
         let wb = Workbook::default();
         assert_eq!(
@@ -861,6 +901,9 @@ mod tests {
         assert_eq!(
             eval_formula_in(&wb, "=UNIQUE({1;1}, FALSE, TRUE)").unwrap(),
             ExcelValue::Error(ExcelError::Calc)
+        );
+    }
+    #[test]
     fn pmt_microsoft_loan_and_errors() {
         let wb = Workbook::default();
         match eval_formula_in(&wb, "=PMT(8%/12,10,10000)").unwrap() {
@@ -884,6 +927,42 @@ mod tests {
         assert_eq!(
             eval_formula_in(&wb, "=PMT()").unwrap(),
             ExcelValue::Error(ExcelError::Value)
+        );
+    }
+    #[test]
+    fn ifs_does_not_short_circuit() {
+        let wb = Workbook::default();
+        assert_eq!(
+            eval_formula_in(&wb, "=IFS(TRUE, 1, FALSE, 1/0)").unwrap(),
+            ExcelValue::Error(ExcelError::Div0)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=IFS(FALSE, 1, FALSE, 2)").unwrap(),
+            ExcelValue::Error(ExcelError::Na)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=IFS(FALSE, 1, TRUE, 9)").unwrap(),
+            ExcelValue::Number(9.0)
+        );
+    }
+
+    #[test]
+    fn filter_calc_and_if_empty() {
+        let wb = Workbook::default();
+        assert_eq!(
+            eval_formula_in(&wb, "=FILTER({1;2}, {FALSE;FALSE})").unwrap(),
+            ExcelValue::Error(ExcelError::Calc)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=FILTER({1;2}, {FALSE;FALSE}, \"none\")").unwrap(),
+            ExcelValue::Text("none".into())
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=FILTER({1;2;3}, {TRUE;FALSE;TRUE})").unwrap(),
+            ExcelValue::Array(vec![
+                vec![ExcelValue::Number(1.0)],
+                vec![ExcelValue::Number(3.0)]
+            ])
         );
     }
 }

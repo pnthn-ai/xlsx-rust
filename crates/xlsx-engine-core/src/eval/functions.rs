@@ -1344,13 +1344,9 @@ fn trunc_num_chars(n: f64) -> Result<u64, ExcelError> {
         Ok(u64::MAX)
     } else {
         Ok(t as u64)
-        1
-    };
-    match super::find::find(&find_text, &within_text, start_num) {
-        1
-    };
-    match super::search::search(&find_text, &within_text, start_num) {
-        Ok(pos) => Ok(ExcelValue::Number(pos)),
+    }
+}
+
 fn fn_pmt(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
     if args.len() < 3 || args.len() > 5 {
         return Ok(ExcelValue::Error(ExcelError::Value));
