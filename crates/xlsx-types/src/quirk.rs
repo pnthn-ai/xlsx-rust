@@ -46,7 +46,7 @@ pub enum QuirkCategory {
     PrecisionAsDisplayed,
     /// Hidden-row / `SUBTOTAL` semantics.
     HiddenRows,
-    /// Wildcard matching in `VLOOKUP` / `COUNTIF` / `MATCH`.
+    /// Wildcard matching in `VLOOKUP` / `COUNTIF` / `MATCH` / `SEARCH`.
     Wildcards,
     /// Left-to-right Excel error propagation (`#DIV/0!+#VALUE!` keeps `#DIV/0!`).
     ErrorPrecedence,
