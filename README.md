@@ -283,13 +283,16 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 | [`eval/coerce.rs`](crates/xlsx-engine-core/src/eval/coerce.rs) | Arithmetic / `&` / `IF` coercion (`"2"+1` = 3, TRUE → 1, empty → 0) |
 | [`eval/compare.rs`](crates/xlsx-engine-core/src/eval/compare.rs) | 15-digit `=`, case-insensitive text, `TRUE=1`, type ranking (`FALSE>100`) |
 | [`eval/empty.rs`](crates/xlsx-engine-core/src/eval/empty.rs) | Blank ≠ 0 ≠ `""`, but `A1=0` and `A1=""` when `A1` is blank |
-| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators, logicals, lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates, math, text, `TYPE` / `IS*` |
+| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators, logicals, lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`FILTER`/`INDEX`/`MATCH`), dates, math, text, `TYPE` / `IS*` |
+| [`eval/filter.rs`](crates/xlsx-engine-core/src/eval/filter.rs) | `FILTER` mask/select kernel (`#CALC!` / `if_empty`, row vs column) |
 
 **Implemented:** arithmetic and comparison operators (unary `+/-`, `%`, `^`,
 `&`, space intersection), host-aware implicit intersection, cell refs /
 ranges / defined names, array literals, error propagation, and the function
-families above. Workbook input is the snippet type in `xlsx-types` (no
-`.xlsx` IO).
+families above (including `FILTER`). Workbook input is the snippet type in
+`xlsx-types` (no `.xlsx` IO).
+
+`FILTER` kernel bench: `cargo bench -p xlsx-engine-core --bench filter`.
 
 **Deferred / in progress:** full function library, locale argument separators,
 live Excel oracle, and performance bakeoff. The fixture corpus is expanded
@@ -315,6 +318,11 @@ as one or the other. Documented quirk categories:
   `SUM(A1)` of `TRUE` is 0)
 - `VLOOKUP` approximate match binary-searches (wrong answers on unsorted data);
   omitted `range_lookup` defaults to approximate. `XLOOKUP` defaults to exact
+- `FILTER(array, include, [if_empty])`: no matches without `if_empty` is
+  `#CALC!`; `if_empty` is used only when the filtered set is empty. `include`
+  must be a vector matching height (row filter) or width (column filter), or
+  a scalar broadcast. An error inside `include` wins. The result is an
+  `ExcelValue::Array` — see spill / model limits below
 - `IF` short-circuits; `AND` / `OR` do not (`AND(FALSE, 1/0)` is `#DIV/0!`)
 - Error precedence is left-to-right (`#DIV/0!+#VALUE!` keeps `#DIV/0!`)
 - 1900 leap-year bug (`DATE(1900,2,29)` is serial 60); 1904 date system
@@ -325,6 +333,15 @@ as one or the other. Documented quirk categories:
 - Circular refs modeled as `#CIRCULAR!`
 - Volatile / locale / precision-as-displayed / hidden-row `SUBTOTAL` are
   catalogued as `ignore` until they can be evaluated honestly
+
+**`FILTER` spill / model limits** (honest, not hidden behind a broken case):
+
+- FILTER returns an array **value**. The snippet workbook has no spill grid,
+  so a blocked cell below/right of the host never yields `#SPILL!`.
+- Comparison / arithmetic operators still scalarize. `FILTER(A1:A3, A1:A3>1)`
+  is not a boolean-array include — pass a logical/numeric vector (literal or
+  range). `*` / `+` criteria broadcasting is not modeled.
+- Excel's ~1,048,576-row array cap is not enforced; size is memory-bounded.
 
 See [`crates/xlsx-types/src/quirk.rs`](crates/xlsx-types/src/quirk.rs). The
 catalog also names `error-precedence`, `percent-unary`, and `range-operators`.
