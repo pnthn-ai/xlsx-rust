@@ -97,6 +97,10 @@ name = "workday"
 harness = false
 
 [[bench]]
+name = "workday_intl"
+harness = false
+
+[[bench]]
 name = "filter"
 harness = false
 

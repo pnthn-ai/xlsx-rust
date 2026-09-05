@@ -11,8 +11,8 @@
 use super::{coerce, compare, excel_pow, Ctx, Evaluator};
 use crate::ast::Expr;
 use crate::dates::{
-    date_serial, eomonth_serial, networkdays_count, serial_to_ymd, time_fraction, weekday,
-    workday_serial,
+    date_serial, eomonth_serial, networkdays_count, parse_weekend_mask, serial_to_ymd,
+    time_fraction, weekday, workday_serial, workday_serial_intl,
 };
 use crate::text_format;
 use xlsx_types::{
@@ -111,6 +111,7 @@ pub(crate) fn dispatch(
         "EOMONTH" => fn_eomonth(ev, args, ctx),
         "NETWORKDAYS" => fn_networkdays(ev, args, ctx),
         "WORKDAY" => fn_workday(ev, args, ctx),
+        "WORKDAY.INTL" => fn_workday_intl(ev, args, ctx),
         "YEAR" => fn_ymd(ev, args, ctx, YmdPart::Year),
         "MONTH" => fn_ymd(ev, args, ctx, YmdPart::Month),
         "DAY" => fn_ymd(ev, args, ctx, YmdPart::Day),
@@ -939,6 +940,56 @@ fn fn_workday(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelV
         }
     }
     match workday_serial(start, days, &holidays, ctx.spec.options.date_system) {
+        Ok(n) => Ok(ExcelValue::Number(n)),
+        Err(e) => Ok(ExcelValue::Error(e)),
+    }
+}
+
+fn fn_workday_intl(
+    ev: &Evaluator,
+    args: &[Expr],
+    ctx: &mut Ctx<'_>,
+) -> Result<ExcelValue, EvalError> {
+    if args.len() < 2 || args.len() > 4 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let start_v = ev.eval_scalar(&args[0], ctx)?;
+    let days_v = ev.eval_scalar(&args[1], ctx)?;
+    let weekend_v = if args.len() >= 3 {
+        Some(ev.eval_scalar(&args[2], ctx)?)
+    } else {
+        None
+    };
+    let hol_v = if args.len() == 4 {
+        Some(ev.eval_expr(&args[3], ctx)?)
+    } else {
+        None
+    };
+    let start = match coerce::to_number(&start_v) {
+        Ok(n) => n,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let days = match coerce::to_number(&days_v) {
+        Ok(n) => n,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let weekend = match parse_weekend_mask(weekend_v.as_ref()) {
+        Ok(m) => m,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let mut holidays = Vec::new();
+    if let Some(v) = hol_v {
+        if let Some(e) = collect_holiday_serials(&v, &mut holidays) {
+            return Ok(ExcelValue::Error(e));
+        }
+    }
+    match workday_serial_intl(
+        start,
+        days,
+        weekend,
+        &holidays,
+        ctx.spec.options.date_system,
+    ) {
         Ok(n) => Ok(ExcelValue::Number(n)),
         Err(e) => Ok(ExcelValue::Error(e)),
     }

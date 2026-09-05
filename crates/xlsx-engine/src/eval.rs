@@ -428,6 +428,7 @@ impl Interpreter {
             "EOMONTH" => self.fn_eomonth(args, ctx),
             "NETWORKDAYS" => self.fn_networkdays(args, ctx),
             "WORKDAY" => self.fn_workday(args, ctx),
+            "WORKDAY.INTL" => self.fn_workday_intl(args, ctx),
             "YEAR" => self.fn_ymd(args, ctx, YmdPart::Year),
             "MONTH" => self.fn_ymd(args, ctx, YmdPart::Month),
             "DAY" => self.fn_ymd(args, ctx, YmdPart::Day),
@@ -1669,6 +1670,52 @@ impl Interpreter {
         }
     }
 
+    fn fn_workday_intl(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.len() < 2 || args.len() > 4 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        let start_v = self.eval_scalar(&args[0], ctx)?;
+        let days_v = self.eval_scalar(&args[1], ctx)?;
+        let weekend_v = if args.len() >= 3 {
+            Some(self.eval_scalar(&args[2], ctx)?)
+        } else {
+            None
+        };
+        let hol_v = if args.len() == 4 {
+            Some(self.eval_expr(&args[3], ctx)?)
+        } else {
+            None
+        };
+        let start = match self.as_number(&start_v) {
+            Ok(n) => n,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        let days = match self.as_number(&days_v) {
+            Ok(n) => n,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        let weekend = match xlsx_engine_core::dates::parse_weekend_mask(weekend_v.as_ref()) {
+            Ok(m) => m,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        let mut holidays = Vec::new();
+        if let Some(v) = hol_v {
+            if let Some(e) = self.collect_holiday_serials(&v, &mut holidays) {
+                return Ok(ExcelValue::Error(e));
+            }
+        }
+        match xlsx_engine_core::workday_serial_intl(
+            start,
+            days,
+            weekend,
+            &holidays,
+            ctx.spec.options.date_system,
+        ) {
+            Ok(n) => Ok(ExcelValue::Number(n)),
+            Err(e) => Ok(ExcelValue::Error(e)),
+        }
+    }
+
     fn fn_weekday(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
         if args.is_empty() || args.len() > 2 {
             return Ok(ExcelValue::Error(ExcelError::Value));
@@ -1700,7 +1747,7 @@ impl Interpreter {
         }
     }
 
-        fn collect_holiday_serials(&self, v: &ExcelValue, out: &mut Vec<f64>) -> Option<ExcelError> {
+    fn collect_holiday_serials(&self, v: &ExcelValue, out: &mut Vec<f64>) -> Option<ExcelError> {
         match v {
             ExcelValue::Array(rows) => {
                 for row in rows {
