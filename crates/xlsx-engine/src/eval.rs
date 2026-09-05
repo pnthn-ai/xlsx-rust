@@ -451,6 +451,7 @@ impl Interpreter {
             "NPV" => self.fn_npv(args, ctx),
             "UNIQUE" => self.fn_unique(args, ctx),
             "IRR" => self.fn_irr(args, ctx),
+            "MIRR" => self.fn_mirr(args, ctx),
             "TRUE" => Ok(ExcelValue::Bool(true)),
             "FALSE" => Ok(ExcelValue::Bool(false)),
             "PMT" => self.fn_pmt(args, ctx),
@@ -2124,6 +2125,30 @@ impl Interpreter {
         match xlsx_engine_core::excel_irr(&flows, guess) {
             Some(r) => Ok(ExcelValue::Number(r)),
             None => Ok(ExcelValue::Error(ExcelError::Num)),
+        }
+    }
+
+    fn fn_mirr(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.len() != 3 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        let from_range = matches!(args[0], Expr::Range(_) | Expr::Cell(_) | Expr::Name(_));
+        let values_v = self.eval_expr(&args[0], ctx)?;
+        let flows = match collect_irr_cashflows(&values_v, from_range, self.semantics) {
+            Ok(v) => v,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        let finance_rate = match self.as_number(&self.eval_scalar(&args[1], ctx)?) {
+            Ok(n) => n,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        let reinvest_rate = match self.as_number(&self.eval_scalar(&args[2], ctx)?) {
+            Ok(n) => n,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        match xlsx_engine_core::excel_mirr(&flows, finance_rate, reinvest_rate) {
+            Ok(r) => Ok(ExcelValue::Number(r)),
+            Err(e) => Ok(ExcelValue::Error(e)),
         }
     }
 
