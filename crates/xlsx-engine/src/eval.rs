@@ -4,8 +4,8 @@ use crate::dates::{date_serial, serial_to_ymd, time_fraction};
 use crate::parse::{parse, BinOp, Expr, UnaryOp};
 use std::collections::HashSet;
 use xlsx_types::{
-    excel_num_eq, ArrayMode, CellAddr, CellRef, EvalError, EvalSpec, EvalTarget, ExcelError,
-    ExcelValue, RangeRef, Workbook,
+    excel_num_eq, ArrayMode, CellAddr, CellRef, Criterion, EvalError, EvalSpec, EvalTarget,
+    ExcelError, ExcelValue, RangeRef, Workbook,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -363,6 +363,7 @@ impl Interpreter {
             "COUNT" => self.fn_agg(args, ctx, AggKind::Count),
             "COUNTA" => self.fn_agg(args, ctx, AggKind::CountA),
             "COUNTBLANK" => self.fn_agg(args, ctx, AggKind::CountBlank),
+            "SUMIFS" => self.fn_sumifs(args, ctx),
             "IF" => self.fn_if(args, ctx),
             "IFERROR" => self.fn_iferror(args, ctx),
             "IFNA" => self.fn_ifna(args, ctx),
@@ -423,6 +424,81 @@ impl Interpreter {
             "FALSE" => Ok(ExcelValue::Bool(false)),
             _ => Ok(ExcelValue::Error(ExcelError::Name)),
         }
+    }
+
+    fn fn_sumifs(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.len() < 3 || args.len() % 2 == 0 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        let sum = match resolve_sumifs_range(&args[0], ctx) {
+            Ok(r) => r,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        let mut pairs: Vec<(RangeRef, Criterion)> = Vec::with_capacity(args.len() / 2);
+        let mut i = 1;
+        while i < args.len() {
+            let range = match resolve_sumifs_range(&args[i], ctx) {
+                Ok(r) => r,
+                Err(e) => return Ok(ExcelValue::Error(e)),
+            };
+            if range.row_count() != sum.row_count() || range.col_count() != sum.col_count() {
+                return Ok(ExcelValue::Error(ExcelError::Value));
+            }
+            let crit_val = self.eval_scalar(&args[i + 1], ctx)?;
+            let criterion = match Criterion::compile(&crit_val) {
+                Ok(c) => c,
+                Err(e) => return Ok(ExcelValue::Error(e)),
+            };
+            pairs.push((range, criterion));
+            i += 2;
+        }
+
+        let sum_sheet = sum
+            .sheet
+            .clone()
+            .unwrap_or_else(|| ctx.current_sheet.clone());
+        let height = sum.row_count();
+        let width = sum.col_count();
+        let mut acc = 0.0;
+        for dr in 0..height {
+            for dc in 0..width {
+                let mut ok = true;
+                for (range, criterion) in &pairs {
+                    let sheet = range
+                        .sheet
+                        .clone()
+                        .unwrap_or_else(|| ctx.current_sheet.clone());
+                    let addr = CellAddr::new(range.start.col + dc, range.start.row + dr);
+                    let v = self.eval_cell(
+                        &CellRef {
+                            sheet: Some(sheet),
+                            addr,
+                        },
+                        ctx,
+                    )?;
+                    if !criterion.matches(&v) {
+                        ok = false;
+                        break;
+                    }
+                }
+                if !ok {
+                    continue;
+                }
+                let sum_addr = CellAddr::new(sum.start.col + dc, sum.start.row + dr);
+                match self.eval_cell(
+                    &CellRef {
+                        sheet: Some(sum_sheet.clone()),
+                        addr: sum_addr,
+                    },
+                    ctx,
+                )? {
+                    ExcelValue::Error(e) => return Ok(ExcelValue::Error(e)),
+                    ExcelValue::Number(n) => acc += n,
+                    _ => {}
+                }
+            }
+        }
+        Ok(ExcelValue::Number(acc))
     }
 
     fn fn_agg(
@@ -1440,6 +1516,30 @@ impl AggAcc {
             AggKind::CountA => ExcelValue::Number(self.counta as f64),
             AggKind::CountBlank => ExcelValue::Number(self.countblank as f64),
         }
+    }
+}
+
+fn resolve_sumifs_range(expr: &Expr, ctx: &Ctx<'_>) -> Result<RangeRef, ExcelError> {
+    match expr {
+        Expr::Range(r) => Ok(r.clone()),
+        Expr::Cell(c) => Ok(RangeRef::new(c.sheet.clone(), c.addr, c.addr)),
+        Expr::Name(n) => {
+            let def = ctx
+                .spec
+                .workbook
+                .defined_name(n)
+                .map_err(|_| ExcelError::Name)?;
+            let refers = def.refers_to.trim();
+            let body = refers.strip_prefix('=').unwrap_or(refers).trim();
+            if let Ok(r) = RangeRef::parse(body) {
+                return Ok(r);
+            }
+            if let Ok(c) = CellRef::parse(body) {
+                return Ok(RangeRef::new(c.sheet, c.addr, c.addr));
+            }
+            Err(ExcelError::Value)
+        }
+        _ => Err(ExcelError::Value),
     }
 }
 
