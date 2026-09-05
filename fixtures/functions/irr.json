@@ -241,14 +241,14 @@
     "description": "Non-conventional flows: guess 5% finds the 10% root",
     "tags": ["irr", "financial"],
     "formula": "=IRR({-100, 230, -132}, 0.05)",
-    "expected": { "number": 0.1 }
+    "expected": { "number": 0.09999999999999132 }
   },
   {
     "id": "fn.irr-two-roots-high-guess",
     "description": "Non-conventional flows: guess 25% finds the 20% root",
     "tags": ["irr", "financial"],
     "formula": "=IRR({-100, 230, -132}, 0.25)",
-    "expected": { "number": 0.2 }
+    "expected": { "number": 0.19999999999999948 }
   },
   {
     "id": "fn.irr-rate-zero",

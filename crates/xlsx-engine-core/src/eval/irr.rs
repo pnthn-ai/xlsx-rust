@@ -87,7 +87,8 @@ fn irr_loop(
         };
 
         if (r1 - r0).abs() <= RATE_TOL {
-            return Some(r1);
+            // Tiny residuals around a true 0% root compare as 0 under Excel 15-digit.
+            return Some(if r1.abs() < 1e-14 { 0.0 } else { r1 });
         }
         prev = Some((r0, npv));
         r0 = r1;
