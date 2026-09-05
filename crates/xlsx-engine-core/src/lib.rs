@@ -57,6 +57,7 @@ pub use eval::{
     Evaluator,
 };
 pub use parse::parse;
+pub use xlsx_types::{excel_ipmt, excel_ipmt_naive};
 
 use xlsx_types::{Candidate, EvalError, EvalSpec, ExcelValue};
 
