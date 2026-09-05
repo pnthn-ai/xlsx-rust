@@ -320,6 +320,7 @@ function families above. Workbook input is the snippet type in `xlsx-types` (no
 | [`eval/switch.rs`](crates/xlsx-engine-core/src/eval/switch.rs) | Excel `SWITCH` exact-match kernel (first hit, default / `#N/A`) |
 | [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators, logicals (`IF`/`IFS`/`AND`/…), lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates, math, text, `TYPE` / `IS*` |
 | [`eval/ifs.rs`](crates/xlsx-engine-core/src/eval/ifs.rs) | `IFS` pair-selection kernel (eager eval, first TRUE, no-match `#N/A`) |
+| [`eval/unique.rs`](crates/xlsx-engine-core/src/eval/unique.rs) | `UNIQUE(array, [by_col], [exactly_once])` hash distinctness; returns the array that would spill |
 
 **Implemented:** arithmetic and comparison operators (unary `+/-`, `%`, `^`,
 `&`, space intersection), host-aware implicit intersection, cell refs /
@@ -412,6 +413,15 @@ as one or the other. Documented quirk categories:
   number and `"2"`, `"TRUE"` coerced to the logical (use `"TRUE*"` for text),
   `""` / `"="` vs `"<>"` blank duality, errors ignored unless the criterion is
   that error
+- `UNIQUE(array, [by_col], [exactly_once])`: first-occurrence distinct rows
+  (or columns when `by_col` is TRUE); case-insensitive text; type-strict
+  (`1` ≠ `"1"` ≠ `TRUE`); blanks collapse to one empty; `exactly_once` with
+  no survivors is `#CALC!`. Result is always an array value.
+- **Spill limitation:** `evaluate` returns that array. The engine does **not**
+  write spilled values into neighboring cells, so occupied destinations never
+  yield `#SPILL!`. Scalar operators (`UNIQUE(...)+1`) take the top-left
+  element (`scalarize`), not a host-aware intersection of a written spill.
+  Use `INDEX` / `SUM` / `COUNTA` to consume the array without a grid write.
 - Wildcards in exact `VLOOKUP` / `MATCH` (`*` / `?`)
 - `AVERAGEIF` criteria strings (`">5"`, `"*a*"`, `"="` / `"<>"` blanks), text `"5"` dual-matching numbers, range vs `average_range` reshape from the top-left, no matches / no numeric average cells → `#DIV/0!`, empty criteria cell treated as `0`
 - Wildcards in exact `VLOOKUP` / `MATCH` (`*` / `?`) and in `SEARCH` (`*` / `?` / `~`)

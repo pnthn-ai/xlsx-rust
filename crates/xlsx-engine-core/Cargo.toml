@@ -87,3 +87,7 @@ harness = false
 [[bench]]
 name = "ifs"
 harness = false
+
+[[bench]]
+name = "unique"
+harness = false

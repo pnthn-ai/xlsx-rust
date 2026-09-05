@@ -128,6 +128,7 @@ pub(crate) fn dispatch(
         "TEXTJOIN" => super::textjoin::fn_textjoin(ev, args, ctx),
         "CONCAT" => super::concat::fn_concat(ev, args, ctx),
         "NPV" => super::npv::eval(ev, args, ctx),
+        "UNIQUE" => super::unique::eval(ev, args, ctx),
         "TRUE" => Ok(ExcelValue::Bool(true)),
         "FALSE" => Ok(ExcelValue::Bool(false)),
         _ => Ok(ExcelValue::Error(ExcelError::Name)),
