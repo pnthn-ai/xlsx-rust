@@ -21,12 +21,9 @@ fn time_ms(iters: u32, mut f: impl FnMut()) -> f64 {
     t0.elapsed().as_secs_f64() * 1000.0 / f64::from(iters)
 }
 
-fn kernel_bench(n: usize, period: usize, iters: u32) {
+fn kernel_bench(n: usize, period: usize, iters: u32, run_naive: bool) {
     let grid = column(n, period);
 
-    let naive_ms = time_ms(iters, || {
-        black_box(unique_apply_naive(black_box(&grid), false, false));
-    });
     let hash_ms = time_ms(iters, || {
         black_box(unique_apply(black_box(&grid), false, false));
     });
@@ -34,10 +31,19 @@ fn kernel_bench(n: usize, period: usize, iters: u32) {
         black_box(unique_apply(black_box(&grid), false, true));
     });
 
-    let speedup = naive_ms / hash_ms.max(1e-9);
-    println!(
-        "kernel n={n:>6} period={period:<5}  naive={naive_ms:.4}ms  hash={hash_ms:.4}ms  exactly_once={once_ms:.4}ms  speedup={speedup:.2}x"
-    );
+    if run_naive {
+        let naive_ms = time_ms(iters, || {
+            black_box(unique_apply_naive(black_box(&grid), false, false));
+        });
+        let speedup = naive_ms / hash_ms.max(1e-9);
+        println!(
+            "kernel n={n:>6} period={period:<5}  naive={naive_ms:.4}ms  hash={hash_ms:.4}ms  exactly_once={once_ms:.4}ms  speedup={speedup:.2}x"
+        );
+    } else {
+        println!(
+            "kernel n={n:>6} period={period:<5}  naive=skipped  hash={hash_ms:.4}ms  exactly_once={once_ms:.4}ms"
+        );
+    }
 }
 
 fn workbook_n(n: u32, period: u32) -> Workbook {
@@ -87,10 +93,11 @@ fn evaluate_bench(n: u32, period: u32, iters: u32) {
 
 fn main() {
     println!("UNIQUE bench (calc-core hash kernel vs naive pairwise)\n");
-    kernel_bench(10_000, 100, 30);
-    kernel_bench(10_000, 10_000, 20);
-    kernel_bench(100_000, 1_000, 8);
-    kernel_bench(100_000, 100_000, 4);
+    kernel_bench(10_000, 100, 30, true);
+    kernel_bench(10_000, 10_000, 12, true);
+    kernel_bench(100_000, 1_000, 6, true);
+    // All-distinct 100k is O(n²) on the naive path — hash only.
+    kernel_bench(100_000, 100_000, 8, false);
     println!();
     evaluate_bench(10_000, 100, 8);
     evaluate_bench(100_000, 1_000, 3);
