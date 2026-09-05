@@ -22,6 +22,7 @@ pub(crate) fn dispatch(
         "COUNT" => fn_agg(ev, args, ctx, AggKind::Count),
         "COUNTA" => fn_agg(ev, args, ctx, AggKind::CountA),
         "COUNTBLANK" => fn_agg(ev, args, ctx, AggKind::CountBlank),
+        "SUMIF" => super::sumif::fn_sumif(ev, args, ctx),
         "IF" => fn_if(ev, args, ctx),
         "IFERROR" => fn_iferror(ev, args, ctx),
         "IFNA" => fn_ifna(ev, args, ctx),

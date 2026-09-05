@@ -4,8 +4,8 @@ use crate::dates::{date_serial, serial_to_ymd, time_fraction};
 use crate::parse::{parse, BinOp, Expr, UnaryOp};
 use std::collections::HashSet;
 use xlsx_types::{
-    excel_num_eq, ArrayMode, CellAddr, CellRef, EvalError, EvalSpec, EvalTarget, ExcelError,
-    ExcelValue, RangeRef, Workbook,
+    excel_num_eq, ArrayMode, CellAddr, CellRef, Criterion, EvalError, EvalSpec, EvalTarget,
+    ExcelError, ExcelValue, RangeRef, Workbook,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -363,6 +363,7 @@ impl Interpreter {
             "COUNT" => self.fn_agg(args, ctx, AggKind::Count),
             "COUNTA" => self.fn_agg(args, ctx, AggKind::CountA),
             "COUNTBLANK" => self.fn_agg(args, ctx, AggKind::CountBlank),
+            "SUMIF" => self.fn_sumif(args, ctx),
             "IF" => self.fn_if(args, ctx),
             "IFERROR" => self.fn_iferror(args, ctx),
             "IFNA" => self.fn_ifna(args, ctx),
@@ -442,6 +443,67 @@ impl Interpreter {
             }
         }
         Ok(acc.finish())
+    }
+
+    fn fn_sumif(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.len() < 2 || args.len() > 3 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        let crit_val = self.eval_scalar(&args[1], ctx)?;
+        let criterion = match Criterion::compile(&crit_val) {
+            Ok(c) => c,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        let range = match seed_sumif_range(&args[0], ctx) {
+            Ok(r) => r,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        let sum_origin = if args.len() == 3 {
+            match seed_sumif_range(&args[2], ctx) {
+                Ok(r) => r,
+                Err(e) => return Ok(ExcelValue::Error(e)),
+            }
+        } else {
+            range.clone()
+        };
+        let crit_sheet = range
+            .sheet
+            .clone()
+            .unwrap_or_else(|| ctx.current_sheet.clone());
+        let sum_sheet = sum_origin
+            .sheet
+            .clone()
+            .unwrap_or_else(|| ctx.current_sheet.clone());
+        let mut acc = 0.0;
+        for dr in 0..range.row_count() {
+            for dc in 0..range.col_count() {
+                let crit_addr = CellAddr::new(range.start.col + dc, range.start.row + dr);
+                let crit_v = self.eval_cell(
+                    &CellRef {
+                        sheet: Some(crit_sheet.clone()),
+                        addr: crit_addr,
+                    },
+                    ctx,
+                )?;
+                if !criterion.matches(&crit_v) {
+                    continue;
+                }
+                let sum_addr = CellAddr::new(sum_origin.start.col + dc, sum_origin.start.row + dr);
+                let sum_v = self.eval_cell(
+                    &CellRef {
+                        sheet: Some(sum_sheet.clone()),
+                        addr: sum_addr,
+                    },
+                    ctx,
+                )?;
+                match sum_v {
+                    ExcelValue::Error(e) => return Ok(ExcelValue::Error(e)),
+                    ExcelValue::Number(n) => acc += n,
+                    _ => {}
+                }
+            }
+        }
+        Ok(ExcelValue::Number(acc))
     }
 
     fn fn_if(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
@@ -1538,6 +1600,30 @@ fn fold_logicals(
                 None
             }
         }
+    }
+}
+
+fn seed_sumif_range(expr: &Expr, ctx: &Ctx<'_>) -> Result<RangeRef, ExcelError> {
+    match expr {
+        Expr::Range(r) => Ok(r.clone()),
+        Expr::Cell(c) => Ok(RangeRef::new(c.sheet.clone(), c.addr, c.addr)),
+        Expr::Name(n) => {
+            let def = ctx
+                .spec
+                .workbook
+                .defined_name(n)
+                .map_err(|_| ExcelError::Name)?;
+            let refers = def.refers_to.trim();
+            let body = refers.strip_prefix('=').unwrap_or(refers).trim();
+            if let Ok(r) = RangeRef::parse(body) {
+                return Ok(r);
+            }
+            if let Ok(c) = CellRef::parse(body) {
+                return Ok(RangeRef::new(c.sheet, c.addr, c.addr));
+            }
+            Err(ExcelError::Value)
+        }
+        _ => Err(ExcelError::Value),
     }
 }
 

@@ -8,6 +8,7 @@
 //! - **xlsx-engine** — stub candidates (`seed-compliant`, `naive`) that demonstrate the gate
 
 pub mod cell;
+pub mod criterion;
 pub mod error;
 pub mod eval;
 pub mod quirk;
@@ -15,6 +16,7 @@ pub mod value;
 pub mod workbook;
 
 pub use cell::{AddrError, CellAddr, CellRef, RangeRef};
+pub use criterion::{excel_wildcard, looks_like_wildcard_pat, Criterion};
 pub use error::ExcelError;
 pub use eval::{
     ArrayMode, Candidate, DateSystem, EvalError, EvalOptions, EvalSpec, EvalTarget, Locale,
