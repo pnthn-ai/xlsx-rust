@@ -5,6 +5,7 @@
 
 pub mod coerce;
 pub mod compare;
+pub mod concat;
 pub mod empty;
 pub mod functions;
 
@@ -108,7 +109,11 @@ impl Evaluator {
         out
     }
 
-    fn eval_cell(&self, cell: &CellRef, ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    pub(crate) fn eval_cell(
+        &self,
+        cell: &CellRef,
+        ctx: &mut Ctx<'_>,
+    ) -> Result<ExcelValue, EvalError> {
         let sheet_name = cell
             .sheet
             .clone()

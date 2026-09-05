@@ -5,6 +5,7 @@
 //! - [`eval`] — workbook-backed walker
 //! - [`eval::coerce`] / [`eval::compare`] / [`eval::empty`] — quirk modules
 //! - [`eval::functions`] — worksheet functions used by the expanded corpus
+//! - [`eval::concat`] — Excel `CONCAT` (range/array flatten + 32767 cap)
 //!
 //! This crate depends only on [`xlsx_types`]. It never reads fixture expected
 //! values; the verification gate (`xlsx-verify`) is the only judge.
@@ -15,6 +16,7 @@ pub mod eval;
 pub mod parse;
 
 pub use ast::{BinOp, Expr, UnaryOp};
+pub use eval::concat::{concat_naive_join, eval_concat_formula, ConcatBuilder, CONCAT_MAX_CHARS};
 pub use eval::{eval_formula_in, Evaluator};
 pub use parse::parse;
 
