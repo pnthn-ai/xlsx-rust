@@ -385,6 +385,7 @@ impl Interpreter {
             "HLOOKUP" => self.fn_hlookup(args, ctx),
             "XLOOKUP" => self.fn_xlookup(args, ctx),
             "FILTER" => self.fn_filter(args, ctx),
+            "TAKE" => self.fn_take(args, ctx),
             "INDEX" => self.fn_index(args, ctx),
             "MATCH" => self.fn_match(args, ctx),
             "CHOOSE" => self.fn_choose(args, ctx),
@@ -1118,6 +1119,28 @@ impl Interpreter {
         }
     }
 
+    fn fn_take(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.is_empty() || args.len() > 3 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        let array = self.eval_expr(&args[0], ctx)?;
+        let rows = if args.len() >= 2 {
+            Some(self.eval_scalar(&args[1], ctx)?)
+        } else {
+            None
+        };
+        let cols = if args.len() >= 3 {
+            Some(self.eval_scalar(&args[2], ctx)?)
+        } else {
+            None
+        };
+        Ok(xlsx_engine_core::excel_take(
+            &array,
+            rows.as_ref(),
+            cols.as_ref(),
+        ))
+    }
+
     fn fn_filter(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
         if args.len() < 2 || args.len() > 3 {
             return Ok(ExcelValue::Error(ExcelError::Value));
@@ -1700,7 +1723,7 @@ impl Interpreter {
         }
     }
 
-        fn collect_holiday_serials(&self, v: &ExcelValue, out: &mut Vec<f64>) -> Option<ExcelError> {
+    fn collect_holiday_serials(&self, v: &ExcelValue, out: &mut Vec<f64>) -> Option<ExcelError> {
         match v {
             ExcelValue::Array(rows) => {
                 for row in rows {
