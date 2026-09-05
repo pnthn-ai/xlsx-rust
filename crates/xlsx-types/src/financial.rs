@@ -216,7 +216,7 @@ fn rate_newton(
             return Err(ExcelError::Num);
         }
         if y.abs() == 0.0 {
-            return Ok(if r0.abs() < ZERO_RATE { 0.0 } else { r0 });
+            return Ok(polish_rate(r0, nper, pmt, pv, fv, typ, naive));
         }
 
         let newton = if dy.is_finite() && dy.abs() > DERIV_MIN {
@@ -251,12 +251,39 @@ fn rate_newton(
         };
 
         if (r1 - r0).abs() <= RATE_TOL {
-            return Ok(if r1.abs() < ZERO_RATE { 0.0 } else { r1 });
+            return Ok(polish_rate(r1, nper, pmt, pv, fv, typ, naive));
         }
         prev = Some((r0, y));
         r0 = r1;
     }
     Err(ExcelError::Num)
+}
+
+/// Extra Newton steps after Excel's 20-iter settle, so a `PMT` inverse
+/// compares equal under 15-digit Excel rounding. Does not change the
+/// `#NUM!` decision (that already happened).
+fn polish_rate(mut r: f64, nper: f64, pmt: f64, pv: f64, fv: f64, typ: f64, naive: bool) -> f64 {
+    if r.abs() < ZERO_RATE {
+        return 0.0;
+    }
+    for _ in 0..4 {
+        let Ok((y, dy)) = tvm_residual(r, nper, pmt, pv, fv, typ, naive) else {
+            break;
+        };
+        if y.abs() == 0.0 || !dy.is_finite() || dy.abs() <= DERIV_MIN {
+            break;
+        }
+        let nxt = r - y / dy;
+        if !nxt.is_finite() || nxt <= -1.0 {
+            break;
+        }
+        r = nxt;
+    }
+    if r.abs() < ZERO_RATE {
+        0.0
+    } else {
+        r
+    }
 }
 
 /// TVM residual `y(r)` and `y'(r)` for Newton.
