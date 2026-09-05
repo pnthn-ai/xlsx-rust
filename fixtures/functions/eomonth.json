@@ -1,0 +1,206 @@
+[
+  {
+    "id": "fn.eomonth.ms-plus-one",
+    "description": "Microsoft example: EOMONTH(1-Jan-11, 1) is 28-Feb-11",
+    "tags": ["eomonth", "dates"],
+    "formula": "=EOMONTH(DATE(2011,1,1),1)",
+    "expected": { "number": 40602 }
+  },
+  {
+    "id": "fn.eomonth.ms-minus-three",
+    "description": "Microsoft example: EOMONTH(1-Jan-11, -3) is 31-Oct-10",
+    "tags": ["eomonth", "dates"],
+    "formula": "=EOMONTH(DATE(2011,1,1),-3)",
+    "expected": { "number": 40482 }
+  },
+  {
+    "id": "fn.eomonth.same-month",
+    "description": "EOMONTH(start, 0) is the last day of start's month",
+    "tags": ["eomonth", "dates"],
+    "formula": "=EOMONTH(DATE(2011,1,15),0)",
+    "expected": { "number": 40574 }
+  },
+  {
+    "id": "fn.eomonth.neg-into-leap",
+    "description": "Negative months: March 2024 minus 1 lands on 29-Feb-2024",
+    "tags": ["eomonth", "dates"],
+    "formula": "=EOMONTH(DATE(2024,3,31),-1)",
+    "expected": { "number": 45351 }
+  },
+  {
+    "id": "fn.eomonth.neg-into-nonleap",
+    "description": "Negative months: March 2011 minus 1 lands on 28-Feb-2011",
+    "tags": ["eomonth", "dates"],
+    "formula": "=EOMONTH(DATE(2011,3,31),-1)",
+    "expected": { "number": 40602 }
+  },
+  {
+    "id": "fn.eomonth.month-end-jan-nonleap",
+    "description": "Month-end edge: 31-Jan-2011 plus 1 month is 28-Feb-2011",
+    "tags": ["eomonth", "dates"],
+    "formula": "=EOMONTH(DATE(2011,1,31),1)",
+    "expected": { "number": 40602 }
+  },
+  {
+    "id": "fn.eomonth.month-end-jan-leap",
+    "description": "Month-end edge: 31-Jan-2012 plus 1 month is 29-Feb-2012",
+    "tags": ["eomonth", "dates"],
+    "formula": "=EOMONTH(DATE(2012,1,31),1)",
+    "expected": { "number": 40968 }
+  },
+  {
+    "id": "fn.eomonth.y2k-leap",
+    "description": "Month-end edge: 31-Jan-2000 plus 1 month is 29-Feb-2000",
+    "tags": ["eomonth", "dates"],
+    "formula": "=EOMONTH(DATE(2000,1,31),1)",
+    "expected": { "number": 36585 }
+  },
+  {
+    "id": "fn.eomonth.month-overflow",
+    "description": "13 months after 1-Jan-2000 is 28-Feb-2001",
+    "tags": ["eomonth", "dates"],
+    "formula": "=EOMONTH(DATE(2000,1,1),13)",
+    "expected": { "number": 36950 }
+  },
+  {
+    "id": "fn.eomonth.serial-60-zero",
+    "description": "Serial 60 is the fictitious 1900-02-29; EOMONTH(60,0) stays 60",
+    "tags": ["eomonth", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=EOMONTH(60,0)",
+    "expected": { "number": 60 }
+  },
+  {
+    "id": "fn.eomonth.serial-59-zero",
+    "description": "EOMONTH(59,0) is also 60 — last day of Excel's 1900 February",
+    "tags": ["eomonth", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=EOMONTH(59,0)",
+    "expected": { "number": 60 }
+  },
+  {
+    "id": "fn.eomonth.serial-60-plus",
+    "description": "EOMONTH(60,1) is 31-Mar-1900 (serial 91)",
+    "tags": ["eomonth", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=EOMONTH(60,1)",
+    "expected": { "number": 91 }
+  },
+  {
+    "id": "fn.eomonth.serial-60-minus",
+    "description": "EOMONTH(60,-1) is 31-Jan-1900 (serial 31)",
+    "tags": ["eomonth", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=EOMONTH(60,-1)",
+    "expected": { "number": 31 }
+  },
+  {
+    "id": "fn.eomonth.jan31-1900-plus",
+    "description": "Month-end edge across the leap bug: 31-Jan-1900 plus 1 is serial 60",
+    "tags": ["eomonth", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=EOMONTH(DATE(1900,1,31),1)",
+    "expected": { "number": 60 }
+  },
+  {
+    "id": "fn.eomonth.mar1-1900-minus",
+    "description": "Negative months into the leap bug: 1-Mar-1900 minus 1 is serial 60",
+    "tags": ["eomonth", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=EOMONTH(DATE(1900,3,1),-1)",
+    "expected": { "number": 60 }
+  },
+  {
+    "id": "fn.eomonth.serial-60-year-wrap",
+    "description": "EOMONTH(60,12) is 28-Feb-1901 (1901 is not a leap year)",
+    "tags": ["eomonth", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=EOMONTH(60,12)",
+    "expected": { "number": 425 }
+  },
+  {
+    "id": "fn.eomonth.trunc-months-pos",
+    "description": "Non-integer months are truncated toward zero (1.9 → 1)",
+    "tags": ["eomonth", "dates"],
+    "formula": "=EOMONTH(DATE(2011,1,1),1.9)",
+    "expected": { "number": 40602 }
+  },
+  {
+    "id": "fn.eomonth.trunc-months-neg",
+    "description": "Negative non-integer months truncate toward zero (-3.9 → -3)",
+    "tags": ["eomonth", "dates"],
+    "formula": "=EOMONTH(DATE(2011,1,1),-3.9)",
+    "expected": { "number": 40482 }
+  },
+  {
+    "id": "fn.eomonth.trunc-start-frac",
+    "description": "Fractional start serials keep the civil day (15-Jan-11 + 0.9 still January)",
+    "tags": ["eomonth", "dates"],
+    "formula": "=EOMONTH(DATE(2011,1,15)+0.9,0)",
+    "expected": { "number": 40574 }
+  },
+  {
+    "id": "fn.eomonth.before-epoch",
+    "description": "Months that land in 1899 are #NUM!",
+    "tags": ["eomonth", "dates", "errors"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=EOMONTH(DATE(1900,1,1),-1)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.eomonth.neg-serial",
+    "description": "Negative start serial is not a valid Excel date",
+    "tags": ["eomonth", "dates", "errors"],
+    "formula": "=EOMONTH(-1,0)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.eomonth.past-max",
+    "description": "EOMONTH past 9999-12-31 is #NUM!",
+    "tags": ["eomonth", "dates", "errors"],
+    "formula": "=EOMONTH(DATE(9999,12,31),1)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.eomonth.arity",
+    "description": "EOMONTH requires two arguments",
+    "tags": ["eomonth", "errors"],
+    "formula": "=EOMONTH(1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.eomonth.bad-text",
+    "description": "Non-numeric text start date is #VALUE! (coercion)",
+    "tags": ["eomonth", "errors"],
+    "formula": "=EOMONTH(\"x\",0)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.eomonth.text-serial",
+    "description": "Numeric text start serial coerces: EOMONTH(\"60\",0) is 60",
+    "tags": ["eomonth", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=EOMONTH(\"60\",0)",
+    "expected": { "number": 60 }
+  },
+  {
+    "id": "fn.eomonth.empty-start",
+    "description": "Blank start coerces to 0 → last day of January 1900",
+    "tags": ["eomonth", "dates", "empty"],
+    "quirks": ["empty-cell-duality", "date-1900-leap-year"],
+    "formula": "=EOMONTH(A1,0)",
+    "expected": { "number": 31 },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.eomonth.system-1904",
+    "description": "EOMONTH(0,0) in the 1904 system is 31-Jan-1904 (serial 30)",
+    "tags": ["eomonth", "dates"],
+    "quirks": ["date-system"],
+    "formula": "=EOMONTH(0,0)",
+    "expected": { "number": 30 },
+    "options": { "date_system": "excel1904" }
+  }
+]

@@ -193,6 +193,36 @@ pub fn serial_to_ymd(serial: f64, system: DateSystem) -> Result<(i32, u32, u32),
     Err(ExcelError::Num)
 }
 
+/// Excel `EOMONTH(start_date, months)`. See `xlsx-engine-core::dates`.
+pub fn eomonth_serial(start: f64, months: f64, system: DateSystem) -> Result<f64, ExcelError> {
+    if !start.is_finite() || !months.is_finite() || start < 0.0 {
+        return Err(ExcelError::Num);
+    }
+    let (year, month, _day) = serial_to_ymd(start, system)?;
+    let months_i = months.trunc();
+    if months_i.abs() > 120_000.0 {
+        return Err(ExcelError::Num);
+    }
+    let month_sum = month as i32 + months_i as i32;
+    let (year, month) = normalize_year_month(year, month_sum)?;
+    if year < 1900 || year > 9999 {
+        return Err(ExcelError::Num);
+    }
+    let last = days_in_month(year, month);
+    let s1900 = ymd_to_serial_1900(year, month, last)?;
+    match system {
+        DateSystem::Excel1900 => Ok(s1900 as f64),
+        DateSystem::Excel1904 => {
+            let s = s1900 - EXCEL1904_EPOCH_IN_1900;
+            if s < 0 {
+                Err(ExcelError::Num)
+            } else {
+                Ok(s as f64)
+            }
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
