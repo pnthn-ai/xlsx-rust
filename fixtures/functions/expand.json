@@ -1,0 +1,535 @@
+[
+  {
+    "id": "fn.expand.ms-2x2-to-3x3-na",
+    "description": "Microsoft example 1: 2×2 → 3×3, omitted pad_with is #N/A",
+    "tags": ["expand", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=EXPAND({1,2;3,4}, 3, 3)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 2 }, { "error": "#N/A" }],
+        [{ "number": 3 }, { "number": 4 }, { "error": "#N/A" }],
+        [{ "error": "#N/A" }, { "error": "#N/A" }, { "error": "#N/A" }]
+      ]
+    }
+  },
+  {
+    "id": "fn.expand.ms-scalar-dash",
+    "description": "Microsoft example 2: scalar → 3×3 padded with \"-\"",
+    "tags": ["expand", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=EXPAND(1, 3, 3, \"-\")",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "text": "-" }, { "text": "-" }],
+        [{ "text": "-" }, { "text": "-" }, { "text": "-" }],
+        [{ "text": "-" }, { "text": "-" }, { "text": "-" }]
+      ]
+    }
+  },
+  {
+    "id": "fn.expand.default-pad-na",
+    "description": "Omitted pad_with fills new cells with #N/A, not 0 or blank",
+    "notes": "This is the pad/#N/A quirk. Supply pad_with (\"\", 0, \"-\") to avoid poisoning SUM.",
+    "tags": ["expand", "errors", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=EXPAND({1,2}, 2, 3)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 2 }, { "error": "#N/A" }],
+        [{ "error": "#N/A" }, { "error": "#N/A" }, { "error": "#N/A" }]
+      ]
+    }
+  },
+  {
+    "id": "fn.expand.pad-zero",
+    "description": "pad_with 0 fills new cells",
+    "tags": ["expand", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=EXPAND({1,2;3,4}, 3, 3, 0)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 2 }, { "number": 0 }],
+        [{ "number": 3 }, { "number": 4 }, { "number": 0 }],
+        [{ "number": 0 }, { "number": 0 }, { "number": 0 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.expand.pad-text",
+    "description": "pad_with text",
+    "tags": ["expand", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=EXPAND({\"A\",\"B\"}, 2, 3, \"x\")",
+    "expected": {
+      "array": [
+        [{ "text": "A" }, { "text": "B" }, { "text": "x" }],
+        [{ "text": "x" }, { "text": "x" }, { "text": "x" }]
+      ]
+    }
+  },
+  {
+    "id": "fn.expand.range-2d",
+    "description": "EXPAND of a 2-D sheet range",
+    "tags": ["expand", "functions"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=EXPAND(A1:B2, 3, 3)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 2 }, { "error": "#N/A" }],
+        [{ "number": 3 }, { "number": 4 }, { "error": "#N/A" }],
+        [{ "error": "#N/A" }, { "error": "#N/A" }, { "error": "#N/A" }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "number": 2 },
+          "A2": { "number": 3 }, "B2": { "number": 4 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.expand.rows-only",
+    "description": "Omitted columns keeps current width; add rows",
+    "tags": ["expand", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=EXPAND({1,2;3,4}, 4)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 2 }],
+        [{ "number": 3 }, { "number": 4 }],
+        [{ "error": "#N/A" }, { "error": "#N/A" }],
+        [{ "error": "#N/A" }, { "error": "#N/A" }]
+      ]
+    }
+  },
+  {
+    "id": "fn.expand.cols-only-blank-rows",
+    "description": "Empty rows argument keeps current height (not 0 → #VALUE!)",
+    "notes": "Microsoft: if rows is empty, default is the source row count. A blank cell is empty; 0 is a shrink and is #VALUE!.",
+    "tags": ["expand", "empty", "array"],
+    "quirks": ["array-eval-mode", "empty-cell-duality"],
+    "formula": "=EXPAND({1;2}, B1, 3, 0)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 0 }, { "number": 0 }],
+        [{ "number": 2 }, { "number": 0 }, { "number": 0 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.expand.omitted-both-identity",
+    "description": "EXPAND(array) with no size args returns the same shape as an array",
+    "tags": ["expand", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=EXPAND({1,2;3,4})",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 2 }],
+        [{ "number": 3 }, { "number": 4 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.expand.rows-only-pad-zero",
+    "description": "Blank columns cell keeps width; pad_with 0 fills new rows",
+    "tags": ["expand", "empty", "array"],
+    "quirks": ["array-eval-mode", "empty-cell-duality"],
+    "formula": "=EXPAND({1,2;3,4}, 4, C1, 0)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 2 }],
+        [{ "number": 3 }, { "number": 4 }],
+        [{ "number": 0 }, { "number": 0 }],
+        [{ "number": 0 }, { "number": 0 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.expand.same-size-no-pad-cells",
+    "description": "rows/columns equal to the source writes no pad cells",
+    "tags": ["expand", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=EXPAND({1,2;3,4}, 2, 2, \"x\")",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 2 }],
+        [{ "number": 3 }, { "number": 4 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.expand.scalar-to-col",
+    "description": "A scalar expanded by rows only is a column",
+    "tags": ["expand", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=EXPAND(5, 3)",
+    "expected": {
+      "array": [
+        [{ "number": 5 }],
+        [{ "error": "#N/A" }],
+        [{ "error": "#N/A" }]
+      ]
+    }
+  },
+  {
+    "id": "fn.expand.keeps-blanks",
+    "description": "Blank cells in the source are kept, not skipped or padded over",
+    "tags": ["expand", "empty"],
+    "quirks": ["array-eval-mode", "empty-cell-duality"],
+    "formula": "=EXPAND(A1:B2, 3, 2, 0)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "empty": null }],
+        [{ "number": 3 }, { "text": "a" }],
+        [{ "number": 0 }, { "number": 0 }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 3 },
+          "B2": { "text": "a" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.expand.keeps-types",
+    "description": "Numbers, text, logicals stay distinct in the grid",
+    "tags": ["expand", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=EXPAND({1,\"1\",TRUE}, 2, 3, FALSE)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "text": "1" }, { "bool": true }],
+        [{ "bool": false }, { "bool": false }, { "bool": false }]
+      ]
+    }
+  },
+  {
+    "id": "fn.expand.in-array-error-kept",
+    "description": "An error inside the array is a result cell, not a function error",
+    "tags": ["expand", "errors", "array"],
+    "quirks": ["array-eval-mode", "error-precedence"],
+    "formula": "=EXPAND({#DIV/0!, 1; 2, 3}, 3, 2, 0)",
+    "expected": {
+      "array": [
+        [{ "error": "#DIV/0!" }, { "number": 1 }],
+        [{ "number": 2 }, { "number": 3 }],
+        [{ "number": 0 }, { "number": 0 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.expand.shrink-rows-value",
+    "description": "rows smaller than the source is #VALUE! (EXPAND cannot shrink)",
+    "notes": "Use TAKE/DROP to cut an array down. We do not invent a shrink-success golden.",
+    "tags": ["expand", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=EXPAND({1,2;3,4}, 1, 2)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.expand.shrink-cols-value",
+    "description": "columns smaller than the source is #VALUE!",
+    "tags": ["expand", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=EXPAND({1,2;3,4}, 2, 1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.expand.rows-zero-value",
+    "description": "rows 0 is a shrink → #VALUE!, not an empty-omit",
+    "notes": "Empty/omitted keeps current size. The number 0 is less than the source height.",
+    "tags": ["expand", "errors"],
+    "quirks": ["array-eval-mode", "empty-cell-duality"],
+    "formula": "=EXPAND({1,2;3,4}, 0, 3)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.expand.rows-neg-value",
+    "description": "Negative rows is #VALUE!",
+    "tags": ["expand", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=EXPAND({1,2}, -1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.expand.rows-fraction-trunc",
+    "description": "rows 3.9 truncates toward zero → 3",
+    "tags": ["expand", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=EXPAND({1,2}, 3.9, 2, 0)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 2 }],
+        [{ "number": 0 }, { "number": 0 }],
+        [{ "number": 0 }, { "number": 0 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.expand.rows-fraction-trunc-shrink",
+    "description": "rows 1.9 on a 2-row array truncates to 1 → #VALUE!",
+    "tags": ["expand", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=EXPAND({1;2}, 1.9)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.expand.rows-true-on-scalar",
+    "description": "TRUE rows coerces to 1 (same size on a scalar)",
+    "tags": ["expand", "array"],
+    "quirks": ["array-eval-mode", "bool-number-equality"],
+    "formula": "=EXPAND(5, TRUE, 2, 0)",
+    "expected": { "array": [[{ "number": 5 }, { "number": 0 }]] }
+  },
+  {
+    "id": "fn.expand.rows-false-value",
+    "description": "FALSE rows coerces to 0 → #VALUE! (not treated as empty)",
+    "tags": ["expand", "errors"],
+    "quirks": ["array-eval-mode", "bool-number-equality", "empty-cell-duality"],
+    "formula": "=EXPAND({1,2}, FALSE, 3)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.expand.rows-text-number",
+    "description": "Numeric text rows coerces",
+    "tags": ["expand", "array"],
+    "quirks": ["array-eval-mode", "equality-vs-arithmetic-coercion"],
+    "formula": "=EXPAND({1,2}, \"3\", 2, 0)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 2 }],
+        [{ "number": 0 }, { "number": 0 }],
+        [{ "number": 0 }, { "number": 0 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.expand.rows-text-value",
+    "description": "Non-numeric rows is #VALUE!",
+    "tags": ["expand", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=EXPAND({1,2}, \"x\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.expand.blank-rows-keeps-height",
+    "description": "A blank rows cell keeps the source height (unlike 0)",
+    "tags": ["expand", "empty"],
+    "quirks": ["array-eval-mode", "empty-cell-duality"],
+    "formula": "=EXPAND({1,2;3,4}, B1, 3, \"-\")",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 2 }, { "text": "-" }],
+        [{ "number": 3 }, { "number": 4 }, { "text": "-" }]
+      ]
+    }
+  },
+  {
+    "id": "fn.expand.over-max-cols-num",
+    "description": "columns 16385 exceeds Excel's 16384-column sheet → #NUM!",
+    "notes": "Size cap, not occupancy #SPILL!. EXPAND({1}, 1, 16384) would allocate a 1×16384 row and is unit-tested, not fixture-golden'd.",
+    "tags": ["expand", "errors", "size"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=EXPAND({1}, 1, 16385)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.expand.over-huge-rows-num",
+    "description": "A huge rows argument is #NUM! (would not fit a worksheet)",
+    "tags": ["expand", "errors", "size"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=EXPAND({1}, 1E9)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.expand.scalar-error-propagates",
+    "description": "A scalar error array is the function result, not a 1-cell expand",
+    "tags": ["expand", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=EXPAND(#DIV/0!, 3, 3)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.expand.rows-error-propagates",
+    "description": "Error rows propagates",
+    "tags": ["expand", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=EXPAND({1,2}, #N/A, 3)",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.expand.cols-error-propagates",
+    "description": "Error columns propagates",
+    "tags": ["expand", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=EXPAND({1,2}, 3, #VALUE!)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.expand.error-ltr-array-wins",
+    "description": "Left-to-right: array error wins over rows error",
+    "tags": ["expand", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=EXPAND(#DIV/0!, #VALUE!, #N/A)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.expand.pad-error-is-value",
+    "description": "An error pad_with is written into new cells",
+    "tags": ["expand", "errors", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=EXPAND({1,2}, 2, 3, #DIV/0!)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 2 }, { "error": "#DIV/0!" }],
+        [{ "error": "#DIV/0!" }, { "error": "#DIV/0!" }, { "error": "#DIV/0!" }]
+      ]
+    }
+  },
+  {
+    "id": "fn.expand.arity-empty",
+    "description": "No arguments is #VALUE!",
+    "tags": ["expand", "errors"],
+    "formula": "=EXPAND()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.expand.arity-extra",
+    "description": "Five arguments is #VALUE!",
+    "tags": ["expand", "errors"],
+    "formula": "=EXPAND({1,2}, 2, 3, 0, 1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.expand.index-cell",
+    "description": "INDEX picks an EXPAND cell without writing a spill range",
+    "tags": ["expand", "index"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=INDEX(EXPAND({1,2;3,4}, 3, 3, 0), 3, 1)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.expand.index-source",
+    "description": "INDEX of a source cell inside EXPAND",
+    "tags": ["expand", "index"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=INDEX(EXPAND({1,2;3,4}, 3, 3), 2, 2)",
+    "expected": { "number": 4 }
+  },
+  {
+    "id": "fn.expand.sum-with-numeric-pad",
+    "description": "SUM consumes the EXPAND array when pads are numeric",
+    "tags": ["expand", "sum"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SUM(EXPAND({1,2;3,4}, 3, 3, 0))",
+    "expected": { "number": 10 }
+  },
+  {
+    "id": "fn.expand.sum-default-pad-na",
+    "description": "SUM of default-padded EXPAND is #N/A (pad is an error)",
+    "notes": "pad/#N/A quirk: omitted pad_with poisons aggregators. Supply 0 to sum.",
+    "tags": ["expand", "sum", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SUM(EXPAND({1,2;3,4}, 3, 3))",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.expand.counta",
+    "description": "COUNTA counts padded cells too (including #N/A)",
+    "tags": ["expand", "counta"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=COUNTA(EXPAND({1,2}, 2, 3))",
+    "expected": { "number": 6 }
+  },
+  {
+    "id": "fn.expand.no-grid-write",
+    "description": "Occupied cells in the Excel spill zone do not produce #SPILL! — EXPAND returns the array",
+    "notes": "Excel would #SPILL! if EXPAND at B1 needed B1:C3. This model never writes a spill range; neighbors are irrelevant. Pick individual results with INDEX/SUM.",
+    "tags": ["expand", "spill"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=EXPAND(A1:B2, 3, 2, 0)",
+    "at": "Sheet1!D1",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 2 }],
+        [{ "number": 3 }, { "number": 4 }],
+        [{ "number": 0 }, { "number": 0 }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "number": 2 },
+          "A2": { "number": 3 }, "B2": { "number": 4 },
+          "D2": { "text": "blocker" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.expand.scalar-plus-top-left",
+    "description": "EXPAND+n in a scalar operator takes the top-left cell (not host-aware spill intersection)",
+    "notes": "The engine scalarizes arrays to the first element. It does not intersect a written spill with the host cell.",
+    "tags": ["expand", "arithmetic"],
+    "quirks": ["array-eval-mode", "implicit-intersection"],
+    "formula": "=EXPAND({10,20;30,40}, 3, 3)+1",
+    "expected": { "number": 11 }
+  },
+  {
+    "id": "fn.expand.dynamic-array-mode",
+    "description": "array_mode=dynamic-array still returns the EXPAND array (no grid write)",
+    "tags": ["expand", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=EXPAND(A1:B2, 3, 3, 0)",
+    "options": { "array_mode": "dynamic-array" },
+    "expected": {
+      "array": [
+        [{ "number": 10 }, { "number": 20 }, { "number": 0 }],
+        [{ "number": 30 }, { "number": 40 }, { "number": 0 }],
+        [{ "number": 0 }, { "number": 0 }, { "number": 0 }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 10 }, "B1": { "number": 20 },
+          "A2": { "number": 30 }, "B2": { "number": 40 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.expand.pad-blank-cell",
+    "description": "A blank pad_with cell pads with empty, not #N/A",
+    "tags": ["expand", "empty"],
+    "quirks": ["array-eval-mode", "empty-cell-duality"],
+    "formula": "=EXPAND({1,2}, 2, 3, B1)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 2 }, { "empty": null }],
+        [{ "empty": null }, { "empty": null }, { "empty": null }]
+      ]
+    }
+  },
+  {
+    "id": "fn.expand.pad-empty-string",
+    "description": "pad_with \"\" is stored text, not a blank cell",
+    "tags": ["expand", "empty"],
+    "quirks": ["array-eval-mode", "empty-cell-duality"],
+    "formula": "=EXPAND({1}, 1, 2, \"\")",
+    "expected": {
+      "array": [[{ "number": 1 }, { "text": "" }]]
+    }
+  }
+]

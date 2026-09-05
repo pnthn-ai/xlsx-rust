@@ -285,7 +285,7 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 | [`eval/coerce.rs`](crates/xlsx-engine-core/src/eval/coerce.rs) | Arithmetic / `&` / `IF` coercion (`"2"+1` = 3, TRUE → 1, empty → 0) |
 | [`eval/compare.rs`](crates/xlsx-engine-core/src/eval/compare.rs) | 15-digit `=`, case-insensitive text, `TRUE=1`, type ranking (`FALSE>100`) |
 | [`eval/empty.rs`](crates/xlsx-engine-core/src/eval/empty.rs) | Blank ≠ 0 ≠ `""`, but `A1=0` and `A1=""` when `A1` is blank |
-| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Dispatch: aggregators (`SUM`/`SUMIF`/`SUMIFS`/`AVERAGEIF`/`COUNTIF`/`SUMPRODUCT`), logicals (`IF`/`IFS`/`SWITCH`), lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`/`FILTER`/`UNIQUE`), dates (`DATE`/`EOMONTH`/`NETWORKDAYS`/`WEEKDAY`/`WORKDAY`), math (`ROUND`/`ROUNDUP`/`ROUNDDOWN`/`FLOOR`/`CEILING`), text (`LEFT`/`SUBSTITUTE`/`REPLACE`/`FIND`/`SEARCH`/`TEXT`/`TEXTJOIN`/`CONCAT`), financial (`NPV`/`PMT`/`IRR`), `TYPE` / `IS*` |
+| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Dispatch: aggregators (`SUM`/`SUMIF`/`SUMIFS`/`AVERAGEIF`/`COUNTIF`/`SUMPRODUCT`), logicals (`IF`/`IFS`/`SWITCH`), lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`/`FILTER`/`UNIQUE`/`EXPAND`), dates (`DATE`/`EOMONTH`/`NETWORKDAYS`/`WEEKDAY`/`WORKDAY`), math (`ROUND`/`ROUNDUP`/`ROUNDDOWN`/`FLOOR`/`CEILING`), text (`LEFT`/`SUBSTITUTE`/`REPLACE`/`FIND`/`SEARCH`/`TEXT`/`TEXTJOIN`/`CONCAT`), financial (`NPV`/`PMT`/`IRR`), `TYPE` / `IS*` |
 | [`eval/sumif.rs`](crates/xlsx-engine-core/src/eval/sumif.rs) | Excel `SUMIF` kernel (criteria walk, reshape `sum_range`, no array literals) |
 | [`eval/sumifs.rs`](crates/xlsx-engine-core/src/eval/sumifs.rs) | Excel `SUMIFS`: multi-criteria AND, same-shape ranges |
 | [`eval/averageif.rs`](crates/xlsx-engine-core/src/eval/averageif.rs) | Excel `AVERAGEIF` kernel (reshape `average_range`, `#DIV/0!` when empty) |
@@ -301,6 +301,7 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 | [`eval/ifs.rs`](crates/xlsx-engine-core/src/eval/ifs.rs) | `IFS` pair-selection kernel (eager eval, first TRUE, no-match `#N/A`) |
 | [`eval/unique.rs`](crates/xlsx-engine-core/src/eval/unique.rs) | `UNIQUE(array, [by_col], [exactly_once])` hash distinctness |
 | [`eval/filter.rs`](crates/xlsx-engine-core/src/eval/filter.rs) | `FILTER` mask/select kernel (`#CALC!` / `if_empty`, row vs column) |
+| [`eval/expand.rs`](crates/xlsx-engine-core/src/eval/expand.rs) | `EXPAND(array, rows, [columns], [pad_with])` grow/pad (`#N/A` / shrink `#VALUE!`) |
 | [`eval/npv.rs`](crates/xlsx-engine-core/src/eval/npv.rs) | Excel `NPV` kernel (period-1 discount, range skip of blanks/text/logicals) |
 | [`eval/irr.rs`](crates/xlsx-engine-core/src/eval/irr.rs) | Excel `IRR` Newton / secant kernel (20 tries, `1e-7` rate, `#NUM!` on failure) |
 | [`text_format.rs`](crates/xlsx-engine-core/src/text_format.rs) | Excel `TEXT` for a documented number/date format subset |
@@ -384,6 +385,14 @@ as one or the other. Documented quirk categories:
   number and `"2"`, `"TRUE"` coerced to the logical (use `"TRUE*"` for text),
   `""` / `"="` vs `"<>"` blank duality, errors ignored unless the criterion is
   that error
+- `EXPAND(array, rows, [columns], [pad_with])`: grows an array; original
+  values stay top-left. Omitted `pad_with` fills new cells with `#N/A`
+  (not `0` / blank) — `SUM(EXPAND(…))` is then `#N/A`. A blank pad cell
+  writes empty. **Cannot shrink:** `rows` / `columns` below the source
+  (after truncate-toward-zero), including `0` and negatives, is `#VALUE!`
+  — use `TAKE` / `DROP`. Omitted **or empty** `rows` / `columns` keep the
+  current size (`FALSE` → `0` → `#VALUE!`). Result is always an array
+  value — see spill / size limits below.
 - `UNIQUE(array, [by_col], [exactly_once])`: first-occurrence distinct rows
   (or columns when `by_col` is TRUE); case-insensitive text; type-strict
   (`1` ≠ `"1"` ≠ `TRUE`); blanks collapse to one empty; `exactly_once` with
@@ -407,6 +416,21 @@ as one or the other. Documented quirk categories:
   or a Newton step to `r <= -1` → `#NUM!`. `NPV` is a separate function.
 - Volatile / locale / precision-as-displayed / hidden-row `SUBTOTAL` are
   catalogued as `ignore` until they can be evaluated honestly
+
+**`EXPAND` spill / size limits** (honest, not hidden behind a broken case):
+
+- EXPAND returns an array **value**. Occupied neighbors never yield
+  `#SPILL!` — the snippet workbook has no spill grid. Pick cells with
+  `INDEX` / `SUM` / `COUNTA`.
+- Scalar operators (`EXPAND(...)+1`) take the top-left element, not a
+  host-aware intersection of a written spill.
+- Worksheet caps **are** enforced as `#NUM!` before allocate: output
+  height `> 1,048,576` or width `> 16,384`. That is a size error, not
+  occupancy `#SPILL!`. We do not invent a `#SPILL!` golden.
+- The parser does not accept empty commas (`EXPAND(A1:B2,,4)`). Omit a
+  trailing `columns`, or pass a blank cell for an empty dimension.
+- `pad_with` is a scalar (top-left of an array). An error used as pad is
+  a pad **value**; it does not fail the call.
 
 **`FILTER` spill / model limits** (honest, not hidden behind a broken case):
 

@@ -8,22 +8,23 @@ pub mod coerce;
 pub mod compare;
 pub mod concat;
 pub mod empty;
-pub mod find;
+pub mod expand;
 pub mod filter;
+pub mod find;
 pub mod functions;
-pub mod substitute;
-pub mod sumif;
-pub mod sumproduct;
+pub mod ifs;
+pub mod irr;
+pub mod npv;
 pub mod replace;
-pub mod sumifs;
-pub mod textjoin;
 pub mod round;
 pub mod search;
-pub mod npv;
+pub mod substitute;
+pub mod sumif;
+pub mod sumifs;
+pub mod sumproduct;
 pub mod switch;
-pub mod ifs;
+pub mod textjoin;
 pub mod unique;
-pub mod irr;
 
 use crate::ast::{BinOp, Expr, UnaryOp};
 use crate::parse::parse;
@@ -273,7 +274,11 @@ impl Evaluator {
         Ok(ExcelValue::Array(rows))
     }
 
-    pub(crate) fn eval_named(&self, name: &str, ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    pub(crate) fn eval_named(
+        &self,
+        name: &str,
+        ctx: &mut Ctx<'_>,
+    ) -> Result<ExcelValue, EvalError> {
         let def = match ctx.spec.workbook.defined_name(name) {
             Ok(d) => d,
             Err(_) => return Ok(ExcelValue::Error(ExcelError::Name)),
@@ -880,6 +885,59 @@ mod tests {
             ExcelValue::Error(ExcelError::Value)
         );
     }
+    #[test]
+    fn expand_pad_shrink_and_omit() {
+        let wb = Workbook::default();
+        assert_eq!(
+            eval_formula_in(&wb, "=EXPAND({1,2;3,4}, 3, 3)").unwrap(),
+            ExcelValue::Array(vec![
+                vec![
+                    ExcelValue::Number(1.0),
+                    ExcelValue::Number(2.0),
+                    ExcelValue::Error(ExcelError::Na)
+                ],
+                vec![
+                    ExcelValue::Number(3.0),
+                    ExcelValue::Number(4.0),
+                    ExcelValue::Error(ExcelError::Na)
+                ],
+                vec![
+                    ExcelValue::Error(ExcelError::Na),
+                    ExcelValue::Error(ExcelError::Na),
+                    ExcelValue::Error(ExcelError::Na)
+                ],
+            ])
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=EXPAND({1,2;3,4}, 3, 3, 0)").unwrap(),
+            ExcelValue::Array(vec![
+                vec![
+                    ExcelValue::Number(1.0),
+                    ExcelValue::Number(2.0),
+                    ExcelValue::Number(0.0)
+                ],
+                vec![
+                    ExcelValue::Number(3.0),
+                    ExcelValue::Number(4.0),
+                    ExcelValue::Number(0.0)
+                ],
+                vec![
+                    ExcelValue::Number(0.0),
+                    ExcelValue::Number(0.0),
+                    ExcelValue::Number(0.0)
+                ],
+            ])
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=EXPAND({1,2;3,4}, 1, 2)").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=EXPAND({1}, 1, 16385)").unwrap(),
+            ExcelValue::Error(ExcelError::Num)
+        );
+    }
+
     #[test]
     fn unique_literal_and_exactly_once() {
         let wb = Workbook::default();
