@@ -285,7 +285,7 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 | [`eval/coerce.rs`](crates/xlsx-engine-core/src/eval/coerce.rs) | Arithmetic / `&` / `IF` coercion (`"2"+1` = 3, TRUE → 1, empty → 0) |
 | [`eval/compare.rs`](crates/xlsx-engine-core/src/eval/compare.rs) | 15-digit `=`, case-insensitive text, `TRUE=1`, type ranking (`FALSE>100`) |
 | [`eval/empty.rs`](crates/xlsx-engine-core/src/eval/empty.rs) | Blank ≠ 0 ≠ `""`, but `A1=0` and `A1=""` when `A1` is blank |
-| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Dispatch: aggregators (`SUM`/`SUMIF`/`SUMIFS`/`AVERAGEIF`/`COUNTIF`/`SUMPRODUCT`), logicals (`IF`/`IFS`/`SWITCH`), lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`/`FILTER`/`UNIQUE`), dates (`DATE`/`EOMONTH`/`NETWORKDAYS`/`WEEKDAY`/`WORKDAY`), math (`ROUND`/`ROUNDUP`/`ROUNDDOWN`/`FLOOR`/`CEILING`), text (`LEFT`/`SUBSTITUTE`/`REPLACE`/`FIND`/`SEARCH`/`TEXT`/`TEXTJOIN`/`CONCAT`), financial (`NPV`/`PMT`/`IRR`), `TYPE` / `IS*` |
+| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Dispatch: aggregators (`SUM`/`SUMIF`/`SUMIFS`/`AVERAGEIF`/`COUNTIF`/`SUMPRODUCT`), logicals (`IF`/`IFS`/`SWITCH`), lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`/`FILTER`/`UNIQUE`/`VSTACK`), dates (`DATE`/`EOMONTH`/`NETWORKDAYS`/`WEEKDAY`/`WORKDAY`), math (`ROUND`/`ROUNDUP`/`ROUNDDOWN`/`FLOOR`/`CEILING`), text (`LEFT`/`SUBSTITUTE`/`REPLACE`/`FIND`/`SEARCH`/`TEXT`/`TEXTJOIN`/`CONCAT`), financial (`NPV`/`PMT`/`IRR`), `TYPE` / `IS*` |
 | [`eval/sumif.rs`](crates/xlsx-engine-core/src/eval/sumif.rs) | Excel `SUMIF` kernel (criteria walk, reshape `sum_range`, no array literals) |
 | [`eval/sumifs.rs`](crates/xlsx-engine-core/src/eval/sumifs.rs) | Excel `SUMIFS`: multi-criteria AND, same-shape ranges |
 | [`eval/averageif.rs`](crates/xlsx-engine-core/src/eval/averageif.rs) | Excel `AVERAGEIF` kernel (reshape `average_range`, `#DIV/0!` when empty) |
@@ -301,6 +301,7 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 | [`eval/ifs.rs`](crates/xlsx-engine-core/src/eval/ifs.rs) | `IFS` pair-selection kernel (eager eval, first TRUE, no-match `#N/A`) |
 | [`eval/unique.rs`](crates/xlsx-engine-core/src/eval/unique.rs) | `UNIQUE(array, [by_col], [exactly_once])` hash distinctness |
 | [`eval/filter.rs`](crates/xlsx-engine-core/src/eval/filter.rs) | `FILTER` mask/select kernel (`#CALC!` / `if_empty`, row vs column) |
+| [`eval/vstack.rs`](crates/xlsx-engine-core/src/eval/vstack.rs) | `VSTACK(array1, [array2], …)` vertical append; `#N/A` width pad |
 | [`eval/npv.rs`](crates/xlsx-engine-core/src/eval/npv.rs) | Excel `NPV` kernel (period-1 discount, range skip of blanks/text/logicals) |
 | [`eval/irr.rs`](crates/xlsx-engine-core/src/eval/irr.rs) | Excel `IRR` Newton / secant kernel (20 tries, `1e-7` rate, `#NUM!` on failure) |
 | [`text_format.rs`](crates/xlsx-engine-core/src/text_format.rs) | Excel `TEXT` for a documented number/date format subset |
@@ -360,6 +361,14 @@ as one or the other. Documented quirk categories:
   must be a vector matching height (row filter) or width (column filter), or
   a scalar broadcast. An error inside `include` wins. The result is an
   `ExcelValue::Array` — see spill / model limits below
+- `VSTACK(array1, [array2], …)`: row-wise append. Height is the sum of
+  argument heights; width is the **max** argument width. A narrower array is
+  padded on the right with `#N/A` (not blank). A blank **source** cell stays
+  empty. Scalars are 1×1. A computed scalar error (`#DIV/0!` literal, `1/0`,
+  `FILTER` → `#CALC!`) surfaces as the whole result; a cell-stored error is
+  stacked as a 1×1 (Microsoft’s mixed-width example). A 0-row array is
+  ignored; if nothing remains, `#CALC!`. Result is an `ExcelValue::Array` —
+  see VSTACK spill / pad limits below
 - `SWITCH(expression, value1, result1, …, [default])` uses Excel `=` (not `IF`
   truthiness: `IF(2, …)` is true, `SWITCH(2, TRUE, …)` does not match). First
   hit wins; unused values/results are not evaluated. No match and no default
@@ -416,6 +425,20 @@ as one or the other. Documented quirk categories:
   is not a boolean-array include — pass a logical/numeric vector (literal or
   range). `*` / `+` criteria broadcasting is not modeled.
 - Excel's ~1,048,576-row array cap is not enforced; size is memory-bounded.
+
+**`VSTACK` spill / pad / width** (honest):
+
+- VSTACK returns the array that **would** spill. Occupied neighbors never
+  yield `#SPILL!` (`fn.vstack.no-grid-write`). `VSTACK(...)+1` takes the
+  top-left via `scalarize`, not a host-aware intersection of a written spill.
+- Width pad is `#N/A` inside that array (`fn.vstack.pad-*`). It is **not**
+  empty: `COUNTA` counts it, `COUNTBLANK` does not, `SUM` surfaces `#N/A`.
+- Excel's `IFNA(VSTACK(...), "")` rewrites each pad cell. This engine's
+  `IFNA` / `IFERROR` only replace a **scalar** error (`fn.vstack.ifna-does-not-rewrite-pads`).
+  Pick a pad with `INDEX`.
+- Omitted middle arguments (`VSTACK(A1,,B1)`) are not modeled — the parser
+  requires an expression after each comma.
+- Excel's ~1,048,576-row cap is not enforced.
 
 See [`crates/xlsx-types/src/quirk.rs`](crates/xlsx-types/src/quirk.rs). The
 catalog also names `error-precedence`, `percent-unary`, and `range-operators`.
