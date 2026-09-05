@@ -45,6 +45,10 @@ name = "averageif"
 harness = false
 
 [[bench]]
+name = "averageifs"
+harness = false
+
+[[bench]]
 name = "textjoin"
 harness = false
 

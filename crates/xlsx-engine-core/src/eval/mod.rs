@@ -4,6 +4,7 @@
 //! Worksheet functions live in [`functions`].
 
 pub mod averageif;
+pub mod averageifs;
 pub mod coerce;
 pub mod compare;
 pub mod concat;
@@ -608,6 +609,35 @@ pub fn eval_averageif_materialized(
     }
 }
 
+/// Evaluate an `AVERAGEIFS(...)` formula with the materializing implementation.
+/// Used only by the Criterion microbench as the pre-hill-climb baseline.
+pub fn eval_averageifs_materialized(
+    workbook: &Workbook,
+    formula: &str,
+) -> Result<ExcelValue, EvalError> {
+    let spec = EvalSpec {
+        case_id: "averageifs-bench".into(),
+        workbook: workbook.clone(),
+        target: EvalTarget::formula(formula),
+        options: Default::default(),
+    };
+    let ast = parse(formula)?;
+    let current_sheet = spec.workbook.default_sheet_name().to_string();
+    let mut ctx = Ctx {
+        spec: &spec,
+        current_sheet,
+        depth: 0,
+        visiting: HashSet::new(),
+        host: spec.default_cell().addr,
+    };
+    match ast {
+        Expr::Call { name, args } if name.eq_ignore_ascii_case("AVERAGEIFS") => {
+            averageifs::averageifs_materialized(&Evaluator, &args, &mut ctx)
+        }
+        _ => Err(EvalError::Other("expected AVERAGEIFS call".into())),
+    }
+}
+
 /// Ad-hoc evaluation helper for unit tests (no Candidate trait required).
 pub fn eval_formula_in(workbook: &Workbook, formula: &str) -> Result<ExcelValue, EvalError> {
     let spec = EvalSpec {
@@ -825,6 +855,44 @@ mod tests {
         );
         assert_eq!(
             eval_formula_in(&wb, "=AVERAGEIF({1,2,3},\">1\")").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
+        );
+    }
+    #[test]
+    fn averageifs_and_same_shape_and_div0() {
+        let mut wb = Workbook::default();
+        wb.set_value("Sheet1", "A1", ExcelValue::Number(1.0))
+            .unwrap();
+        wb.set_value("Sheet1", "A2", ExcelValue::Number(6.0))
+            .unwrap();
+        wb.set_value("Sheet1", "A3", ExcelValue::Number(3.0))
+            .unwrap();
+        wb.set_value("Sheet1", "B1", ExcelValue::Text("x".into()))
+            .unwrap();
+        wb.set_value("Sheet1", "B2", ExcelValue::Text("x".into()))
+            .unwrap();
+        wb.set_value("Sheet1", "B3", ExcelValue::Text("y".into()))
+            .unwrap();
+        wb.set_value("Sheet1", "C1", ExcelValue::Number(10.0))
+            .unwrap();
+        wb.set_value("Sheet1", "C2", ExcelValue::Number(20.0))
+            .unwrap();
+        wb.set_value("Sheet1", "C3", ExcelValue::Number(30.0))
+            .unwrap();
+        assert_eq!(
+            eval_formula_in(&wb, "=AVERAGEIFS(C1:C3,A1:A3,\">2\",B1:B3,\"x\")").unwrap(),
+            ExcelValue::Number(20.0)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=AVERAGEIFS(C1,A1:A3,\">2\")").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=AVERAGEIFS(C1:C3,A1:A3,\">100\")").unwrap(),
+            ExcelValue::Error(ExcelError::Div0)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=AVERAGEIFS({1,2,3},A1:A3,\">1\")").unwrap(),
             ExcelValue::Error(ExcelError::Value)
         );
     }

@@ -372,6 +372,7 @@ impl Interpreter {
             "COUNTIF" => self.fn_countif(args, ctx),
             "SUMIFS" => self.fn_sumifs(args, ctx),
             "AVERAGEIF" => self.fn_averageif(args, ctx),
+            "AVERAGEIFS" => self.fn_averageifs(args, ctx),
             "IF" => self.fn_if(args, ctx),
             "IFS" => self.fn_ifs(args, ctx),
             "IFERROR" => self.fn_iferror(args, ctx),
@@ -808,6 +809,89 @@ impl Interpreter {
                     ctx,
                 )?;
                 match avg_v {
+                    ExcelValue::Error(e) => return Ok(ExcelValue::Error(e)),
+                    ExcelValue::Number(n) => {
+                        sum += n;
+                        count += 1;
+                    }
+                    _ => {}
+                }
+            }
+        }
+        if count == 0 {
+            Ok(ExcelValue::Error(ExcelError::Div0))
+        } else {
+            Ok(ExcelValue::Number(sum / count as f64))
+        }
+    }
+
+    fn fn_averageifs(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.len() < 3 || args.len() % 2 == 0 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        let avg = match resolve_sumifs_range(&args[0], ctx) {
+            Ok(r) => r,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        let mut pairs: Vec<(RangeRef, Criterion)> = Vec::with_capacity(args.len() / 2);
+        let mut i = 1;
+        while i < args.len() {
+            let range = match resolve_sumifs_range(&args[i], ctx) {
+                Ok(r) => r,
+                Err(e) => return Ok(ExcelValue::Error(e)),
+            };
+            if range.row_count() != avg.row_count() || range.col_count() != avg.col_count() {
+                return Ok(ExcelValue::Error(ExcelError::Value));
+            }
+            let crit_val = self.eval_scalar(&args[i + 1], ctx)?;
+            let criterion = match Criterion::compile(&crit_val) {
+                Ok(c) => c,
+                Err(e) => return Ok(ExcelValue::Error(e)),
+            };
+            pairs.push((range, criterion));
+            i += 2;
+        }
+
+        let avg_sheet = avg
+            .sheet
+            .clone()
+            .unwrap_or_else(|| ctx.current_sheet.clone());
+        let height = avg.row_count();
+        let width = avg.col_count();
+        let mut sum = 0.0;
+        let mut count = 0u64;
+        for dr in 0..height {
+            for dc in 0..width {
+                let mut ok = true;
+                for (range, criterion) in &pairs {
+                    let sheet = range
+                        .sheet
+                        .clone()
+                        .unwrap_or_else(|| ctx.current_sheet.clone());
+                    let addr = CellAddr::new(range.start.col + dc, range.start.row + dr);
+                    let v = self.eval_cell(
+                        &CellRef {
+                            sheet: Some(sheet),
+                            addr,
+                        },
+                        ctx,
+                    )?;
+                    if !criterion.matches(&v) {
+                        ok = false;
+                        break;
+                    }
+                }
+                if !ok {
+                    continue;
+                }
+                let avg_addr = CellAddr::new(avg.start.col + dc, avg.start.row + dr);
+                match self.eval_cell(
+                    &CellRef {
+                        sheet: Some(avg_sheet.clone()),
+                        addr: avg_addr,
+                    },
+                    ctx,
+                )? {
                     ExcelValue::Error(e) => return Ok(ExcelValue::Error(e)),
                     ExcelValue::Number(n) => {
                         sum += n;
