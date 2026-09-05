@@ -424,6 +424,7 @@ impl Interpreter {
             "VALUE" => self.fn_value(args, ctx),
             "SUBSTITUTE" => self.fn_substitute(args, ctx),
             "TEXT" => self.fn_text(args, ctx),
+            "REPLACE" => self.fn_replace(args, ctx),
             "TRUE" => Ok(ExcelValue::Bool(true)),
             "FALSE" => Ok(ExcelValue::Bool(false)),
             _ => Ok(ExcelValue::Error(ExcelError::Name)),
@@ -1424,6 +1425,35 @@ impl Interpreter {
             Ok(s) => Ok(ExcelValue::Text(s)),
             Err(e) => Ok(ExcelValue::Error(e)),
         }
+    fn fn_replace(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.len() != 4 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        let old_text = match self.as_text(&self.eval_scalar(&args[0], ctx)?) {
+            Ok(s) => s,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        let start_num = match self.as_number(&self.eval_scalar(&args[1], ctx)?) {
+            Ok(n) => match trunc_start_num(n) {
+                Ok(n) => n,
+                Err(e) => return Ok(ExcelValue::Error(e)),
+            },
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        let num_chars = match self.as_number(&self.eval_scalar(&args[2], ctx)?) {
+            Ok(n) => match trunc_num_chars(n) {
+                Ok(n) => n,
+                Err(e) => return Ok(ExcelValue::Error(e)),
+            },
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        let new_text = match self.as_text(&self.eval_scalar(&args[3], ctx)?) {
+            Ok(s) => s,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        Ok(ExcelValue::Text(excel_replace(
+            &old_text, start_num, num_chars, &new_text,
+        )))
     }
 
     fn fn_value(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
@@ -2254,6 +2284,65 @@ fn sumproduct_product_sum(arrays: &[ExcelValue]) -> ExcelValue {
         }
     };
     ExcelValue::Number(acc)
+}
+/// Excel `REPLACE` kernel (same semantics as `xlsx-engine-core`).
+fn excel_replace(old_text: &str, start_num: u64, num_chars: u64, new_text: &str) -> String {
+    let chars: Vec<char> = old_text.chars().collect();
+    let start0 = match usize::try_from(start_num.saturating_sub(1)) {
+        Ok(n) => n,
+        Err(_) => {
+            let mut out = String::with_capacity(old_text.len() + new_text.len());
+            out.push_str(old_text);
+            out.push_str(new_text);
+            return out;
+        }
+    };
+    if start0 >= chars.len() {
+        let mut out = String::with_capacity(old_text.len() + new_text.len());
+        out.push_str(old_text);
+        out.push_str(new_text);
+        return out;
+    }
+    let take = match usize::try_from(num_chars) {
+        Ok(n) => n,
+        Err(_) => chars.len() - start0,
+    };
+    let end = start0.saturating_add(take).min(chars.len());
+    let mut out = String::new();
+    out.extend(chars[..start0].iter());
+    out.push_str(new_text);
+    out.extend(chars[end..].iter());
+    out
+}
+
+fn trunc_start_num(n: f64) -> Result<u64, ExcelError> {
+    if !n.is_finite() {
+        return Err(ExcelError::Value);
+    }
+    let t = n.trunc();
+    if t < 1.0 {
+        return Err(ExcelError::Value);
+    }
+    if t > u64::MAX as f64 {
+        Ok(u64::MAX)
+    } else {
+        Ok(t as u64)
+    }
+}
+
+fn trunc_num_chars(n: f64) -> Result<u64, ExcelError> {
+    if !n.is_finite() {
+        return Err(ExcelError::Value);
+    }
+    let t = n.trunc();
+    if t < 0.0 {
+        return Err(ExcelError::Value);
+    }
+    if t > u64::MAX as f64 {
+        Ok(u64::MAX)
+    } else {
+        Ok(t as u64)
+    }
 }
 /// Used by tests that want a workbook-backed evaluation without the Candidate trait.
 pub fn eval_formula_in(

@@ -23,6 +23,8 @@ pub use eval::substitute::{
 };
 pub use eval::sumproduct::{product_sum, product_sum_naive, product_sum_packed};
 pub use eval::{eval_formula_in, eval_sumif_materialized, Evaluator};
+pub use eval::replace::{replace as excel_replace, replace_naive as excel_replace_naive};
+pub use eval::{eval_formula_in, Evaluator};
 pub use parse::parse;
 
 use xlsx_types::{Candidate, EvalError, EvalSpec, ExcelValue};

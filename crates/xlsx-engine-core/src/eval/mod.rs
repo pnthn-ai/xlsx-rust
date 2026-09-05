@@ -10,6 +10,7 @@ pub mod functions;
 pub mod substitute;
 pub mod sumif;
 pub mod sumproduct;
+pub mod replace;
 
 use crate::ast::{BinOp, Expr, UnaryOp};
 use crate::parse::parse;
