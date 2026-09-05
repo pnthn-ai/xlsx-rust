@@ -1,0 +1,295 @@
+[
+  {
+    "id": "fn.rate.ms-loan",
+    "description": "Microsoft RATE example: 4-year / −$200/mo / $8,000 loan",
+    "tags": ["rate", "financial"],
+    "notes": "support.microsoft.com RATE displays 1% (0 decimals). Golden is the OpenFormula 6.12.42 Newton root (20 tries, 1e-7) of the PMT identity.",
+    "formula": "=RATE(4*12, -200, 8000)",
+    "expected": { "number": 0.007701472488202253 }
+  },
+  {
+    "id": "fn.rate.ms-loan-cells",
+    "description": "Same Microsoft loan via cell refs (A2=4, A3=−200, A4=8000)",
+    "tags": ["rate", "financial"],
+    "formula": "=RATE(A2*12, A3, A4)",
+    "expected": { "number": 0.007701472488202253 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A2": { "number": 4 },
+          "A3": { "number": -200 },
+          "A4": { "number": 8000 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.rate.ms-loan-annualized",
+    "description": "Microsoft RATE example annualized (*12 displays as 9.24%)",
+    "tags": ["rate", "financial"],
+    "notes": "support.microsoft.com RATE: 9.24% when monthly rate is multiplied by 12.",
+    "formula": "=ROUND(RATE(4*12, -200, 8000)*12, 4)",
+    "expected": { "number": 0.0924 }
+  },
+  {
+    "id": "fn.rate.invert-pmt",
+    "description": "RATE inverts PMT on a 10-period 10% loan",
+    "tags": ["rate", "financial"],
+    "notes": "Expected is the rate fed to PMT (OpenFormula identity), not a fixture golden.",
+    "formula": "=RATE(10, PMT(0.1, 10, 1000), 1000)",
+    "expected": { "number": 0.0999999999999998 }
+  },
+  {
+    "id": "fn.rate.invert-pmt-ms",
+    "description": "RATE inverts the Microsoft 10-month 8% PMT example",
+    "tags": ["rate", "financial"],
+    "formula": "=RATE(10, PMT(8%/12, 10, 10000), 10000)",
+    "expected": { "number": 0.0066666666666660435 }
+  },
+  {
+    "id": "fn.rate.invert-pmt-begin",
+    "description": "RATE inverts PMT with type=1",
+    "tags": ["rate", "financial"],
+    "formula": "=RATE(10, PMT(0.1, 10, 1000, 0, 1), 1000, 0, 1)",
+    "expected": { "number": 0.09999999999999978 }
+  },
+  {
+    "id": "fn.rate.yearly",
+    "description": "Annual RATE(10, PMT(8%, 10, 10000), 10000)",
+    "tags": ["rate", "financial"],
+    "formula": "=RATE(10, PMT(0.08, 10, 10000), 10000)",
+    "expected": { "number": 0.0800000000000001 }
+  },
+  {
+    "id": "fn.rate.zero-rate",
+    "description": "pv + pmt·nper + fv = 0 is an exact 0% root (no iteration)",
+    "tags": ["rate", "financial"],
+    "formula": "=RATE(10, -100, 1000)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.rate.zero-rate-fv",
+    "description": "Zero-rate residual with a balloon fv",
+    "tags": ["rate", "financial"],
+    "formula": "=RATE(10, -150, 1000, 500)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.rate.balloon",
+    "description": "RATE inverts a balloon (fv) PMT",
+    "tags": ["rate", "financial"],
+    "formula": "=RATE(5, PMT(0.05, 5, 10000, 1000), 10000, 1000)",
+    "expected": { "number": 0.04999999999999929 }
+  },
+  {
+    "id": "fn.rate.annuity-inflow",
+    "description": "Negative pv (cash received) with a positive pmt",
+    "tags": ["rate", "financial"],
+    "formula": "=RATE(10, PMT(0.05, 10, -10000), -10000)",
+    "expected": { "number": 0.05000000000000001 }
+  },
+  {
+    "id": "fn.rate.neg-rate",
+    "description": "Negative rate (deflation) is allowed when 1+rate > 0",
+    "tags": ["rate", "financial"],
+    "formula": "=RATE(10, PMT(-0.05, 10, 1000), 1000)",
+    "expected": { "number": -0.05 }
+  },
+  {
+    "id": "fn.rate.frac-nper",
+    "description": "nper is not truncated; fractional periods are allowed",
+    "tags": ["rate", "financial"],
+    "notes": "Newton root of OpenFormula 6.12.42 from guess 0.1.",
+    "formula": "=RATE(0.9, -100, 400)",
+    "expected": { "number": -0.7961723610105143 }
+  },
+  {
+    "id": "fn.rate.neg-nper",
+    "description": "Negative nper is a valid TVM input (solve-backwards)",
+    "tags": ["rate", "financial"],
+    "formula": "=RATE(-10, PMT(0.1, -10, 1000), 1000)",
+    "expected": { "number": 0.1 }
+  },
+  {
+    "id": "fn.rate.one-period",
+    "description": "nper=1 uses the closed form r = −(pv+pmt+fv)/(pv+pmt·type)",
+    "tags": ["rate", "financial", "perf"],
+    "formula": "=RATE(1, -110, 100)",
+    "expected": { "number": 0.1 }
+  },
+  {
+    "id": "fn.rate.pmt-zero-compound",
+    "description": "pmt=0 is the compound closed form (−fv/pv)^(1/n)−1",
+    "tags": ["rate", "financial", "perf"],
+    "formula": "=RATE(10, 0, -1000, 2000)",
+    "expected": { "number": 0.07177346253629316 }
+  },
+  {
+    "id": "fn.rate.percent-unary",
+    "description": "Guess written with postfix %",
+    "tags": ["rate", "financial"],
+    "quirks": ["percent-unary"],
+    "formula": "=RATE(10, PMT(8%, 10, 10000), 10000, 0, 0, 10%)",
+    "expected": { "number": 0.0800000000000001 }
+  },
+  {
+    "id": "fn.rate.text-number",
+    "description": "Numeric text coerces like arithmetic",
+    "tags": ["rate", "financial", "coercion"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=RATE(\"10\", PMT(0.1, 10, 1000), \"1000\")",
+    "expected": { "number": 0.0999999999999998 }
+  },
+  {
+    "id": "fn.rate.true-type",
+    "description": "TRUE coerces to type=1",
+    "tags": ["rate", "financial", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=RATE(10, PMT(0.1, 10, 1000, 0, TRUE), 1000, 0, TRUE)",
+    "expected": { "number": 0.09999999999999978 }
+  },
+  {
+    "id": "fn.rate.false-type",
+    "description": "FALSE coerces to type=0 (end of period)",
+    "tags": ["rate", "financial", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=RATE(10, PMT(0.1, 10, 1000, 0, FALSE), 1000, 0, FALSE)",
+    "expected": { "number": 0.0999999999999998 }
+  },
+  {
+    "id": "fn.rate.empty-optional",
+    "description": "Blank fv/type/guess cells: fv/type→0, guess→0 (then Newton from 0)",
+    "tags": ["rate", "financial", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "notes": "Omitted guess defaults to 0.1; a blank cell is 0. Zero residual still returns 0.",
+    "formula": "=RATE(A1, A2, A3, A4, A5, A6)",
+    "expected": { "number": 0.1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 10 },
+          "A2": { "formula": "=PMT(0.1, 10, 1000)" },
+          "A3": { "number": 1000 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.rate.guess-explicit",
+    "description": "A closer guess still recovers the same root",
+    "tags": ["rate", "financial"],
+    "formula": "=RATE(8, PMT(0.25, 8, 1000), 1000, 0, 0, 0.25)",
+    "expected": { "number": 0.25 }
+  },
+  {
+    "id": "fn.rate.mortgage-default-num",
+    "description": "30-year monthly mortgage from default guess 0.1 does not settle in 20 Newton steps",
+    "tags": ["rate", "financial"],
+    "notes": "Excel RATE quirk: successive results must agree within 1e-7 after 20 tries. From 10% the path is still ~4% after 20 steps → #NUM!. Pass guess 1%.",
+    "formula": "=RATE(360, PMT(0.05/12, 360, 200000), 200000)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.rate.mortgage-guess",
+    "description": "Same mortgage with guess 1% recovers 0.05/12",
+    "tags": ["rate", "financial", "perf"],
+    "formula": "=RATE(360, PMT(0.05/12, 360, 200000), 200000, 0, 0, 0.01)",
+    "expected": { "number": 0.004166666666666679 }
+  },
+  {
+    "id": "fn.rate.type-one-root",
+    "description": "type=1 with fv=100: Excel Newton from 0.1 finds the negative root",
+    "tags": ["rate", "financial"],
+    "notes": "Documented Excel vs Sheets split (HyperFormula #603). Golden is the FV-form Newton path, not a Sheets root.",
+    "formula": "=RATE(12, -100, 400, 100, 1)",
+    "expected": { "number": -0.4996926790855335 }
+  },
+  {
+    "id": "fn.rate.type-one-near-minus-one",
+    "description": "type=1 with fv=1: Newton root just above −1",
+    "tags": ["rate", "financial"],
+    "formula": "=RATE(12, -100, 400, 1, 1)",
+    "expected": { "number": -0.9900990099009901 }
+  },
+  {
+    "id": "fn.rate.type-one-fv0-num",
+    "description": "type=1 with fv=0: a Newton step lands at r <= −1 → #NUM!",
+    "tags": ["rate", "financial"],
+    "formula": "=RATE(12, -100, 400, 0, 1)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.rate.same-sign-num",
+    "description": "All cash out: no root in (−1, ∞) from guess 0.1",
+    "tags": ["rate", "financial"],
+    "formula": "=RATE(10, 100, 1000, 500)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.rate.guess-minus-one",
+    "description": "guess <= −1 cannot start Newton → #NUM!",
+    "tags": ["rate", "financial"],
+    "formula": "=RATE(10, -100, 1000, 0, 0, -1)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.rate.nper-zero",
+    "description": "nper=0 is #NUM! (no periods to solve)",
+    "tags": ["rate", "financial", "errors"],
+    "formula": "=RATE(0, -100, 1000)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.rate.pmt-zero-no-growth",
+    "description": "pmt=0 and fv=0 cannot satisfy pv·(1+r)^n = 0",
+    "tags": ["rate", "financial", "errors"],
+    "formula": "=RATE(10, 0, 1000)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.rate.too-few-args",
+    "description": "RATE requires nper, pmt, pv",
+    "tags": ["rate", "financial", "errors"],
+    "formula": "=RATE(10, -100)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.rate.no-args",
+    "description": "RATE() is #VALUE!",
+    "tags": ["rate", "financial", "errors"],
+    "formula": "=RATE()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.rate.too-many-args",
+    "description": "More than six arguments is #VALUE!",
+    "tags": ["rate", "financial", "errors"],
+    "formula": "=RATE(10, -100, 1000, 0, 0, 0.1, 0)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.rate.text-nper",
+    "description": "Non-numeric text nper is #VALUE!",
+    "tags": ["rate", "financial", "errors"],
+    "formula": "=RATE(\"x\", -100, 1000)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.rate.error-left",
+    "description": "Left-to-right error precedence: first arg error wins",
+    "tags": ["rate", "financial", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=RATE(#DIV/0!, #VALUE!, 1)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.rate.error-second",
+    "description": "Second-arg error surfaces when nper is fine",
+    "tags": ["rate", "financial", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=RATE(10, #NAME?, #N/A)",
+    "expected": { "error": "#NAME?" }
+  }
+]

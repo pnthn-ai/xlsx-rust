@@ -8,8 +8,8 @@ use crate::parse::{parse, BinOp, Expr, UnaryOp};
 use std::collections::{HashMap, HashSet};
 use xlsx_types::{
     count_matches, excel_ceiling, excel_ceiling_math, excel_floor, excel_floor_math, excel_num_eq,
-    excel_pmt, excel_round_15, ArrayMode, CellAddr, CellRef, Criterion, EvalError, EvalSpec,
-    EvalTarget, ExcelError, ExcelValue, RangeRef, Workbook,
+    excel_pmt, excel_rate, excel_round_15, ArrayMode, CellAddr, CellRef, Criterion, EvalError,
+    EvalSpec, EvalTarget, ExcelError, ExcelValue, RangeRef, Workbook,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -454,6 +454,7 @@ impl Interpreter {
             "TRUE" => Ok(ExcelValue::Bool(true)),
             "FALSE" => Ok(ExcelValue::Bool(false)),
             "PMT" => self.fn_pmt(args, ctx),
+            "RATE" => self.fn_rate(args, ctx),
             _ => Ok(ExcelValue::Error(ExcelError::Name)),
         }
     }
@@ -1700,7 +1701,7 @@ impl Interpreter {
         }
     }
 
-        fn collect_holiday_serials(&self, v: &ExcelValue, out: &mut Vec<f64>) -> Option<ExcelError> {
+    fn collect_holiday_serials(&self, v: &ExcelValue, out: &mut Vec<f64>) -> Option<ExcelError> {
         match v {
             ExcelValue::Array(rows) => {
                 for row in rows {
@@ -2098,6 +2099,52 @@ impl Interpreter {
             0.0
         };
         match excel_pmt(rate, nper, pv, fv, typ) {
+            Ok(n) => Ok(ExcelValue::Number(n)),
+            Err(e) => Ok(ExcelValue::Error(e)),
+        }
+    }
+
+    fn fn_rate(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.len() < 3 || args.len() > 6 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        let nper = match self.as_number(&self.eval_scalar(&args[0], ctx)?) {
+            Ok(n) => n,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        let pmt = match self.as_number(&self.eval_scalar(&args[1], ctx)?) {
+            Ok(n) => n,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        let pv = match self.as_number(&self.eval_scalar(&args[2], ctx)?) {
+            Ok(n) => n,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        let fv = if args.len() >= 4 {
+            match self.as_number(&self.eval_scalar(&args[3], ctx)?) {
+                Ok(n) => n,
+                Err(e) => return Ok(ExcelValue::Error(e)),
+            }
+        } else {
+            0.0
+        };
+        let typ = if args.len() >= 5 {
+            match self.as_number(&self.eval_scalar(&args[4], ctx)?) {
+                Ok(n) => n,
+                Err(e) => return Ok(ExcelValue::Error(e)),
+            }
+        } else {
+            0.0
+        };
+        let guess = if args.len() >= 6 {
+            match self.as_number(&self.eval_scalar(&args[5], ctx)?) {
+                Ok(n) => n,
+                Err(e) => return Ok(ExcelValue::Error(e)),
+            }
+        } else {
+            0.1
+        };
+        match excel_rate(nper, pmt, pv, fv, typ, guess) {
             Ok(n) => Ok(ExcelValue::Number(n)),
             Err(e) => Ok(ExcelValue::Error(e)),
         }
