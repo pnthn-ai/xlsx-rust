@@ -193,6 +193,222 @@ pub fn serial_to_ymd(serial: f64, system: DateSystem) -> Result<(i32, u32, u32),
     Err(ExcelError::Num)
 }
 
+/// Convert a workbook-local date serial into the 1900 system.
+pub fn to_1900_serial(serial: i32, system: DateSystem) -> Result<i32, ExcelError> {
+    match system {
+        DateSystem::Excel1900 => Ok(serial),
+        DateSystem::Excel1904 => serial
+            .checked_add(EXCEL1904_EPOCH_IN_1900)
+            .ok_or(ExcelError::Num),
+    }
+}
+
+/// Convert a 1900-system serial back into the workbook-local date system.
+pub fn from_1900_serial(serial_1900: i32, system: DateSystem) -> Result<i32, ExcelError> {
+    match system {
+        DateSystem::Excel1900 => {
+            if serial_1900 < 0 || serial_1900 > EXCEL_MAX_SERIAL_1900 {
+                Err(ExcelError::Num)
+            } else {
+                Ok(serial_1900)
+            }
+        }
+        DateSystem::Excel1904 => {
+            let local = serial_1900
+                .checked_sub(EXCEL1904_EPOCH_IN_1900)
+                .ok_or(ExcelError::Num)?;
+            if local < 0 || local > EXCEL_MAX_SERIAL_1900 - EXCEL1904_EPOCH_IN_1900 {
+                Err(ExcelError::Num)
+            } else {
+                Ok(local)
+            }
+        }
+    }
+}
+
+fn max_local_serial(system: DateSystem) -> i32 {
+    match system {
+        DateSystem::Excel1900 => EXCEL_MAX_SERIAL_1900,
+        DateSystem::Excel1904 => EXCEL_MAX_SERIAL_1900 - EXCEL1904_EPOCH_IN_1900,
+    }
+}
+
+/// Truncate a coerced date argument to a whole serial in `system`.
+///
+/// Negative / non-finite / past-9999-12-31 values are `#NUM!`. Serial 0 is
+/// valid (1900-01-00, or 1904-01-01 in the 1904 system).
+pub fn truncate_date_serial(n: f64, system: DateSystem) -> Result<i32, ExcelError> {
+    if !n.is_finite() {
+        return Err(ExcelError::Num);
+    }
+    let s = n.trunc();
+    let max = max_local_serial(system) as f64;
+    if s < 0.0 || s > max {
+        return Err(ExcelError::Num);
+    }
+    Ok(s as i32)
+}
+
+/// Excel 1900-system weekend: serial 1 is Sunday, so `n % 7` is 0 (Sat) or 1 (Sun).
+///
+/// Serial 60 (the fictitious 1900-02-29) is a Wednesday — a workday.
+pub fn is_weekend_sat_sun_1900(serial_1900: i32) -> bool {
+    let w = serial_1900.rem_euclid(7);
+    w == 0 || w == 1
+}
+
+/// Number of Mon–Fri serials in `(-∞, n]` (1900 system). Serial 0 is Saturday.
+pub fn workdays_through(n: i32) -> i32 {
+    if n < 0 {
+        return 0;
+    }
+    let complete = (n + 1) / 7;
+    let rem = (n + 1) % 7;
+    // Partial week starting at serial 0: Sat, Sun, Mon, Tue, Wed, Thu, Fri.
+    let extra = if rem <= 2 { 0 } else { rem - 2 };
+    complete * 5 + extra
+}
+
+/// First 1900-system serial whose Mon–Fri count through that day equals `w`.
+fn invert_workdays_through(w: i64) -> Result<i32, ExcelError> {
+    if w <= 0 {
+        return Err(ExcelError::Num);
+    }
+    let weeks = (w - 1) / 5;
+    let rem = (w - 1) % 5;
+    let t = weeks
+        .checked_mul(7)
+        .and_then(|x| x.checked_add(2 + rem))
+        .ok_or(ExcelError::Num)?;
+    if t < 0 || t > i64::from(EXCEL_MAX_SERIAL_1900) {
+        return Err(ExcelError::Num);
+    }
+    Ok(t as i32)
+}
+
+fn workday_1900_no_holidays(start: i32, days: i32) -> Result<i32, ExcelError> {
+    if days == 0 {
+        return Ok(start);
+    }
+    if days > 0 {
+        let target = i64::from(workdays_through(start)) + i64::from(days);
+        invert_workdays_through(target)
+    } else {
+        let target = i64::from(workdays_through(start - 1)) + i64::from(days) + 1;
+        invert_workdays_through(target)
+    }
+}
+
+fn count_holidays_between(start: i32, end: i32, hols: &[i32]) -> i32 {
+    if end > start {
+        hols.iter().filter(|&&h| h > start && h <= end).count() as i32
+    } else if end < start {
+        hols.iter().filter(|&&h| h >= end && h < start).count() as i32
+    } else {
+        0
+    }
+}
+
+fn workday_1900(start: i32, days: i32, hols: &[i32]) -> Result<i32, ExcelError> {
+    if days == 0 {
+        return Ok(start);
+    }
+    let mut extra = 0i32;
+    loop {
+        let signed_extra = if days > 0 { extra } else { -extra };
+        let total = days.checked_add(signed_extra).ok_or(ExcelError::Num)?;
+        let candidate = workday_1900_no_holidays(start, total)?;
+        let counted = count_holidays_between(start, candidate, hols);
+        if counted == extra {
+            return Ok(candidate);
+        }
+        extra = counted;
+    }
+}
+
+/// Excel `WORKDAY(start, days, [holidays])` with weekend Sat/Sun.
+///
+/// `days == 0` returns the truncated start date even when that day is a
+/// weekend or a holiday. Non-zero `days` count workdays *after* (or before)
+/// the start date. Holiday serials are truncated, de-duplicated, and ignored
+/// on weekends. Uses an O(1) Mon–Fri inversion plus an O(H) holiday adjust.
+pub fn workday_serial(
+    start: f64,
+    days: f64,
+    holidays: &[f64],
+    system: DateSystem,
+) -> Result<f64, ExcelError> {
+    let start_s = truncate_date_serial(start, system)?;
+    if !days.is_finite() {
+        return Err(ExcelError::Num);
+    }
+    let days_t = days.trunc();
+    if days_t.abs() > f64::from(EXCEL_MAX_SERIAL_1900) {
+        return Err(ExcelError::Num);
+    }
+    let days_i = days_t as i32;
+    let start_1900 = to_1900_serial(start_s, system)?;
+
+    let mut hols = Vec::with_capacity(holidays.len());
+    for &h in holidays {
+        let hs = to_1900_serial(truncate_date_serial(h, system)?, system)?;
+        if !is_weekend_sat_sun_1900(hs) {
+            hols.push(hs);
+        }
+    }
+    hols.sort_unstable();
+    hols.dedup();
+
+    let result_1900 = workday_1900(start_1900, days_i, &hols)?;
+    Ok(from_1900_serial(result_1900, system)? as f64)
+}
+
+/// Day-walk reference for benches and cross-checks. Not used on the hot path.
+pub fn workday_serial_walk(
+    start: f64,
+    days: f64,
+    holidays: &[f64],
+    system: DateSystem,
+) -> Result<f64, ExcelError> {
+    let start_s = truncate_date_serial(start, system)?;
+    if !days.is_finite() {
+        return Err(ExcelError::Num);
+    }
+    let days_t = days.trunc();
+    if days_t.abs() > f64::from(EXCEL_MAX_SERIAL_1900) {
+        return Err(ExcelError::Num);
+    }
+    let mut remaining = days_t as i32;
+    let start_1900 = to_1900_serial(start_s, system)?;
+
+    let mut hols = Vec::with_capacity(holidays.len());
+    for &h in holidays {
+        let hs = to_1900_serial(truncate_date_serial(h, system)?, system)?;
+        if !is_weekend_sat_sun_1900(hs) {
+            hols.push(hs);
+        }
+    }
+    hols.sort_unstable();
+    hols.dedup();
+
+    if remaining == 0 {
+        return Ok(start_s as f64);
+    }
+    let dir = if remaining > 0 { 1 } else { -1 };
+    remaining = remaining.abs();
+    let mut cur = start_1900;
+    while remaining > 0 {
+        cur = cur.checked_add(dir).ok_or(ExcelError::Num)?;
+        if cur < 0 || cur > EXCEL_MAX_SERIAL_1900 {
+            return Err(ExcelError::Num);
+        }
+        if !is_weekend_sat_sun_1900(cur) && hols.binary_search(&cur).is_err() {
+            remaining -= 1;
+        }
+    }
+    Ok(from_1900_serial(cur, system)? as f64)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -251,5 +467,149 @@ mod tests {
         assert_eq!(time_fraction(12.0, 0.0, 0.0).unwrap(), 0.5);
         assert_eq!(time_fraction(6.0, 0.0, 0.0).unwrap(), 0.25);
         assert_eq!(time_fraction(18.0, 0.0, 0.0).unwrap(), 0.75);
+    }
+
+    fn d(y: i32, m: i32, day: i32) -> f64 {
+        date_serial(y, m, day, DateSystem::Excel1900).unwrap()
+    }
+
+    fn wd(start: f64, days: f64, hols: &[f64]) -> f64 {
+        workday_serial(start, days, hols, DateSystem::Excel1900).unwrap()
+    }
+
+    #[test]
+    fn workday_ms_examples() {
+        let start = d(2008, 10, 1);
+        let end_plain = d(2009, 4, 30);
+        let end_hols = d(2009, 5, 5);
+        let h1 = d(2008, 11, 26);
+        let h2 = d(2008, 12, 4);
+        let h3 = d(2009, 1, 21);
+        assert_eq!(start, 39722.0);
+        assert_eq!(end_plain, 39933.0);
+        assert_eq!(end_hols, 39938.0);
+        assert_eq!(wd(start, 151.0, &[]), end_plain);
+        assert_eq!(wd(start, 151.0, &[h1, h2, h3]), end_hols);
+        assert_eq!(wd(d(2012, 1, 1), 3.0, &[]), d(2012, 1, 4));
+        assert_eq!(wd(d(2012, 1, 1), 3.0, &[d(2012, 1, 2)]), d(2012, 1, 5));
+    }
+
+    #[test]
+    fn workday_zero_returns_start_even_on_weekend_or_holiday() {
+        assert_eq!(wd(d(2024, 1, 6), 0.0, &[]), d(2024, 1, 6));
+        assert_eq!(wd(d(2024, 1, 7), 0.0, &[]), d(2024, 1, 7));
+        assert_eq!(wd(d(2024, 1, 1), 0.0, &[d(2024, 1, 1)]), d(2024, 1, 1));
+        assert_eq!(wd(60.0, 0.0, &[60.0]), 60.0);
+        assert_eq!(wd(0.0, 0.0, &[]), 0.0);
+    }
+
+    #[test]
+    fn workday_weekend_start() {
+        // Fri/Sat/Sun + 1 all land on the following Monday.
+        assert_eq!(wd(d(2024, 1, 5), 1.0, &[]), d(2024, 1, 8));
+        assert_eq!(wd(d(2024, 1, 6), 1.0, &[]), d(2024, 1, 8));
+        assert_eq!(wd(d(2024, 1, 7), 1.0, &[]), d(2024, 1, 8));
+        // Sat/Sun/Mon - 1 all land on Friday.
+        assert_eq!(wd(d(2024, 1, 6), -1.0, &[]), d(2024, 1, 5));
+        assert_eq!(wd(d(2024, 1, 7), -1.0, &[]), d(2024, 1, 5));
+        assert_eq!(wd(d(2024, 1, 8), -1.0, &[]), d(2024, 1, 5));
+        assert_eq!(wd(1.0, 1.0, &[]), 2.0);
+        assert_eq!(wd(7.0, 1.0, &[]), 9.0);
+        assert_eq!(wd(6.0, 1.0, &[]), 9.0);
+    }
+
+    #[test]
+    fn workday_serial_60_leap_bug() {
+        let s = DateSystem::Excel1900;
+        assert!(!is_weekend_sat_sun_1900(60));
+        assert_eq!(workday_serial(59.0, 1.0, &[], s).unwrap(), 60.0);
+        assert_eq!(workday_serial(60.0, 1.0, &[], s).unwrap(), 61.0);
+        assert_eq!(workday_serial(59.0, 2.0, &[], s).unwrap(), 61.0);
+        assert_eq!(workday_serial(58.0, 1.0, &[], s).unwrap(), 59.0);
+        assert_eq!(workday_serial(60.0, -1.0, &[], s).unwrap(), 59.0);
+        assert_eq!(workday_serial(61.0, -1.0, &[], s).unwrap(), 60.0);
+        assert_eq!(workday_serial(59.0, 1.0, &[60.0], s).unwrap(), 61.0);
+        assert_eq!(workday_serial(d(1900, 2, 1), 20.0, &[], s).unwrap(), 60.0);
+        assert_eq!(
+            workday_serial(d(1900, 2, 1), 20.0, &[60.0], s).unwrap(),
+            61.0
+        );
+    }
+
+    #[test]
+    fn workday_holidays() {
+        let thu = d(2024, 1, 4);
+        let fri = d(2024, 1, 5);
+        let mon = d(2024, 1, 8);
+        let tue = d(2024, 1, 9);
+        assert_eq!(wd(thu, 1.0, &[fri]), mon);
+        assert_eq!(wd(thu, 1.0, &[fri, mon]), tue);
+        assert_eq!(wd(thu, 1.0, &[d(2024, 1, 6)]), fri);
+        assert_eq!(wd(thu, 1.0, &[fri, fri]), mon);
+        assert_eq!(wd(d(2024, 1, 1), 1.0, &[d(2024, 1, 1)]), d(2024, 1, 2));
+        assert_eq!(wd(thu, 1.0, &[d(2023, 12, 25)]), fri);
+    }
+
+    #[test]
+    fn workday_truncates_fractions() {
+        assert_eq!(wd(d(2024, 1, 4) + 0.9, 1.9, &[]), d(2024, 1, 5));
+        assert_eq!(wd(d(2024, 1, 8) + 0.9, -1.9, &[]), d(2024, 1, 5));
+    }
+
+    #[test]
+    fn workday_rejects_out_of_range() {
+        let s = DateSystem::Excel1900;
+        assert_eq!(workday_serial(-1.0, 1.0, &[], s), Err(ExcelError::Num));
+        assert_eq!(workday_serial(2.0, -1.0, &[], s), Err(ExcelError::Num));
+        assert_eq!(workday_serial(1.0, -1.0, &[], s), Err(ExcelError::Num));
+        assert_eq!(
+            workday_serial(EXCEL_MAX_SERIAL_1900 as f64, 1.0, &[], s),
+            Err(ExcelError::Num)
+        );
+        assert_eq!(workday_serial(1.0, 1.0, &[-1.0], s), Err(ExcelError::Num));
+        assert_eq!(
+            workday_serial(EXCEL_MAX_SERIAL_1900 as f64, 0.0, &[], s).unwrap(),
+            EXCEL_MAX_SERIAL_1900 as f64
+        );
+    }
+
+    #[test]
+    fn workday_system_1904() {
+        let s = DateSystem::Excel1904;
+        assert_eq!(workday_serial(0.0, 0.0, &[], s).unwrap(), 0.0);
+        assert_eq!(workday_serial(0.0, 1.0, &[], s).unwrap(), 3.0);
+        assert_eq!(workday_serial(0.0, 1.0, &[0.0], s).unwrap(), 3.0);
+        assert_eq!(workday_serial(3.0, -1.0, &[], s).unwrap(), 0.0);
+    }
+
+    #[test]
+    fn workday_matches_walk_on_prefix() {
+        let s = DateSystem::Excel1900;
+        for start in 0..40 {
+            for days in -15..=15 {
+                let fast = workday_serial(start as f64, days as f64, &[], s);
+                let walk = workday_serial_walk(start as f64, days as f64, &[], s);
+                assert_eq!(fast, walk, "WORKDAY({start}, {days})");
+            }
+        }
+        let hols = [60.0, 61.0, 64.0];
+        for start in 50..80 {
+            for days in -10..=10 {
+                let fast = workday_serial(start as f64, days as f64, &hols, s);
+                let walk = workday_serial_walk(start as f64, days as f64, &hols, s);
+                assert_eq!(fast, walk, "WORKDAY({start}, {days}) with hols");
+            }
+        }
+    }
+
+    #[test]
+    fn invert_workdays_matches_through() {
+        for n in 0..=80 {
+            if is_weekend_sat_sun_1900(n) {
+                continue;
+            }
+            let w = workdays_through(n);
+            assert_eq!(invert_workdays_through(w as i64).unwrap(), n, "n={n}");
+        }
     }
 }
