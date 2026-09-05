@@ -1,0 +1,597 @@
+[
+  {
+    "id": "fn.drop.col-first",
+    "description": "Positive rows drops from the top of a column",
+    "tags": ["drop", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=DROP({1;2;3;4}, 1)",
+    "expected": {
+      "array": [
+        [{ "number": 2 }],
+        [{ "number": 3 }],
+        [{ "number": 4 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.drop.col-two",
+    "description": "DROP two rows from the top",
+    "tags": ["drop", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=DROP({1;2;3;4}, 2)",
+    "expected": {
+      "array": [
+        [{ "number": 3 }],
+        [{ "number": 4 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.drop.col-last-neg",
+    "description": "Negative rows drops from the bottom",
+    "tags": ["drop", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=DROP({1;2;3;4}, -1)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "number": 2 }],
+        [{ "number": 3 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.drop.col-neg-two",
+    "description": "DROP last two rows of a column",
+    "tags": ["drop", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=DROP({1;2;3;4}, -2)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "number": 2 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.drop.row-first-col",
+    "description": "cols=1 drops the leftmost column of a row (rows explicitly 0)",
+    "notes": "The parser does not accept omitted-middle args (DROP(a,,1)). Use 0.",
+    "tags": ["drop", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=DROP({1,2,3}, 0, 1)",
+    "expected": {
+      "array": [[{ "number": 2 }, { "number": 3 }]]
+    }
+  },
+  {
+    "id": "fn.drop.row-last-col",
+    "description": "Negative cols drops from the right",
+    "tags": ["drop", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=DROP({1,2,3}, 0, -1)",
+    "expected": {
+      "array": [[{ "number": 1 }, { "number": 2 }]]
+    }
+  },
+  {
+    "id": "fn.drop.matrix-rows",
+    "description": "2-D DROP with rows only keeps remaining rows intact",
+    "tags": ["drop", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=DROP({1,2;3,4;5,6}, 1)",
+    "expected": {
+      "array": [
+        [{ "number": 3 }, { "number": 4 }],
+        [{ "number": 5 }, { "number": 6 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.drop.matrix-cols",
+    "description": "2-D DROP with cols only keeps remaining columns",
+    "tags": ["drop", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=DROP({1,2,3;4,5,6}, 0, 1)",
+    "expected": {
+      "array": [
+        [{ "number": 2 }, { "number": 3 }],
+        [{ "number": 5 }, { "number": 6 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.drop.matrix-both",
+    "description": "DROP rows and cols from the start (Microsoft example 4 shape)",
+    "tags": ["drop", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=DROP({1,2,3;4,5,6;7,8,9}, 1, 1)",
+    "expected": {
+      "array": [
+        [{ "number": 5 }, { "number": 6 }],
+        [{ "number": 8 }, { "number": 9 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.drop.matrix-both-neg",
+    "description": "Negative rows and cols drop from the end of a matrix",
+    "tags": ["drop", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=DROP({1,2,3;4,5,6;7,8,9}, -1, -1)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 2 }],
+        [{ "number": 4 }, { "number": 5 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.drop.matrix-mixed-sign",
+    "description": "Negative rows + positive cols (footer and first column)",
+    "tags": ["drop", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=DROP({1,2,3;4,5,6;7,8,9}, -1, 1)",
+    "expected": {
+      "array": [
+        [{ "number": 2 }, { "number": 3 }],
+        [{ "number": 5 }, { "number": 6 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.drop.zero-rows",
+    "description": "rows=0 is a no-op (omitted cols defaults to 0)",
+    "notes": "Microsoft's DROP page says #CALC! 'when rows or columns is 0'. That contradicts their own examples and the useful DROP(data,0) no-op. 0 is a no-op on that axis; #CALC! is an empty result.",
+    "tags": ["drop", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=DROP({1;2;3}, 0)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "number": 2 }],
+        [{ "number": 3 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.drop.zero-both",
+    "description": "Explicit 0,0 returns the original array",
+    "tags": ["drop", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=DROP({1;2}, 0, 0)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "number": 2 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.drop.all-rows-calc",
+    "description": "Dropping every row is an empty array → #CALC!",
+    "tags": ["drop", "errors", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=DROP({1;2;3}, 3)",
+    "expected": { "error": "#CALC!" }
+  },
+  {
+    "id": "fn.drop.more-rows-calc",
+    "description": "Dropping more rows than exist is #CALC! (DROP does not cap)",
+    "tags": ["drop", "errors", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=DROP({1;2}, 5)",
+    "expected": { "error": "#CALC!" }
+  },
+  {
+    "id": "fn.drop.neg-all-rows-calc",
+    "description": "Negative count that empties the axis is also #CALC!",
+    "tags": ["drop", "errors", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=DROP({1;2;3}, -3)",
+    "expected": { "error": "#CALC!" }
+  },
+  {
+    "id": "fn.drop.all-cols-calc",
+    "description": "Dropping every column is #CALC!",
+    "tags": ["drop", "errors", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=DROP({1,2,3}, 0, 3)",
+    "expected": { "error": "#CALC!" }
+  },
+  {
+    "id": "fn.drop.row-vector-drop-row-calc",
+    "description": "A one-row vector has height 1; DROP(..., 1) empties it",
+    "tags": ["drop", "errors", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=DROP({1,2,3}, 1)",
+    "expected": { "error": "#CALC!" }
+  },
+  {
+    "id": "fn.drop.frac-trunc",
+    "description": "Positive fractional rows truncate toward zero (1.9 → 1)",
+    "tags": ["drop", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=DROP({1;2;3;4}, 1.9)",
+    "expected": {
+      "array": [
+        [{ "number": 2 }],
+        [{ "number": 3 }],
+        [{ "number": 4 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.drop.frac-neg-trunc",
+    "description": "Negative fractional rows truncate toward zero (−1.9 → −1)",
+    "tags": ["drop", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=DROP({1;2;3;4}, -1.9)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "number": 2 }],
+        [{ "number": 3 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.drop.frac-lt-one",
+    "description": "|n| < 1 truncates to 0 (no-op)",
+    "tags": ["drop", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=DROP({1;2;3}, 0.9)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "number": 2 }],
+        [{ "number": 3 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.drop.text-count",
+    "description": "Numeric text rows coerces (\"1\" → 1)",
+    "tags": ["drop", "functions", "array"],
+    "quirks": ["array-eval-mode", "equality-vs-arithmetic-coercion"],
+    "formula": "=DROP({1;2;3}, \"1\")",
+    "expected": {
+      "array": [
+        [{ "number": 2 }],
+        [{ "number": 3 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.drop.bool-true",
+    "description": "TRUE rows coerces to 1",
+    "tags": ["drop", "functions", "array"],
+    "quirks": ["array-eval-mode", "bool-number-equality"],
+    "formula": "=DROP({1;2;3}, TRUE)",
+    "expected": {
+      "array": [
+        [{ "number": 2 }],
+        [{ "number": 3 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.drop.text-bad",
+    "description": "Non-numeric text count is #VALUE!",
+    "tags": ["drop", "errors"],
+    "formula": "=DROP({1;2}, \"x\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.drop.empty-count-cell",
+    "description": "A blank rows cell coerces to 0 (no-op)",
+    "tags": ["drop", "empty"],
+    "quirks": ["array-eval-mode", "empty-cell-duality"],
+    "formula": "=DROP({1;2;3}, A1)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "number": 2 }],
+        [{ "number": 3 }]
+      ]
+    },
+    "workbook": { "sheets": [{ "name": "Sheet1", "cells": {} }] }
+  },
+  {
+    "id": "fn.drop.arity-zero",
+    "description": "DROP() is #VALUE!",
+    "tags": ["drop", "errors"],
+    "formula": "=DROP()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.drop.arity-one",
+    "description": "DROP(array) without rows/cols is #VALUE!",
+    "tags": ["drop", "errors"],
+    "formula": "=DROP({1;2})",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.drop.arity-four",
+    "description": "Four arguments are #VALUE!",
+    "tags": ["drop", "errors"],
+    "formula": "=DROP({1;2}, 0, 0, 0)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.drop.error-arg",
+    "description": "A scalar error array argument surfaces",
+    "tags": ["drop", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=DROP(#DIV/0!, 1)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.drop.error-rows",
+    "description": "Error in rows surfaces after a valid array",
+    "tags": ["drop", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=DROP({1;2}, #N/A)",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.drop.error-ltr",
+    "description": "Array is evaluated first: #N/A beats a later #DIV/0!",
+    "tags": ["drop", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=DROP(#N/A, #DIV/0!)",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.drop.errors-in-array",
+    "description": "Error cells inside the array are kept when not dropped",
+    "tags": ["drop", "errors", "array"],
+    "quirks": ["array-eval-mode", "error-precedence"],
+    "formula": "=DROP({#DIV/0!;2;3}, 1)",
+    "expected": {
+      "array": [
+        [{ "number": 2 }],
+        [{ "number": 3 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.drop.errors-kept",
+    "description": "Dropping the tail leaves a leading #DIV/0! cell",
+    "tags": ["drop", "errors", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=DROP({#DIV/0!;2;3}, -2)",
+    "expected": {
+      "array": [[{ "error": "#DIV/0!" }]]
+    }
+  },
+  {
+    "id": "fn.drop.scalar-zero",
+    "description": "DROP of a scalar with 0 rows is a 1×1 array",
+    "tags": ["drop", "functions"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=DROP(5, 0)",
+    "expected": {
+      "array": [[{ "number": 5 }]]
+    }
+  },
+  {
+    "id": "fn.drop.scalar-one-calc",
+    "description": "DROP of a 1×1 with rows=1 is #CALC!",
+    "tags": ["drop", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=DROP(5, 1)",
+    "expected": { "error": "#CALC!" }
+  },
+  {
+    "id": "fn.drop.range",
+    "description": "DROP of a worksheet column",
+    "tags": ["drop", "functions"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=DROP(A1:A4, 1)",
+    "expected": {
+      "array": [
+        [{ "number": 20 }],
+        [{ "number": 30 }],
+        [{ "number": 40 }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 10 },
+          "A2": { "number": 20 },
+          "A3": { "number": 30 },
+          "A4": { "number": 40 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.drop.range-2d",
+    "description": "DROP of a 2-D sheet range (header row + first column)",
+    "tags": ["drop", "functions"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=DROP(A1:C3, 1, 1)",
+    "expected": {
+      "array": [
+        [{ "number": 5 }, { "number": 6 }],
+        [{ "number": 8 }, { "number": 9 }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "number": 2 }, "C1": { "number": 3 },
+          "A2": { "number": 4 }, "B2": { "number": 5 }, "C2": { "number": 6 },
+          "A3": { "number": 7 }, "B3": { "number": 8 }, "C3": { "number": 9 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.drop.range-neg-footer",
+    "description": "Negative rows drops a totals row from a sheet range",
+    "tags": ["drop", "functions"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=DROP(A1:B3, -1)",
+    "expected": {
+      "array": [
+        [{ "text": "a" }, { "number": 1 }],
+        [{ "text": "b" }, { "number": 2 }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "a" }, "B1": { "number": 1 },
+          "A2": { "text": "b" }, "B2": { "number": 2 },
+          "A3": { "text": "total" }, "B3": { "number": 3 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.drop.blanks-kept",
+    "description": "Blanks inside the kept rectangle stay empty (not zero)",
+    "tags": ["drop", "empty"],
+    "quirks": ["array-eval-mode", "empty-cell-duality"],
+    "formula": "=DROP(A1:A4, 1)",
+    "expected": {
+      "array": [
+        [{ "empty": null }],
+        [{ "number": 3 }],
+        [{ "text": "" }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A3": { "number": 3 },
+          "A4": { "text": "" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.drop.index",
+    "description": "INDEX picks a DROP row without writing a spill range",
+    "tags": ["drop", "index"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=INDEX(DROP({1;2;3;4}, 1), 1)",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.drop.sum",
+    "description": "SUM consumes the DROP array (2+3+4)",
+    "tags": ["drop", "sum"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SUM(DROP({1;2;3;4}, 1))",
+    "expected": { "number": 9 }
+  },
+  {
+    "id": "fn.drop.counta",
+    "description": "COUNTA of DROP counts remaining non-blanks",
+    "tags": ["drop", "counta"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=COUNTA(DROP(A1:A4, 1))",
+    "expected": { "number": 2 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "hdr" },
+          "A2": { "text": "a" },
+          "A3": { "text": "b" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.drop.type-array",
+    "description": "TYPE of a DROP result is 64 (array)",
+    "tags": ["drop", "type"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TYPE(DROP({1;2}, 0))",
+    "expected": { "number": 64 }
+  },
+  {
+    "id": "fn.drop.nested",
+    "description": "DROP of DROP peels both ends",
+    "tags": ["drop", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=DROP(DROP({1;2;3;4}, 1), -1)",
+    "expected": {
+      "array": [
+        [{ "number": 2 }],
+        [{ "number": 3 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.drop.dynamic-array-mode",
+    "description": "array_mode=dynamic-array still returns the DROP array (no grid write)",
+    "tags": ["drop", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=DROP(A1:A4, 1)",
+    "options": { "array_mode": "dynamic-array" },
+    "expected": {
+      "array": [
+        [{ "number": 20 }],
+        [{ "number": 30 }],
+        [{ "number": 40 }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 10 },
+          "A2": { "number": 20 },
+          "A3": { "number": 30 },
+          "A4": { "number": 40 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.drop.no-grid-write",
+    "description": "Occupied cells in the Excel spill zone do not produce #SPILL! — DROP returns the array",
+    "notes": "Excel would #SPILL! if DROP at B1 needed B2:B3. This model never writes a spill range; neighbors are irrelevant. Pick individual results with INDEX/SUM.",
+    "tags": ["drop", "spill"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=DROP(A1:A3, 1)",
+    "at": "Sheet1!B1",
+    "expected": {
+      "array": [
+        [{ "number": 2 }],
+        [{ "number": 3 }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 2 },
+          "A3": { "number": 3 },
+          "B2": { "text": "blocker" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.drop.scalar-plus-top-left",
+    "description": "DROP+n in a scalar operator takes the top-left kept cell (not host-aware spill intersection)",
+    "notes": "The engine scalarizes arrays to the first element. It does not intersect a written spill with the host cell.",
+    "tags": ["drop", "arithmetic"],
+    "quirks": ["array-eval-mode", "implicit-intersection"],
+    "formula": "=DROP({10;20;30}, 1)+1",
+    "expected": { "number": 21 }
+  }
+]
