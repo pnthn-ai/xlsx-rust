@@ -223,7 +223,6 @@ pub fn eomonth_serial(start: f64, months: f64, system: DateSystem) -> Result<f64
     }
 }
 
-
 pub fn to_1900_serial(serial: i32, system: DateSystem) -> Result<i32, ExcelError> {
     match system {
         DateSystem::Excel1900 => Ok(serial),
@@ -276,10 +275,56 @@ pub fn truncate_date_serial(n: f64, system: DateSystem) -> Result<i32, ExcelErro
     Ok(s as i32)
 }
 
+/// Weekend mask bits follow `serial_1900 % 7` (serial 0 = Saturday):
+/// bit 0 Sat, 1 Sun, 2 Mon, 3 Tue, 4 Wed, 5 Thu, 6 Fri.
+pub const WEEKEND_SAT_SUN: u8 = 0b0000_0011;
+
 /// Excel 1900-system weekend: serial 1 is Sunday, so `n % 7` is 0 (Sat) or 1 (Sun).
 pub fn is_weekend_sat_sun_1900(serial_1900: i32) -> bool {
+    is_weekend_mask_1900(serial_1900, WEEKEND_SAT_SUN)
+}
+
+#[inline]
+pub fn is_weekend_mask_1900(serial_1900: i32, weekend_mask: u8) -> bool {
     let w = serial_1900.rem_euclid(7);
-    w == 0 || w == 1
+    weekend_mask & (1 << w) != 0
+}
+
+pub fn weekend_mask_from_code(code: i32) -> Result<u8, ExcelError> {
+    match code {
+        1 => Ok(WEEKEND_SAT_SUN),
+        2 => Ok(0b0000_0110),
+        3 => Ok(0b0000_1100),
+        4 => Ok(0b0001_1000),
+        5 => Ok(0b0011_0000),
+        6 => Ok(0b0110_0000),
+        7 => Ok(0b0100_0001),
+        11 => Ok(0b0000_0010),
+        12 => Ok(0b0000_0100),
+        13 => Ok(0b0000_1000),
+        14 => Ok(0b0001_0000),
+        15 => Ok(0b0010_0000),
+        16 => Ok(0b0100_0000),
+        17 => Ok(0b0000_0001),
+        _ => Err(ExcelError::Num),
+    }
+}
+
+pub fn weekend_mask_from_string(s: &str) -> Result<u8, ExcelError> {
+    let b = s.as_bytes();
+    if b.len() != 7 {
+        return Err(ExcelError::Value);
+    }
+    const BITS: [u32; 7] = [2, 3, 4, 5, 6, 0, 1];
+    let mut mask = 0u8;
+    for (i, &ch) in b.iter().enumerate() {
+        match ch {
+            b'1' => mask |= 1 << BITS[i],
+            b'0' => {}
+            _ => return Err(ExcelError::Value),
+        }
+    }
+    Ok(mask)
 }
 
 fn workdays_through(n: i32) -> i32 {
@@ -381,17 +426,52 @@ pub fn workday_serial(
 }
 
 /// Mon–Fri count in `[lo, hi]` inclusive, 1900-system serials. O(1).
+#[allow(dead_code)]
 pub fn weekday_count_sat_sun(lo_1900: i32, hi_1900: i32) -> i32 {
+    weekday_count_mask(lo_1900, hi_1900, WEEKEND_SAT_SUN)
+}
+
+pub fn workdays_through_mask(n: i32, weekend_mask: u8) -> i32 {
+    if n < 0 {
+        return 0;
+    }
+    let work_per_week = 7 - weekend_mask.count_ones() as i32;
+    if work_per_week == 0 {
+        return 0;
+    }
+    let complete = (n + 1) / 7;
+    let rem = (n + 1) % 7;
+    let mut extra = 0;
+    for r in 0..rem {
+        if weekend_mask & (1 << r) == 0 {
+            extra += 1;
+        }
+    }
+    complete * work_per_week + extra
+}
+
+pub fn weekday_count_mask(lo_1900: i32, hi_1900: i32, weekend_mask: u8) -> i32 {
     if hi_1900 < lo_1900 {
         return 0;
     }
-    workdays_through(hi_1900) - workdays_through(lo_1900 - 1)
+    workdays_through_mask(hi_1900, weekend_mask) - workdays_through_mask(lo_1900 - 1, weekend_mask)
 }
 
 /// Excel `NETWORKDAYS(start, end, [holidays])` with weekend Sat/Sun.
 pub fn networkdays_count(
     start: f64,
     end: f64,
+    holidays: &[f64],
+    system: DateSystem,
+) -> Result<f64, ExcelError> {
+    networkdays_count_mask(start, end, WEEKEND_SAT_SUN, holidays, system)
+}
+
+/// Excel `NETWORKDAYS.INTL` count for a pre-parsed weekend mask.
+pub fn networkdays_count_mask(
+    start: f64,
+    end: f64,
+    weekend_mask: u8,
     holidays: &[f64],
     system: DateSystem,
 ) -> Result<f64, ExcelError> {
@@ -405,7 +485,7 @@ pub fn networkdays_count(
     } else {
         (end_1900, start_1900)
     };
-    let mut work = weekday_count_sat_sun(lo, hi);
+    let mut work = weekday_count_mask(lo, hi, weekend_mask);
     let mut hols = Vec::with_capacity(holidays.len());
     for &h in holidays {
         hols.push(to_1900_serial(truncate_date_serial(h, system)?, system)?);
@@ -413,7 +493,7 @@ pub fn networkdays_count(
     hols.sort_unstable();
     hols.dedup();
     for h in hols {
-        if h >= lo && h <= hi && !is_weekend_sat_sun_1900(h) {
+        if h >= lo && h <= hi && !is_weekend_mask_1900(h, weekend_mask) {
             work -= 1;
         }
     }
@@ -474,7 +554,6 @@ pub fn weekday(serial: f64, return_type: i32, system: DateSystem) -> Result<f64,
     let s1900 = serial_as_1900_int(serial, system)?;
     map_weekday_return_type(type1_from_1900_serial(s1900), return_type)
 }
-
 
 #[cfg(test)]
 mod tests {

@@ -1,8 +1,9 @@
 //! Seed-scoped evaluator with Excel-like and intentionally naive semantics.
 
 use crate::dates::{
-    date_serial, eomonth_serial, networkdays_count, serial_to_ymd, time_fraction, weekday,
-    workday_serial,
+    date_serial, eomonth_serial, networkdays_count, networkdays_count_mask, serial_to_ymd,
+    time_fraction, weekday, weekend_mask_from_code, weekend_mask_from_string, workday_serial,
+    WEEKEND_SAT_SUN,
 };
 use crate::parse::{parse, BinOp, Expr, UnaryOp};
 use std::collections::{HashMap, HashSet};
@@ -427,6 +428,7 @@ impl Interpreter {
             "TIME" => self.fn_time(args, ctx),
             "EOMONTH" => self.fn_eomonth(args, ctx),
             "NETWORKDAYS" => self.fn_networkdays(args, ctx),
+            "NETWORKDAYS.INTL" => self.fn_networkdays_intl(args, ctx),
             "WORKDAY" => self.fn_workday(args, ctx),
             "YEAR" => self.fn_ymd(args, ctx, YmdPart::Year),
             "MONTH" => self.fn_ymd(args, ctx, YmdPart::Month),
@@ -1638,6 +1640,71 @@ impl Interpreter {
         }
     }
 
+    fn fn_networkdays_intl(
+        &self,
+        args: &[Expr],
+        ctx: &mut Ctx<'_>,
+    ) -> Result<ExcelValue, EvalError> {
+        if args.len() < 2 || args.len() > 4 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        let start_v = self.eval_scalar(&args[0], ctx)?;
+        let end_v = self.eval_scalar(&args[1], ctx)?;
+        let weekend_v = if args.len() >= 3 {
+            Some(self.eval_scalar(&args[2], ctx)?)
+        } else {
+            None
+        };
+        let hol_v = if args.len() == 4 {
+            Some(self.eval_expr(&args[3], ctx)?)
+        } else {
+            None
+        };
+        let start = match self.as_number(&start_v) {
+            Ok(n) => n,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        let end = match self.as_number(&end_v) {
+            Ok(n) => n,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        let mask = match weekend_v {
+            None => WEEKEND_SAT_SUN,
+            Some(v) => match self.parse_weekend_arg(&v) {
+                Ok(m) => m,
+                Err(e) => return Ok(ExcelValue::Error(e)),
+            },
+        };
+        let mut holidays = Vec::new();
+        if let Some(v) = hol_v {
+            if let Some(e) = self.collect_holiday_serials(&v, &mut holidays) {
+                return Ok(ExcelValue::Error(e));
+            }
+        }
+        match networkdays_count_mask(start, end, mask, &holidays, ctx.spec.options.date_system) {
+            Ok(n) => Ok(ExcelValue::Number(n)),
+            Err(e) => Ok(ExcelValue::Error(e)),
+        }
+    }
+
+    fn parse_weekend_arg(&self, v: &ExcelValue) -> Result<u8, ExcelError> {
+        match v {
+            ExcelValue::Error(e) => Err(*e),
+            ExcelValue::Text(s) => weekend_mask_from_string(s),
+            other => {
+                let n = self.as_number(other)?;
+                if !n.is_finite() {
+                    return Err(ExcelError::Num);
+                }
+                let t = n.trunc();
+                if t < i32::MIN as f64 || t > i32::MAX as f64 {
+                    return Err(ExcelError::Num);
+                }
+                weekend_mask_from_code(t as i32)
+            }
+        }
+    }
+
     fn fn_workday(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
         if args.len() < 2 || args.len() > 3 {
             return Ok(ExcelValue::Error(ExcelError::Value));
@@ -1700,7 +1767,7 @@ impl Interpreter {
         }
     }
 
-        fn collect_holiday_serials(&self, v: &ExcelValue, out: &mut Vec<f64>) -> Option<ExcelError> {
+    fn collect_holiday_serials(&self, v: &ExcelValue, out: &mut Vec<f64>) -> Option<ExcelError> {
         match v {
             ExcelValue::Array(rows) => {
                 for row in rows {

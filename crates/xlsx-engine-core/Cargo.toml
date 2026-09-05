@@ -73,6 +73,10 @@ name = "networkdays"
 harness = false
 
 [[bench]]
+name = "networkdays_intl"
+harness = false
+
+[[bench]]
 name = "weekday"
 harness = false
 

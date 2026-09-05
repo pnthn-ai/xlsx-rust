@@ -11,8 +11,9 @@
 use super::{coerce, compare, excel_pow, Ctx, Evaluator};
 use crate::ast::Expr;
 use crate::dates::{
-    date_serial, eomonth_serial, networkdays_count, serial_to_ymd, time_fraction, weekday,
-    workday_serial,
+    date_serial, eomonth_serial, networkdays_count, networkdays_count_mask, serial_to_ymd,
+    time_fraction, weekday, weekend_mask_from_code, weekend_mask_from_string, workday_serial,
+    WEEKEND_SAT_SUN,
 };
 use crate::text_format;
 use xlsx_types::{
@@ -110,6 +111,7 @@ pub(crate) fn dispatch(
         "TIME" => fn_time(ev, args, ctx),
         "EOMONTH" => fn_eomonth(ev, args, ctx),
         "NETWORKDAYS" => fn_networkdays(ev, args, ctx),
+        "NETWORKDAYS.INTL" => fn_networkdays_intl(ev, args, ctx),
         "WORKDAY" => fn_workday(ev, args, ctx),
         "YEAR" => fn_ymd(ev, args, ctx, YmdPart::Year),
         "MONTH" => fn_ymd(ev, args, ctx, YmdPart::Month),
@@ -910,6 +912,75 @@ fn fn_networkdays(
     match networkdays_count(start, end, &holidays, ctx.spec.options.date_system) {
         Ok(n) => Ok(ExcelValue::Number(n)),
         Err(e) => Ok(ExcelValue::Error(e)),
+    }
+}
+
+fn fn_networkdays_intl(
+    ev: &Evaluator,
+    args: &[Expr],
+    ctx: &mut Ctx<'_>,
+) -> Result<ExcelValue, EvalError> {
+    if args.len() < 2 || args.len() > 4 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let start_v = ev.eval_scalar(&args[0], ctx)?;
+    let end_v = ev.eval_scalar(&args[1], ctx)?;
+    let weekend_v = if args.len() >= 3 {
+        Some(ev.eval_scalar(&args[2], ctx)?)
+    } else {
+        None
+    };
+    let hol_v = if args.len() == 4 {
+        Some(ev.eval_expr(&args[3], ctx)?)
+    } else {
+        None
+    };
+    let start = match coerce::to_number(&start_v) {
+        Ok(n) => n,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let end = match coerce::to_number(&end_v) {
+        Ok(n) => n,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let mask = match weekend_v {
+        None => WEEKEND_SAT_SUN,
+        Some(v) => match parse_weekend_arg(&v) {
+            Ok(m) => m,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        },
+    };
+    let mut holidays = Vec::new();
+    if let Some(v) = hol_v {
+        if let Some(e) = collect_holiday_serials(&v, &mut holidays) {
+            return Ok(ExcelValue::Error(e));
+        }
+    }
+    match networkdays_count_mask(start, end, mask, &holidays, ctx.spec.options.date_system) {
+        Ok(n) => Ok(ExcelValue::Number(n)),
+        Err(e) => Ok(ExcelValue::Error(e)),
+    }
+}
+
+/// Weekend number (1–7 / 11–17) or a 7-character `0`/`1` string (Mon→Sun).
+///
+/// Text is always a weekend string — `"1"` is `#VALUE!`, not code 1 — so
+/// `"0000011"` cannot be misread as numeric 11.
+fn parse_weekend_arg(v: &ExcelValue) -> Result<u8, ExcelError> {
+    match v {
+        ExcelValue::Error(e) => Err(*e),
+        ExcelValue::Text(s) => weekend_mask_from_string(s),
+        other => {
+            let n = coerce::to_number(other)?;
+            if !n.is_finite() {
+                return Err(ExcelError::Num);
+            }
+            let t = n.trunc();
+            if t < i32::MIN as f64 || t > i32::MAX as f64 {
+                return Err(ExcelError::Num);
+            }
+            weekend_mask_from_code(t as i32)
+        }
     }
 }
 
