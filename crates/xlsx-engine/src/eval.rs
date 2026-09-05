@@ -433,6 +433,7 @@ impl Interpreter {
             "TEXT" => self.fn_text(args, ctx),
             "REPLACE" => self.fn_replace(args, ctx),
             "TEXTJOIN" => self.fn_textjoin(args, ctx),
+            "CONCAT" => self.fn_concat(args, ctx),
             "TRUE" => Ok(ExcelValue::Bool(true)),
             "FALSE" => Ok(ExcelValue::Bool(false)),
             _ => Ok(ExcelValue::Error(ExcelError::Name)),
@@ -1665,6 +1666,13 @@ impl Interpreter {
         };
         let mut parts = Vec::new();
         for arg in &args[2..] {
+    fn fn_concat(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.is_empty() {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        let mut out = String::new();
+        let mut utf16 = 0usize;
+        for arg in args {
             if let Expr::Range(r) = arg {
                 let sheet = r.sheet.as_deref().unwrap_or(ctx.current_sheet.as_str());
                 if ctx.spec.workbook.sheet(Some(sheet)).is_err() {
@@ -1704,6 +1712,27 @@ impl Interpreter {
                 return Ok(ExcelValue::Error(ExcelError::Value));
             }
             out.push_str(part);
+            if let Expr::Cell(c) = arg {
+                let sheet = c.sheet.as_deref().unwrap_or(ctx.current_sheet.as_str());
+                if ctx.spec.workbook.sheet(Some(sheet)).is_err() {
+                    return Ok(ExcelValue::Error(ExcelError::Ref));
+                }
+            }
+            let v = self.eval_expr(arg, ctx)?;
+            let mut parts = Vec::new();
+            if let Err(e) = flatten_concat_texts(&v, &mut parts, self) {
+                return Ok(ExcelValue::Error(e));
+            }
+            for part in parts {
+                if part.is_empty() {
+                    continue;
+                }
+                utf16 += part.encode_utf16().count();
+                if utf16 > 32767 {
+                    return Ok(ExcelValue::Error(ExcelError::Value));
+                }
+                out.push_str(&part);
+            }
         }
         Ok(ExcelValue::Text(out))
     }
@@ -2350,6 +2379,7 @@ fn format_plain(n: f64) -> String {
 }
 
 fn flatten_join_texts(
+fn flatten_concat_texts(
     v: &ExcelValue,
     out: &mut Vec<String>,
     interp: &Interpreter,
@@ -2359,6 +2389,7 @@ fn flatten_join_texts(
             for row in rows {
                 for c in row {
                     flatten_join_texts(c, out, interp)?;
+                    flatten_concat_texts(c, out, interp)?;
                 }
             }
             Ok(())

@@ -326,6 +326,15 @@ families above (including `TEXTJOIN` with cycling delimiters and
 `ignore_empty`). Workbook input is the snippet type in `xlsx-types` (no
 families above (including `ROUNDUP` / `ROUNDDOWN`). Workbook input is the snippet type in `xlsx-types` (no
 `.xlsx` IO).
+| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators, logicals, lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates, math, text (`CONCAT` / `LEFT` / …), `TYPE` / `IS*` |
+| [`eval/concat.rs`](crates/xlsx-engine-core/src/eval/concat.rs) | Excel `CONCAT`: row-major range/array flatten, blanks/`""` add nothing, 32,767 UTF-16 cap |
+
+**Implemented:** arithmetic and comparison operators (unary `+/-`, `%`, `^`,
+`&`, space intersection), host-aware implicit intersection, cell refs /
+ranges / defined names, array literals, error propagation, `CONCAT` (arrays
+and ranges flattened row-major; result over 32,767 UTF-16 units is
+`#VALUE!`), and the function families above. Workbook input is the snippet
+type in `xlsx-types` (no `.xlsx` IO).
 
 **Deferred / in progress:** full function library, locale argument separators,
 live Excel oracle, and performance bakeoff. The fixture corpus is expanded

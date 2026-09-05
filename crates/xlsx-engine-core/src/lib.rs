@@ -7,6 +7,7 @@
 //! - [`eval::functions`] — worksheet functions used by the expanded corpus
 //! - [`text_format`] — Excel `TEXT` for a documented number/date format subset
 //! - [`eval::functions`] also dispatches `SUMIF` / `COUNTIF` / `SUMPRODUCT` / `SUBSTITUTE`
+//! - [`eval::concat`] — Excel `CONCAT` (range/array flatten + 32767 cap)
 //!
 //! This crate depends only on [`xlsx_types`]. It never reads fixture expected
 //! values; the verification gate (`xlsx-verify`) is the only judge.
@@ -31,6 +32,7 @@ pub use eval::round::{
     rounddown as excel_rounddown, rounddown_naive as excel_rounddown_naive,
     roundup as excel_roundup, roundup_naive as excel_roundup_naive,
 };
+pub use eval::concat::{concat_naive_join, eval_concat_formula, ConcatBuilder, CONCAT_MAX_CHARS};
 pub use eval::{eval_formula_in, Evaluator};
 pub use eval::{eval_formula_in, eval_sumifs_materialized, Evaluator};
 pub use eval::{eval_averageif_materialized, eval_formula_in, Evaluator};

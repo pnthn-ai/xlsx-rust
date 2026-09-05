@@ -6,6 +6,7 @@
 pub mod averageif;
 pub mod coerce;
 pub mod compare;
+pub mod concat;
 pub mod empty;
 pub mod find;
 pub mod functions;
