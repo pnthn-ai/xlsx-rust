@@ -130,8 +130,7 @@ Group new cases by what they prove, not by when they were added:
 |---|---|
 | [`fixtures/seed/`](fixtures/seed) | Original gate seed (kept stable; do not duplicate) |
 | [`fixtures/quirks/`](fixtures/quirks) | Excel oddities: type rank, empty duality, coercion, dates, VLOOKUP approx, … |
-| [`fixtures/functions/`](fixtures/functions) | Function families (`SUM`/`AVERAGE`/`COUNT`/`COUNTIF`, logicals, text, lookup, `TYPE`) |
-| [`fixtures/functions/`](fixtures/functions) | Function families (`SUM`/`AVERAGE`/`COUNT`, logicals, text, lookup, `TYPE`, `PMT`) |
+| [`fixtures/functions/`](fixtures/functions) | Function families (`SUM`/`AVERAGE`/`COUNT`/`COUNTIF`, logicals, text, lookup, `TYPE`, `PMT`, `PV`) |
 | [`fixtures/operators/`](fixtures/operators) | Unary/`%`, intersection / union-shaped ranges |
 | [`fixtures/ignored/`](fixtures/ignored) | Documented `ignore` (volatile, locale, precision-as-displayed, hidden rows) |
 
@@ -285,7 +284,7 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 | [`eval/coerce.rs`](crates/xlsx-engine-core/src/eval/coerce.rs) | Arithmetic / `&` / `IF` coercion (`"2"+1` = 3, TRUE → 1, empty → 0) |
 | [`eval/compare.rs`](crates/xlsx-engine-core/src/eval/compare.rs) | 15-digit `=`, case-insensitive text, `TRUE=1`, type ranking (`FALSE>100`) |
 | [`eval/empty.rs`](crates/xlsx-engine-core/src/eval/empty.rs) | Blank ≠ 0 ≠ `""`, but `A1=0` and `A1=""` when `A1` is blank |
-| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Dispatch: aggregators (`SUM`/`SUMIF`/`SUMIFS`/`AVERAGEIF`/`COUNTIF`/`SUMPRODUCT`), logicals (`IF`/`IFS`/`SWITCH`), lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`/`FILTER`/`UNIQUE`), dates (`DATE`/`EOMONTH`/`NETWORKDAYS`/`WEEKDAY`/`WORKDAY`), math (`ROUND`/`ROUNDUP`/`ROUNDDOWN`/`FLOOR`/`CEILING`), text (`LEFT`/`SUBSTITUTE`/`REPLACE`/`FIND`/`SEARCH`/`TEXT`/`TEXTJOIN`/`CONCAT`), financial (`NPV`/`PMT`/`IRR`), `TYPE` / `IS*` |
+| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Dispatch: aggregators (`SUM`/`SUMIF`/`SUMIFS`/`AVERAGEIF`/`COUNTIF`/`SUMPRODUCT`), logicals (`IF`/`IFS`/`SWITCH`), lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`/`FILTER`/`UNIQUE`), dates (`DATE`/`EOMONTH`/`NETWORKDAYS`/`WEEKDAY`/`WORKDAY`), math (`ROUND`/`ROUNDUP`/`ROUNDDOWN`/`FLOOR`/`CEILING`), text (`LEFT`/`SUBSTITUTE`/`REPLACE`/`FIND`/`SEARCH`/`TEXT`/`TEXTJOIN`/`CONCAT`), financial (`NPV`/`PMT`/`PV`/`IRR`), `TYPE` / `IS*` |
 | [`eval/sumif.rs`](crates/xlsx-engine-core/src/eval/sumif.rs) | Excel `SUMIF` kernel (criteria walk, reshape `sum_range`, no array literals) |
 | [`eval/sumifs.rs`](crates/xlsx-engine-core/src/eval/sumifs.rs) | Excel `SUMIFS`: multi-criteria AND, same-shape ranges |
 | [`eval/averageif.rs`](crates/xlsx-engine-core/src/eval/averageif.rs) | Excel `AVERAGEIF` kernel (reshape `average_range`, `#DIV/0!` when empty) |
@@ -311,7 +310,7 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 ranges / defined names, array literals, error propagation, and the function
 families above. Criterion matching for `SUMIF` / `SUMIFS` / `AVERAGEIF` /
 `COUNTIF` lives in [`xlsx_types::Criterion`](crates/xlsx-types/src/criterion.rs)
-(`compile` vs `parse`). `PMT` lives in
+(`compile` vs `parse`). `PMT` / `PV` live in
 [`xlsx-types/src/financial.rs`](crates/xlsx-types/src/financial.rs). Workbook
 input is the snippet type in `xlsx-types` (no `.xlsx` IO). Kernels do **not**
 read fixture goldens.
@@ -398,6 +397,10 @@ as one or the other. Documented quirk categories:
   negative); `rate=0` is `-(pv+fv)/nper` (`#DIV/0!` if `nper=0`);
   `rate=-1` / overflow / negative^non-integer `nper` are `#NUM!`; omitted
   `fv`/`type` default to 0; `type` is the OpenFormula PayType multiplier
+- `PV(rate, nper, pmt, [fv], [type])`: same identity solved for present
+  value; `rate=0` is `-(fv+pmt*nper)` (finite even when `nper=0`: `-fv`);
+  `rate=-1` divides by `(1+rate)^nper=0` → `#NUM!`; overflow /
+  negative^non-integer `nper` are `#NUM!`; omitted `fv`/`type` default to 0
 - Circular refs modeled as `#CIRCULAR!`
 - `IRR(values, [guess])`: Newton-Raphson with secant fallback, default guess
   `0.1`, 20 iterations, rate tolerance `1e-7` (0.00001 percent). Needs at
