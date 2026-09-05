@@ -1,0 +1,234 @@
+[
+  {
+    "id": "fn.networkdays.ms-plain",
+    "description": "Microsoft example: NETWORKDAYS(1-Oct-12, 1-Mar-13) is 110",
+    "tags": ["networkdays", "dates"],
+    "formula": "=NETWORKDAYS(DATE(2012,10,1),DATE(2013,3,1))",
+    "expected": { "number": 110 }
+  },
+  {
+    "id": "fn.networkdays.ms-one-holiday",
+    "description": "Microsoft example: Thanksgiving 22-Nov-12 drops the count to 109",
+    "tags": ["networkdays", "dates"],
+    "formula": "=NETWORKDAYS(DATE(2012,10,1),DATE(2013,3,1),DATE(2012,11,22))",
+    "expected": { "number": 109 }
+  },
+  {
+    "id": "fn.networkdays.ms-holiday-range",
+    "description": "Microsoft example: three holidays in a range drop the count to 107",
+    "tags": ["networkdays", "dates"],
+    "formula": "=NETWORKDAYS(A1,A2,B1:B3)",
+    "expected": { "number": 107 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "number": 41183 },
+            "A2": { "number": 41334 },
+            "B1": { "number": 41235 },
+            "B2": { "number": 41247 },
+            "B3": { "number": 41295 }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.networkdays.same-weekday",
+    "description": "Same-day Tuesday is 1 working day",
+    "tags": ["networkdays", "dates"],
+    "formula": "=NETWORKDAYS(DATE(2024,1,2),DATE(2024,1,2))",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.networkdays.same-weekend",
+    "description": "Same-day Saturday is 0 working days",
+    "tags": ["networkdays", "dates"],
+    "formula": "=NETWORKDAYS(DATE(2024,1,6),DATE(2024,1,6))",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.networkdays.mon-fri",
+    "description": "Monday through Friday is 5",
+    "tags": ["networkdays", "dates"],
+    "formula": "=NETWORKDAYS(DATE(2024,1,1),DATE(2024,1,5))",
+    "expected": { "number": 5 }
+  },
+  {
+    "id": "fn.networkdays.mon-sun",
+    "description": "Monday through Sunday still 5 (Sat/Sun excluded)",
+    "tags": ["networkdays", "dates"],
+    "formula": "=NETWORKDAYS(DATE(2024,1,1),DATE(2024,1,7))",
+    "expected": { "number": 5 }
+  },
+  {
+    "id": "fn.networkdays.reversed",
+    "description": "Start after end yields the negated forward count",
+    "tags": ["networkdays", "dates"],
+    "formula": "=NETWORKDAYS(DATE(2024,1,5),DATE(2024,1,1))",
+    "expected": { "number": -5 }
+  },
+  {
+    "id": "fn.networkdays.reversed-ms",
+    "description": "Reversed Microsoft span is -110",
+    "tags": ["networkdays", "dates"],
+    "formula": "=NETWORKDAYS(DATE(2013,3,1),DATE(2012,10,1))",
+    "expected": { "number": -110 }
+  },
+  {
+    "id": "fn.networkdays.serial-60-alone",
+    "description": "Serial 60 is the fictitious 1900-02-29 (Wednesday) — a workday",
+    "tags": ["networkdays", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=NETWORKDAYS(60,60)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.networkdays.serial-59-61",
+    "description": "Tue 28-Feb through Thu 1-Mar 1900 includes the leap-bug Wednesday",
+    "tags": ["networkdays", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=NETWORKDAYS(59,61)",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.networkdays.serial-60-holiday",
+    "description": "Holiday on serial 60 subtracts the leap-bug Wednesday",
+    "tags": ["networkdays", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=NETWORKDAYS(DATE(1900,2,1),DATE(1900,3,5),60)",
+    "expected": { "number": 23 }
+  },
+  {
+    "id": "fn.networkdays.sun-sat-week",
+    "description": "Serial 1 (Sun) through 7 (Sat) is 5 weekdays",
+    "tags": ["networkdays", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=NETWORKDAYS(1,7)",
+    "expected": { "number": 5 }
+  },
+  {
+    "id": "fn.networkdays.holiday-weekend",
+    "description": "A Saturday holiday does not change the weekday count",
+    "tags": ["networkdays", "dates"],
+    "formula": "=NETWORKDAYS(DATE(2024,1,1),DATE(2024,1,7),DATE(2024,1,6))",
+    "expected": { "number": 5 }
+  },
+  {
+    "id": "fn.networkdays.holiday-weekday",
+    "description": "A Monday holiday drops the week from 5 to 4",
+    "tags": ["networkdays", "dates"],
+    "formula": "=NETWORKDAYS(DATE(2024,1,1),DATE(2024,1,7),DATE(2024,1,1))",
+    "expected": { "number": 4 }
+  },
+  {
+    "id": "fn.networkdays.holiday-dup",
+    "description": "Duplicate holiday serials are counted once",
+    "tags": ["networkdays", "dates"],
+    "formula": "=NETWORKDAYS(DATE(2024,1,1),DATE(2024,1,7),{DATE(2024,1,1),DATE(2024,1,1)})",
+    "expected": { "number": 4 }
+  },
+  {
+    "id": "fn.networkdays.holiday-outside",
+    "description": "Holidays outside the span are ignored",
+    "tags": ["networkdays", "dates"],
+    "formula": "=NETWORKDAYS(DATE(2024,1,1),DATE(2024,1,7),DATE(2023,12,25))",
+    "expected": { "number": 5 }
+  },
+  {
+    "id": "fn.networkdays.holiday-array",
+    "description": "Array-literal holidays: Mon and Tue off leaves 3 weekdays",
+    "tags": ["networkdays", "dates"],
+    "formula": "=NETWORKDAYS(DATE(2024,1,1),DATE(2024,1,7),{DATE(2024,1,1),DATE(2024,1,2)})",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.networkdays.holiday-blanks",
+    "description": "Blank cells in a holiday range are skipped",
+    "tags": ["networkdays", "dates", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=NETWORKDAYS(DATE(2024,1,1),DATE(2024,1,7),B1:B3)",
+    "expected": { "number": 4 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "B1": { "number": 45292 }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.networkdays.trunc-frac",
+    "description": "Fractional time on start/end is truncated toward zero",
+    "tags": ["networkdays", "dates"],
+    "formula": "=NETWORKDAYS(DATE(2024,1,1)+0.9,DATE(2024,1,5)+0.1)",
+    "expected": { "number": 5 }
+  },
+  {
+    "id": "fn.networkdays.empty-start",
+    "description": "Blank start coerces to serial 0 (Sat); NETWORKDAYS(0,2) is 1",
+    "tags": ["networkdays", "dates", "empty"],
+    "quirks": ["empty-cell-duality", "date-1900-leap-year"],
+    "formula": "=NETWORKDAYS(A1,2)",
+    "expected": { "number": 1 },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.networkdays.text-serial",
+    "description": "Numeric text serials coerce: NETWORKDAYS(\"2\",\"2\") is Monday",
+    "tags": ["networkdays", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=NETWORKDAYS(\"2\",\"2\")",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.networkdays.neg-serial",
+    "description": "Negative start serial is not a valid Excel date",
+    "tags": ["networkdays", "dates", "errors"],
+    "formula": "=NETWORKDAYS(-1,10)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.networkdays.past-max",
+    "description": "End serial past 9999-12-31 is #NUM!",
+    "tags": ["networkdays", "dates", "errors"],
+    "formula": "=NETWORKDAYS(1,2958466)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.networkdays.arity",
+    "description": "NETWORKDAYS requires two or three arguments",
+    "tags": ["networkdays", "errors"],
+    "formula": "=NETWORKDAYS(1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.networkdays.bad-text",
+    "description": "Non-numeric text start is #VALUE! (coercion)",
+    "tags": ["networkdays", "errors"],
+    "formula": "=NETWORKDAYS(\"x\",10)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.networkdays.holiday-bad-text",
+    "description": "Non-numeric holiday text is #VALUE!",
+    "tags": ["networkdays", "errors"],
+    "formula": "=NETWORKDAYS(1,7,\"x\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.networkdays.system-1904",
+    "description": "NETWORKDAYS(0,4) in 1904: Fri–Tue = Fri+Mon+Tue = 3",
+    "tags": ["networkdays", "dates"],
+    "quirks": ["date-system"],
+    "formula": "=NETWORKDAYS(0,4)",
+    "expected": { "number": 3 },
+    "options": { "date_system": "excel1904" }
+  }
+]
