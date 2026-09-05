@@ -450,6 +450,7 @@ impl Interpreter {
             "CONCAT" => self.fn_concat(args, ctx),
             "NPV" => self.fn_npv(args, ctx),
             "UNIQUE" => self.fn_unique(args, ctx),
+            "TOROW" => self.fn_torow(args, ctx),
             "IRR" => self.fn_irr(args, ctx),
             "TRUE" => Ok(ExcelValue::Bool(true)),
             "FALSE" => Ok(ExcelValue::Bool(false)),
@@ -931,6 +932,28 @@ impl Interpreter {
             Err(e) => return Ok(ExcelValue::Error(e)),
         };
         Ok(unique_apply_seed(&grid, by_col, exactly_once))
+    }
+
+    fn fn_torow(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.is_empty() || args.len() > 3 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        let array = self.eval_expr(&args[0], ctx)?;
+        let ignore = if args.len() >= 2 {
+            Some(self.eval_scalar(&args[1], ctx)?)
+        } else {
+            None
+        };
+        let scan_by_col = if args.len() >= 3 {
+            Some(self.eval_scalar(&args[2], ctx)?)
+        } else {
+            None
+        };
+        Ok(xlsx_engine_core::excel_torow(
+            &array,
+            ignore.as_ref(),
+            scan_by_col.as_ref(),
+        ))
     }
 
     fn fn_ifna(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
@@ -1700,7 +1723,7 @@ impl Interpreter {
         }
     }
 
-        fn collect_holiday_serials(&self, v: &ExcelValue, out: &mut Vec<f64>) -> Option<ExcelError> {
+    fn collect_holiday_serials(&self, v: &ExcelValue, out: &mut Vec<f64>) -> Option<ExcelError> {
         match v {
             ExcelValue::Array(rows) => {
                 for row in rows {

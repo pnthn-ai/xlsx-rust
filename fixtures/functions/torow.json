@@ -1,0 +1,433 @@
+[
+  {
+    "id": "fn.torow.matrix-row-major",
+    "description": "TOROW of a 2×3 matrix scans left-to-right then down",
+    "tags": ["torow", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TOROW({1,2,3;4,5,6})",
+    "expected": {
+      "array": [[
+        { "number": 1 }, { "number": 2 }, { "number": 3 },
+        { "number": 4 }, { "number": 5 }, { "number": 6 }
+      ]]
+    }
+  },
+  {
+    "id": "fn.torow.matrix-col-major",
+    "description": "scan_by_col=TRUE walks top-to-bottom then across",
+    "tags": ["torow", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TOROW({1,2,3;4,5,6}, 0, TRUE)",
+    "expected": {
+      "array": [[
+        { "number": 1 }, { "number": 4 }, { "number": 2 },
+        { "number": 5 }, { "number": 3 }, { "number": 6 }
+      ]]
+    }
+  },
+  {
+    "id": "fn.torow.column-to-row",
+    "description": "A column becomes a single row in first-to-last order",
+    "tags": ["torow", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TOROW({1;2;3})",
+    "expected": {
+      "array": [[{ "number": 1 }, { "number": 2 }, { "number": 3 }]]
+    }
+  },
+  {
+    "id": "fn.torow.already-a-row",
+    "description": "A row scanned by row is unchanged",
+    "tags": ["torow", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TOROW({1,2,3})",
+    "expected": {
+      "array": [[{ "number": 1 }, { "number": 2 }, { "number": 3 }]]
+    }
+  },
+  {
+    "id": "fn.torow.scalar-wraps",
+    "description": "A scalar wraps as a 1×1 array row",
+    "tags": ["torow", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TOROW(5)",
+    "expected": {
+      "array": [[{ "number": 5 }]]
+    }
+  },
+  {
+    "id": "fn.torow.range-keep-all",
+    "description": "Range flatten keeps blanks as empty (not 0)",
+    "tags": ["torow", "empty"],
+    "quirks": ["array-eval-mode", "empty-cell-duality"],
+    "formula": "=TOROW(A1:B2)",
+    "expected": {
+      "array": [[
+        { "number": 1 }, { "empty": null },
+        { "number": 3 }, { "number": 4 }
+      ]]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 3 },
+          "B2": { "number": 4 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.torow.range-ignore-blanks",
+    "description": "ignore=1 drops empty cells and keeps numbers",
+    "tags": ["torow", "empty"],
+    "quirks": ["array-eval-mode", "empty-cell-duality"],
+    "formula": "=TOROW(A1:B2, 1)",
+    "expected": {
+      "array": [[{ "number": 1 }, { "number": 3 }, { "number": 4 }]]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 3 },
+          "B2": { "number": 4 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.torow.ignore-blanks-keeps-empty-string",
+    "description": "Stored \"\" is text, not blank — ignore=1 keeps it",
+    "tags": ["torow", "empty"],
+    "quirks": ["array-eval-mode", "empty-cell-duality"],
+    "formula": "=TOROW(A1:A3, 1)",
+    "expected": {
+      "array": [[{ "number": 1 }, { "text": "" }]]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A3": { "text": "" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.torow.ignore-blanks-keeps-zero-and-false",
+    "description": "0 and FALSE are values, not blanks",
+    "tags": ["torow", "empty"],
+    "quirks": ["array-eval-mode", "empty-cell-duality"],
+    "formula": "=TOROW({0,FALSE}, 1)",
+    "expected": {
+      "array": [[{ "number": 0 }, { "bool": false }]]
+    }
+  },
+  {
+    "id": "fn.torow.ignore-errors",
+    "description": "ignore=2 drops errors and keeps blanks",
+    "tags": ["torow", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TOROW(A1:A3, 2)",
+    "expected": {
+      "array": [[{ "number": 1 }, { "empty": null }]]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "error": "#DIV/0!" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.torow.keep-errors-in-row",
+    "description": "ignore=0 keeps error cells inside the result row",
+    "tags": ["torow", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TOROW({1,#DIV/0!,3})",
+    "expected": {
+      "array": [[{ "number": 1 }, { "error": "#DIV/0!" }, { "number": 3 }]]
+    }
+  },
+  {
+    "id": "fn.torow.ignore-blanks-and-errors",
+    "description": "ignore=3 drops blanks and errors",
+    "tags": ["torow", "errors", "empty"],
+    "quirks": ["array-eval-mode", "empty-cell-duality"],
+    "formula": "=TOROW(A1:B2, 3)",
+    "expected": {
+      "array": [[{ "number": 1 }, { "number": 4 }]]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "B1": { "error": "#N/A" },
+          "B2": { "number": 4 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.torow.all-ignored-is-calc",
+    "description": "Every cell ignored is #CALC! (Excel cannot return an empty array)",
+    "tags": ["torow", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TOROW({#N/A;#DIV/0!}, 2)",
+    "expected": { "error": "#CALC!" }
+  },
+  {
+    "id": "fn.torow.all-blanks-ignored-is-calc",
+    "description": "ignore=1 on an all-blank range is #CALC!",
+    "tags": ["torow", "empty", "errors"],
+    "quirks": ["array-eval-mode", "empty-cell-duality"],
+    "formula": "=TOROW(A1:B2, 1)",
+    "expected": { "error": "#CALC!" },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.torow.ignore-true-is-blanks",
+    "description": "TRUE coerces to ignore=1 (drop blanks)",
+    "tags": ["torow", "empty"],
+    "quirks": ["array-eval-mode", "empty-cell-duality"],
+    "formula": "=TOROW(A1:A3, TRUE)",
+    "expected": {
+      "array": [[{ "number": 1 }, { "number": 2 }]]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A3": { "number": 2 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.torow.ignore-false-keeps-all",
+    "description": "FALSE coerces to ignore=0",
+    "tags": ["torow", "empty"],
+    "quirks": ["array-eval-mode", "empty-cell-duality"],
+    "formula": "=TOROW(A1:A2, FALSE)",
+    "expected": {
+      "array": [[{ "number": 1 }, { "empty": null }]]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.torow.ignore-out-of-range",
+    "description": "ignore outside 0..=3 is #VALUE!",
+    "tags": ["torow", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TOROW({1,2}, 4)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.torow.ignore-negative",
+    "description": "Negative ignore is #VALUE!",
+    "tags": ["torow", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TOROW({1,2}, -1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.torow.ignore-fractional",
+    "description": "Non-whole ignore is #VALUE! (not INT-truncated)",
+    "tags": ["torow", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TOROW({1,2}, 1.5)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.torow.ignore-text",
+    "description": "Text ignore is #VALUE!",
+    "tags": ["torow", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TOROW({1,2}, \"x\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.torow.scan-by-col-one",
+    "description": "scan_by_col=1 is TRUE",
+    "tags": ["torow", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TOROW({1,2;3,4}, 0, 1)",
+    "expected": {
+      "array": [[{ "number": 1 }, { "number": 3 }, { "number": 2 }, { "number": 4 }]]
+    }
+  },
+  {
+    "id": "fn.torow.scan-by-col-zero",
+    "description": "scan_by_col=0 is FALSE (row-major)",
+    "tags": ["torow", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TOROW({1,2;3,4}, 0, 0)",
+    "expected": {
+      "array": [[{ "number": 1 }, { "number": 2 }, { "number": 3 }, { "number": 4 }]]
+    }
+  },
+  {
+    "id": "fn.torow.scan-by-col-text",
+    "description": "Text scan_by_col is #VALUE!",
+    "tags": ["torow", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TOROW({1,2}, 0, \"TRUE\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.torow.ignore-error-arg",
+    "description": "Error in ignore propagates",
+    "tags": ["torow", "errors"],
+    "quirks": ["array-eval-mode", "error-precedence"],
+    "formula": "=TOROW({1,2}, 1/0)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.torow.scalar-error-arg",
+    "description": "A scalar error array argument propagates (not wrapped)",
+    "tags": ["torow", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TOROW(#DIV/0!)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.torow.no-args",
+    "description": "Zero arguments is #VALUE!",
+    "tags": ["torow", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TOROW()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.torow.too-many-args",
+    "description": "More than three arguments is #VALUE!",
+    "tags": ["torow", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TOROW({1,2}, 0, FALSE, 1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.torow.ignore-blanks-scan-by-col",
+    "description": "ignore=1 with column scan drops blanks in column-major order",
+    "tags": ["torow", "empty"],
+    "quirks": ["array-eval-mode", "empty-cell-duality"],
+    "formula": "=TOROW(A1:C2, 1, TRUE)",
+    "expected": {
+      "array": [[{ "number": 1 }, { "number": 5 }, { "number": 3 }, { "number": 6 }]]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "C1": { "number": 3 },
+          "B2": { "number": 5 },
+          "C2": { "number": 6 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.torow.type-is-array",
+    "description": "TYPE of a TOROW result is 64 (array)",
+    "tags": ["torow", "functions"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TYPE(TOROW({1,2}))",
+    "expected": { "number": 64 }
+  },
+  {
+    "id": "fn.torow.index-consume",
+    "description": "INDEX reads a cell of the TOROW row without a spill write",
+    "tags": ["torow", "functions"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=INDEX(TOROW({1,2;3,4}), 1, 3)",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.torow.index-col-major",
+    "description": "INDEX of a column-major TOROW follows scan order",
+    "tags": ["torow", "functions"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=INDEX(TOROW({1,2;3,4}, 0, TRUE), 1, 2)",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.torow.sum-consume",
+    "description": "SUM folds the TOROW row (array context, no spill grid)",
+    "tags": ["torow", "functions"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SUM(TOROW({1,2;3,4}))",
+    "expected": { "number": 10 }
+  },
+  {
+    "id": "fn.torow.counta-skips-blanks",
+    "description": "COUNTA of TOROW counts non-empty cells in the result row",
+    "tags": ["torow", "empty"],
+    "quirks": ["array-eval-mode", "empty-cell-duality"],
+    "formula": "=COUNTA(TOROW(A1:B2))",
+    "expected": { "number": 3 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 3 },
+          "B2": { "text": "x" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.torow.mixed-types",
+    "description": "Numbers, text, and logicals keep their types",
+    "tags": ["torow", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TOROW({1,\"a\",TRUE;2,\"b\",FALSE})",
+    "expected": {
+      "array": [[
+        { "number": 1 }, { "text": "a" }, { "bool": true },
+        { "number": 2 }, { "text": "b" }, { "bool": false }
+      ]]
+    }
+  },
+  {
+    "id": "fn.torow.named-range",
+    "description": "TOROW of a defined-name range",
+    "tags": ["torow", "functions"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TOROW(Block)",
+    "expected": {
+      "array": [[{ "number": 1 }, { "number": 2 }, { "number": 3 }, { "number": 4 }]]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "B1": { "number": 2 },
+          "A2": { "number": 3 },
+          "B2": { "number": 4 }
+        }
+      }],
+      "names": [{ "name": "Block", "refers_to": "Sheet1!A1:B2" }]
+    }
+  }
+]

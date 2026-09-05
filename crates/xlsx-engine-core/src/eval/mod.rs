@@ -8,22 +8,23 @@ pub mod coerce;
 pub mod compare;
 pub mod concat;
 pub mod empty;
-pub mod find;
 pub mod filter;
+pub mod find;
 pub mod functions;
-pub mod substitute;
-pub mod sumif;
-pub mod sumproduct;
+pub mod ifs;
+pub mod irr;
+pub mod npv;
 pub mod replace;
-pub mod sumifs;
-pub mod textjoin;
 pub mod round;
 pub mod search;
-pub mod npv;
+pub mod substitute;
+pub mod sumif;
+pub mod sumifs;
+pub mod sumproduct;
 pub mod switch;
-pub mod ifs;
+pub mod textjoin;
+pub mod torow;
 pub mod unique;
-pub mod irr;
 
 use crate::ast::{BinOp, Expr, UnaryOp};
 use crate::parse::parse;
@@ -273,7 +274,11 @@ impl Evaluator {
         Ok(ExcelValue::Array(rows))
     }
 
-    pub(crate) fn eval_named(&self, name: &str, ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    pub(crate) fn eval_named(
+        &self,
+        name: &str,
+        ctx: &mut Ctx<'_>,
+    ) -> Result<ExcelValue, EvalError> {
         let def = match ctx.spec.workbook.defined_name(name) {
             Ok(d) => d,
             Err(_) => return Ok(ExcelValue::Error(ExcelError::Name)),
@@ -901,6 +906,61 @@ mod tests {
         assert_eq!(
             eval_formula_in(&wb, "=UNIQUE({1;1}, FALSE, TRUE)").unwrap(),
             ExcelValue::Error(ExcelError::Calc)
+        );
+    }
+    #[test]
+    fn torow_literal_scan_and_ignore() {
+        let wb = Workbook::default();
+        assert_eq!(
+            eval_formula_in(&wb, "=TOROW({1,2;3,4})").unwrap(),
+            ExcelValue::Array(vec![vec![
+                ExcelValue::Number(1.0),
+                ExcelValue::Number(2.0),
+                ExcelValue::Number(3.0),
+                ExcelValue::Number(4.0),
+            ]])
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=TOROW({1,2;3,4}, 0, TRUE)").unwrap(),
+            ExcelValue::Array(vec![vec![
+                ExcelValue::Number(1.0),
+                ExcelValue::Number(3.0),
+                ExcelValue::Number(2.0),
+                ExcelValue::Number(4.0),
+            ]])
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=TOROW({1;2;2;3})").unwrap(),
+            ExcelValue::Array(vec![vec![
+                ExcelValue::Number(1.0),
+                ExcelValue::Number(2.0),
+                ExcelValue::Number(2.0),
+                ExcelValue::Number(3.0),
+            ]])
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=TOROW({#DIV/0!;1}, 2)").unwrap(),
+            ExcelValue::Array(vec![vec![ExcelValue::Number(1.0)]])
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=TOROW({#N/A;#DIV/0!}, 2)").unwrap(),
+            ExcelValue::Error(ExcelError::Calc)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=TOROW({1,2}, 4)").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=TYPE(TOROW({1,2}))").unwrap(),
+            ExcelValue::Number(64.0)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=INDEX(TOROW({1,2;3,4}), 1, 3)").unwrap(),
+            ExcelValue::Number(3.0)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=TOROW()").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
         );
     }
     #[test]
