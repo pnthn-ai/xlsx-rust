@@ -210,25 +210,81 @@ enum FastPack {
 }
 
 fn pack_range(ev: &Evaluator, range: &RangeRef, ctx: &mut Ctx<'_>) -> Result<Vec<f64>, FastPack> {
-    let sheet = range
+    let sheet_name = range
         .sheet
         .clone()
         .unwrap_or_else(|| ctx.current_sheet.clone());
     let n = (range.row_count() as usize).saturating_mul(range.col_count() as usize);
     let mut out = Vec::with_capacity(n);
+    let mut a1 = [0u8; 16];
     for addr in range.cells() {
-        let v = ev
-            .eval_cell(
-                &CellRef {
-                    sheet: Some(sheet.clone()),
-                    addr,
-                },
-                ctx,
-            )
-            .map_err(FastPack::Eval)?;
-        out.push(sumproduct_number(&v).map_err(FastPack::Excel)?);
+        let key = format_a1(addr, &mut a1);
+        let packed = {
+            let sheet = match ctx.spec.workbook.sheet(Some(&sheet_name)) {
+                Ok(s) => s,
+                Err(_) => return Err(FastPack::Excel(ExcelError::Ref)),
+            };
+            match sheet.cells.get(key) {
+                Some(c) if c.formula.is_some() => None,
+                Some(c) => Some(
+                    sumproduct_number(c.value.as_ref().unwrap_or(&ExcelValue::Empty))
+                        .map_err(FastPack::Excel)?,
+                ),
+                None => Some(0.0),
+            }
+        };
+        match packed {
+            Some(n) => out.push(n),
+            None => {
+                let v = ev
+                    .eval_cell(
+                        &CellRef {
+                            sheet: Some(sheet_name.clone()),
+                            addr,
+                        },
+                        ctx,
+                    )
+                    .map_err(FastPack::Eval)?;
+                out.push(sumproduct_number(&v).map_err(FastPack::Excel)?);
+            }
+        }
     }
     Ok(out)
+}
+
+fn format_a1(addr: xlsx_types::CellAddr, buf: &mut [u8; 16]) -> &str {
+    let mut col = addr.col + 1;
+    let mut tmp = [0u8; 4];
+    let mut n = 0usize;
+    while col > 0 {
+        col -= 1;
+        tmp[n] = b'A' + (col % 26) as u8;
+        col /= 26;
+        n += 1;
+    }
+    let mut i = 0usize;
+    for k in (0..n).rev() {
+        buf[i] = tmp[k];
+        i += 1;
+    }
+    let mut row = addr.row + 1;
+    let mut digits = [0u8; 10];
+    let mut d = 0usize;
+    if row == 0 {
+        digits[0] = b'0';
+        d = 1;
+    } else {
+        while row > 0 {
+            digits[d] = b'0' + (row % 10) as u8;
+            row /= 10;
+            d += 1;
+        }
+    }
+    for k in (0..d).rev() {
+        buf[i] = digits[k];
+        i += 1;
+    }
+    std::str::from_utf8(&buf[..i]).unwrap_or("")
 }
 
 impl Evaluator {

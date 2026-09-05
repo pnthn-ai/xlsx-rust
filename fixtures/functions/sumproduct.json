@@ -187,11 +187,11 @@
   },
   {
     "id": "fn.sumproduct.range-bool-uncoerced",
-    "description": "TRUE in a range is 0 unless coerced",
+    "description": "TRUE in a range is 0 unless coerced (1*4 + 0*5 + 3*6)",
     "tags": ["sumproduct", "functions"],
     "quirks": ["sum-arg-vs-range", "bool-number-equality"],
     "formula": "=SUMPRODUCT(A1:A3, B1:B3)",
-    "expected": { "number": 18 },
+    "expected": { "number": 22 },
     "workbook": {
       "sheets": [{
         "name": "Sheet1",
