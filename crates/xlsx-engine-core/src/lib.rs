@@ -9,6 +9,7 @@
 //! - [`eval::functions`] also dispatches `SUMIF` / `COUNTIF` / `SUMPRODUCT` / `SUBSTITUTE`
 //! - [`eval::concat`] — Excel `CONCAT` (range/array flatten + 32767 cap)
 //! - [`dates::weekday`] — O(1) Excel `WEEKDAY` on the date serial
+//! - [`dates::workday_serial_intl`] — O(1) Excel `WORKDAY.INTL` weekend mask
 //! - [`eval::switch`] — Excel `SWITCH` (exact `=` match, short-circuit vs `IF`)
 //! - [`eval::ifs`] — `IFS` pair-selection kernel (eager; no-match `#N/A`)
 //! - [`eval::unique`] — `UNIQUE` dynamic-array kernel (hash distinctness)
@@ -24,7 +25,7 @@ pub mod eval;
 pub mod parse;
 pub mod text_format;
 
-pub use dates::workday_serial;
+pub use dates::{workday_serial, workday_serial_intl};
 
 pub use ast::{BinOp, Expr, UnaryOp};
 pub use dates::{weekday as excel_weekday, weekday_naive as excel_weekday_naive};
@@ -53,8 +54,8 @@ pub use eval::textjoin::{
 };
 pub use eval::unique::{unique_apply, unique_apply_naive, unique_eq};
 pub use eval::{
-    eval_averageif_materialized, eval_formula_in, eval_sumif_materialized, eval_sumifs_materialized,
-    Evaluator,
+    eval_averageif_materialized, eval_formula_in, eval_sumif_materialized,
+    eval_sumifs_materialized, Evaluator,
 };
 pub use parse::parse;
 
