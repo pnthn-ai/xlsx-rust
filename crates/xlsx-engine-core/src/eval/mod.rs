@@ -8,22 +8,22 @@ pub mod coerce;
 pub mod compare;
 pub mod concat;
 pub mod empty;
-pub mod find;
 pub mod filter;
+pub mod find;
 pub mod functions;
-pub mod substitute;
-pub mod sumif;
-pub mod sumproduct;
+pub mod ifs;
+pub mod irr;
+pub mod npv;
 pub mod replace;
-pub mod sumifs;
-pub mod textjoin;
 pub mod round;
 pub mod search;
-pub mod npv;
+pub mod substitute;
+pub mod sumif;
+pub mod sumifs;
+pub mod sumproduct;
 pub mod switch;
-pub mod ifs;
+pub mod textjoin;
 pub mod unique;
-pub mod irr;
 
 use crate::ast::{BinOp, Expr, UnaryOp};
 use crate::parse::parse;
@@ -273,7 +273,11 @@ impl Evaluator {
         Ok(ExcelValue::Array(rows))
     }
 
-    pub(crate) fn eval_named(&self, name: &str, ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    pub(crate) fn eval_named(
+        &self,
+        name: &str,
+        ctx: &mut Ctx<'_>,
+    ) -> Result<ExcelValue, EvalError> {
         let def = match ctx.spec.workbook.defined_name(name) {
             Ok(d) => d,
             Err(_) => return Ok(ExcelValue::Error(ExcelError::Name)),
@@ -927,6 +931,41 @@ mod tests {
         assert_eq!(
             eval_formula_in(&wb, "=PMT()").unwrap(),
             ExcelValue::Error(ExcelError::Value)
+        );
+    }
+
+    #[test]
+    fn cumipmt_microsoft_loan_and_errors() {
+        let wb = Workbook::default();
+        match eval_formula_in(&wb, "=CUMIPMT(9%/12,30*12,125000,13,24,0)").unwrap() {
+            ExcelValue::Number(n) => {
+                assert_eq!((n * 100.0).round() as i64, -1_113_523, "got {n}")
+            }
+            other => panic!("expected number, got {other:?}"),
+        }
+        assert_eq!(
+            eval_formula_in(&wb, "=CUMIPMT(9%/12,360,125000,1,1,0)").unwrap(),
+            ExcelValue::Number(-937.5)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=CUMIPMT(0.1,10,1000,1,1,0,0)").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=CUMIPMT(0.1,10,1000,1,1)").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=CUMIPMT()").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=CUMIPMT(0,10,1000,1,1,0)").unwrap(),
+            ExcelValue::Error(ExcelError::Num)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=CUMIPMT(0.1,10,1000,1,11,0)").unwrap(),
+            ExcelValue::Error(ExcelError::Num)
         );
     }
 }
