@@ -3,6 +3,7 @@
 //! Operators call into [`coerce`] / [`compare`] / [`empty`] for Excel quirks.
 //! Worksheet functions live in [`functions`].
 
+pub mod averageif;
 pub mod coerce;
 pub mod compare;
 pub mod empty;
@@ -516,12 +517,16 @@ pub fn eval_sumif_materialized(
 /// Evaluate a `SUMIFS(...)` formula with the materializing implementation.
 /// Used only by the Criterion microbench as the pre-hill-climb baseline.
 pub fn eval_sumifs_materialized(
+/// Evaluate an `AVERAGEIF(...)` formula with the materializing implementation.
+/// Used only by the Criterion microbench as the pre-hill-climb baseline.
+pub fn eval_averageif_materialized(
     workbook: &Workbook,
     formula: &str,
 ) -> Result<ExcelValue, EvalError> {
     let spec = EvalSpec {
         case_id: "sumif-bench".into(),
         case_id: "sumifs-bench".into(),
+        case_id: "averageif-bench".into(),
         workbook: workbook.clone(),
         target: EvalTarget::formula(formula),
         options: Default::default(),
@@ -544,6 +549,10 @@ pub fn eval_sumifs_materialized(
             sumifs::sumifs_materialized(&Evaluator, &args, &mut ctx)
         }
         _ => Err(EvalError::Other("expected SUMIFS call".into())),
+        Expr::Call { name, args } if name.eq_ignore_ascii_case("AVERAGEIF") => {
+            averageif::averageif_materialized(&Evaluator, &args, &mut ctx)
+        }
+        _ => Err(EvalError::Other("expected AVERAGEIF call".into())),
     }
 }
 
@@ -639,6 +648,7 @@ mod tests {
     #[test]
     fn sumif_gt_and_reshape() {
     fn sumifs_and_same_shape_and_no_reshape() {
+    fn averageif_gt_reshape_and_div0() {
         let mut wb = Workbook::default();
         wb.set_value("Sheet1", "A1", ExcelValue::Number(1.0))
             .unwrap();
@@ -728,6 +738,19 @@ mod tests {
         );
         assert_eq!(
             eval_formula_in(&wb, "=SUMIFS({1,2,3},A1:A3,\">1\")").unwrap(),
+            eval_formula_in(&wb, "=AVERAGEIF(A1:A3,\">2\")").unwrap(),
+            ExcelValue::Number(4.5)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=AVERAGEIF(A1:A3,\">2\",B1)").unwrap(),
+            ExcelValue::Number(25.0)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=AVERAGEIF(A1:A3,\">100\")").unwrap(),
+            ExcelValue::Error(ExcelError::Div0)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=AVERAGEIF({1,2,3},\">1\")").unwrap(),
             ExcelValue::Error(ExcelError::Value)
         );
     }

@@ -303,6 +303,7 @@ ranges / defined names, array literals, error propagation, `COUNTIF`, and the
 function families above. Workbook input is the snippet type in `xlsx-types` (no
 `.xlsx` IO).
 | [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators (`SUM`/`SUMIFS`/…), logicals, lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates, math, text, `TYPE` / `IS*` |
+| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators (incl. `AVERAGEIF`), logicals, lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates, math, text, `TYPE` / `IS*` |
 
 **Implemented:** arithmetic and comparison operators (unary `+/-`, `%`, `^`,
 `&`, space intersection), host-aware implicit intersection, cell refs /
@@ -358,6 +359,8 @@ as one or the other. Documented quirk categories:
   number and `"2"`, `"TRUE"` coerced to the logical (use `"TRUE*"` for text),
   `""` / `"="` vs `"<>"` blank duality, errors ignored unless the criterion is
   that error
+- Wildcards in exact `VLOOKUP` / `MATCH` (`*` / `?`)
+- `AVERAGEIF` criteria strings (`">5"`, `"*a*"`, `"="` / `"<>"` blanks), text `"5"` dual-matching numbers, range vs `average_range` reshape from the top-left, no matches / no numeric average cells → `#DIV/0!`, empty criteria cell treated as `0`
 - Circular refs modeled as `#CIRCULAR!`
 - Volatile / locale / precision-as-displayed / hidden-row `SUBTOTAL` are
   catalogued as `ignore` until they can be evaluated honestly

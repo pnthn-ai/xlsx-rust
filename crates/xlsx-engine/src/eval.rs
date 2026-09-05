@@ -369,6 +369,7 @@ impl Interpreter {
             "SUMIF" => self.fn_sumif(args, ctx),
             "COUNTIF" => self.fn_countif(args, ctx),
             "SUMIFS" => self.fn_sumifs(args, ctx),
+            "AVERAGEIF" => self.fn_averageif(args, ctx),
             "IF" => self.fn_if(args, ctx),
             "IFERROR" => self.fn_iferror(args, ctx),
             "IFNA" => self.fn_ifna(args, ctx),
@@ -669,6 +670,16 @@ impl Interpreter {
             return Ok(ExcelValue::Error(ExcelError::Value));
         }
         let crit_val = self.eval_scalar(&args[1], ctx)?;
+    fn fn_averageif(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.len() < 2 || args.len() > 3 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        let crit_raw = self.eval_scalar(&args[1], ctx)?;
+        // Microsoft: empty criteria cell is treated as 0.
+        let crit_val = match crit_raw {
+            ExcelValue::Empty => ExcelValue::Number(0.0),
+            other => other,
+        };
         let criterion = match Criterion::compile(&crit_val) {
             Ok(c) => c,
             Err(e) => return Ok(ExcelValue::Error(e)),
@@ -679,6 +690,12 @@ impl Interpreter {
         };
         let sum_origin = if args.len() == 3 {
             match seed_sumif_range(&args[2], ctx) {
+        let range = match seed_if_range(&args[0], ctx) {
+            Ok(r) => r,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        let avg_origin = if args.len() == 3 {
+            match seed_if_range(&args[2], ctx) {
                 Ok(r) => r,
                 Err(e) => return Ok(ExcelValue::Error(e)),
             }
@@ -694,6 +711,12 @@ impl Interpreter {
             .clone()
             .unwrap_or_else(|| ctx.current_sheet.clone());
         let mut acc = 0.0;
+        let avg_sheet = avg_origin
+            .sheet
+            .clone()
+            .unwrap_or_else(|| ctx.current_sheet.clone());
+        let mut sum = 0.0;
+        let mut count = 0u64;
         for dr in 0..range.row_count() {
             for dc in 0..range.col_count() {
                 let crit_addr = CellAddr::new(range.start.col + dc, range.start.row + dr);
@@ -718,6 +741,20 @@ impl Interpreter {
                 match sum_v {
                     ExcelValue::Error(e) => return Ok(ExcelValue::Error(e)),
                     ExcelValue::Number(n) => acc += n,
+                let avg_addr = CellAddr::new(avg_origin.start.col + dc, avg_origin.start.row + dr);
+                let avg_v = self.eval_cell(
+                    &CellRef {
+                        sheet: Some(avg_sheet.clone()),
+                        addr: avg_addr,
+                    },
+                    ctx,
+                )?;
+                match avg_v {
+                    ExcelValue::Error(e) => return Ok(ExcelValue::Error(e)),
+                    ExcelValue::Number(n) => {
+                        sum += n;
+                        count += 1;
+                    }
                     _ => {}
                 }
             }
@@ -737,6 +774,11 @@ impl Interpreter {
         let crit = Criterion::parse(&self.eval_scalar(&args[1], ctx)?);
         let v = self.eval_expr(&args[0], ctx)?;
         Ok(ExcelValue::Number(count_matches(&v, &crit) as f64))
+        if count == 0 {
+            Ok(ExcelValue::Error(ExcelError::Div0))
+        } else {
+            Ok(ExcelValue::Number(sum / count as f64))
+        }
     }
 
     fn fn_if(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
@@ -1972,6 +2014,7 @@ fn fold_logicals(
 }
 
 fn seed_sumif_range(expr: &Expr, ctx: &Ctx<'_>) -> Result<RangeRef, ExcelError> {
+fn seed_if_range(expr: &Expr, ctx: &Ctx<'_>) -> Result<RangeRef, ExcelError> {
     match expr {
         Expr::Range(r) => Ok(r.clone()),
         Expr::Cell(c) => Ok(RangeRef::new(c.sheet.clone(), c.addr, c.addr)),

@@ -22,9 +22,13 @@ harness = false
 
 
 
+
+
 [[bench]]
 name = "sumif"
 harness = false
+
+
 
 
 
@@ -42,9 +46,13 @@ harness = false
 
 
 
+
+
 [[bench]]
 name = "countif"
 harness = false
+
+
 
 
 
@@ -58,12 +66,22 @@ harness = false
 
 
 
+
+
 [[bench]]
 name = "find"
 criterion = "0.5"
 harness = false
 
 
+
+
 [[bench]]
 name = "sumifs"
+criterion = "0.5"
+harness = false
+
+
+[[bench]]
+name = "averageif"
 harness = false
