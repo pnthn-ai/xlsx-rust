@@ -93,6 +93,7 @@ pub(crate) fn dispatch(
         "TRIM" => fn_trim(ev, args, ctx),
         "EXACT" => fn_exact(ev, args, ctx),
         "VALUE" => fn_value(ev, args, ctx),
+        "REPLACE" => fn_replace(ev, args, ctx),
         "TRUE" => Ok(ExcelValue::Bool(true)),
         "FALSE" => Ok(ExcelValue::Bool(false)),
         _ => Ok(ExcelValue::Error(ExcelError::Name)),
@@ -785,6 +786,67 @@ fn fn_exact(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelVal
         Err(e) => return Ok(ExcelValue::Error(e)),
     };
     Ok(ExcelValue::Bool(a == b))
+}
+
+fn fn_replace(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    if args.len() != 4 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let old_text = match coerce::to_text(&ev.eval_scalar(&args[0], ctx)?) {
+        Ok(s) => s,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let start_num = match coerce::to_number(&ev.eval_scalar(&args[1], ctx)?) {
+        Ok(n) => match trunc_start_num(n) {
+            Ok(n) => n,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        },
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let num_chars = match coerce::to_number(&ev.eval_scalar(&args[2], ctx)?) {
+        Ok(n) => match trunc_num_chars(n) {
+            Ok(n) => n,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        },
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let new_text = match coerce::to_text(&ev.eval_scalar(&args[3], ctx)?) {
+        Ok(s) => s,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    Ok(ExcelValue::Text(super::replace::replace(
+        &old_text, start_num, num_chars, &new_text,
+    )))
+}
+
+fn trunc_start_num(n: f64) -> Result<u64, ExcelError> {
+    if !n.is_finite() {
+        return Err(ExcelError::Value);
+    }
+    let t = n.trunc();
+    if t < 1.0 {
+        return Err(ExcelError::Value);
+    }
+    if t > u64::MAX as f64 {
+        Ok(u64::MAX)
+    } else {
+        Ok(t as u64)
+    }
+}
+
+fn trunc_num_chars(n: f64) -> Result<u64, ExcelError> {
+    if !n.is_finite() {
+        return Err(ExcelError::Value);
+    }
+    let t = n.trunc();
+    if t < 0.0 {
+        return Err(ExcelError::Value);
+    }
+    if t > u64::MAX as f64 {
+        Ok(u64::MAX)
+    } else {
+        Ok(t as u64)
+    }
 }
 
 fn fn_value(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
