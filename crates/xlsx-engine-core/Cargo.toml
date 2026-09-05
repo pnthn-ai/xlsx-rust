@@ -9,6 +9,13 @@ description = "Excel-compatible formula parser and calculation core (calc-core c
 [dependencies]
 xlsx-types = { workspace = true }
 
+[dev-dependencies]
+criterion = { workspace = true }
+
 [[bench]]
 name = "substitute"
+harness = false
+
+[[bench]]
+name = "sumif"
 harness = false

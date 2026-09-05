@@ -714,6 +714,7 @@ dependencies = [
 name = "xlsx-engine-core"
 version = "0.1.0"
 dependencies = [
+ "criterion",
  "xlsx-types",
 ]
 

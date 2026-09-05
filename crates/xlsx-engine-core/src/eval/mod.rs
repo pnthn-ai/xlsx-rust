@@ -8,6 +8,7 @@ pub mod compare;
 pub mod empty;
 pub mod functions;
 pub mod substitute;
+pub mod sumif;
 
 use crate::ast::{BinOp, Expr, UnaryOp};
 use crate::parse::parse;
@@ -20,8 +21,8 @@ use xlsx_types::{
 pub struct Evaluator;
 
 pub(crate) struct Ctx<'a> {
-    spec: &'a EvalSpec,
-    current_sheet: String,
+    pub(crate) spec: &'a EvalSpec,
+    pub(crate) current_sheet: String,
     depth: usize,
     visiting: HashSet<String>,
     host: CellAddr,
@@ -109,7 +110,11 @@ impl Evaluator {
         out
     }
 
-    fn eval_cell(&self, cell: &CellRef, ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    pub(crate) fn eval_cell(
+        &self,
+        cell: &CellRef,
+        ctx: &mut Ctx<'_>,
+    ) -> Result<ExcelValue, EvalError> {
         let sheet_name = cell
             .sheet
             .clone()
@@ -419,6 +424,35 @@ fn intersect_ranges(a: &RangeRef, b: &RangeRef) -> Option<RangeRef> {
     ))
 }
 
+/// Evaluate a `SUMIF(...)` formula with the materializing implementation.
+/// Used only by the Criterion microbench as the pre-hill-climb baseline.
+pub fn eval_sumif_materialized(
+    workbook: &Workbook,
+    formula: &str,
+) -> Result<ExcelValue, EvalError> {
+    let spec = EvalSpec {
+        case_id: "sumif-bench".into(),
+        workbook: workbook.clone(),
+        target: EvalTarget::formula(formula),
+        options: Default::default(),
+    };
+    let ast = parse(formula)?;
+    let current_sheet = spec.workbook.default_sheet_name().to_string();
+    let mut ctx = Ctx {
+        spec: &spec,
+        current_sheet,
+        depth: 0,
+        visiting: HashSet::new(),
+        host: spec.default_cell().addr,
+    };
+    match ast {
+        Expr::Call { name, args } if name.eq_ignore_ascii_case("SUMIF") => {
+            sumif::sumif_materialized(&Evaluator, &args, &mut ctx)
+        }
+        _ => Err(EvalError::Other("expected SUMIF call".into())),
+    }
+}
+
 /// Ad-hoc evaluation helper for unit tests (no Candidate trait required).
 pub fn eval_formula_in(workbook: &Workbook, formula: &str) -> Result<ExcelValue, EvalError> {
     let spec = EvalSpec {
@@ -505,6 +539,35 @@ mod tests {
         assert_eq!(
             eval_formula_in(&wb, "=0^0").unwrap(),
             ExcelValue::Error(ExcelError::Num)
+        );
+    }
+
+    #[test]
+    fn sumif_gt_and_reshape() {
+        let mut wb = Workbook::default();
+        wb.set_value("Sheet1", "A1", ExcelValue::Number(1.0))
+            .unwrap();
+        wb.set_value("Sheet1", "A2", ExcelValue::Number(6.0))
+            .unwrap();
+        wb.set_value("Sheet1", "A3", ExcelValue::Number(3.0))
+            .unwrap();
+        wb.set_value("Sheet1", "B1", ExcelValue::Number(10.0))
+            .unwrap();
+        wb.set_value("Sheet1", "B2", ExcelValue::Number(20.0))
+            .unwrap();
+        wb.set_value("Sheet1", "B3", ExcelValue::Number(30.0))
+            .unwrap();
+        assert_eq!(
+            eval_formula_in(&wb, "=SUMIF(A1:A3,\">2\")").unwrap(),
+            ExcelValue::Number(9.0)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=SUMIF(A1:A3,\">2\",B1)").unwrap(),
+            ExcelValue::Number(50.0)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=SUMIF({1,2,3},\">1\")").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
         );
     }
 }

@@ -64,7 +64,26 @@ impl CellAddr {
     }
 
     pub fn a1(self) -> String {
-        format!("{}{}", col_name(self.col), self.row + 1)
+        let mut s = String::with_capacity(8);
+        self.write_a1(&mut s);
+        s
+    }
+
+    /// Append this address in A1 notation (`A1`, `AA10`) without an extra alloc
+    /// for the return value. Used by tight range walks (`SUMIF`).
+    pub fn write_a1(self, out: &mut String) {
+        write_col_name(self.col, out);
+        let mut row = self.row + 1;
+        if row == 0 {
+            out.push('0');
+            return;
+        }
+        let start = out.len();
+        while row > 0 {
+            out.push(char::from(b'0' + (row % 10) as u8));
+            row /= 10;
+        }
+        reverse_ascii_tail(out, start);
     }
 }
 
@@ -204,16 +223,33 @@ fn parse_col(s: &str) -> Option<u32> {
     n.checked_sub(1)
 }
 
-fn col_name(mut col: u32) -> String {
-    let mut buf = Vec::new();
+#[cfg(test)]
+fn col_name(col: u32) -> String {
+    let mut s = String::with_capacity(3);
+    write_col_name(col, &mut s);
+    s
+}
+
+fn write_col_name(mut col: u32, out: &mut String) {
+    let start = out.len();
     col += 1;
     while col > 0 {
         col -= 1;
-        buf.push(b'A' + (col % 26) as u8);
+        out.push(char::from(b'A' + (col % 26) as u8));
         col /= 26;
     }
-    buf.reverse();
-    String::from_utf8(buf).unwrap()
+    reverse_ascii_tail(out, start);
+}
+
+fn reverse_ascii_tail(out: &mut String, start: usize) {
+    let n = out.len() - start;
+    let mut buf = [0u8; 16];
+    let src = &out.as_bytes()[start..];
+    for i in 0..n {
+        buf[i] = src[n - 1 - i];
+    }
+    out.truncate(start);
+    out.push_str(std::str::from_utf8(&buf[..n]).unwrap());
 }
 
 /// Split `Sheet1!A1` or `'My Sheet'!A1`.
@@ -252,6 +288,12 @@ mod tests {
         assert_eq!(CellAddr::parse("AA10").unwrap().a1(), "AA10");
         assert_eq!(col_name(0), "A");
         assert_eq!(col_name(26), "AA");
+        let mut buf = String::new();
+        CellAddr::parse("AA10").unwrap().write_a1(&mut buf);
+        assert_eq!(buf, "AA10");
+        buf.clear();
+        CellAddr::new(0, 0).write_a1(&mut buf);
+        assert_eq!(buf, "A1");
     }
 
     #[test]
