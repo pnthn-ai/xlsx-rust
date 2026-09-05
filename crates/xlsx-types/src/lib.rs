@@ -29,7 +29,7 @@ pub use floor_ceiling::{
     excel_ceiling_slice_naive, excel_floor, excel_floor_math, excel_floor_naive, excel_floor_slice,
     excel_floor_slice_naive,
 };
-pub use financial::pmt as excel_pmt;
+pub use financial::{ipmt as excel_ipmt, ipmt_naive as excel_ipmt_naive, pmt as excel_pmt};
 pub use quirk::QuirkCategory;
 pub use value::{excel_num_eq, excel_round_15, ExcelType, ExcelValue};
 pub use workbook::{Cell, DefinedName, Sheet, Workbook, WorkbookError};

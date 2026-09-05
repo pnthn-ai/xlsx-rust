@@ -929,4 +929,36 @@ mod tests {
             ExcelValue::Error(ExcelError::Value)
         );
     }
+    #[test]
+    fn ipmt_microsoft_loan_and_errors() {
+        let wb = Workbook::default();
+        match eval_formula_in(&wb, "=IPMT(10%/12,1,36,8000)").unwrap() {
+            ExcelValue::Number(n) => {
+                assert_eq!((n * 100.0).round() as i64, -6_667, "got {n}")
+            }
+            other => panic!("expected number, got {other:?}"),
+        }
+        match eval_formula_in(&wb, "=IPMT(10%,3,3,8000)").unwrap() {
+            ExcelValue::Number(n) => {
+                assert_eq!((n * 100.0).round() as i64, -29_245, "got {n}")
+            }
+            other => panic!("expected number, got {other:?}"),
+        }
+        assert_eq!(
+            eval_formula_in(&wb, "=IPMT(0.1,1,36,8000,0,1)").unwrap(),
+            ExcelValue::Number(0.0)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=IPMT(0.1,0,10,1000)").unwrap(),
+            ExcelValue::Error(ExcelError::Num)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=IPMT(0.1,1,10)").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=IPMT()").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
+        );
+    }
 }

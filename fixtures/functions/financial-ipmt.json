@@ -1,0 +1,335 @@
+[
+  {
+    "id": "fn.ipmt.ms-month1",
+    "description": "Microsoft IPMT example: first-month interest on 10% / 3 years / $8,000",
+    "tags": ["ipmt", "financial"],
+    "notes": "support.microsoft.com IPMT: ($66.67). Golden is -pv*rate (OpenFormula 6.12.28).",
+    "formula": "=IPMT(10%/12, 1, 3*12, 8000)",
+    "expected": { "number": -66.66666666666667 }
+  },
+  {
+    "id": "fn.ipmt.ms-month1-cells",
+    "description": "Same Microsoft first month via cell refs (A2=10%, A3=1, A4=3, A5=8000)",
+    "tags": ["ipmt", "financial"],
+    "formula": "=IPMT(A2/12, A3, A4*12, A5)",
+    "expected": { "number": -66.66666666666667 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A2": { "number": 0.10 },
+          "A3": { "number": 1 },
+          "A4": { "number": 3 },
+          "A5": { "number": 8000 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.ipmt.ms-year3",
+    "description": "Microsoft IPMT example: year-3 interest with annual periods",
+    "tags": ["ipmt", "financial"],
+    "notes": "support.microsoft.com IPMT: ($292.45).",
+    "formula": "=IPMT(10%, 3, 3, 8000)",
+    "expected": { "number": -292.4471299093658 }
+  },
+  {
+    "id": "fn.ipmt.ms-begin",
+    "description": "Same Microsoft loan, type=1: first period interest is 0",
+    "tags": ["ipmt", "financial"],
+    "formula": "=IPMT(10%/12, 1, 36, 8000, 0, 1)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.ipmt.mortgage-first",
+    "description": "30-year monthly mortgage at 5% on $200,000 — period 1",
+    "tags": ["ipmt", "financial"],
+    "formula": "=IPMT(0.05/12, 1, 360, 200000)",
+    "expected": { "number": -833.3333333333334 }
+  },
+  {
+    "id": "fn.ipmt.mortgage-mid",
+    "description": "Same mortgage, period 180 (halfway)",
+    "tags": ["ipmt", "financial"],
+    "formula": "=IPMT(0.05/12, 180, 360, 200000)",
+    "expected": { "number": -567.8068900486991 }
+  },
+  {
+    "id": "fn.ipmt.mortgage-last",
+    "description": "Same mortgage, final period",
+    "tags": ["ipmt", "financial"],
+    "formula": "=IPMT(0.05/12, 360, 360, 200000)",
+    "expected": { "number": -4.454951228315864 }
+  },
+  {
+    "id": "fn.ipmt.mortgage-begin-first",
+    "description": "Mortgage type=1: period 1 interest is 0",
+    "tags": ["ipmt", "financial"],
+    "formula": "=IPMT(0.05/12, 1, 360, 200000, 0, 1)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.ipmt.mortgage-begin-2",
+    "description": "Mortgage type=1: period 2 interest on the reduced balance",
+    "tags": ["ipmt", "financial"],
+    "formula": "=IPMT(0.05/12, 2, 360, 200000, 0, 1)",
+    "expected": { "number": -828.8783821050168 }
+  },
+  {
+    "id": "fn.ipmt.pmt-loan-first",
+    "description": "Interest of the Microsoft PMT 10-month 8% / $10,000 loan, period 1",
+    "tags": ["ipmt", "financial"],
+    "formula": "=IPMT(8%/12, 1, 10, 10000)",
+    "expected": { "number": -66.66666666666667 }
+  },
+  {
+    "id": "fn.ipmt.pmt-loan-last",
+    "description": "Same PMT loan, final period interest",
+    "tags": ["ipmt", "financial"],
+    "formula": "=IPMT(8%/12, 10, 10, 10000)",
+    "expected": { "number": -6.867762181186482 }
+  },
+  {
+    "id": "fn.ipmt.yearly",
+    "description": "Annual IPMT(8%, 1, 10, 10000) — units must match",
+    "tags": ["ipmt", "financial"],
+    "formula": "=IPMT(0.08, 1, 10, 10000)",
+    "expected": { "number": -800 }
+  },
+  {
+    "id": "fn.ipmt.yearly-last",
+    "description": "Annual IPMT last period",
+    "tags": ["ipmt", "financial"],
+    "formula": "=IPMT(0.08, 10, 10, 10000)",
+    "expected": { "number": -110.3922138496855 }
+  },
+  {
+    "id": "fn.ipmt.zero-rate",
+    "description": "rate=0 → interest is 0 (straight-line principal only)",
+    "tags": ["ipmt", "financial"],
+    "formula": "=IPMT(0, 1, 10, 1000)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.ipmt.zero-rate-mid",
+    "description": "rate=0 with balloon fv is still 0 interest",
+    "tags": ["ipmt", "financial"],
+    "formula": "=IPMT(0, 5, 10, 1000, 500)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.ipmt.balloon-first",
+    "description": "Loan with remaining fv (balloon), period 1",
+    "tags": ["ipmt", "financial"],
+    "formula": "=IPMT(0.05, 1, 5, 10000, 1000)",
+    "expected": { "number": -500 }
+  },
+  {
+    "id": "fn.ipmt.balloon-last",
+    "description": "Balloon loan, final period interest",
+    "tags": ["ipmt", "financial"],
+    "formula": "=IPMT(0.05, 5, 5, 10000, 1000)",
+    "expected": { "number": -70.98679901956912 }
+  },
+  {
+    "id": "fn.ipmt.annuity-inflow",
+    "description": "Negative pv (cash received) yields a positive first-period IPMT",
+    "tags": ["ipmt", "financial"],
+    "formula": "=IPMT(0.05, 1, 10, -10000)",
+    "expected": { "number": 500 }
+  },
+  {
+    "id": "fn.ipmt.neg-rate",
+    "description": "Negative rate (deflation) is allowed when 1+rate > 0",
+    "tags": ["ipmt", "financial"],
+    "formula": "=IPMT(-0.05, 1, 10, 1000)",
+    "expected": { "number": 50 }
+  },
+  {
+    "id": "fn.ipmt.frac-per",
+    "description": "per is not truncated; fractional periods are allowed",
+    "tags": ["ipmt", "financial"],
+    "formula": "=IPMT(0.1, 2.5, 10, 1000)",
+    "expected": { "number": -90.35667701433248 }
+  },
+  {
+    "id": "fn.ipmt.long-horizon",
+    "description": "Large integer nper stays finite (100-year monthly at 5%, period 600)",
+    "tags": ["ipmt", "financial", "perf"],
+    "formula": "=IPMT(0.05/12, 600, 1200, 100000)",
+    "expected": { "number": -385.050677808801 }
+  },
+  {
+    "id": "fn.ipmt.small-rate",
+    "description": "Tiny rate uses expm1 so (1+r)^n-1 does not cancel",
+    "tags": ["ipmt", "financial", "perf"],
+    "quirks": ["ieee-vs-excel-precision"],
+    "formula": "=IPMT(0.00000001, 12, 360, 100000)",
+    "expected": { "number": -0.0009694444977638586 }
+  },
+  {
+    "id": "fn.ipmt.percent-unary",
+    "description": "Rate written with postfix % (10%/12)",
+    "tags": ["ipmt", "financial"],
+    "quirks": ["percent-unary"],
+    "formula": "=IPMT(10%/12, 1, 36, 8000)",
+    "expected": { "number": -66.66666666666667 }
+  },
+  {
+    "id": "fn.ipmt.text-number",
+    "description": "Numeric text coerces like arithmetic",
+    "tags": ["ipmt", "financial", "coercion"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=IPMT(\"0.1\", \"1\", \"10\", \"1000\")",
+    "expected": { "number": -100 }
+  },
+  {
+    "id": "fn.ipmt.true-type",
+    "description": "TRUE coerces to type=1 → first-period IPMT is 0",
+    "tags": ["ipmt", "financial", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=IPMT(0.1, 1, 10, 1000, 0, TRUE)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.ipmt.false-type",
+    "description": "FALSE coerces to type=0 (end of period)",
+    "tags": ["ipmt", "financial", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=IPMT(0.1, 1, 10, 1000, 0, FALSE)",
+    "expected": { "number": -100 }
+  },
+  {
+    "id": "fn.ipmt.empty-optional",
+    "description": "Blank fv/type cells coerce to 0",
+    "tags": ["ipmt", "financial", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=IPMT(A1, A2, A3, A4, A5, A6)",
+    "expected": { "number": -100 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 0.1 },
+          "A2": { "number": 1 },
+          "A3": { "number": 10 },
+          "A4": { "number": 1000 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.ipmt.begin-per2",
+    "description": "type=1 period 2: interest on the post-first-payment balance",
+    "tags": ["ipmt", "financial"],
+    "formula": "=IPMT(0.1, 2, 10, 1000, 0, 1)",
+    "expected": { "number": -85.20496410158984 }
+  },
+  {
+    "id": "fn.ipmt.rate-minus-one",
+    "description": "rate=-1 and type=0, per=1: IPMT = -pv*rate = pv",
+    "tags": ["ipmt", "financial"],
+    "formula": "=IPMT(-1, 1, 1, 100)",
+    "expected": { "number": 100 }
+  },
+  {
+    "id": "fn.ipmt.rate-minus-one-begin",
+    "description": "rate=-1 and type=1, per=1 short-circuits to 0",
+    "tags": ["ipmt", "financial"],
+    "formula": "=IPMT(-1, 1, 1, 100, 0, 1)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.ipmt.rate-minus-one-begin-later",
+    "description": "rate=-1 and type=1, per>1 divides by 1+rate=0 → #NUM!",
+    "tags": ["ipmt", "financial"],
+    "formula": "=IPMT(-1, 2, 2, 100, 0, 1)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.ipmt.neg-base-frac-per",
+    "description": "(1+rate)<0 and non-integer (per-1) is #NUM! (same as POWER)",
+    "tags": ["ipmt", "financial"],
+    "formula": "=IPMT(-2, 1.5, 3, 1000)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.ipmt.neg-base-int",
+    "description": "Negative (1+rate) with integer per is allowed; period 1 is -pv*rate",
+    "tags": ["ipmt", "financial"],
+    "formula": "=IPMT(-2, 1, 3, 1000)",
+    "expected": { "number": 2000 }
+  },
+  {
+    "id": "fn.ipmt.per-zero",
+    "description": "per=0 is outside 1..=nper → #NUM!",
+    "tags": ["ipmt", "financial", "errors"],
+    "formula": "=IPMT(0.1, 0, 10, 1000)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.ipmt.per-past-nper",
+    "description": "per = nper+1 is #NUM!",
+    "tags": ["ipmt", "financial", "errors"],
+    "formula": "=IPMT(0.1, 11, 10, 1000)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.ipmt.nper-zero",
+    "description": "nper=0 makes the 1..=nper range empty → #NUM!",
+    "tags": ["ipmt", "financial", "errors"],
+    "formula": "=IPMT(0.1, 1, 0, 1000)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.ipmt.overflow",
+    "description": "(1+rate)^nper overflow in the PMT step is #NUM! (same as POWER)",
+    "tags": ["ipmt", "financial", "errors"],
+    "formula": "=IPMT(0.5, 1, 2000, 1000)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.ipmt.too-few-args",
+    "description": "IPMT requires rate, per, nper, pv",
+    "tags": ["ipmt", "financial", "errors"],
+    "formula": "=IPMT(0.1, 1, 10)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.ipmt.no-args",
+    "description": "IPMT() is #VALUE!",
+    "tags": ["ipmt", "financial", "errors"],
+    "formula": "=IPMT()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.ipmt.too-many-args",
+    "description": "More than six arguments is #VALUE!",
+    "tags": ["ipmt", "financial", "errors"],
+    "formula": "=IPMT(0.1, 1, 10, 1000, 0, 0, 0)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.ipmt.text-rate",
+    "description": "Non-numeric text rate is #VALUE!",
+    "tags": ["ipmt", "financial", "errors"],
+    "formula": "=IPMT(\"x\", 1, 10, 1000)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.ipmt.error-left",
+    "description": "Left-to-right error precedence: first arg error wins",
+    "tags": ["ipmt", "financial", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=IPMT(#DIV/0!, #VALUE!, 1, 1)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.ipmt.error-second",
+    "description": "Second-arg error surfaces when rate is fine",
+    "tags": ["ipmt", "financial", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=IPMT(0.1, #NAME?, #N/A, 1)",
+    "expected": { "error": "#NAME?" }
+  }
+]
