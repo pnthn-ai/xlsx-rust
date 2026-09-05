@@ -1,0 +1,558 @@
+[
+  {
+    "id": "fn.textsplit.cols-basic",
+    "description": "TEXTSPLIT with a column delimiter spills one row",
+    "tags": ["textsplit", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TEXTSPLIT(\"a,b,c\", \",\")",
+    "expected": {
+      "array": [[{ "text": "a" }, { "text": "b" }, { "text": "c" }]]
+    }
+  },
+  {
+    "id": "fn.textsplit.ms-red-blue-green",
+    "description": "Microsoft / Exceljet example: hyphen into columns",
+    "tags": ["textsplit", "functions"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TEXTSPLIT(\"red-blue-green\", \"-\")",
+    "expected": {
+      "array": [[{ "text": "red" }, { "text": "blue" }, { "text": "green" }]]
+    }
+  },
+  {
+    "id": "fn.textsplit.rows-omitted-col",
+    "description": "Omitted col_delimiter + row_delimiter spills a column",
+    "tags": ["textsplit", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TEXTSPLIT(\"red-blue-green\",, \"-\")",
+    "expected": {
+      "array": [
+        [{ "text": "red" }],
+        [{ "text": "blue" }],
+        [{ "text": "green" }]
+      ]
+    }
+  },
+  {
+    "id": "fn.textsplit.2d-even",
+    "description": "Both delimiters with equal-width rows need no pad",
+    "tags": ["textsplit", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TEXTSPLIT(\"a,b;c,d\", \",\", \";\")",
+    "expected": {
+      "array": [
+        [{ "text": "a" }, { "text": "b" }],
+        [{ "text": "c" }, { "text": "d" }]
+      ]
+    }
+  },
+  {
+    "id": "fn.textsplit.2d-pad-na",
+    "description": "Uneven 2-D rows pad with #N/A by default",
+    "tags": ["textsplit", "functions", "pad"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TEXTSPLIT(\"a,b;c\", \",\", \";\")",
+    "expected": {
+      "array": [
+        [{ "text": "a" }, { "text": "b" }],
+        [{ "text": "c" }, { "error": "#N/A" }]
+      ]
+    },
+    "notes": "pad_with omitted defaults to #N/A so the result stays rectangular."
+  },
+  {
+    "id": "fn.textsplit.2d-pad-with-empty",
+    "description": "pad_with \"\" replaces #N/A on short rows",
+    "tags": ["textsplit", "functions", "pad"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TEXTSPLIT(\"a,b;c\", \",\", \";\", FALSE, 0, \"\")",
+    "expected": {
+      "array": [
+        [{ "text": "a" }, { "text": "b" }],
+        [{ "text": "c" }, { "text": "" }]
+      ]
+    }
+  },
+  {
+    "id": "fn.textsplit.2d-pad-with-x",
+    "description": "pad_with text fills the missing 2-D cell",
+    "tags": ["textsplit", "pad"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TEXTSPLIT(\"a,b;c\", \",\", \";\", FALSE, 0, \"x\")",
+    "expected": {
+      "array": [
+        [{ "text": "a" }, { "text": "b" }],
+        [{ "text": "c" }, { "text": "x" }]
+      ]
+    }
+  },
+  {
+    "id": "fn.textsplit.ignore-empty-false",
+    "description": "Consecutive delimiters keep an empty token by default",
+    "tags": ["textsplit", "empty"],
+    "quirks": ["array-eval-mode", "empty-cell-duality"],
+    "formula": "=TEXTSPLIT(\"a,,b\", \",\")",
+    "expected": {
+      "array": [[{ "text": "a" }, { "text": "" }, { "text": "b" }]]
+    }
+  },
+  {
+    "id": "fn.textsplit.ignore-empty-true",
+    "description": "ignore_empty TRUE drops consecutive-delimiter tokens",
+    "tags": ["textsplit", "empty"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TEXTSPLIT(\"a,,b\", \",\", , TRUE)",
+    "expected": {
+      "array": [[{ "text": "a" }, { "text": "b" }]]
+    }
+  },
+  {
+    "id": "fn.textsplit.ignore-empty-one",
+    "description": "Numeric 1 is TRUE for ignore_empty",
+    "tags": ["textsplit", "empty"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TEXTSPLIT(\"a,,b\", \",\", , 1)",
+    "expected": {
+      "array": [[{ "text": "a" }, { "text": "b" }]]
+    }
+  },
+  {
+    "id": "fn.textsplit.leading-trailing-delim",
+    "description": "Leading and trailing delimiters create empty tokens",
+    "tags": ["textsplit", "empty"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TEXTSPLIT(\",a,\", \",\")",
+    "expected": {
+      "array": [[{ "text": "" }, { "text": "a" }, { "text": "" }]]
+    }
+  },
+  {
+    "id": "fn.textsplit.leading-trailing-ignore",
+    "description": "ignore_empty TRUE drops leading/trailing empties",
+    "tags": ["textsplit", "empty"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TEXTSPLIT(\",a,\", \",\", , TRUE)",
+    "expected": {
+      "array": [[{ "text": "a" }]]
+    }
+  },
+  {
+    "id": "fn.textsplit.space-not-empty",
+    "description": "A space token is kept when ignore_empty is TRUE",
+    "tags": ["textsplit", "empty"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TEXTSPLIT(\"a, ,b\", \",\", , TRUE)",
+    "expected": {
+      "array": [[{ "text": "a" }, { "text": " " }, { "text": "b" }]]
+    }
+  },
+  {
+    "id": "fn.textsplit.match-mode-sensitive",
+    "description": "Default match_mode 0 is case-sensitive",
+    "tags": ["textsplit", "case"],
+    "quirks": ["array-eval-mode", "case-insensitive-text"],
+    "formula": "=TEXTSPLIT(\"axbXc\", \"X\")",
+    "expected": {
+      "array": [[{ "text": "axb" }, { "text": "c" }]]
+    }
+  },
+  {
+    "id": "fn.textsplit.match-mode-insensitive",
+    "description": "match_mode 1 splits on X and x",
+    "tags": ["textsplit", "case"],
+    "quirks": ["array-eval-mode", "case-insensitive-text"],
+    "formula": "=TEXTSPLIT(\"axbXc\", \"X\", , , 1)",
+    "expected": {
+      "array": [[{ "text": "a" }, { "text": "b" }, { "text": "c" }]]
+    }
+  },
+  {
+    "id": "fn.textsplit.match-mode-true",
+    "description": "TRUE coerces to match_mode 1",
+    "tags": ["textsplit", "case"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TEXTSPLIT(\"axbXc\", \"X\", , , TRUE)",
+    "expected": {
+      "array": [[{ "text": "a" }, { "text": "b" }, { "text": "c" }]]
+    }
+  },
+  {
+    "id": "fn.textsplit.multi-delim-cols",
+    "description": "Array of column delimiters splits on any of them",
+    "tags": ["textsplit", "functions"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TEXTSPLIT(\"a,b;c\", {\",\",\";\"})",
+    "expected": {
+      "array": [[{ "text": "a" }, { "text": "b" }, { "text": "c" }]]
+    }
+  },
+  {
+    "id": "fn.textsplit.multi-char-delim",
+    "description": "A multi-character delimiter is matched as a whole",
+    "tags": ["textsplit", "functions"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TEXTSPLIT(\"one<->two<->three\", \"<->\")",
+    "expected": {
+      "array": [[{ "text": "one" }, { "text": "two" }, { "text": "three" }]]
+    }
+  },
+  {
+    "id": "fn.textsplit.no-delim-found",
+    "description": "Missing delimiter returns the original text as a 1×1 array",
+    "tags": ["textsplit", "functions"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TEXTSPLIT(\"apple orange\", \".\")",
+    "expected": {
+      "array": [[{ "text": "apple orange" }]]
+    }
+  },
+  {
+    "id": "fn.textsplit.empty-text",
+    "description": "Empty text with a delimiter that is not found stays \"\"",
+    "tags": ["textsplit", "empty"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TEXTSPLIT(\"\", \",\")",
+    "expected": {
+      "array": [[{ "text": "" }]]
+    }
+  },
+  {
+    "id": "fn.textsplit.empty-text-ignore",
+    "description": "No delimiter found: ignore_empty does not drop the original empty text",
+    "tags": ["textsplit", "empty"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TEXTSPLIT(\"\", \",\", , TRUE)",
+    "expected": {
+      "array": [[{ "text": "" }]]
+    }
+  },
+  {
+    "id": "fn.textsplit.all-empty-ignore-calc",
+    "description": "Every token empty after ignore_empty is #CALC!",
+    "tags": ["textsplit", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TEXTSPLIT(\",\", \",\", , TRUE)",
+    "expected": { "error": "#CALC!" },
+    "notes": "Excel cannot return an empty array. Consecutive delimiters with ignore_empty TRUE leave no tokens."
+  },
+  {
+    "id": "fn.textsplit.empty-delim-value",
+    "description": "Empty-string delimiter is #VALUE! (not an omitted axis)",
+    "tags": ["textsplit", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TEXTSPLIT(\"abc\", \"\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.textsplit.arity-one",
+    "description": "TEXTSPLIT(text) with no delimiter is #VALUE!",
+    "tags": ["textsplit", "errors"],
+    "formula": "=TEXTSPLIT(\"abc\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.textsplit.arity-zero",
+    "description": "TEXTSPLIT() is #VALUE!",
+    "tags": ["textsplit", "errors"],
+    "formula": "=TEXTSPLIT()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.textsplit.match-mode-bad",
+    "description": "match_mode other than 0/1 is #VALUE!",
+    "tags": ["textsplit", "errors"],
+    "formula": "=TEXTSPLIT(\"aXb\", \"X\", , , 2)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.textsplit.number-text-coerce",
+    "description": "Numeric text coerces like & then splits as text",
+    "tags": ["textsplit", "coercion"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=TEXTSPLIT(1234, 3)",
+    "expected": {
+      "array": [[{ "text": "12" }, { "text": "4" }]]
+    }
+  },
+  {
+    "id": "fn.textsplit.bool-text",
+    "description": "TRUE text is the word TRUE",
+    "tags": ["textsplit", "coercion"],
+    "formula": "=TEXTSPLIT(TRUE, \"U\")",
+    "expected": {
+      "array": [[{ "text": "TR" }, { "text": "E" }]]
+    }
+  },
+  {
+    "id": "fn.textsplit.pieces-stay-text",
+    "description": "Split digits stay text; SUM of the array skips them",
+    "tags": ["textsplit", "coercion"],
+    "quirks": ["sum-arg-vs-range", "array-eval-mode"],
+    "formula": "=SUM(TEXTSPLIT(\"1,2,3\", \",\"))",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.textsplit.2d-ignore-empty-row",
+    "description": "ignore_empty TRUE drops an empty row between row delimiters",
+    "tags": ["textsplit", "empty"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TEXTSPLIT(\"a,b;;c,d\", \",\", \";\", TRUE)",
+    "expected": {
+      "array": [
+        [{ "text": "a" }, { "text": "b" }],
+        [{ "text": "c" }, { "text": "d" }]
+      ]
+    }
+  },
+  {
+    "id": "fn.textsplit.same-delim-both-axes",
+    "description": "The same delimiter on both axes splits rows first (a column)",
+    "tags": ["textsplit", "functions"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TEXTSPLIT(\"a;b;c\", \";\", \";\")",
+    "expected": {
+      "array": [
+        [{ "text": "a" }],
+        [{ "text": "b" }],
+        [{ "text": "c" }]
+      ]
+    }
+  },
+  {
+    "id": "fn.textsplit.unicode",
+    "description": "Unicode scalars split on an ASCII delimiter",
+    "tags": ["textsplit", "functions"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TEXTSPLIT(\"α,β,γ\", \",\")",
+    "expected": {
+      "array": [[{ "text": "α" }, { "text": "β" }, { "text": "γ" }]]
+    }
+  },
+  {
+    "id": "fn.textsplit.cell-ref",
+    "description": "text from a cell reference",
+    "tags": ["textsplit", "functions"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TEXTSPLIT(A1, \",\")",
+    "expected": {
+      "array": [[{ "text": "one" }, { "text": "two" }]]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": { "A1": { "text": "one,two" } }
+      }]
+    }
+  },
+  {
+    "id": "fn.textsplit.index-second",
+    "description": "INDEX consumes a column-split without a grid write",
+    "tags": ["textsplit", "functions"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=INDEX(TEXTSPLIT(\"a,b,c\", \",\"), 1, 2)",
+    "expected": { "text": "b" }
+  },
+  {
+    "id": "fn.textsplit.index-row",
+    "description": "INDEX of a row-split column",
+    "tags": ["textsplit", "functions"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=INDEX(TEXTSPLIT(\"a,b,c\",, \",\"), 3, 1)",
+    "expected": { "text": "c" }
+  },
+  {
+    "id": "fn.textsplit.counta",
+    "description": "COUNTA counts every split token including empties",
+    "tags": ["textsplit", "functions"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=COUNTA(TEXTSPLIT(\"a,,b\", \",\"))",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.textsplit.counta-pad",
+    "description": "Pad #N/A cells count for COUNTA",
+    "tags": ["textsplit", "pad"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=COUNTA(TEXTSPLIT(\"a,b;c\", \",\", \";\"))",
+    "expected": { "number": 4 }
+  },
+  {
+    "id": "fn.textsplit.type-64",
+    "description": "TYPE of a TEXTSPLIT result is 64 (array)",
+    "tags": ["textsplit", "information"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TYPE(TEXTSPLIT(\"a,b\", \",\"))",
+    "expected": { "number": 64 }
+  },
+  {
+    "id": "fn.textsplit.isna-pad",
+    "description": "INDEX of a pad cell is #N/A; ISNA is TRUE",
+    "tags": ["textsplit", "pad"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=ISNA(INDEX(TEXTSPLIT(\"a,b;c\", \",\", \";\"), 2, 2))",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.textsplit.no-grid-write",
+    "description": "Occupied cells in the Excel spill zone do not produce #SPILL!",
+    "notes": "Excel would #SPILL! if TEXTSPLIT at B1 needed B2. This model never writes a spill range; neighbors are irrelevant. Pick individual results with INDEX.",
+    "tags": ["textsplit", "spill"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TEXTSPLIT(A1, \",\")",
+    "at": "Sheet1!B1",
+    "expected": {
+      "array": [[{ "text": "a" }, { "text": "b" }]]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "a,b" },
+          "C1": { "text": "blocker" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.textsplit.scalar-plus-top-left",
+    "description": "TEXTSPLIT+n in a scalar operator takes the top-left token",
+    "notes": "Pieces are text, so \"10\"+1 is 11 via arithmetic coercion of the scalarized top-left.",
+    "tags": ["textsplit", "arithmetic"],
+    "quirks": ["array-eval-mode", "implicit-intersection", "equality-vs-arithmetic-coercion"],
+    "formula": "=TEXTSPLIT(\"10,20\", \",\")+1",
+    "expected": { "number": 11 }
+  },
+  {
+    "id": "fn.textsplit.error-text",
+    "description": "Error in text propagates",
+    "tags": ["textsplit", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=TEXTSPLIT(1/0, \",\")",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.textsplit.error-delim",
+    "description": "Error in col_delimiter propagates",
+    "tags": ["textsplit", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=TEXTSPLIT(\"a,b\", 1/0)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.textsplit.ignore-empty-text-value",
+    "description": "Text ignore_empty is #VALUE!",
+    "tags": ["textsplit", "errors"],
+    "formula": "=TEXTSPLIT(\"a,b\", \",\", , \"x\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.textsplit.ifna-not-elementwise",
+    "description": "IFNA does not rewrite pad #N/A cells inside the array",
+    "notes": "Excel dynamic-array IFNA(TEXTSPLIT(...), \"\") maps over the spill. This IFNA only replaces a scalar #N/A, so the array (with pad #N/A) is returned as-is.",
+    "tags": ["textsplit", "pad"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=IFNA(TEXTSPLIT(\"a,b;c\", \",\", \";\"), \"\")",
+    "expected": {
+      "array": [
+        [{ "text": "a" }, { "text": "b" }],
+        [{ "text": "c" }, { "error": "#N/A" }]
+      ]
+    }
+  },
+  {
+    "id": "fn.textsplit.nested-index",
+    "description": "TEXTSPLIT of TEXTJOIN is the inverse on these tokens",
+    "tags": ["textsplit", "textjoin"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=INDEX(TEXTSPLIT(TEXTJOIN(\",\", TRUE, \"a\", \"b\", \"c\"), \",\"), 1, 3)",
+    "expected": { "text": "c" }
+  },
+  {
+    "id": "fn.textsplit.blank-cell-text",
+    "description": "Blank text cell coerces to \"\" and no delimiter is found",
+    "tags": ["textsplit", "empty"],
+    "quirks": ["empty-cell-duality", "array-eval-mode"],
+    "formula": "=TEXTSPLIT(A1, \",\")",
+    "expected": {
+      "array": [[{ "text": "" }]]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {}
+      }]
+    }
+  },
+  {
+    "id": "fn.textsplit.range-text-scalarize",
+    "description": "A range in text is scalarized (top-left / implicit intersection), not array-of-arrays",
+    "tags": ["textsplit", "functions"],
+    "quirks": ["implicit-intersection", "array-eval-mode"],
+    "formula": "=TEXTSPLIT(A1:A2, \",\")",
+    "at": "Sheet1!B1",
+    "expected": {
+      "array": [[{ "text": "a" }, { "text": "b" }]]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "a,b" },
+          "A2": { "text": "c,d" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.textsplit.2d-ms-key-value",
+    "description": "Exceljet-style key=value rows with missing quantity pads #N/A",
+    "tags": ["textsplit", "pad"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TEXTSPLIT(\"Red=1,Blue,Green=3\", \"=\", \",\")",
+    "expected": {
+      "array": [
+        [{ "text": "Red" }, { "text": "1" }],
+        [{ "text": "Blue" }, { "error": "#N/A" }],
+        [{ "text": "Green" }, { "text": "3" }]
+      ]
+    }
+  },
+  {
+    "id": "fn.textsplit.array-of-arrays-not-modeled",
+    "description": "TEXTSPLIT of a column of strings is not Excel's array-of-arrays spill",
+    "ignore": "Excel TEXTSPLIT on a range returns an array of arrays (often truncated or an error). This engine scalarizes text to one string. Documented model limit, not a hidden bug.",
+    "tags": ["textsplit", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TEXTSPLIT(A1:A2, \",\")",
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "a,b" },
+          "A2": { "text": "c,d" }
+        }
+      }]
+    },
+    "expected": {
+      "array": [[{ "text": "a" }, { "text": "b" }]]
+    }
+  },
+  {
+    "id": "fn.textsplit.spill-occupancy-not-modeled",
+    "description": "Blocked spill destination is not #SPILL! in this model",
+    "ignore": "Workbook snippets have no spill grid. TEXTSPLIT returns an array value; #SPILL! from occupied cells below/right of the host is not modeled.",
+    "tags": ["textsplit", "spill"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TEXTSPLIT(\"a,b\", \",\")",
+    "at": "Sheet1!A1",
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": { "B1": { "text": "blocker" } }
+      }]
+    },
+    "expected": {
+      "array": [[{ "text": "a" }, { "text": "b" }]]
+    }
+  }
+]

@@ -269,6 +269,8 @@ pub enum Expr {
         args: Vec<Expr>,
     },
     Array(Vec<Vec<Expr>>),
+    /// Omitted function argument (`TEXTSPLIT(text,,row)`).
+    Missing,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -555,7 +557,11 @@ impl Parser {
             return Ok(args);
         }
         loop {
-            args.push(self.parse_comparison()?);
+            if matches!(self.peek(), Token::Comma | Token::RParen) {
+                args.push(Expr::Missing);
+            } else {
+                args.push(self.parse_comparison()?);
+            }
             match self.bump() {
                 Token::Comma => continue,
                 Token::RParen => break,
@@ -638,6 +644,18 @@ mod tests {
                 op: BinOp::Intersect,
                 ..
             } => {}
+            other => panic!("{other:?}"),
+        }
+    }
+
+    #[test]
+    fn parse_omitted_call_args() {
+        match parse("=TEXTSPLIT(\"a;b\",,\";\")").unwrap() {
+            Expr::Call { name, args } => {
+                assert!(name.eq_ignore_ascii_case("TEXTSPLIT"));
+                assert_eq!(args.len(), 3);
+                assert!(matches!(&args[1], Expr::Missing));
+            }
             other => panic!("{other:?}"),
         }
     }

@@ -516,7 +516,12 @@ impl Parser {
             return Ok(args);
         }
         loop {
-            args.push(self.parse_comparison()?);
+            // `FOO(a,,b)` / `FOO(a,)` / `TEXTSPLIT(text,,row)` — omitted slot.
+            if matches!(self.peek(), Token::Comma | Token::RParen) {
+                args.push(Expr::Missing);
+            } else {
+                args.push(self.parse_comparison()?);
+            }
             match self.bump() {
                 Token::Comma => continue,
                 Token::RParen => break,
@@ -633,6 +638,40 @@ mod tests {
                 op: BinOp::Intersect,
                 ..
             } => {}
+            other => panic!("{other:?}"),
+        }
+    }
+
+    #[test]
+    fn parse_omitted_call_args() {
+        match parse("=TEXTSPLIT(\"a;b\",,\";\")").unwrap() {
+            Expr::Call { name, args } => {
+                assert!(name.eq_ignore_ascii_case("TEXTSPLIT"));
+                assert_eq!(args.len(), 3);
+                assert!(matches!(&args[0], Expr::Text(s) if s == "a;b"));
+                assert!(args[1].is_omitted());
+                assert!(matches!(&args[2], Expr::Text(s) if s == ";"));
+            }
+            other => panic!("{other:?}"),
+        }
+        match parse("=FOO(a,)").unwrap() {
+            Expr::Call { args, .. } => {
+                assert_eq!(args.len(), 2);
+                assert!(matches!(&args[0], Expr::Name(n) if n == "a"));
+                assert!(args[1].is_omitted());
+            }
+            other => panic!("{other:?}"),
+        }
+        match parse("=FOO(,)").unwrap() {
+            Expr::Call { args, .. } => {
+                assert_eq!(args.len(), 2);
+                assert!(args[0].is_omitted());
+                assert!(args[1].is_omitted());
+            }
+            other => panic!("{other:?}"),
+        }
+        match parse("=SUM()").unwrap() {
+            Expr::Call { args, .. } => assert!(args.is_empty()),
             other => panic!("{other:?}"),
         }
     }

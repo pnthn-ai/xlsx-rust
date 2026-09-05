@@ -17,6 +17,7 @@ pub mod sumproduct;
 pub mod replace;
 pub mod sumifs;
 pub mod textjoin;
+pub mod textsplit;
 pub mod round;
 pub mod search;
 pub mod npv;
@@ -133,6 +134,7 @@ impl Evaluator {
             Expr::Unary { op, expr } => self.eval_unary(*op, expr, ctx),
             Expr::Binary { op, left, right } => self.eval_binary(*op, left, right, ctx),
             Expr::Call { name, args } => functions::dispatch(self, name, args, ctx),
+            Expr::Missing => Ok(ExcelValue::Empty),
             Expr::Array(rows) => {
                 let mut out = Vec::new();
                 for row in rows {
