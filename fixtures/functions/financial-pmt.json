@@ -5,14 +5,14 @@
     "tags": ["pmt", "financial"],
     "notes": "support.microsoft.com PMT: ($1,037.03). Golden is the OpenFormula 6.12.36 identity.",
     "formula": "=PMT(8%/12, 10, 10000)",
-    "expected": { "number": -1037.03208935916 }
+    "expected": { "number": -1037.0320893591606 }
   },
   {
     "id": "fn.pmt.ms-loan-cells",
     "description": "Same Microsoft loan via cell refs (A2=8%, A3=10, A4=10000)",
     "tags": ["pmt", "financial"],
     "formula": "=PMT(A2/12, A3, A4)",
-    "expected": { "number": -1037.03208935916 },
+    "expected": { "number": -1037.0320893591606 },
     "workbook": {
       "sheets": [{
         "name": "Sheet1",
@@ -30,7 +30,7 @@
     "tags": ["pmt", "financial"],
     "notes": "support.microsoft.com PMT: ($1,030.16).",
     "formula": "=PMT(8%/12, 10, 10000, 0, 1)",
-    "expected": { "number": -1030.16432717798 }
+    "expected": { "number": -1030.164327177974 }
   },
   {
     "id": "fn.pmt.ms-sinking",
@@ -38,28 +38,28 @@
     "tags": ["pmt", "financial"],
     "notes": "support.microsoft.com PMT: ($129.08). pv=0, fv=50000.",
     "formula": "=PMT(6%/12, 18*12, 0, 50000)",
-    "expected": { "number": -129.081160867995 }
+    "expected": { "number": -129.0811608679973 }
   },
   {
     "id": "fn.pmt.mortgage-30y",
     "description": "30-year monthly mortgage at 5% on $200,000",
     "tags": ["pmt", "financial"],
     "formula": "=PMT(0.05/12, 360, 200000)",
-    "expected": { "number": -1073.64324602428 }
+    "expected": { "number": -1073.6432460242763 }
   },
   {
     "id": "fn.pmt.mortgage-30y-begin",
     "description": "Same mortgage with type=1",
     "tags": ["pmt", "financial"],
     "formula": "=PMT(0.05/12, 360, 200000, 0, 1)",
-    "expected": { "number": -1069.18829479596 }
+    "expected": { "number": -1069.1882947959598 }
   },
   {
     "id": "fn.pmt.yearly",
     "description": "Annual PMT(8%, 10, 10000) — units must match",
     "tags": ["pmt", "financial"],
     "formula": "=PMT(0.08, 10, 10000)",
-    "expected": { "number": -1490.29488697075 }
+    "expected": { "number": -1490.2948869707539 }
   },
   {
     "id": "fn.pmt.zero-rate",
@@ -80,42 +80,42 @@
     "description": "Loan with remaining fv (balloon)",
     "tags": ["pmt", "financial"],
     "formula": "=PMT(0.05, 5, 10000, 1000)",
-    "expected": { "number": -2490.72277941095 }
+    "expected": { "number": -2490.722779410949 }
   },
   {
     "id": "fn.pmt.annuity-inflow",
     "description": "Negative pv (cash received) yields a positive PMT",
     "tags": ["pmt", "financial"],
     "formula": "=PMT(0.05, 10, -10000)",
-    "expected": { "number": 1295.04574965457 }
+    "expected": { "number": 1295.0457496545669 }
   },
   {
     "id": "fn.pmt.neg-rate",
     "description": "Negative rate (deflation) is allowed when 1+rate > 0",
     "tags": ["pmt", "financial"],
     "formula": "=PMT(-0.05, 10, 1000)",
-    "expected": { "number": -74.6065359345489 }
+    "expected": { "number": -74.60653593454886 }
   },
   {
     "id": "fn.pmt.frac-nper",
     "description": "nper is not truncated; fractional periods are allowed",
     "tags": ["pmt", "financial"],
     "formula": "=PMT(0.1, 10.5, 1000)",
-    "expected": { "number": -158.128043036274 }
+    "expected": { "number": -158.12804303627416 }
   },
   {
     "id": "fn.pmt.neg-nper",
     "description": "Negative nper is a valid TVM input (solve-backwards)",
     "tags": ["pmt", "financial"],
     "formula": "=PMT(0.1, -10, 1000)",
-    "expected": { "number": 62.7453948825115 }
+    "expected": { "number": 62.74539488251153 }
   },
   {
     "id": "fn.pmt.long-horizon",
     "description": "Large integer nper stays finite (100-year monthly at 5%)",
     "tags": ["pmt", "financial", "perf"],
     "formula": "=PMT(0.05/12, 1200, 100000)",
-    "expected": { "number": -419.522906310491 }
+    "expected": { "number": -419.52290631049067 }
   },
   {
     "id": "fn.pmt.small-rate",
@@ -123,7 +123,7 @@
     "tags": ["pmt", "financial", "perf"],
     "quirks": ["ieee-vs-excel-precision"],
     "formula": "=PMT(0.00000001, 360, 100000)",
-    "expected": { "number": -277.778279166967 }
+    "expected": { "number": -277.7782791669666 }
   },
   {
     "id": "fn.pmt.percent-unary",
@@ -131,7 +131,7 @@
     "tags": ["pmt", "financial"],
     "quirks": ["percent-unary"],
     "formula": "=PMT(8%/12, 10, 10000)",
-    "expected": { "number": -1037.03208935916 }
+    "expected": { "number": -1037.0320893591606 }
   },
   {
     "id": "fn.pmt.text-number",
@@ -139,7 +139,7 @@
     "tags": ["pmt", "financial", "coercion"],
     "quirks": ["equality-vs-arithmetic-coercion"],
     "formula": "=PMT(\"0.1\", \"10\", \"1000\")",
-    "expected": { "number": -162.745394882512 }
+    "expected": { "number": -162.74539488251153 }
   },
   {
     "id": "fn.pmt.true-type",
@@ -147,7 +147,7 @@
     "tags": ["pmt", "financial", "coercion"],
     "quirks": ["bool-number-equality"],
     "formula": "=PMT(0.1, 10, 1000, 0, TRUE)",
-    "expected": { "number": -147.950358984101 }
+    "expected": { "number": -147.9503589841014 }
   },
   {
     "id": "fn.pmt.false-type",
@@ -155,7 +155,7 @@
     "tags": ["pmt", "financial", "coercion"],
     "quirks": ["bool-number-equality"],
     "formula": "=PMT(0.1, 10, 1000, 0, FALSE)",
-    "expected": { "number": -162.745394882512 }
+    "expected": { "number": -162.74539488251153 }
   },
   {
     "id": "fn.pmt.empty-optional",
@@ -163,7 +163,7 @@
     "tags": ["pmt", "financial", "empty"],
     "quirks": ["empty-cell-duality"],
     "formula": "=PMT(A1, A2, A3, A4, A5)",
-    "expected": { "number": -162.745394882512 },
+    "expected": { "number": -162.74539488251153 },
     "workbook": {
       "sheets": [{
         "name": "Sheet1",

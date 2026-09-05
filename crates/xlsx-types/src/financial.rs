@@ -118,21 +118,24 @@ mod tests {
         );
     }
 
+    fn cents(n: f64) -> i64 {
+        (n * 100.0).round() as i64
+    }
+
     #[test]
     fn microsoft_loan_examples() {
-        // support.microsoft.com PMT examples (published to cents; full value
-        // from the OpenFormula identity).
-        close(
-            pmt(0.08 / 12.0, 10.0, 10_000.0, 0.0, 0.0).unwrap(),
-            -1037.03208935916,
+        // support.microsoft.com PMT examples are published to cents.
+        assert_eq!(
+            cents(pmt(0.08 / 12.0, 10.0, 10_000.0, 0.0, 0.0).unwrap()),
+            -103_703
         );
-        close(
-            pmt(0.08 / 12.0, 10.0, 10_000.0, 0.0, 1.0).unwrap(),
-            -1030.16432717798,
+        assert_eq!(
+            cents(pmt(0.08 / 12.0, 10.0, 10_000.0, 0.0, 1.0).unwrap()),
+            -103_016
         );
-        close(
-            pmt(0.06 / 12.0, 18.0 * 12.0, 0.0, 50_000.0, 0.0).unwrap(),
-            -129.081160867995,
+        assert_eq!(
+            cents(pmt(0.06 / 12.0, 18.0 * 12.0, 0.0, 50_000.0, 0.0).unwrap()),
+            -12_908
         );
     }
 

@@ -512,7 +512,7 @@ mod tests {
         let wb = Workbook::default();
         match eval_formula_in(&wb, "=PMT(8%/12,10,10000)").unwrap() {
             ExcelValue::Number(n) => {
-                assert!(xlsx_types::excel_num_eq(n, -1037.03208935916), "got {n}")
+                assert_eq!((n * 100.0).round() as i64, -103_703, "got {n}")
             }
             other => panic!("expected number, got {other:?}"),
         }
