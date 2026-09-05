@@ -5,7 +5,7 @@
 use super::{coerce, compare, excel_pow, Ctx, Evaluator};
 use crate::ast::Expr;
 use crate::dates::{date_serial, serial_to_ymd, time_fraction};
-use xlsx_types::{EvalError, ExcelError, ExcelValue};
+use xlsx_types::{count_matches, Criterion, EvalError, ExcelError, ExcelValue};
 
 pub(crate) fn dispatch(
     ev: &Evaluator,
@@ -22,6 +22,7 @@ pub(crate) fn dispatch(
         "COUNT" => fn_agg(ev, args, ctx, AggKind::Count),
         "COUNTA" => fn_agg(ev, args, ctx, AggKind::CountA),
         "COUNTBLANK" => fn_agg(ev, args, ctx, AggKind::CountBlank),
+        "COUNTIF" => fn_countif(ev, args, ctx),
         "IF" => fn_if(ev, args, ctx),
         "IFERROR" => fn_iferror(ev, args, ctx),
         "IFNA" => fn_ifna(ev, args, ctx),
@@ -96,6 +97,21 @@ pub(crate) fn dispatch(
         "TRUE" => Ok(ExcelValue::Bool(true)),
         "FALSE" => Ok(ExcelValue::Bool(false)),
         _ => Ok(ExcelValue::Error(ExcelError::Name)),
+    }
+}
+
+fn fn_countif(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    if args.len() != 2 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let crit_v = ev.eval_scalar(&args[1], ctx)?;
+    let crit = Criterion::parse(&crit_v);
+    match &args[0] {
+        Expr::Range(r) => ev.countif_range(r, ctx, &crit),
+        other => {
+            let v = ev.eval_expr(other, ctx)?;
+            Ok(ExcelValue::Number(count_matches(&v, &crit) as f64))
+        }
     }
 }
 
