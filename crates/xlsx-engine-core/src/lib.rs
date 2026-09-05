@@ -15,6 +15,7 @@ pub mod eval;
 pub mod parse;
 
 pub use ast::{BinOp, Expr, UnaryOp};
+pub use eval::npv::{npv as excel_npv, npv_naive as excel_npv_naive};
 pub use eval::{eval_formula_in, Evaluator};
 pub use parse::parse;
 
