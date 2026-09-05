@@ -311,6 +311,10 @@ fn ci_bytes_eq(a: &[u8], b: &[u8]) -> bool {
 }
 
 fn ci_find_unicode(hay: &str, needle: &str) -> Option<usize> {
+    let mut nchars = needle.chars();
+    if let (Some(n), None) = (nchars.next(), nchars.next()) {
+        return find_unicode_char_ci(hay, n);
+    }
     let mut pos = 0usize;
     let mut rest = hay;
     while !rest.is_empty() {
@@ -321,6 +325,60 @@ fn ci_find_unicode(hay: &str, needle: &str) -> Option<usize> {
         pos += 1;
     }
     None
+}
+
+/// Case-insensitive single-char search. Probes the first UTF-8 byte of each
+/// case-folded encoding so an ASCII-heavy haystack does not walk every scalar.
+fn find_unicode_char_ci(hay: &str, n: char) -> Option<usize> {
+    let mut encs = Vec::new();
+    push_char_utf8(&mut encs, n);
+    for c in n.to_lowercase() {
+        push_char_utf8(&mut encs, c);
+    }
+    for c in n.to_uppercase() {
+        push_char_utf8(&mut encs, c);
+    }
+    encs.sort_unstable();
+    encs.dedup();
+    if encs.is_empty() {
+        return None;
+    }
+    let mut firsts: Vec<u8> = encs.iter().map(|e| e[0]).collect();
+    firsts.sort_unstable();
+    firsts.dedup();
+    let bytes = hay.as_bytes();
+    let mut i = 0usize;
+    while i < bytes.len() {
+        let rel = if firsts.len() == 1 {
+            memchr_byte(&bytes[i..], firsts[0])
+        } else if firsts.len() == 2 {
+            memchr2_byte(&bytes[i..], firsts[0], firsts[1])
+        } else {
+            bytes[i..].iter().position(|b| firsts.contains(b))
+        };
+        let Some(rel) = rel else {
+            return None;
+        };
+        let pos = i + rel;
+        for enc in &encs {
+            if bytes[pos..].starts_with(enc.as_slice()) {
+                let prefix = &hay[..pos];
+                let idx = if prefix.is_ascii() {
+                    pos
+                } else {
+                    prefix.chars().count()
+                };
+                return Some(idx);
+            }
+        }
+        i = pos + 1;
+    }
+    None
+}
+
+fn push_char_utf8(out: &mut Vec<Vec<u8>>, c: char) {
+    let mut buf = [0u8; 4];
+    out.push(c.encode_utf8(&mut buf).as_bytes().to_vec());
 }
 
 fn ci_starts_with(hay: &str, needle: &str) -> bool {
@@ -344,6 +402,10 @@ fn ci_eq(a: char, b: char) -> bool {
     }
     if a.is_ascii() && b.is_ascii() {
         return a.eq_ignore_ascii_case(&b);
+    }
+    // ASCII never case-folds onto a non-ASCII letter (`e` ≠ `é`).
+    if a.is_ascii() || b.is_ascii() {
+        return false;
     }
     a.to_lowercase().eq(b.to_lowercase())
 }

@@ -1891,6 +1891,9 @@ fn search_ci_eq(a: char, b: char) -> bool {
     if a.is_ascii() && b.is_ascii() {
         return a.eq_ignore_ascii_case(&b);
     }
+    if a.is_ascii() || b.is_ascii() {
+        return false;
+    }
     a.to_lowercase().eq(b.to_lowercase())
 }
 
