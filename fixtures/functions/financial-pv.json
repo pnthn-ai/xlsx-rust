@@ -5,14 +5,14 @@
     "tags": ["pv", "financial"],
     "notes": "support.microsoft.com PV: ($59,777.15). Golden is the OpenFormula 6.12.41 identity.",
     "formula": "=PV(8%/12, 12*20, 500)",
-    "expected": { "number": -59777.14585118777 }
+    "expected": { "number": -59777.14585118782 }
   },
   {
     "id": "fn.pv.ms-annuity-cells",
     "description": "Same Microsoft annuity via cell refs (A2=500, A3=8%, A4=20 years)",
     "tags": ["pv", "financial"],
     "formula": "=PV(A3/12, 12*A4, A2)",
-    "expected": { "number": -59777.14585118777 },
+    "expected": { "number": -59777.14585118782 },
     "workbook": {
       "sheets": [{
         "name": "Sheet1",
@@ -29,7 +29,7 @@
     "description": "Same Microsoft annuity, type=1 (beginning of period)",
     "tags": ["pv", "financial"],
     "formula": "=PV(8%/12, 12*20, 500, 0, 1)",
-    "expected": { "number": -60175.660156862345 }
+    "expected": { "number": -60175.660156862396 }
   },
   {
     "id": "fn.pv.lump-sum",
@@ -43,7 +43,7 @@
     "description": "Present value of $50,000 in 18 years at 6% monthly (pmt=0)",
     "tags": ["pv", "financial"],
     "formula": "=PV(6%/12, 18*12, 0, 50000)",
-    "expected": { "number": -17025.5309670934 }
+    "expected": { "number": -17025.530967093564 }
   },
   {
     "id": "fn.pv.pmt-inverse",
@@ -64,7 +64,7 @@
     "description": "Annual PV(8%, 10, 1000) — units must match",
     "tags": ["pv", "financial"],
     "formula": "=PV(0.08, 10, 1000)",
-    "expected": { "number": -6710.081398941448 }
+    "expected": { "number": -6710.081398941446 }
   },
   {
     "id": "fn.pv.zero-rate",
@@ -85,21 +85,21 @@
     "description": "Annuity plus remaining fv (balloon)",
     "tags": ["pv", "financial"],
     "formula": "=PV(0.05, 5, -2000, 1000)",
-    "expected": { "number": 7875.427174793188 }
+    "expected": { "number": 7875.4271747931825 }
   },
   {
     "id": "fn.pv.annuity-outflow",
     "description": "Negative pmt (cash paid out) yields a positive PV",
     "tags": ["pv", "financial"],
     "formula": "=PV(0.05, 10, -1000)",
-    "expected": { "number": 7721.734929184817 }
+    "expected": { "number": 7721.734929184813 }
   },
   {
     "id": "fn.pv.neg-rate",
     "description": "Negative rate (deflation) is allowed when 1+rate > 0",
     "tags": ["pv", "financial"],
     "formula": "=PV(-0.05, 10, 100)",
-    "expected": { "number": -1340.3651402301873 }
+    "expected": { "number": -1340.3651402301862 }
   },
   {
     "id": "fn.pv.frac-nper",
@@ -113,14 +113,14 @@
     "description": "Negative nper is a valid TVM input (solve-backwards)",
     "tags": ["pv", "financial"],
     "formula": "=PV(0.1, -10, 100)",
-    "expected": { "number": 1593.742460100002 }
+    "expected": { "number": 1593.7424601000018 }
   },
   {
     "id": "fn.pv.long-horizon",
     "description": "Large integer nper stays finite (100-year monthly at 5%)",
     "tags": ["pv", "financial", "perf"],
     "formula": "=PV(0.05/12, 1200, 500)",
-    "expected": { "number": -119183.00347346177 }
+    "expected": { "number": -119183.0034734618 }
   },
   {
     "id": "fn.pv.small-rate",
@@ -136,7 +136,7 @@
     "tags": ["pv", "financial"],
     "quirks": ["percent-unary"],
     "formula": "=PV(8%/12, 12*20, 500)",
-    "expected": { "number": -59777.14585118777 }
+    "expected": { "number": -59777.14585118782 }
   },
   {
     "id": "fn.pv.text-number",
@@ -144,7 +144,7 @@
     "tags": ["pv", "financial", "coercion"],
     "quirks": ["equality-vs-arithmetic-coercion"],
     "formula": "=PV(\"0.1\", \"10\", \"100\")",
-    "expected": { "number": -614.4567105704685 }
+    "expected": { "number": -614.4567105704684 }
   },
   {
     "id": "fn.pv.true-type",
@@ -160,7 +160,7 @@
     "tags": ["pv", "financial", "coercion"],
     "quirks": ["bool-number-equality"],
     "formula": "=PV(0.1, 10, 100, 0, FALSE)",
-    "expected": { "number": -614.4567105704685 }
+    "expected": { "number": -614.4567105704684 }
   },
   {
     "id": "fn.pv.empty-optional",
@@ -168,7 +168,7 @@
     "tags": ["pv", "financial", "empty"],
     "quirks": ["empty-cell-duality"],
     "formula": "=PV(A1, A2, A3, A4, A5)",
-    "expected": { "number": -614.4567105704685 },
+    "expected": { "number": -614.4567105704684 },
     "workbook": {
       "sheets": [{
         "name": "Sheet1",

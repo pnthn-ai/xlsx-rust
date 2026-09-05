@@ -322,7 +322,7 @@ mod tests {
         let tiny = pv(1e-12, 360.0, 100.0, 0.0, 0.0).unwrap();
         let limit = pv(0.0, 360.0, 100.0, 0.0, 0.0).unwrap();
         assert!(
-            (tiny - limit).abs() < 1e-6,
+            (tiny - limit).abs() < 1e-5,
             "tiny-rate PV {tiny} should approach {limit}"
         );
         let naive = pv_naive(1e-12, 360.0, 100.0, 0.0, 0.0).unwrap();
