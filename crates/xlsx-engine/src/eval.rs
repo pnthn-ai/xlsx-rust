@@ -446,6 +446,7 @@ impl Interpreter {
             "REPLACE" => self.fn_replace(args, ctx),
             "TEXTJOIN" => self.fn_textjoin(args, ctx),
             "CONCAT" => self.fn_concat(args, ctx),
+            "NPV" => self.fn_npv(args, ctx),
             "TRUE" => Ok(ExcelValue::Bool(true)),
             "FALSE" => Ok(ExcelValue::Bool(false)),
             _ => Ok(ExcelValue::Error(ExcelError::Name)),
@@ -1800,6 +1801,31 @@ impl Interpreter {
             Ok(pos) => Ok(ExcelValue::Number(pos)),
             Err(e) => Ok(ExcelValue::Error(e)),
         }
+    fn fn_npv(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.len() < 2 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        let rate = match self.as_number(&self.eval_scalar(&args[0], ctx)?) {
+            Ok(n) => n,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        if !rate.is_finite() {
+            return Ok(ExcelValue::Error(ExcelError::Num));
+        }
+        let mut factor = 1.0;
+        let one = 1.0 + rate;
+        let mut sum = 0.0;
+        for arg in &args[1..] {
+            let from_range = matches!(arg, Expr::Range(_) | Expr::Cell(_) | Expr::Name(_));
+            let v = self.eval_expr(arg, ctx)?;
+            if let Some(e) = npv_feed(&v, from_range, rate, one, &mut factor, &mut sum) {
+                return Ok(ExcelValue::Error(e));
+            }
+        }
+        if !sum.is_finite() {
+            return Ok(ExcelValue::Error(ExcelError::Num));
+        }
+        Ok(ExcelValue::Number(sum))
     }
 
     fn fn_value(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
@@ -2537,6 +2563,53 @@ fn excel_round_dir(n: f64, digits: i32, up: bool) -> f64 {
 fn excel_trunc(n: f64, digits: i32) -> f64 {
     let factor = 10f64.powi(digits);
     (n * factor).trunc() / factor
+}
+
+fn npv_feed(
+    v: &ExcelValue,
+    from_range: bool,
+    rate: f64,
+    one: f64,
+    factor: &mut f64,
+    sum: &mut f64,
+) -> Option<ExcelError> {
+    match (v, from_range) {
+        (ExcelValue::Array(rows), _) => {
+            for row in rows {
+                for c in row {
+                    if let Some(e) = npv_feed(c, true, rate, one, factor, sum) {
+                        return Some(e);
+                    }
+                }
+            }
+            None
+        }
+        (ExcelValue::Error(e), _) => Some(*e),
+        (ExcelValue::Number(n), _) => npv_push(*n, rate, one, factor, sum),
+        (ExcelValue::Empty, _) => None,
+        (ExcelValue::Bool(b), false) => {
+            npv_push(if *b { 1.0 } else { 0.0 }, rate, one, factor, sum)
+        }
+        (ExcelValue::Bool(_), true) => None,
+        (ExcelValue::Text(s), false) => match parse_excel_number(s) {
+            Ok(n) => npv_push(n, rate, one, factor, sum),
+            Err(e) => Some(e),
+        },
+        (ExcelValue::Text(_), true) => None,
+    }
+}
+
+fn npv_push(v: f64, rate: f64, one: f64, factor: &mut f64, sum: &mut f64) -> Option<ExcelError> {
+    if rate == -1.0 {
+        return Some(ExcelError::Div0);
+    }
+    *factor *= one;
+    *sum += v / *factor;
+    if !sum.is_finite() {
+        Some(ExcelError::Num)
+    } else {
+        None
+    }
 }
 
 fn parse_excel_number(s: &str) -> Result<f64, ExcelError> {

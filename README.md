@@ -314,6 +314,8 @@ function families above. Workbook input is the snippet type in `xlsx-types` (no
 | [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators, logicals, lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates (`DATE`/`TIME`/`YEAR`/`MONTH`/`DAY`/`NETWORKDAYS`), math, text, `TYPE` / `IS*` |
 | [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators, logicals, lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates (`DATE`/`TIME`/`YEAR`/`MONTH`/`DAY`/`WEEKDAY`), math, text, `TYPE` / `IS*` |
 | [`dates.rs`](crates/xlsx-engine-core/src/dates.rs) | 1900/1904 serials, leap-year bug, O(1) `WEEKDAY` |
+| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators, logicals, lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates, math, text, `NPV`, `TYPE` / `IS*` |
+| [`eval/npv.rs`](crates/xlsx-engine-core/src/eval/npv.rs) | Excel `NPV` kernel (period-1 discount, range skip of blanks/text/logicals) |
 
 **Implemented:** arithmetic and comparison operators (unary `+/-`, `%`, `^`,
 `&`, space intersection), host-aware implicit intersection, cell refs /
@@ -371,6 +373,10 @@ as one or the other. Documented quirk categories:
 - `SUMPRODUCT`: element-wise multiply then sum; uncoerced logicals/text/empty
   are 0; `--` or `*` turns TRUE/FALSE into 1/0; mismatched dimensions are
   `#VALUE!`; arguments evaluate in array context (`(A1:A3>1)*B1:B3`)
+- `NPV(rate, values…)`: discounts from period 1; range/array blanks, text, and
+  logicals are skipped and do **not** consume a period; scalar logicals/text
+  numbers coerce (`NPV(1,TRUE,1)` is 0.75, `NPV(1,A1)` of `TRUE` is 0);
+  `rate = -1` with a kept cash flow is `#DIV/0!`
 - `VLOOKUP` approximate match binary-searches (wrong answers on unsorted data);
   omitted `range_lookup` defaults to approximate. `XLOOKUP` defaults to exact
 - `IF` short-circuits; `AND` / `OR` do not (`AND(FALSE, 1/0)` is `#DIV/0!`)
