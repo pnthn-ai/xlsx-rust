@@ -586,6 +586,37 @@
     }
   },
   {
+    "id": "fn.drop.missing-sheet",
+    "description": "DROP of a range on a missing sheet is #REF!",
+    "tags": ["drop", "errors"],
+    "formula": "=DROP(Missing!A1:A3, 1)",
+    "expected": { "error": "#REF!" }
+  },
+  {
+    "id": "fn.drop.dropped-formula-error",
+    "description": "A #DIV/0! formula in a dropped header does not surface",
+    "notes": "Range DROP evaluates only the kept rectangle. The error in A1 is dropped, not propagated.",
+    "tags": ["drop", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=DROP(A1:A3, 1)",
+    "expected": {
+      "array": [
+        [{ "number": 2 }],
+        [{ "number": 3 }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "formula": "=1/0" },
+          "A2": { "number": 2 },
+          "A3": { "number": 3 }
+        }
+      }]
+    }
+  },
+  {
     "id": "fn.drop.scalar-plus-top-left",
     "description": "DROP+n in a scalar operator takes the top-left kept cell (not host-aware spill intersection)",
     "notes": "The engine scalarizes arrays to the first element. It does not intersect a written spill with the host cell.",

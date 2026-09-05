@@ -435,6 +435,9 @@ as one or the other. Documented quirk categories:
   `0` is a no-op. Empty leftover (`|count| >= axis`) is `#CALC!`.
 - The parser does not accept omitted-middle arguments (`DROP(a,,2)`). Use
   `DROP(a,0,2)`.
+- A range first argument evaluates **only the kept rectangle**. Dropped
+  formula cells are not computed (a circular ref in a dropped header does
+  not fire). Stored values and errors in the kept region match Excel.
 - Excel's worksheet array-size cap (and the documented `#NUM!` for a
   too-large array) is not enforced; allocation is memory-bounded.
 

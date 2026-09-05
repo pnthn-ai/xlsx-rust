@@ -30,6 +30,8 @@
 //!   is memory-bounded (live Excel would `#NUM!` on a too-large array).
 //! - The parser does not accept omitted-middle arguments (`DROP(a,,2)`). Use
 //!   `DROP(a,0,2)`.
+//! - A range first argument evaluates **only the kept rectangle**. Dropped
+//!   formula cells are not computed (circular refs there do not fire).
 //!
 //! [`apply`] clones **only** the kept rectangle (keep-all can move the grid).
 //! [`apply_naive`] clones the whole matrix, then `drain`s dropped edges —
@@ -37,7 +39,7 @@
 
 use super::{coerce, Ctx, Evaluator};
 use crate::ast::Expr;
-use xlsx_types::{EvalError, ExcelError, ExcelValue};
+use xlsx_types::{CellAddr, CellRef, EvalError, ExcelError, ExcelValue, RangeRef};
 
 /// Excel `DROP` from already-evaluated `array` / counts.
 pub fn apply(array: &ExcelValue, rows: f64, cols: f64) -> ExcelValue {
@@ -66,6 +68,14 @@ pub(crate) fn eval(
         return Ok(ExcelValue::Error(ExcelError::Value));
     }
 
+    // Range first argument: evaluate only the kept rectangle (dropped cells
+    // are never read). Formula errors / circular refs in the dropped edge
+    // therefore do not fire — same visible result as materialize-then-slice
+    // for stored values and for errors that land in the kept region.
+    if let Expr::Range(range) = &args[0] {
+        return eval_range(ev, range, &args[1], args.get(2), ctx);
+    }
+
     let array = ev.eval_expr(&args[0], ctx)?;
     if let ExcelValue::Error(e) = array {
         return Ok(ExcelValue::Error(e));
@@ -85,6 +95,64 @@ pub(crate) fn eval(
     };
 
     Ok(apply(&array, rows, cols))
+}
+
+fn eval_range(
+    ev: &Evaluator,
+    range: &RangeRef,
+    rows_expr: &Expr,
+    cols_expr: Option<&Expr>,
+    ctx: &mut Ctx<'_>,
+) -> Result<ExcelValue, EvalError> {
+    let sheet_name = range
+        .sheet
+        .clone()
+        .unwrap_or_else(|| ctx.current_sheet.clone());
+    if ctx.spec.workbook.sheet(Some(&sheet_name)).is_err() {
+        return Ok(ExcelValue::Error(ExcelError::Ref));
+    }
+
+    let height = range.row_count() as usize;
+    let width = range.col_count() as usize;
+
+    let rows = match count_arg(ev, rows_expr, ctx)? {
+        Ok(n) => n,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let cols = if let Some(expr) = cols_expr {
+        match count_arg(ev, expr, ctx)? {
+            Ok(n) => n,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        }
+    } else {
+        0.0
+    };
+
+    let (r0, r1) = match axis_span(height, rows) {
+        Ok(s) => s,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let (c0, c1) = match axis_span(width, cols) {
+        Ok(s) => s,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+
+    let mut out = Vec::with_capacity(r1 - r0);
+    let start = range.start;
+    for ri in r0..r1 {
+        let mut row = Vec::with_capacity(c1 - c0);
+        for ci in c0..c1 {
+            row.push(ev.eval_cell(
+                &CellRef {
+                    sheet: Some(sheet_name.clone()),
+                    addr: CellAddr::new(start.col + ci as u32, start.row + ri as u32),
+                },
+                ctx,
+            )?);
+        }
+        out.push(row);
+    }
+    Ok(ExcelValue::Array(out))
 }
 
 fn count_arg(
@@ -158,9 +226,17 @@ fn axis_span(dim: usize, count: f64) -> Result<(usize, usize), ExcelError> {
 }
 
 fn take_rect(grid: &[Vec<ExcelValue>], r0: usize, r1: usize, c0: usize, c1: usize) -> ExcelValue {
-    let mut out = Vec::with_capacity(r1 - r0);
-    for row in &grid[r0..r1] {
-        out.push(row[c0..c1].to_vec());
+    let width = grid.first().map(|r| r.len()).unwrap_or(0);
+    if r0 == 0 && r1 == grid.len() && c0 == 0 && c1 == width {
+        return ExcelValue::Array(grid.to_vec());
+    }
+    let mut out = Vec::with_capacity(r1.saturating_sub(r0));
+    if c0 == 0 && c1 == width {
+        out.extend(grid[r0..r1].iter().cloned());
+    } else {
+        for row in &grid[r0..r1] {
+            out.push(row[c0..c1].to_vec());
+        }
     }
     ExcelValue::Array(out)
 }

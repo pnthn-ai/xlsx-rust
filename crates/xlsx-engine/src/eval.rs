@@ -1141,6 +1141,15 @@ impl Interpreter {
         if args.len() < 2 || args.len() > 3 {
             return Ok(ExcelValue::Error(ExcelError::Value));
         }
+        if let Expr::Range(range) = &args[0] {
+            let sheet = range
+                .sheet
+                .clone()
+                .unwrap_or_else(|| ctx.current_sheet.clone());
+            if ctx.spec.workbook.sheet(Some(&sheet)).is_err() {
+                return Ok(ExcelValue::Error(ExcelError::Ref));
+            }
+        }
         let array = self.eval_expr(&args[0], ctx)?;
         if let ExcelValue::Error(e) = array {
             return Ok(ExcelValue::Error(e));

@@ -28,6 +28,14 @@ fn bench_drop(c: &mut Criterion) {
             b.iter(|| black_box(eval_calc_core(black_box(&spec_footer))))
         });
 
+        let spec_half = col_10k.spec(
+            "drop.half_10k",
+            format!("=DROP({}, 5000)", col_10k.a1_range()),
+        );
+        g.bench_function("col_drop_half_10k", |b| {
+            b.iter(|| black_box(eval_calc_core(black_box(&spec_half))))
+        });
+
         let grid = numeric_grid(1_024, 8, |r, c| (r * 8 + c + 1) as f64);
         let spec_2d = formula_spec(
             "drop.grid_1k_x8",

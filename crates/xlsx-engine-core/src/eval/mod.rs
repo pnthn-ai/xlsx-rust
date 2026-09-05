@@ -923,8 +923,13 @@ mod tests {
             eval_formula_in(&wb, "=DROP({1;2})").unwrap(),
             ExcelValue::Error(ExcelError::Value)
         );
+        assert_eq!(
+            eval_formula_in(&wb, "=DROP(Missing!A1:A3, 1)").unwrap(),
+            ExcelValue::Error(ExcelError::Ref)
+        );
     }
 
+    #[test]
     fn unique_literal_and_exactly_once() {
         let wb = Workbook::default();
         assert_eq!(

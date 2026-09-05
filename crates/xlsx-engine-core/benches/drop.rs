@@ -44,15 +44,15 @@ fn matrix(rows: usize, cell: impl Fn(usize) -> Vec<ExcelValue>) -> ExcelValue {
 fn cases() -> Vec<Case> {
     vec![
         Case {
-            name: "8k×8 text, drop 1/8 top rows",
+            name: "8k×8 text, drop 3/4 top rows",
             array: matrix(ROWS, text_row),
-            rows: (ROWS / 8) as f64,
+            rows: (ROWS * 3 / 4) as f64,
             cols: 0.0,
         },
         Case {
-            name: "8k×8 text, drop 1/8 bottom rows",
+            name: "8k×8 text, drop 3/4 bottom rows",
             array: matrix(ROWS, text_row),
-            rows: -((ROWS / 8) as f64),
+            rows: -((ROWS * 3 / 4) as f64),
             cols: 0.0,
         },
         Case {
@@ -62,10 +62,10 @@ fn cases() -> Vec<Case> {
             cols: 0.0,
         },
         Case {
-            name: "8k×8 text, drop 2 left cols",
+            name: "8k×8 text, drop 6 of 8 cols",
             array: matrix(ROWS, text_row),
             rows: 0.0,
-            cols: 2.0,
+            cols: 6.0,
         },
         Case {
             name: "8k×8 text, drop all rows → #CALC!",
@@ -74,16 +74,16 @@ fn cases() -> Vec<Case> {
             cols: 0.0,
         },
         Case {
-            name: "8k×8 numeric, drop header+footer",
+            name: "8k×8 numeric, drop half+2 cols",
             array: matrix(ROWS, number_row),
-            rows: 1.0,
-            cols: 0.0,
+            rows: (ROWS / 2) as f64,
+            cols: 2.0,
         },
         Case {
-            name: "8k×8 numeric, drop rows+cols mixed",
+            name: "8k×8 numeric, drop footer+right",
             array: matrix(ROWS, number_row),
-            rows: -64.0,
-            cols: 2.0,
+            rows: -((ROWS / 2) as f64),
+            cols: -2.0,
         },
     ]
 }
