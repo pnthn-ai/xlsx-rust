@@ -450,6 +450,7 @@ impl Interpreter {
             "CONCAT" => self.fn_concat(args, ctx),
             "NPV" => self.fn_npv(args, ctx),
             "UNIQUE" => self.fn_unique(args, ctx),
+            "EXPAND" => self.fn_expand(args, ctx),
             "IRR" => self.fn_irr(args, ctx),
             "TRUE" => Ok(ExcelValue::Bool(true)),
             "FALSE" => Ok(ExcelValue::Bool(false)),
@@ -900,6 +901,48 @@ impl Interpreter {
         } else {
             Ok(v)
         }
+    }
+
+    fn fn_expand(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.is_empty() || args.len() > 4 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        let array = self.eval_expr(&args[0], ctx)?;
+        let rows_v = if args.len() >= 2 {
+            Some(self.eval_scalar(&args[1], ctx)?)
+        } else {
+            None
+        };
+        let cols_v = if args.len() >= 3 {
+            Some(self.eval_scalar(&args[2], ctx)?)
+        } else {
+            None
+        };
+        let pad = if args.len() >= 4 {
+            self.eval_scalar(&args[3], ctx)?
+        } else {
+            ExcelValue::Error(ExcelError::Na)
+        };
+        if let ExcelValue::Error(e) = array {
+            return Ok(ExcelValue::Error(e));
+        }
+        let rows = match rows_v
+            .as_ref()
+            .map(xlsx_engine_core::expand_dim_from_value)
+            .transpose()
+        {
+            Ok(n) => n.flatten(),
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        let columns = match cols_v
+            .as_ref()
+            .map(xlsx_engine_core::expand_dim_from_value)
+            .transpose()
+        {
+            Ok(n) => n.flatten(),
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        Ok(xlsx_engine_core::excel_expand(&array, rows, columns, &pad))
     }
 
     fn fn_unique(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
@@ -1700,7 +1743,7 @@ impl Interpreter {
         }
     }
 
-        fn collect_holiday_serials(&self, v: &ExcelValue, out: &mut Vec<f64>) -> Option<ExcelError> {
+    fn collect_holiday_serials(&self, v: &ExcelValue, out: &mut Vec<f64>) -> Option<ExcelError> {
         match v {
             ExcelValue::Array(rows) => {
                 for row in rows {
