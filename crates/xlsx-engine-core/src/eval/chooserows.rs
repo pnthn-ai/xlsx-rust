@@ -409,10 +409,7 @@ mod tests {
     #[test]
     fn empty_row_num_list_is_value() {
         let array = col(&[1.0]);
-        assert_eq!(
-            select(&array, &[]),
-            ExcelValue::Error(ExcelError::Value)
-        );
+        assert_eq!(select(&array, &[]), ExcelValue::Error(ExcelError::Value));
     }
 
     #[test]

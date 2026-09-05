@@ -170,10 +170,7 @@ fn evaluate_bench(n: u32, formula: &str, iters: u32) {
     let ms = time_it(iters, || {
         black_box(engine.evaluate(black_box(&spec)).unwrap());
     });
-    println!(
-        "evaluate n={n:>6}  {}  formula={formula}",
-        fmt_dur(ms)
-    );
+    println!("evaluate n={n:>6}  {}  formula={formula}", fmt_dur(ms));
 }
 
 fn main() {

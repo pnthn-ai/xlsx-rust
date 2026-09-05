@@ -432,7 +432,11 @@ fn fn_filter(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelVa
 /// Excel `CHOOSEROWS(array, row_num1, [row_num2], ...)`.
 ///
 /// Arity ≥ 2. Negative indices count from the end. `0` / out-of-range → `#VALUE!`.
-fn fn_chooserows(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+fn fn_chooserows(
+    ev: &Evaluator,
+    args: &[Expr],
+    ctx: &mut Ctx<'_>,
+) -> Result<ExcelValue, EvalError> {
     if args.len() < 2 {
         return Ok(ExcelValue::Error(ExcelError::Value));
     }
