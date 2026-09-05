@@ -1,0 +1,460 @@
+[
+  {
+    "id": "fn.npv-ms-example-1",
+    "description": "Microsoft example: NPV(0.1, -10000, 3000, 4200, 6800)",
+    "tags": ["npv", "financial"],
+    "formula": "=NPV(0.1,-10000,3000,4200,6800)",
+    "expected": { "number": 1188.44341233522 }
+  },
+  {
+    "id": "fn.npv-ms-example-2",
+    "description": "Microsoft example 2: NPV of later flows plus t0 outlay",
+    "tags": ["npv", "financial"],
+    "formula": "=NPV(A1,A3:A7)+A2",
+    "expected": { "number": 1922.061554932363 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 0.08 },
+          "A2": { "number": -40000 },
+          "A3": { "number": 8000 },
+          "A4": { "number": 9200 },
+          "A5": { "number": 10000 },
+          "A6": { "number": 12000 },
+          "A7": { "number": 14500 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.npv-ms-example-2-extra-loss",
+    "description": "Microsoft example 2 with a sixth-year loss of 9000",
+    "tags": ["npv", "financial"],
+    "formula": "=NPV(A1,A3:A7,-9000)+A2",
+    "expected": { "number": -3749.465087015575 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 0.08 },
+          "A2": { "number": -40000 },
+          "A3": { "number": 8000 },
+          "A4": { "number": 9200 },
+          "A5": { "number": 10000 },
+          "A6": { "number": 12000 },
+          "A7": { "number": 14500 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.npv-basic-scalars",
+    "description": "NPV(0.1, 100, 200, 300) discounts from period 1",
+    "tags": ["npv", "financial"],
+    "formula": "=NPV(0.1,100,200,300)",
+    "expected": { "number": 481.5927873779112 }
+  },
+  {
+    "id": "fn.npv-single-value",
+    "description": "One cash flow is value/(1+rate)",
+    "tags": ["npv", "financial"],
+    "formula": "=NPV(0.1,100)",
+    "expected": { "number": 90.9090909090909 }
+  },
+  {
+    "id": "fn.npv-rate-zero",
+    "description": "rate 0 sums the cash flows",
+    "tags": ["npv", "financial"],
+    "formula": "=NPV(0,100,200,300)",
+    "expected": { "number": 600 }
+  },
+  {
+    "id": "fn.npv-negative-cashflow",
+    "description": "Negative outflows are first-class cash flows",
+    "tags": ["npv", "financial"],
+    "formula": "=NPV(0.1,-1000,500,500)",
+    "expected": { "number": -120.2103681442525 }
+  },
+  {
+    "id": "fn.npv-range",
+    "description": "A column range is walked in order",
+    "tags": ["npv", "financial"],
+    "formula": "=NPV(0.1,A1:A3)",
+    "expected": { "number": 481.5927873779112 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 100 },
+          "A2": { "number": 200 },
+          "A3": { "number": 300 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.npv-range-skips-blank",
+    "description": "Blank cells in a range are skipped and do not consume a period",
+    "tags": ["npv", "financial", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=NPV(0.1,A1:A3)",
+    "expected": { "number": 256.198347107438 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 100 },
+          "A3": { "number": 200 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.npv-zero-keeps-period",
+    "description": "An explicit 0 is a cash flow and keeps its period",
+    "tags": ["npv", "financial", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=NPV(0.1,A1:A3)",
+    "expected": { "number": 241.1720510894064 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 100 },
+          "A2": { "number": 0 },
+          "A3": { "number": 200 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.npv-range-skips-text",
+    "description": "Text in a range is skipped (numeric-looking text too) and slides later flows",
+    "tags": ["npv", "financial"],
+    "quirks": ["sum-arg-vs-range"],
+    "formula": "=NPV(0.1,A1:A3)",
+    "expected": { "number": 256.198347107438 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 100 },
+          "A2": { "text": "200" },
+          "A3": { "number": 200 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.npv-range-skips-bool",
+    "description": "Logicals in a range are skipped (cell ref is range-like)",
+    "tags": ["npv", "financial"],
+    "quirks": ["sum-arg-vs-range", "bool-number-equality"],
+    "formula": "=NPV(1,A1)",
+    "expected": { "number": 0 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": { "A1": { "bool": true } }
+      }]
+    }
+  },
+  {
+    "id": "fn.npv-scalar-bool",
+    "description": "NPV(1, TRUE, 1) coerces TRUE→1 (Excel, not Google Sheets)",
+    "tags": ["npv", "financial", "coercion"],
+    "quirks": ["sum-arg-vs-range", "bool-number-equality"],
+    "formula": "=NPV(1,TRUE,1)",
+    "expected": { "number": 0.75 }
+  },
+  {
+    "id": "fn.npv-scalar-false",
+    "description": "FALSE as a scalar cash flow is 0 and keeps the period",
+    "tags": ["npv", "financial", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=NPV(0.1,100,FALSE,200)",
+    "expected": { "number": 241.1720510894064 }
+  },
+  {
+    "id": "fn.npv-scalar-text-num",
+    "description": "Numeric text scalar is coerced",
+    "tags": ["npv", "financial", "coercion"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=NPV(0.1,\"100\")",
+    "expected": { "number": 90.9090909090909 }
+  },
+  {
+    "id": "fn.npv-scalar-text-bad",
+    "description": "Non-numeric text scalar is #VALUE!",
+    "tags": ["npv", "financial", "errors"],
+    "formula": "=NPV(0.1,\"x\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.npv-blank-cell-scalar-ref",
+    "description": "Blank cell argument is a 1-length range: skipped, result 0",
+    "tags": ["npv", "financial", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=NPV(0.1,A1)",
+    "expected": { "number": 0 },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.npv-empty-range",
+    "description": "A range of only blanks yields 0 (value1 was supplied)",
+    "tags": ["npv", "financial", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=NPV(0.1,A1:A5)",
+    "expected": { "number": 0 },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.npv-two-ranges",
+    "description": "Multiple ranges concatenate in argument order",
+    "tags": ["npv", "financial"],
+    "formula": "=NPV(0.1,A1:A2,B1:B2)",
+    "expected": { "number": 75.47981695239395 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 10 },
+          "A2": { "number": 20 },
+          "B1": { "number": 30 },
+          "B2": { "number": 40 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.npv-range-plus-scalar",
+    "description": "A range followed by a scalar continues the period index",
+    "tags": ["npv", "financial"],
+    "formula": "=NPV(0.1,A1:A2,30)",
+    "expected": { "number": 48.15927873779113 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 10 },
+          "A2": { "number": 20 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.npv-array-literal",
+    "description": "Array literal is flattened row-major; text/logicals inside are skipped",
+    "tags": ["npv", "financial"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=NPV(0.1,{100,\"x\",200})",
+    "expected": { "number": 256.198347107438 }
+  },
+  {
+    "id": "fn.npv-2d-range-row-major",
+    "description": "2-D range is walked row-major (A1,B1,A2,B2)",
+    "tags": ["npv", "financial"],
+    "formula": "=NPV(0.1,A1:B2)",
+    "expected": { "number": 7.547981695239394 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "B1": { "number": 2 },
+          "A2": { "number": 3 },
+          "B2": { "number": 4 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.npv-named-range",
+    "description": "Defined name referring to a cash-flow range",
+    "tags": ["npv", "financial", "named"],
+    "formula": "=NPV(0.1,Flows)",
+    "expected": { "number": 481.5927873779112 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 100 },
+          "A2": { "number": 200 },
+          "A3": { "number": 300 }
+        }
+      }],
+      "names": [{ "name": "Flows", "refers_to": "Sheet1!A1:A3" }]
+    }
+  },
+  {
+    "id": "fn.npv-rate-true",
+    "description": "TRUE rate coerces to 1",
+    "tags": ["npv", "financial", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=NPV(TRUE,100)",
+    "expected": { "number": 50 }
+  },
+  {
+    "id": "fn.npv-rate-text",
+    "description": "Numeric text rate is coerced",
+    "tags": ["npv", "financial", "coercion"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=NPV(\"0.1\",100)",
+    "expected": { "number": 90.9090909090909 }
+  },
+  {
+    "id": "fn.npv-rate-blank-cell",
+    "description": "Blank rate cell coerces to 0 (sum of flows)",
+    "tags": ["npv", "financial", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=NPV(A1,100,200)",
+    "expected": { "number": 300 },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.npv-rate-neg-one",
+    "description": "rate = -1 with a cash flow is #DIV/0!",
+    "tags": ["npv", "financial", "errors"],
+    "formula": "=NPV(-1,100)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.npv-rate-neg-one-no-flows",
+    "description": "rate = -1 with only skipped blanks is 0 (no division)",
+    "tags": ["npv", "financial", "errors", "empty"],
+    "formula": "=NPV(-1,A1)",
+    "expected": { "number": 0 },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.npv-rate-lt-neg-one",
+    "description": "rate < -1 uses a negative discount factor: NPV(-2,100,200)=100",
+    "tags": ["npv", "financial"],
+    "formula": "=NPV(-2,100,200)",
+    "expected": { "number": 100 }
+  },
+  {
+    "id": "fn.npv-neg-half-rate",
+    "description": "rate = -0.5: 100/0.5 + 200/0.25 = 1000",
+    "tags": ["npv", "financial"],
+    "formula": "=NPV(-0.5,100,200)",
+    "expected": { "number": 1000 }
+  },
+  {
+    "id": "fn.npv-arity-0",
+    "description": "NPV() is #VALUE!",
+    "tags": ["npv", "financial", "errors"],
+    "formula": "=NPV()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.npv-arity-rate-only",
+    "description": "NPV(rate) without value1 is #VALUE!",
+    "tags": ["npv", "financial", "errors"],
+    "formula": "=NPV(0.1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.npv-err-rate",
+    "description": "Error in rate propagates",
+    "tags": ["npv", "financial", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=NPV(1/0,100)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.npv-err-value",
+    "description": "Error in a scalar value propagates",
+    "tags": ["npv", "financial", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=NPV(0.1,#N/A)",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.npv-err-left-wins",
+    "description": "Left-to-right: rate error beats a later value error",
+    "tags": ["npv", "financial", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=NPV(#DIV/0!,#N/A)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.npv-err-in-range",
+    "description": "Error in a range is not skipped; it propagates",
+    "tags": ["npv", "financial", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=NPV(0.1,A1:A3)",
+    "expected": { "error": "#DIV/0!" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 100 },
+          "A2": { "error": "#DIV/0!" },
+          "A3": { "number": 200 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.npv-err-after-skip",
+    "description": "Skipped text does not hide a later range error",
+    "tags": ["npv", "financial", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=NPV(0.1,A1:A2)",
+    "expected": { "error": "#N/A" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "skip" },
+          "A2": { "error": "#N/A" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.npv-stored-empty-string",
+    "description": "Stored \"\" in a range is text and is skipped like other text",
+    "tags": ["npv", "financial", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=NPV(0.1,A1:A3)",
+    "expected": { "number": 256.198347107438 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 100 },
+          "A2": { "text": "" },
+          "A3": { "number": 200 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.npv-formula-cell-in-range",
+    "description": "Formula cells in the range are evaluated, then classified",
+    "tags": ["npv", "financial"],
+    "formula": "=NPV(0.1,A1:A3)",
+    "expected": { "number": 481.5927873779112 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 100 },
+          "A2": { "formula": "=50*4" },
+          "A3": { "number": 300 }
+        }
+      }]
+    }
+  }
+]

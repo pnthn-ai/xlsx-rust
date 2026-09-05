@@ -7,6 +7,7 @@ pub mod coerce;
 pub mod compare;
 pub mod empty;
 pub mod functions;
+pub mod npv;
 
 use crate::ast::{BinOp, Expr, UnaryOp};
 use crate::parse::parse;
@@ -108,7 +109,11 @@ impl Evaluator {
         out
     }
 
-    fn eval_cell(&self, cell: &CellRef, ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    pub(crate) fn eval_cell(
+        &self,
+        cell: &CellRef,
+        ctx: &mut Ctx<'_>,
+    ) -> Result<ExcelValue, EvalError> {
         let sheet_name = cell
             .sheet
             .clone()
