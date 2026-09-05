@@ -56,24 +56,24 @@ fn cases() -> Vec<Case> {
             iters: ITERS_LIGHT,
         },
         Case {
-            name: "10k conventional 10%/12%",
+            name: "10k conventional 1%/1.2%",
             values: n10k,
-            finance: 0.10,
-            reinvest: 0.12,
+            finance: 0.01,
+            reinvest: 0.012,
             iters: ITERS_HEAVY,
         },
         Case {
-            name: "100k conventional 8%/10%",
+            name: "100k conventional 0.1%/0.12%",
             values: n100k,
-            finance: 0.08,
-            reinvest: 0.10,
+            finance: 0.001,
+            reinvest: 0.0012,
             iters: ITERS_HEAVY,
         },
         Case {
-            name: "10k mixed signed 8%/10%",
+            name: "10k mixed signed 1%/1.2%",
             values: mixed,
-            finance: 0.08,
-            reinvest: 0.10,
+            finance: 0.01,
+            reinvest: 0.012,
             iters: ITERS_LIGHT,
         },
     ]
@@ -112,14 +112,14 @@ fn main() {
     println!("{}", "-".repeat(72));
     for c in cases() {
         let naive = time_it(c.iters, || {
-            black_box(excel_mirr_naive(
+            let _ = black_box(excel_mirr_naive(
                 black_box(&c.values),
                 black_box(c.finance),
                 black_box(c.reinvest),
             ));
         });
         let fast = time_it(c.iters, || {
-            black_box(excel_mirr(
+            let _ = black_box(excel_mirr(
                 black_box(&c.values),
                 black_box(c.finance),
                 black_box(c.reinvest),
@@ -133,8 +133,10 @@ fn main() {
             fmt_dur(fast),
             speedup
         );
-        let a = excel_mirr_naive(&c.values, c.finance, c.reinvest).unwrap();
-        let b = excel_mirr(&c.values, c.finance, c.reinvest).unwrap();
+        let a = excel_mirr_naive(&c.values, c.finance, c.reinvest)
+            .unwrap_or_else(|e| panic!("naive #NUM!/error on {}: {e:?}", c.name));
+        let b = excel_mirr(&c.values, c.finance, c.reinvest)
+            .unwrap_or_else(|e| panic!("fast #NUM!/error on {}: {e:?}", c.name));
         let scale = a.abs().max(b.abs()).max(1.0);
         assert!(
             (a - b).abs() / scale < 1e-9,

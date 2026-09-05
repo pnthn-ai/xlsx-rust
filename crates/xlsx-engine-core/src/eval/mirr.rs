@@ -23,8 +23,11 @@
 //! period, no sign-masked `Vec`s). [`mirr_naive`] builds the masked series
 //! and calls [`super::npv::npv_naive`] so the bench can print a before/after.
 
-use super::npv::{npv, npv_naive};
+use super::npv::npv_naive;
 use xlsx_types::ExcelError;
+
+#[cfg(test)]
+use super::npv::npv;
 
 /// Production `MIRR` kernel (streaming NPV of each sign).
 pub fn mirr(values: &[f64], finance_rate: f64, reinvest_rate: f64) -> Result<f64, ExcelError> {
@@ -299,6 +302,13 @@ mod tests {
             mirr(&[-100.0, 110.0], 0.1, f64::INFINITY),
             Err(ExcelError::Num)
         );
+    }
+
+    #[test]
+    fn grow_overflow_is_num() {
+        let mut v = vec![1.0; 2000];
+        v[0] = -1.0;
+        assert_eq!(both(&v, 0.5, 0.5), Err(ExcelError::Num));
     }
 
     #[test]
