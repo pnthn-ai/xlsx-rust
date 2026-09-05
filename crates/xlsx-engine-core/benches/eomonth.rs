@@ -13,7 +13,11 @@ use xlsx_types::DateSystem;
 const SYSTEM: DateSystem = DateSystem::Excel1900;
 
 /// Pre-hill-climb year walk: O(years since 1900) each way.
-fn eomonth_serial_walk(start: f64, months: f64, system: DateSystem) -> Result<f64, xlsx_types::ExcelError> {
+fn eomonth_serial_walk(
+    start: f64,
+    months: f64,
+    system: DateSystem,
+) -> Result<f64, xlsx_types::ExcelError> {
     if !start.is_finite() || !months.is_finite() || start < 0.0 {
         return Err(xlsx_types::ExcelError::Num);
     }
@@ -115,7 +119,11 @@ fn ymd_to_serial_1900_walk(year: i32, month: i32, day: i32) -> Result<i32, xlsx_
     Ok(serial)
 }
 
-fn run_pair(f: fn(f64, f64, DateSystem) -> Result<f64, xlsx_types::ExcelError>, start: f64, months: f64) {
+fn run_pair(
+    f: fn(f64, f64, DateSystem) -> Result<f64, xlsx_types::ExcelError>,
+    start: f64,
+    months: f64,
+) {
     black_box(f(black_box(start), black_box(months), SYSTEM).unwrap());
 }
 

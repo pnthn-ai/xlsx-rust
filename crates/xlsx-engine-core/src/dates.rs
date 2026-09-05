@@ -373,7 +373,10 @@ mod tests {
     #[test]
     fn eomonth_truncates_toward_zero() {
         let s = DateSystem::Excel1900;
-        assert_eq!(eomonth_serial(d(2011, 1, 1), 1.9, s).unwrap(), d(2011, 2, 28));
+        assert_eq!(
+            eomonth_serial(d(2011, 1, 1), 1.9, s).unwrap(),
+            d(2011, 2, 28)
+        );
         assert_eq!(
             eomonth_serial(d(2011, 1, 1), -3.9, s).unwrap(),
             d(2010, 10, 31)
