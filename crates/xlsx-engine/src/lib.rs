@@ -1,8 +1,8 @@
 //! Stub calculation candidates for the verification gate.
 //!
-//! This is **not** a full formula engine. It exists so the verification layer
-//! has something to load, and so a subagent can see a pass path
-//! (`seed-compliant`) and a fail path (`naive`) before writing a real engine.
+//! The real engine lives in `xlsx-engine-core` (`calc-core`). This crate keeps
+//! a seed-scoped pass path (`seed-compliant`) and an intentional fail path
+//! (`naive`) so the gate remains demonstrable.
 
 mod eval;
 mod parse;

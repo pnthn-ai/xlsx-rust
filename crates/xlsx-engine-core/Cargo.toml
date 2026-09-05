@@ -1,0 +1,10 @@
+[package]
+name = "xlsx-engine-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Excel-compatible formula parser and calculation core (calc-core candidate)"
+
+[dependencies]
+xlsx-types = { workspace = true }

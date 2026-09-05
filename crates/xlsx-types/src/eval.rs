@@ -127,7 +127,7 @@ pub enum EvalError {
 /// LibreOffice backend implements the same shape (via [`crate::oracle`]
 /// adapters in `xlsx-oracle`).
 pub trait Candidate: Send + Sync {
-    /// Stable id used in reports (`seed-compliant`, `naive`, `my-pr-42`).
+    /// Stable id used in reports (`calc-core`, `seed-compliant`, `naive`).
     fn id(&self) -> &str;
 
     fn evaluate(&self, spec: &EvalSpec) -> Result<ExcelValue, EvalError>;

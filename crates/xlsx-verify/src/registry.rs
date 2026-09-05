@@ -5,10 +5,12 @@
 //! [`all_candidates`]) so `xlsx-verify --candidate <id>` can load it.
 
 use xlsx_engine::{NaiveEngine, SeedCompliantEngine};
+use xlsx_engine_core::CalcCoreEngine;
 use xlsx_types::Candidate;
 
 pub fn builtin(id: &str) -> Result<Box<dyn Candidate>, String> {
     match id {
+        "calc-core" | "engine" | "core" => Ok(Box::new(CalcCoreEngine::new())),
         "seed-compliant" | "compliant" | "reference" => Ok(Box::new(SeedCompliantEngine::new())),
         "naive" | "stub" => Ok(Box::new(NaiveEngine::new())),
         other => Err(format!(
@@ -19,16 +21,17 @@ pub fn builtin(id: &str) -> Result<Box<dyn Candidate>, String> {
 }
 
 pub fn known_ids() -> Vec<&'static str> {
-    vec!["seed-compliant", "naive"]
+    vec!["calc-core", "seed-compliant", "naive"]
 }
 
 pub fn all_candidates() -> Vec<Box<dyn Candidate>> {
     vec![
+        Box::new(CalcCoreEngine::new()),
         Box::new(SeedCompliantEngine::new()),
         Box::new(NaiveEngine::new()),
     ]
 }
 
 pub fn default_candidate_id() -> &'static str {
-    "seed-compliant"
+    "calc-core"
 }

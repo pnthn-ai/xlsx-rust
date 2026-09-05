@@ -4,9 +4,9 @@ Headless XLSX calculation engine in Rust. The long-term goal is Excel
 compatibility (including the quirks) with better time-to-compute than Microsoft
 Excel for every function.
 
-**This repository currently ships the correctness verification layer only.**
-There is no full formula parser/engine yet. New function and engine work lands
-as *candidates*; this layer is the gate they must pass.
+The first real calculation candidate is **`calc-core`** (`crates/xlsx-engine-core`):
+an AST parser + workbook-backed evaluator with Excel quirk modules. The
+verification layer is the gate every candidate — including this one — must pass.
 
 ```
                     ┌─────────────┐
@@ -38,10 +38,12 @@ backend can be wired later through `xlsx-oracle` without changing candidates.
 | [`crates/xlsx-types`](crates/xlsx-types) | Excel values, error codes, workbook snippets, [`Candidate`](crates/xlsx-types/src/eval.rs) trait |
 | [`crates/xlsx-oracle`](crates/xlsx-oracle) | Trusted expected-result source: fixture, mock, recording wrapper for a future live backend |
 | [`crates/xlsx-verify`](crates/xlsx-verify) | Corpus loader, comparison, verdict report, `xlsx-verify` CLI |
-| [`crates/xlsx-engine`](crates/xlsx-engine) | Two stub candidates: `seed-compliant` (passes the seed corpus) and `naive` (fails Excel quirks on purpose) |
+| [`crates/xlsx-engine-core`](crates/xlsx-engine-core) | Real formula engine (`calc-core`): parser, evaluator, quirk modules |
+| [`crates/xlsx-engine`](crates/xlsx-engine) | Stub candidates: `seed-compliant` (seed-scoped pass path) and `naive` (intentional fail path) |
 
-`xlsx-engine` is **not** the product engine. It exists so the gate has a pass
-path and a fail path today. Replace / outgrow it with real candidates.
+`xlsx-engine` stubs remain so the gate still has an explicit pass/fail demo.
+`calc-core` is the serious default; it does **not** read fixture expected
+outputs.
 
 ## Verification gate (for subagent PRs)
 
@@ -57,8 +59,9 @@ Skipped cases (`ignore` on a fixture) do not fail the gate. Do not use `ignore`
 to hide a broken new function — add the case, make the candidate pass it.
 
 ```bash
-# default candidate is seed-compliant; fixture oracle; no Excel required
+# default candidate is calc-core; fixture oracle; no Excel required
 cargo test --workspace
+cargo run -p xlsx-verify -- --candidate calc-core --format json
 cargo run -p xlsx-verify -- --format text
 cargo run -p xlsx-verify -- --format json --output report.json
 
@@ -187,7 +190,7 @@ Text (human) and JSON (subagents / CI) share the same structure:
 
 ```json
 {
-  "candidate": "seed-compliant",
+  "candidate": "calc-core",
   "oracle": "fixture",
   "corpus": "/path/to/fixtures",
   "summary": { "total": 42, "passed": 42, "failed": 0, "errored": 0, "skipped": 0 },
@@ -239,10 +242,42 @@ Under [`fixtures/seed/`](fixtures/seed): arithmetic, comparisons, type-coercion
 quirks, `SUM` / `IF` / `VLOOKUP`, error propagation, empty-vs-zero, array
 literals, a defined name, and a stored-formula cell.
 
-`seed-compliant` implements just enough Excel-like semantics to pass these
-cases. `naive` uses IEEE / weak coercion so the same corpus produces visible
+`calc-core` implements a real parser/evaluator for this corpus (and is the
+CLI default). `seed-compliant` is a leftover seed-scoped stub that still
+passes. `naive` uses IEEE / weak coercion so the same corpus produces visible
 `FAIL` rows (division by zero → `+inf`, `"2"+1` → `#VALUE!`, `TRUE=1` →
 `FALSE`, blank `= 0` → `FALSE`, …).
+
+## Calculation core (`calc-core`)
+
+```
+formula text ──parse──▶ AST ──eval──▶ ExcelValue
+                              │
+                    ┌─────────┼─────────┐
+                    │         │         │
+                 coerce    compare    empty
+                 (arith)    (= < >)   (blank duality)
+```
+
+| Module | Role |
+|---|---|
+| [`parse.rs`](crates/xlsx-engine-core/src/parse.rs) | Tokenizer + recursive-descent AST (ops, parens, refs, ranges, names, literals, arrays, calls) |
+| [`eval/mod.rs`](crates/xlsx-engine-core/src/eval/mod.rs) | Workbook-snippet walker; cell / named / formula targets; circular detection |
+| [`eval/coerce.rs`](crates/xlsx-engine-core/src/eval/coerce.rs) | Arithmetic / `&` / `IF` coercion (`"2"+1` = 3, TRUE → 1, empty → 0) |
+| [`eval/compare.rs`](crates/xlsx-engine-core/src/eval/compare.rs) | 15-digit `=`, case-insensitive text, `TRUE=1`, type ranking (`FALSE>100`) |
+| [`eval/empty.rs`](crates/xlsx-engine-core/src/eval/empty.rs) | Blank ≠ 0 ≠ `""`, but `A1=0` and `A1=""` when `A1` is blank |
+| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | `SUM`, `IF` (short-circuit), `VLOOKUP`, `IFERROR`, `ABS`, `N`, `IS*` |
+
+**Implemented for this PR:** arithmetic and comparison operators (unary `+/-`,
+`%`, `^`, `&`), cell refs / ranges / defined names, array literals, error
+propagation (`#DIV/0!` vs `EvalError`), and the functions above. Workbook
+input is the snippet type in `xlsx-types` (no `.xlsx` IO).
+
+**Deferred:** full function library, locale argument separators, implicit
+intersection by host row/column (top-left only today), intersection/union
+operators, live Excel oracle, performance bakeoff, and mass corpus growth
+(another branch may expand `fixtures/` — this crate consumes whatever is
+on `main`).
 
 ## Excel compatibility notes
 

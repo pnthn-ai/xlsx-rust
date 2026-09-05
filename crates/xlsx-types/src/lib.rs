@@ -4,7 +4,8 @@
 //! - **xlsx-types** — values, errors, workbook snippets, [`Candidate`] trait
 //! - **xlsx-oracle** — trusted expected-result source
 //! - **xlsx-verify** — corpus + compare + report + CLI
-//! - **xlsx-engine** — stub candidates that the verifier gates
+//! - **xlsx-engine-core** — real `calc-core` formula engine
+//! - **xlsx-engine** — stub candidates (`seed-compliant`, `naive`) that demonstrate the gate
 
 pub mod cell;
 pub mod error;

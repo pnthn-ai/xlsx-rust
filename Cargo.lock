@@ -273,6 +273,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "xlsx-engine-core"
+version = "0.1.0"
+dependencies = [
+ "xlsx-types",
+]
+
+[[package]]
 name = "xlsx-oracle"
 version = "0.1.0"
 dependencies = [
@@ -299,6 +306,7 @@ dependencies = [
  "serde_json",
  "thiserror",
  "xlsx-engine",
+ "xlsx-engine-core",
  "xlsx-oracle",
  "xlsx-types",
 ]
