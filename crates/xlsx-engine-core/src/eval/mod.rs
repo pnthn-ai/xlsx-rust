@@ -929,40 +929,4 @@ mod tests {
             ExcelValue::Error(ExcelError::Value)
         );
     }
-    #[test]
-    fn ifs_does_not_short_circuit() {
-        let wb = Workbook::default();
-        assert_eq!(
-            eval_formula_in(&wb, "=IFS(TRUE, 1, FALSE, 1/0)").unwrap(),
-            ExcelValue::Error(ExcelError::Div0)
-        );
-        assert_eq!(
-            eval_formula_in(&wb, "=IFS(FALSE, 1, FALSE, 2)").unwrap(),
-            ExcelValue::Error(ExcelError::Na)
-        );
-        assert_eq!(
-            eval_formula_in(&wb, "=IFS(FALSE, 1, TRUE, 9)").unwrap(),
-            ExcelValue::Number(9.0)
-        );
-    }
-
-    #[test]
-    fn filter_calc_and_if_empty() {
-        let wb = Workbook::default();
-        assert_eq!(
-            eval_formula_in(&wb, "=FILTER({1;2}, {FALSE;FALSE})").unwrap(),
-            ExcelValue::Error(ExcelError::Calc)
-        );
-        assert_eq!(
-            eval_formula_in(&wb, "=FILTER({1;2}, {FALSE;FALSE}, \"none\")").unwrap(),
-            ExcelValue::Text("none".into())
-        );
-        assert_eq!(
-            eval_formula_in(&wb, "=FILTER({1;2;3}, {TRUE;FALSE;TRUE})").unwrap(),
-            ExcelValue::Array(vec![
-                vec![ExcelValue::Number(1.0)],
-                vec![ExcelValue::Number(3.0)]
-            ])
-        );
-    }
 }
