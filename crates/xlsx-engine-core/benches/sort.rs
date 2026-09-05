@@ -147,10 +147,9 @@ fn workbook_n(n: u32) -> Workbook {
     let mut sheet = Sheet::new("Sheet1");
     for i in 0..n {
         let a1 = format!("A{}", i + 1);
-        sheet.cells.insert(
-            a1,
-            Cell::value(ExcelValue::Number((n - 1 - i) as f64)),
-        );
+        sheet
+            .cells
+            .insert(a1, Cell::value(ExcelValue::Number((n - 1 - i) as f64)));
     }
     Workbook {
         sheets: vec![sheet],
