@@ -9,6 +9,10 @@ use crate::text_format;
 use xlsx_types::{count_matches, Criterion, EvalError, ExcelError, ExcelValue};
 use crate::dates::{date_serial, eomonth_serial, serial_to_ymd, time_fraction};
 use xlsx_types::{EvalError, ExcelError, ExcelValue};
+use xlsx_types::{
+    excel_ceiling, excel_ceiling_math, excel_floor, excel_floor_math, EvalError, ExcelError,
+    ExcelValue,
+};
 
 pub(crate) fn dispatch(
     ev: &Evaluator,
@@ -58,6 +62,10 @@ pub(crate) fn dispatch(
         "ROUND" => fn_round(ev, args, ctx),
         "ROUNDUP" => fn_round_dir(ev, args, ctx, RoundDir::Up),
         "ROUNDDOWN" => fn_round_dir(ev, args, ctx, RoundDir::Down),
+        "FLOOR" => fn_floor_ceil(ev, args, ctx, FloorCeil::Floor),
+        "CEILING" => fn_floor_ceil(ev, args, ctx, FloorCeil::Ceiling),
+        "FLOOR.MATH" => fn_floor_ceil_math(ev, args, ctx, FloorCeil::Floor),
+        "CEILING.MATH" => fn_floor_ceil_math(ev, args, ctx, FloorCeil::Ceiling),
         "MOD" => fn_mod(ev, args, ctx),
         "SQRT" => fn_unary_num(ev, args, ctx, |n| {
             if n < 0.0 {
@@ -485,6 +493,78 @@ fn fn_trunc(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelVal
         0
     };
     Ok(ExcelValue::Number(excel_trunc(n, digits)))
+}
+
+#[derive(Clone, Copy)]
+enum FloorCeil {
+    Floor,
+    Ceiling,
+}
+
+fn fn_floor_ceil(
+    ev: &Evaluator,
+    args: &[Expr],
+    ctx: &mut Ctx<'_>,
+    kind: FloorCeil,
+) -> Result<ExcelValue, EvalError> {
+    if args.len() != 2 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let n = match coerce::to_number(&ev.eval_scalar(&args[0], ctx)?) {
+        Ok(n) => n,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let s = match coerce::to_number(&ev.eval_scalar(&args[1], ctx)?) {
+        Ok(n) => n,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let r = match kind {
+        FloorCeil::Floor => excel_floor(n, s),
+        FloorCeil::Ceiling => excel_ceiling(n, s),
+    };
+    Ok(match r {
+        Ok(v) => ExcelValue::Number(v),
+        Err(e) => ExcelValue::Error(e),
+    })
+}
+
+fn fn_floor_ceil_math(
+    ev: &Evaluator,
+    args: &[Expr],
+    ctx: &mut Ctx<'_>,
+    kind: FloorCeil,
+) -> Result<ExcelValue, EvalError> {
+    if args.is_empty() || args.len() > 3 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let n = match coerce::to_number(&ev.eval_scalar(&args[0], ctx)?) {
+        Ok(n) => n,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let s = if args.len() >= 2 {
+        match coerce::to_number(&ev.eval_scalar(&args[1], ctx)?) {
+            Ok(n) => n,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        }
+    } else {
+        1.0
+    };
+    let mode = if args.len() >= 3 {
+        match coerce::to_number(&ev.eval_scalar(&args[2], ctx)?) {
+            Ok(n) => n,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        }
+    } else {
+        0.0
+    };
+    let r = match kind {
+        FloorCeil::Floor => excel_floor_math(n, s, mode),
+        FloorCeil::Ceiling => excel_ceiling_math(n, s, mode),
+    };
+    Ok(match r {
+        Ok(v) => ExcelValue::Number(v),
+        Err(e) => ExcelValue::Error(e),
+    })
 }
 
 fn fn_round(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {

@@ -8,6 +8,8 @@ use xlsx_types::{
     EvalTarget, ExcelError, ExcelValue, RangeRef, Workbook,
     excel_num_eq, ArrayMode, CellAddr, CellRef, Criterion, EvalError, EvalSpec, EvalTarget,
     ExcelError, ExcelValue, RangeRef, Workbook,
+    excel_ceiling, excel_ceiling_math, excel_floor, excel_floor_math, excel_num_eq, ArrayMode,
+    CellAddr, CellRef, EvalError, EvalSpec, EvalTarget, ExcelError, ExcelValue, RangeRef, Workbook,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -390,6 +392,10 @@ impl Interpreter {
             "ROUND" => self.fn_round(args, ctx),
             "ROUNDUP" => self.fn_round_dir(args, ctx, true),
             "ROUNDDOWN" => self.fn_round_dir(args, ctx, false),
+            "FLOOR" => self.fn_floor_ceil(args, ctx, true),
+            "CEILING" => self.fn_floor_ceil(args, ctx, false),
+            "FLOOR.MATH" => self.fn_floor_ceil_math(args, ctx, true),
+            "CEILING.MATH" => self.fn_floor_ceil_math(args, ctx, false),
             "MOD" => self.fn_mod(args, ctx),
             "SQRT" => self.fn_sqrt(args, ctx),
             "POWER" => self.fn_power(args, ctx),
@@ -1133,6 +1139,74 @@ impl Interpreter {
             0
         };
         Ok(ExcelValue::Number(excel_trunc(n, digits)))
+    }
+
+    fn fn_floor_ceil(
+        &self,
+        args: &[Expr],
+        ctx: &mut Ctx<'_>,
+        floor: bool,
+    ) -> Result<ExcelValue, EvalError> {
+        if args.len() != 2 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        let n = match self.as_number(&self.eval_scalar(&args[0], ctx)?) {
+            Ok(n) => n,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        let s = match self.as_number(&self.eval_scalar(&args[1], ctx)?) {
+            Ok(n) => n,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        let r = if floor {
+            excel_floor(n, s)
+        } else {
+            excel_ceiling(n, s)
+        };
+        Ok(match r {
+            Ok(v) => ExcelValue::Number(v),
+            Err(e) => ExcelValue::Error(e),
+        })
+    }
+
+    fn fn_floor_ceil_math(
+        &self,
+        args: &[Expr],
+        ctx: &mut Ctx<'_>,
+        floor: bool,
+    ) -> Result<ExcelValue, EvalError> {
+        if args.is_empty() || args.len() > 3 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        let n = match self.as_number(&self.eval_scalar(&args[0], ctx)?) {
+            Ok(n) => n,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        let s = if args.len() >= 2 {
+            match self.as_number(&self.eval_scalar(&args[1], ctx)?) {
+                Ok(n) => n,
+                Err(e) => return Ok(ExcelValue::Error(e)),
+            }
+        } else {
+            1.0
+        };
+        let mode = if args.len() >= 3 {
+            match self.as_number(&self.eval_scalar(&args[2], ctx)?) {
+                Ok(n) => n,
+                Err(e) => return Ok(ExcelValue::Error(e)),
+            }
+        } else {
+            0.0
+        };
+        let r = if floor {
+            excel_floor_math(n, s, mode)
+        } else {
+            excel_ceiling_math(n, s, mode)
+        };
+        Ok(match r {
+            Ok(v) => ExcelValue::Number(v),
+            Err(e) => ExcelValue::Error(e),
+        })
     }
 
     fn fn_round(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
