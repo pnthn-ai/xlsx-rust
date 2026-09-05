@@ -66,8 +66,9 @@ fn cases() -> Vec<Case> {
             args: vec![col(128, 0.0), col(8_192, 50_000.0)],
         },
         Case {
-            name: "1×8k + 8k×1 mixed axes",
-            args: vec![wide_row(8_192, 0.0), col(8_192, 1.0)],
+            // 512×513 with a large #N/A triangle — not 8k×8k (67M pad cells).
+            name: "1×512 + 512×1 mixed axes",
+            args: vec![wide_row(512, 0.0), col(512, 1.0)],
         },
         Case {
             name: "16 columns of 4k (many args)",

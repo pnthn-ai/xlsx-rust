@@ -171,14 +171,12 @@ fn stack_fast(views: &[View<'_>]) -> ExcelValue {
     for r in 0..height {
         let mut row = Vec::with_capacity(width);
         for view in views {
-            let h = view.height();
-            let w = view.width();
-            if r < h {
-                for c in 0..w {
-                    row.push(view.get(r, c).clone());
+            match view {
+                View::Grid(rows) if r < rows.len() => {
+                    row.extend_from_slice(&rows[r]);
                 }
-            } else {
-                row.extend(std::iter::repeat_n(NA, w));
+                View::Scalar(v) if r == 0 => row.push((*v).clone()),
+                other => row.extend(std::iter::repeat_n(NA, other.width())),
             }
         }
         out.push(row);
