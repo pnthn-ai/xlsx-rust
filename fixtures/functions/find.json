@@ -1,0 +1,340 @@
+[
+  {
+    "id": "fn.find-basic",
+    "description": "FIND(\"M\", \"Miriam McGovern\") is 1 (Microsoft example)",
+    "tags": ["text", "find"],
+    "formula": "=FIND(\"M\", \"Miriam McGovern\")",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.find-second-m",
+    "description": "FIND(\"m\", \"Miriam McGovern\") is 6 (Microsoft example)",
+    "tags": ["text", "find"],
+    "formula": "=FIND(\"m\", \"Miriam McGovern\")",
+    "expected": { "number": 6 }
+  },
+  {
+    "id": "fn.find-start-num",
+    "description": "FIND(\"M\", \"Miriam McGovern\", 3) is 8 (Microsoft start_num example)",
+    "tags": ["text", "find"],
+    "formula": "=FIND(\"M\", \"Miriam McGovern\", 3)",
+    "expected": { "number": 8 }
+  },
+  {
+    "id": "fn.find-start-num-later-hit",
+    "description": "start_num skips earlier matches: FIND(\"a\", \"banana\", 3) is 4",
+    "tags": ["text", "find"],
+    "formula": "=FIND(\"a\", \"banana\", 3)",
+    "expected": { "number": 4 }
+  },
+  {
+    "id": "fn.find-start-num-last",
+    "description": "start_num on the last matching character still hits",
+    "tags": ["text", "find"],
+    "formula": "=FIND(\"a\", \"banana\", 6)",
+    "expected": { "number": 6 }
+  },
+  {
+    "id": "fn.find-start-num-past-last",
+    "description": "start_num past the last match is #VALUE!",
+    "tags": ["text", "find", "errors"],
+    "formula": "=FIND(\"a\", \"banana\", 7)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.find-start-num-zero",
+    "description": "start_num 0 is #VALUE!",
+    "tags": ["text", "find", "errors"],
+    "formula": "=FIND(\"a\", \"abc\", 0)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.find-start-num-neg",
+    "description": "start_num -1 is #VALUE!",
+    "tags": ["text", "find", "errors"],
+    "formula": "=FIND(\"a\", \"abc\", -1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.find-start-num-trunc",
+    "description": "start_num 2.9 truncates toward zero to 2",
+    "tags": ["text", "find"],
+    "formula": "=FIND(\"c\", \"abc\", 2.9)",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.find-start-num-trunc-zero",
+    "description": "start_num 0.9 truncates to 0 → #VALUE!",
+    "tags": ["text", "find", "errors"],
+    "formula": "=FIND(\"a\", \"abc\", 0.9)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.find-start-num-true",
+    "description": "TRUE coerces to start_num 1",
+    "tags": ["text", "find", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=FIND(\"a\", \"abc\", TRUE)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.find-start-num-false",
+    "description": "FALSE coerces to 0 → #VALUE!",
+    "tags": ["text", "find", "errors", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=FIND(\"a\", \"abc\", FALSE)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.find-start-num-text-num",
+    "description": "Numeric text start_num is coerced",
+    "tags": ["text", "find", "coercion"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=FIND(\"b\", \"abc\", \"2\")",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.find-start-num-text-bad",
+    "description": "Non-numeric start_num is #VALUE!",
+    "tags": ["text", "find", "errors"],
+    "formula": "=FIND(\"a\", \"abc\", \"x\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.find-start-num-blank-cell",
+    "description": "Blank start_num cell coerces to 0 → #VALUE!",
+    "tags": ["text", "find", "errors", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=FIND(\"a\", \"abc\", A1)",
+    "expected": { "error": "#VALUE!" },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.find-miss",
+    "description": "Missing find_text is #VALUE! (not #N/A)",
+    "tags": ["text", "find", "errors"],
+    "formula": "=FIND(\"z\", \"abc\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.find-miss-substring",
+    "description": "Partial leftover after start_num that cannot fit the needle is #VALUE!",
+    "tags": ["text", "find", "errors"],
+    "formula": "=FIND(\"an\", \"banana\", 5)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.find-empty-find-text",
+    "description": "Empty find_text matches at position 1",
+    "tags": ["text", "find"],
+    "formula": "=FIND(\"\", \"abc\")",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.find-empty-find-text-start",
+    "description": "Empty find_text with start_num returns start_num",
+    "tags": ["text", "find"],
+    "formula": "=FIND(\"\", \"abc\", 3)",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.find-empty-find-text-len-plus-one",
+    "description": "Empty find_text may land one past LEN(within_text)",
+    "tags": ["text", "find"],
+    "formula": "=FIND(\"\", \"abc\", 4)",
+    "expected": { "number": 4 }
+  },
+  {
+    "id": "fn.find-empty-find-text-past-end",
+    "description": "Empty find_text with start_num > LEN+1 is #VALUE!",
+    "tags": ["text", "find", "errors"],
+    "formula": "=FIND(\"\", \"abc\", 5)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.find-empty-both",
+    "description": "FIND(\"\", \"\") is 1",
+    "tags": ["text", "find"],
+    "formula": "=FIND(\"\", \"\")",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.find-empty-within",
+    "description": "Non-empty needle in empty within_text is #VALUE!",
+    "tags": ["text", "find", "errors"],
+    "formula": "=FIND(\"a\", \"\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.find-blank-find-text-cell",
+    "description": "Blank find_text cell coerces to \"\" and matches at 1",
+    "tags": ["text", "find", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=FIND(A1, \"abc\")",
+    "expected": { "number": 1 },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.find-case-sensitive-miss",
+    "description": "FIND is case-sensitive (unlike SEARCH): \"a\" does not match \"ABC\"",
+    "tags": ["text", "find"],
+    "quirks": ["case-insensitive-text"],
+    "formula": "=FIND(\"a\", \"ABC\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.find-case-sensitive-hit",
+    "description": "FIND(\"A\", \"ABC\") is 1; SEARCH would also hit, but FIND requires exact case",
+    "tags": ["text", "find"],
+    "quirks": ["case-insensitive-text"],
+    "formula": "=FIND(\"A\", \"ABC\")",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.find-case-vs-search-mixed",
+    "description": "FIND(\"bc\", \"ABC\") is #VALUE!; SEARCH would return 2 (case-insensitive)",
+    "tags": ["text", "find"],
+    "quirks": ["case-insensitive-text"],
+    "formula": "=FIND(\"bc\", \"ABC\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.find-vs-search-wildcard-star",
+    "description": "FIND treats * as a literal (SEARCH would treat it as a wildcard)",
+    "tags": ["text", "find"],
+    "quirks": ["wildcards"],
+    "formula": "=FIND(\"*\", \"abc\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.find-vs-search-wildcard-pattern",
+    "description": "FIND(\"a*\", \"abc\") is #VALUE!; SEARCH(\"a*\", \"abc\") would be 1",
+    "tags": ["text", "find"],
+    "quirks": ["wildcards"],
+    "formula": "=FIND(\"a*\", \"abc\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.find-literal-star",
+    "description": "A literal asterisk in within_text is found by FIND",
+    "tags": ["text", "find"],
+    "quirks": ["wildcards"],
+    "formula": "=FIND(\"*\", \"a*b\")",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.find-literal-question",
+    "description": "? is a literal character, not a SEARCH single-char wildcard",
+    "tags": ["text", "find"],
+    "quirks": ["wildcards"],
+    "formula": "=FIND(\"?\", \"a?b\")",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.find-substring",
+    "description": "Multi-character needle returns the first character position",
+    "tags": ["text", "find"],
+    "formula": "=FIND(\"an\", \"banana\")",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.find-substring-start",
+    "description": "start_num 3 skips the first \"an\" in banana",
+    "tags": ["text", "find"],
+    "formula": "=FIND(\"an\", \"banana\", 3)",
+    "expected": { "number": 4 }
+  },
+  {
+    "id": "fn.find-number",
+    "description": "Numbers coerce to plain text before search; result is the 1-based index",
+    "tags": ["text", "find", "coercion"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=FIND(2, 12321)",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.find-decimal",
+    "description": "Decimal point is part of the coerced number text",
+    "tags": ["text", "find", "coercion"],
+    "formula": "=FIND(\".\", 12.5)",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.find-bool",
+    "description": "TRUE coerces to the text \"TRUE\"",
+    "tags": ["text", "find", "coercion"],
+    "formula": "=FIND(\"R\", TRUE)",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.find-bool-needle",
+    "description": "Boolean find_text coerces to \"TRUE\" / \"FALSE\"",
+    "tags": ["text", "find", "coercion"],
+    "formula": "=FIND(TRUE, \"TRUEBLUE\")",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.find-unicode",
+    "description": "UTF-8 scalar position (café): é is character 4, matching LEN/MID",
+    "tags": ["text", "find"],
+    "formula": "=FIND(\"é\", \"café\")",
+    "expected": { "number": 4 }
+  },
+  {
+    "id": "fn.find-arity-0",
+    "description": "FIND() is #VALUE!",
+    "tags": ["text", "find", "errors"],
+    "formula": "=FIND()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.find-arity-1",
+    "description": "One argument is #VALUE!",
+    "tags": ["text", "find", "errors"],
+    "formula": "=FIND(\"a\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.find-arity-4",
+    "description": "Four arguments is #VALUE!",
+    "tags": ["text", "find", "errors"],
+    "formula": "=FIND(\"a\", \"abc\", 1, 1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.find-err-find-text",
+    "description": "Error in find_text propagates",
+    "tags": ["text", "find", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=FIND(1/0, \"abc\")",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.find-err-within",
+    "description": "Error in within_text propagates",
+    "tags": ["text", "find", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=FIND(\"a\", 1/0)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.find-err-start",
+    "description": "Error in start_num propagates",
+    "tags": ["text", "find", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=FIND(\"a\", \"abc\", 1/0)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.find-err-left-wins",
+    "description": "Left-to-right: find_text error beats a later #N/A",
+    "tags": ["text", "find", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=FIND(#DIV/0!, #N/A)",
+    "expected": { "error": "#DIV/0!" }
+  }
+]

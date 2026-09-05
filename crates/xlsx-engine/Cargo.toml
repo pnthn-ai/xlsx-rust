@@ -8,4 +8,5 @@ description = "Stub / seed-compliant calculation candidates (not a full Excel en
 
 [dependencies]
 xlsx-types = { workspace = true }
+xlsx-engine-core = { workspace = true }
 thiserror = { workspace = true }

@@ -1,0 +1,448 @@
+[
+  {
+    "id": "fn.weekday-ms-default",
+    "description": "Microsoft example: WEEKDAY(DATE(2008,2,14)) is 5 (Thursday, Sun=1)",
+    "tags": ["weekday", "dates"],
+    "formula": "=WEEKDAY(DATE(2008,2,14))",
+    "expected": { "number": 5 }
+  },
+  {
+    "id": "fn.weekday-ms-type-1",
+    "description": "WEEKDAY(DATE(2008,2,14),1) is 5",
+    "tags": ["weekday", "dates"],
+    "formula": "=WEEKDAY(DATE(2008,2,14),1)",
+    "expected": { "number": 5 }
+  },
+  {
+    "id": "fn.weekday-ms-type-2",
+    "description": "WEEKDAY(DATE(2008,2,14),2) is 4 (Monday=1)",
+    "tags": ["weekday", "dates"],
+    "formula": "=WEEKDAY(DATE(2008,2,14),2)",
+    "expected": { "number": 4 }
+  },
+  {
+    "id": "fn.weekday-ms-type-3",
+    "description": "WEEKDAY(DATE(2008,2,14),3) is 3 (Monday=0)",
+    "tags": ["weekday", "dates"],
+    "formula": "=WEEKDAY(DATE(2008,2,14),3)",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.weekday-type-11",
+    "description": "Type 11: Thursday is 4 (Monday=1), same as type 2",
+    "tags": ["weekday", "dates"],
+    "formula": "=WEEKDAY(DATE(2008,2,14),11)",
+    "expected": { "number": 4 }
+  },
+  {
+    "id": "fn.weekday-type-12",
+    "description": "Type 12: Thursday is 3 (Tuesday=1)",
+    "tags": ["weekday", "dates"],
+    "formula": "=WEEKDAY(DATE(2008,2,14),12)",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.weekday-type-13",
+    "description": "Type 13: Thursday is 2 (Wednesday=1)",
+    "tags": ["weekday", "dates"],
+    "formula": "=WEEKDAY(DATE(2008,2,14),13)",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.weekday-type-14",
+    "description": "Type 14: Thursday is 1 (Thursday=1)",
+    "tags": ["weekday", "dates"],
+    "formula": "=WEEKDAY(DATE(2008,2,14),14)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.weekday-type-15",
+    "description": "Type 15: Thursday is 7 (Friday=1)",
+    "tags": ["weekday", "dates"],
+    "formula": "=WEEKDAY(DATE(2008,2,14),15)",
+    "expected": { "number": 7 }
+  },
+  {
+    "id": "fn.weekday-type-16",
+    "description": "Type 16: Thursday is 6 (Saturday=1)",
+    "tags": ["weekday", "dates"],
+    "formula": "=WEEKDAY(DATE(2008,2,14),16)",
+    "expected": { "number": 6 }
+  },
+  {
+    "id": "fn.weekday-type-17",
+    "description": "Type 17: Thursday is 5 (Sunday=1), same as type 1",
+    "tags": ["weekday", "dates"],
+    "formula": "=WEEKDAY(DATE(2008,2,14),17)",
+    "expected": { "number": 5 }
+  },
+  {
+    "id": "fn.weekday-type-2-sunday",
+    "description": "Sunday with type 2 is 7",
+    "tags": ["weekday", "dates"],
+    "formula": "=WEEKDAY(DATE(2015,3,15),2)",
+    "expected": { "number": 7 }
+  },
+  {
+    "id": "fn.weekday-type-3-sunday",
+    "description": "Sunday with type 3 is 6",
+    "tags": ["weekday", "dates"],
+    "formula": "=WEEKDAY(DATE(2015,3,15),3)",
+    "expected": { "number": 6 }
+  },
+  {
+    "id": "fn.weekday-type-16-sunday",
+    "description": "TechNet: WEEKDAY(DATE(2015,3,15),16) is 2 (Saturday=1)",
+    "tags": ["weekday", "dates"],
+    "formula": "=WEEKDAY(DATE(2015,3,15),16)",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.weekday-type-17-sunday",
+    "description": "TechNet: WEEKDAY(DATE(2015,3,15),17) is 1 (Sunday=1)",
+    "tags": ["weekday", "dates"],
+    "formula": "=WEEKDAY(DATE(2015,3,15),17)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.weekday-type-2-monday",
+    "description": "Monday 2008-02-11 with type 2 is 1",
+    "tags": ["weekday", "dates"],
+    "formula": "=WEEKDAY(DATE(2008,2,11),2)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.weekday-type-3-monday",
+    "description": "Monday 2008-02-11 with type 3 is 0",
+    "tags": ["weekday", "dates"],
+    "formula": "=WEEKDAY(DATE(2008,2,11),3)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.weekday-jan1-2008",
+    "description": "DATE(2008,1,1) is Tuesday = serial 39448, WEEKDAY type 1 is 3",
+    "tags": ["weekday", "dates"],
+    "formula": "=WEEKDAY(DATE(2008,1,1))",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.weekday-serial-39448",
+    "description": "Microsoft: January 1 2008 is serial 39448",
+    "tags": ["weekday", "dates"],
+    "formula": "=WEEKDAY(39448)",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.weekday-serial-1-sunday-bug",
+    "description": "WEEKDAY(1) is 1 — Excel treats 1900-01-01 as Sunday, not Monday",
+    "tags": ["weekday", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=WEEKDAY(1)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.weekday-jan1-1900",
+    "description": "WEEKDAY(DATE(1900,1,1)) is 1 (Sunday in Excel)",
+    "tags": ["weekday", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=WEEKDAY(DATE(1900,1,1))",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.weekday-feb28-1900",
+    "description": "WEEKDAY(59) is 3 (Tuesday) — historically Wednesday; pre-leap-bug weekday is wrong",
+    "tags": ["weekday", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=WEEKDAY(59)",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.weekday-feb29-1900",
+    "description": "WEEKDAY(60) is 4 — fictitious 1900-02-29 is Wednesday",
+    "tags": ["weekday", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=WEEKDAY(60)",
+    "expected": { "number": 4 }
+  },
+  {
+    "id": "fn.weekday-feb29-via-date",
+    "description": "WEEKDAY(DATE(1900,2,29)) is 4",
+    "tags": ["weekday", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=WEEKDAY(DATE(1900,2,29))",
+    "expected": { "number": 4 }
+  },
+  {
+    "id": "fn.weekday-mar1-1900",
+    "description": "WEEKDAY(61) is 5 (Thursday) — civil weekday is correct from here on",
+    "tags": ["weekday", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=WEEKDAY(61)",
+    "expected": { "number": 5 }
+  },
+  {
+    "id": "fn.weekday-mar1-via-date",
+    "description": "WEEKDAY(DATE(1900,3,1)) is 5",
+    "tags": ["weekday", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=WEEKDAY(DATE(1900,3,1))",
+    "expected": { "number": 5 }
+  },
+  {
+    "id": "fn.weekday-feb29-type-2",
+    "description": "Fictitious leap day with type 2 is 3 (Wednesday, Monday=1)",
+    "tags": ["weekday", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=WEEKDAY(60,2)",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.weekday-feb29-type-3",
+    "description": "Fictitious leap day with type 3 is 2",
+    "tags": ["weekday", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=WEEKDAY(60,3)",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.weekday-serial-0",
+    "description": "WEEKDAY(0) is 7 — 1900-01-00 is Saturday (same range as YEAR(0))",
+    "tags": ["weekday", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=WEEKDAY(0)",
+    "expected": { "number": 7 }
+  },
+  {
+    "id": "fn.weekday-1904-epoch",
+    "description": "WEEKDAY(0) is 6 (Friday) under the 1904 date system",
+    "tags": ["weekday", "dates"],
+    "quirks": ["date-system"],
+    "formula": "=WEEKDAY(0)",
+    "expected": { "number": 6 },
+    "options": { "date_system": "excel1904" }
+  },
+  {
+    "id": "fn.weekday-1904-date",
+    "description": "WEEKDAY(DATE(1904,1,1)) is 6 in the 1904 system",
+    "tags": ["weekday", "dates"],
+    "quirks": ["date-system"],
+    "formula": "=WEEKDAY(DATE(1904,1,1))",
+    "expected": { "number": 6 },
+    "options": { "date_system": "excel1904" }
+  },
+  {
+    "id": "fn.weekday-1904-type-2",
+    "description": "1904-01-01 Friday with type 2 is 5",
+    "tags": ["weekday", "dates"],
+    "quirks": ["date-system"],
+    "formula": "=WEEKDAY(0,2)",
+    "expected": { "number": 5 },
+    "options": { "date_system": "excel1904" }
+  },
+  {
+    "id": "fn.weekday-serial-frac",
+    "description": "Time fraction is discarded: WEEKDAY(1.9) equals WEEKDAY(1)",
+    "tags": ["weekday", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=WEEKDAY(1.9)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.weekday-type-trunc",
+    "description": "return_type 2.9 truncates to 2",
+    "tags": ["weekday", "dates"],
+    "formula": "=WEEKDAY(DATE(2008,2,14),2.9)",
+    "expected": { "number": 4 }
+  },
+  {
+    "id": "fn.weekday-type-11-trunc",
+    "description": "return_type 11.9 truncates to 11",
+    "tags": ["weekday", "dates"],
+    "formula": "=WEEKDAY(DATE(2008,2,14),11.9)",
+    "expected": { "number": 4 }
+  },
+  {
+    "id": "fn.weekday-type-numeric-text",
+    "description": "Numeric text return_type \"2\" coerces to 2",
+    "tags": ["weekday", "dates"],
+    "formula": "=WEEKDAY(DATE(2008,2,14),\"2\")",
+    "expected": { "number": 4 }
+  },
+  {
+    "id": "fn.weekday-serial-numeric-text",
+    "description": "Numeric text serial \"39448\" coerces",
+    "tags": ["weekday", "dates"],
+    "formula": "=WEEKDAY(\"39448\")",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.weekday-bool-true",
+    "description": "WEEKDAY(TRUE) is WEEKDAY(1) = 1",
+    "tags": ["weekday", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=WEEKDAY(TRUE)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.weekday-bool-false",
+    "description": "WEEKDAY(FALSE) is WEEKDAY(0) = 7",
+    "tags": ["weekday", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=WEEKDAY(FALSE)",
+    "expected": { "number": 7 }
+  },
+  {
+    "id": "fn.weekday-type-true",
+    "description": "TRUE return_type coerces to 1",
+    "tags": ["weekday", "dates"],
+    "formula": "=WEEKDAY(DATE(2008,2,14),TRUE)",
+    "expected": { "number": 5 }
+  },
+  {
+    "id": "fn.weekday-type-false",
+    "description": "FALSE return_type coerces to 0 → #NUM!",
+    "tags": ["weekday", "dates", "errors"],
+    "formula": "=WEEKDAY(DATE(2008,2,14),FALSE)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.weekday-blank-cell",
+    "description": "WEEKDAY of a blank cell is 7 (empty → 0 → Saturday)",
+    "tags": ["weekday", "dates", "empty"],
+    "quirks": ["empty-cell-duality", "date-1900-leap-year"],
+    "formula": "=WEEKDAY(A1)",
+    "expected": { "number": 7 },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.weekday-neg-serial",
+    "description": "Negative serial is #NUM!",
+    "tags": ["weekday", "dates", "errors"],
+    "formula": "=WEEKDAY(-1)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.weekday-over-max",
+    "description": "Serial past 9999-12-31 is #NUM!",
+    "tags": ["weekday", "dates", "errors"],
+    "formula": "=WEEKDAY(2958466)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.weekday-max-serial",
+    "description": "WEEKDAY(DATE(9999,12,31)) is 6 (Friday)",
+    "tags": ["weekday", "dates"],
+    "formula": "=WEEKDAY(DATE(9999,12,31))",
+    "expected": { "number": 6 }
+  },
+  {
+    "id": "fn.weekday-bad-type-0",
+    "description": "return_type 0 is #NUM!",
+    "tags": ["weekday", "dates", "errors"],
+    "formula": "=WEEKDAY(1,0)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.weekday-bad-type-4",
+    "description": "return_type 4 is #NUM!",
+    "tags": ["weekday", "dates", "errors"],
+    "formula": "=WEEKDAY(1,4)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.weekday-bad-type-10",
+    "description": "return_type 10 is #NUM!",
+    "tags": ["weekday", "dates", "errors"],
+    "formula": "=WEEKDAY(1,10)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.weekday-bad-type-18",
+    "description": "return_type 18 is #NUM!",
+    "tags": ["weekday", "dates", "errors"],
+    "formula": "=WEEKDAY(1,18)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.weekday-bad-type-neg",
+    "description": "Negative return_type is #NUM!",
+    "tags": ["weekday", "dates", "errors"],
+    "formula": "=WEEKDAY(1,-1)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.weekday-text-serial",
+    "description": "Non-numeric text serial is #VALUE!",
+    "tags": ["weekday", "dates", "errors"],
+    "formula": "=WEEKDAY(\"x\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.weekday-text-type",
+    "description": "Non-numeric text return_type is #VALUE!",
+    "tags": ["weekday", "dates", "errors"],
+    "formula": "=WEEKDAY(1,\"x\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.weekday-no-args",
+    "description": "WEEKDAY() is #VALUE!",
+    "tags": ["weekday", "dates", "errors"],
+    "formula": "=WEEKDAY()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.weekday-too-many-args",
+    "description": "WEEKDAY(1,1,1) is #VALUE!",
+    "tags": ["weekday", "dates", "errors"],
+    "formula": "=WEEKDAY(1,1,1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.weekday-err-serial-div0",
+    "description": "Error in serial propagates",
+    "tags": ["weekday", "dates", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=WEEKDAY(1/0)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.weekday-err-type-div0",
+    "description": "Error in return_type propagates",
+    "tags": ["weekday", "dates", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=WEEKDAY(1,1/0)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.weekday-err-ltr",
+    "description": "Left-to-right: serial #DIV/0! wins over return_type #N/A",
+    "tags": ["weekday", "dates", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=WEEKDAY(1/0,NA())",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.weekday-err-na-serial",
+    "description": "WEEKDAY(NA()) is #N/A",
+    "tags": ["weekday", "dates", "errors"],
+    "formula": "=WEEKDAY(NA())",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.weekday-y2k-leap",
+    "description": "WEEKDAY(DATE(2000,2,29)) — 2000-02-29 was Tuesday = 3",
+    "tags": ["weekday", "dates"],
+    "formula": "=WEEKDAY(DATE(2000,2,29))",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.weekday-composed",
+    "description": "WEEKDAY of a DATE result used in arithmetic still works",
+    "tags": ["weekday", "dates"],
+    "formula": "=WEEKDAY(DATE(2008,2,14)+7)",
+    "expected": { "number": 5 }
+  }
+]

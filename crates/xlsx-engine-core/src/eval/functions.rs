@@ -1,11 +1,24 @@
 //! Worksheet functions implemented with Excel-compatible semantics.
 //!
+//! `IFS` lives with the other logicals here; pair selection is [`super::ifs`].
+//! `FILTER` lives with the other lookups here; the mask/select kernel is
+//! [`super::filter`].
+//!
 //! Unknown names return `#NAME?` (an Excel value, not [`EvalError`]).
+//! Financial TVM starts with `PMT` (`xlsx_types::excel_pmt`); `PV`/`FV`/`NPER`
+//! are later workstreams.
 
 use super::{coerce, compare, excel_pow, Ctx, Evaluator};
 use crate::ast::Expr;
-use crate::dates::{date_serial, serial_to_ymd, time_fraction};
-use xlsx_types::{EvalError, ExcelError, ExcelValue};
+use crate::dates::{
+    date_serial, eomonth_serial, networkdays_count, serial_to_ymd, time_fraction, weekday,
+    workday_serial,
+};
+use crate::text_format;
+use xlsx_types::{
+    count_matches, excel_ceiling, excel_ceiling_math, excel_floor, excel_floor_math, excel_pmt,
+    Criterion, EvalError, ExcelError, ExcelValue,
+};
 
 pub(crate) fn dispatch(
     ev: &Evaluator,
@@ -15,6 +28,7 @@ pub(crate) fn dispatch(
 ) -> Result<ExcelValue, EvalError> {
     match name.to_ascii_uppercase().as_str() {
         "SUM" => fn_agg(ev, args, ctx, AggKind::Sum),
+        "SUMPRODUCT" => super::sumproduct::eval(ev, args, ctx),
         "PRODUCT" => fn_agg(ev, args, ctx, AggKind::Product),
         "AVERAGE" => fn_agg(ev, args, ctx, AggKind::Average),
         "MIN" => fn_agg(ev, args, ctx, AggKind::Min),
@@ -22,9 +36,15 @@ pub(crate) fn dispatch(
         "COUNT" => fn_agg(ev, args, ctx, AggKind::Count),
         "COUNTA" => fn_agg(ev, args, ctx, AggKind::CountA),
         "COUNTBLANK" => fn_agg(ev, args, ctx, AggKind::CountBlank),
+        "SUMIF" => super::sumif::fn_sumif(ev, args, ctx),
+        "COUNTIF" => fn_countif(ev, args, ctx),
+        "SUMIFS" => super::sumifs::fn_sumifs(ev, args, ctx),
+        "AVERAGEIF" => super::averageif::fn_averageif(ev, args, ctx),
         "IF" => fn_if(ev, args, ctx),
+        "IFS" => fn_ifs(ev, args, ctx),
         "IFERROR" => fn_iferror(ev, args, ctx),
         "IFNA" => fn_ifna(ev, args, ctx),
+        "SWITCH" => fn_switch(ev, args, ctx),
         "AND" => fn_and_or(ev, args, ctx, AndOr::And),
         "OR" => fn_and_or(ev, args, ctx, AndOr::Or),
         "XOR" => fn_and_or(ev, args, ctx, AndOr::Xor),
@@ -32,6 +52,7 @@ pub(crate) fn dispatch(
         "VLOOKUP" => fn_vlookup(ev, args, ctx),
         "HLOOKUP" => fn_hlookup(ev, args, ctx),
         "XLOOKUP" => fn_xlookup(ev, args, ctx),
+        "FILTER" => fn_filter(ev, args, ctx),
         "INDEX" => fn_index(ev, args, ctx),
         "MATCH" => fn_match(ev, args, ctx),
         "CHOOSE" => fn_choose(ev, args, ctx),
@@ -48,6 +69,12 @@ pub(crate) fn dispatch(
         "INT" => fn_unary_num(ev, args, ctx, |n| ExcelValue::Number(n.floor())),
         "TRUNC" => fn_trunc(ev, args, ctx),
         "ROUND" => fn_round(ev, args, ctx),
+        "ROUNDUP" => fn_round_dir(ev, args, ctx, RoundDir::Up),
+        "ROUNDDOWN" => fn_round_dir(ev, args, ctx, RoundDir::Down),
+        "FLOOR" => fn_floor_ceil(ev, args, ctx, FloorCeil::Floor),
+        "CEILING" => fn_floor_ceil(ev, args, ctx, FloorCeil::Ceiling),
+        "FLOOR.MATH" => fn_floor_ceil_math(ev, args, ctx, FloorCeil::Floor),
+        "CEILING.MATH" => fn_floor_ceil_math(ev, args, ctx, FloorCeil::Ceiling),
         "MOD" => fn_mod(ev, args, ctx),
         "SQRT" => fn_unary_num(ev, args, ctx, |n| {
             if n < 0.0 {
@@ -81,9 +108,13 @@ pub(crate) fn dispatch(
         "ISODD" => fn_even_odd(ev, args, ctx, false),
         "DATE" => fn_date(ev, args, ctx),
         "TIME" => fn_time(ev, args, ctx),
+        "EOMONTH" => fn_eomonth(ev, args, ctx),
+        "NETWORKDAYS" => fn_networkdays(ev, args, ctx),
+        "WORKDAY" => fn_workday(ev, args, ctx),
         "YEAR" => fn_ymd(ev, args, ctx, YmdPart::Year),
         "MONTH" => fn_ymd(ev, args, ctx, YmdPart::Month),
         "DAY" => fn_ymd(ev, args, ctx, YmdPart::Day),
+        "WEEKDAY" => fn_weekday(ev, args, ctx),
         "LEFT" => fn_left_right(ev, args, ctx, true),
         "RIGHT" => fn_left_right(ev, args, ctx, false),
         "MID" => fn_mid(ev, args, ctx),
@@ -92,10 +123,37 @@ pub(crate) fn dispatch(
         "UPPER" => fn_case(ev, args, ctx, false),
         "TRIM" => fn_trim(ev, args, ctx),
         "EXACT" => fn_exact(ev, args, ctx),
+        "FIND" => fn_find(ev, args, ctx),
+        "SEARCH" => fn_search(ev, args, ctx),
         "VALUE" => fn_value(ev, args, ctx),
+        "SUBSTITUTE" => fn_substitute(ev, args, ctx),
+        "TEXT" => fn_text(ev, args, ctx),
+        "REPLACE" => fn_replace(ev, args, ctx),
+        "TEXTJOIN" => super::textjoin::fn_textjoin(ev, args, ctx),
+        "CONCAT" => super::concat::fn_concat(ev, args, ctx),
+        "NPV" => super::npv::eval(ev, args, ctx),
+        "UNIQUE" => super::unique::eval(ev, args, ctx),
+        "IRR" => fn_irr(ev, args, ctx),
         "TRUE" => Ok(ExcelValue::Bool(true)),
         "FALSE" => Ok(ExcelValue::Bool(false)),
+        // Financial (TVM). PV / FV / NPER are later workstreams.
+        "PMT" => fn_pmt(ev, args, ctx),
         _ => Ok(ExcelValue::Error(ExcelError::Name)),
+    }
+}
+
+fn fn_countif(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    if args.len() != 2 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let crit_v = ev.eval_scalar(&args[1], ctx)?;
+    let crit = Criterion::parse(&crit_v);
+    match &args[0] {
+        Expr::Range(r) => ev.countif_range(r, ctx, &crit),
+        other => {
+            let v = ev.eval_expr(other, ctx)?;
+            Ok(ExcelValue::Number(count_matches(&v, &crit) as f64))
+        }
     }
 }
 
@@ -137,6 +195,24 @@ fn fn_if(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue,
     }
 }
 
+/// Excel `IFS`: evaluate every pair (no short-circuit), first TRUE wins,
+/// no match → `#N/A`. Odd / empty arity is `#VALUE!`.
+fn fn_ifs(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    if args.is_empty() || args.len() % 2 == 1 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let mut first_err = None;
+    let mut first_true = None;
+    let mut i = 0;
+    while i + 1 < args.len() {
+        let cond = ev.eval_scalar(&args[i], ctx)?;
+        let val = ev.eval_expr(&args[i + 1], ctx)?;
+        super::ifs::fold_pair(&cond, val, &mut first_err, &mut first_true);
+        i += 2;
+    }
+    Ok(super::ifs::finish(first_err, first_true))
+}
+
 fn fn_iferror(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
     if args.len() < 2 {
         return Ok(ExcelValue::Error(ExcelError::Value));
@@ -158,6 +234,42 @@ fn fn_ifna(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValu
         ev.eval_expr(&args[1], ctx)
     } else {
         Ok(v)
+    }
+}
+
+/// `SWITCH(expression, value1, result1, …, [default])`.
+///
+/// Exact `=` match, first hit wins, unused branches are not evaluated.
+/// See [`super::switch`].
+fn fn_switch(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    if args.len() < 3 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let expr = ev.eval_scalar(&args[0], ctx)?;
+    if let ExcelValue::Error(e) = expr {
+        return Ok(ExcelValue::Error(e));
+    }
+    let has_default = args.len() % 2 == 0;
+    let pair_end = if has_default {
+        args.len() - 1
+    } else {
+        args.len()
+    };
+    let mut i = 1;
+    while i < pair_end {
+        let value = ev.eval_scalar(&args[i], ctx)?;
+        if let ExcelValue::Error(e) = value {
+            return Ok(ExcelValue::Error(e));
+        }
+        if super::switch::matches(&expr, &value) {
+            return ev.eval_expr(&args[i + 1], ctx);
+        }
+        i += 2;
+    }
+    if has_default {
+        ev.eval_expr(&args[args.len() - 1], ctx)
+    } else {
+        Ok(ExcelValue::Error(ExcelError::Na))
     }
 }
 
@@ -296,6 +408,23 @@ fn fn_hlookup(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelV
         Some(c) => Ok(rows[row_idx - 1][c].clone()),
         None => Ok(ExcelValue::Error(ExcelError::Na)),
     }
+}
+
+/// Excel `FILTER(array, include, [if_empty])`.
+///
+/// Arity 2 or 3. Omitted `if_empty` + no matches → `#CALC!`.
+fn fn_filter(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    if args.len() < 2 || args.len() > 3 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let array = ev.eval_expr(&args[0], ctx)?;
+    let include = ev.eval_expr(&args[1], ctx)?;
+    let if_empty = if args.len() >= 3 {
+        Some(ev.eval_expr(&args[2], ctx)?)
+    } else {
+        None
+    };
+    Ok(super::filter::select(&array, &include, if_empty.as_ref()))
 }
 
 fn fn_xlookup(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
@@ -455,6 +584,78 @@ fn fn_trunc(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelVal
     Ok(ExcelValue::Number(excel_trunc(n, digits)))
 }
 
+#[derive(Clone, Copy)]
+enum FloorCeil {
+    Floor,
+    Ceiling,
+}
+
+fn fn_floor_ceil(
+    ev: &Evaluator,
+    args: &[Expr],
+    ctx: &mut Ctx<'_>,
+    kind: FloorCeil,
+) -> Result<ExcelValue, EvalError> {
+    if args.len() != 2 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let n = match coerce::to_number(&ev.eval_scalar(&args[0], ctx)?) {
+        Ok(n) => n,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let s = match coerce::to_number(&ev.eval_scalar(&args[1], ctx)?) {
+        Ok(n) => n,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let r = match kind {
+        FloorCeil::Floor => excel_floor(n, s),
+        FloorCeil::Ceiling => excel_ceiling(n, s),
+    };
+    Ok(match r {
+        Ok(v) => ExcelValue::Number(v),
+        Err(e) => ExcelValue::Error(e),
+    })
+}
+
+fn fn_floor_ceil_math(
+    ev: &Evaluator,
+    args: &[Expr],
+    ctx: &mut Ctx<'_>,
+    kind: FloorCeil,
+) -> Result<ExcelValue, EvalError> {
+    if args.is_empty() || args.len() > 3 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let n = match coerce::to_number(&ev.eval_scalar(&args[0], ctx)?) {
+        Ok(n) => n,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let s = if args.len() >= 2 {
+        match coerce::to_number(&ev.eval_scalar(&args[1], ctx)?) {
+            Ok(n) => n,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        }
+    } else {
+        1.0
+    };
+    let mode = if args.len() >= 3 {
+        match coerce::to_number(&ev.eval_scalar(&args[2], ctx)?) {
+            Ok(n) => n,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        }
+    } else {
+        0.0
+    };
+    let r = match kind {
+        FloorCeil::Floor => excel_floor_math(n, s, mode),
+        FloorCeil::Ceiling => excel_ceiling_math(n, s, mode),
+    };
+    Ok(match r {
+        Ok(v) => ExcelValue::Number(v),
+        Err(e) => ExcelValue::Error(e),
+    })
+}
+
 fn fn_round(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
     if args.len() < 2 {
         return Ok(ExcelValue::Error(ExcelError::Value));
@@ -468,6 +669,36 @@ fn fn_round(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelVal
         Err(e) => return Ok(ExcelValue::Error(e)),
     };
     Ok(ExcelValue::Number(excel_round_half_away(n, digits)))
+}
+
+#[derive(Clone, Copy)]
+enum RoundDir {
+    Up,
+    Down,
+}
+
+fn fn_round_dir(
+    ev: &Evaluator,
+    args: &[Expr],
+    ctx: &mut Ctx<'_>,
+    dir: RoundDir,
+) -> Result<ExcelValue, EvalError> {
+    if args.len() != 2 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let n = match coerce::to_number(&ev.eval_scalar(&args[0], ctx)?) {
+        Ok(n) => n,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let digits = match coerce::to_number(&ev.eval_scalar(&args[1], ctx)?) {
+        Ok(d) => d.trunc() as i32,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let out = match dir {
+        RoundDir::Up => super::round::roundup(n, digits),
+        RoundDir::Down => super::round::rounddown(n, digits),
+    };
+    Ok(ExcelValue::Number(out))
 }
 
 fn fn_mod(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
@@ -629,6 +860,145 @@ fn fn_time(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValu
     }
 }
 
+fn fn_eomonth(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    if args.len() != 2 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let start = match coerce::to_number(&ev.eval_scalar(&args[0], ctx)?) {
+        Ok(n) => n,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let months = match coerce::to_number(&ev.eval_scalar(&args[1], ctx)?) {
+        Ok(n) => n,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    match eomonth_serial(start, months, ctx.spec.options.date_system) {
+        Ok(n) => Ok(ExcelValue::Number(n)),
+        Err(e) => Ok(ExcelValue::Error(e)),
+    }
+}
+
+fn fn_networkdays(
+    ev: &Evaluator,
+    args: &[Expr],
+    ctx: &mut Ctx<'_>,
+) -> Result<ExcelValue, EvalError> {
+    if args.len() < 2 || args.len() > 3 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let start_v = ev.eval_scalar(&args[0], ctx)?;
+    let end_v = ev.eval_scalar(&args[1], ctx)?;
+    let hol_v = if args.len() == 3 {
+        Some(ev.eval_expr(&args[2], ctx)?)
+    } else {
+        None
+    };
+    let start = match coerce::to_number(&start_v) {
+        Ok(n) => n,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let end = match coerce::to_number(&end_v) {
+        Ok(n) => n,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let mut holidays = Vec::new();
+    if let Some(v) = hol_v {
+        if let Some(e) = collect_holiday_serials(&v, &mut holidays) {
+            return Ok(ExcelValue::Error(e));
+        }
+    }
+    match networkdays_count(start, end, &holidays, ctx.spec.options.date_system) {
+        Ok(n) => Ok(ExcelValue::Number(n)),
+        Err(e) => Ok(ExcelValue::Error(e)),
+    }
+}
+
+fn fn_workday(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    if args.len() < 2 || args.len() > 3 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let start_v = ev.eval_scalar(&args[0], ctx)?;
+    let days_v = ev.eval_scalar(&args[1], ctx)?;
+    let hol_v = if args.len() == 3 {
+        Some(ev.eval_expr(&args[2], ctx)?)
+    } else {
+        None
+    };
+    let start = match coerce::to_number(&start_v) {
+        Ok(n) => n,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let days = match coerce::to_number(&days_v) {
+        Ok(n) => n,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let mut holidays = Vec::new();
+    if let Some(v) = hol_v {
+        if let Some(e) = collect_holiday_serials(&v, &mut holidays) {
+            return Ok(ExcelValue::Error(e));
+        }
+    }
+    match workday_serial(start, days, &holidays, ctx.spec.options.date_system) {
+        Ok(n) => Ok(ExcelValue::Number(n)),
+        Err(e) => Ok(ExcelValue::Error(e)),
+    }
+}
+
+fn fn_weekday(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    if args.is_empty() || args.len() > 2 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let serial = match coerce::to_number(&ev.eval_scalar(&args[0], ctx)?) {
+        Ok(n) => n,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let return_type = if args.len() >= 2 {
+        match coerce::to_number(&ev.eval_scalar(&args[1], ctx)?) {
+            Ok(n) => {
+                if !n.is_finite() {
+                    return Ok(ExcelValue::Error(ExcelError::Num));
+                }
+                let t = n.trunc();
+                if t < i32::MIN as f64 || t > i32::MAX as f64 {
+                    return Ok(ExcelValue::Error(ExcelError::Num));
+                }
+                t as i32
+            }
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        }
+    } else {
+        1
+    };
+    match weekday(serial, return_type, ctx.spec.options.date_system) {
+        Ok(n) => Ok(ExcelValue::Number(n)),
+        Err(e) => Ok(ExcelValue::Error(e)),
+    }
+}
+
+fn collect_holiday_serials(v: &ExcelValue, out: &mut Vec<f64>) -> Option<ExcelError> {
+    match v {
+        ExcelValue::Array(rows) => {
+            for row in rows {
+                for c in row {
+                    if let Some(e) = collect_holiday_serials(c, out) {
+                        return Some(e);
+                    }
+                }
+            }
+            None
+        }
+        ExcelValue::Empty => None,
+        ExcelValue::Error(e) => Some(*e),
+        other => match coerce::to_number(other) {
+            Ok(n) => {
+                out.push(n);
+                None
+            }
+            Err(e) => Some(e),
+        },
+    }
+}
+
 fn fn_ymd(
     ev: &Evaluator,
     args: &[Expr],
@@ -787,6 +1157,304 @@ fn fn_exact(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelVal
     Ok(ExcelValue::Bool(a == b))
 }
 
+fn fn_substitute(
+    ev: &Evaluator,
+    args: &[Expr],
+    ctx: &mut Ctx<'_>,
+) -> Result<ExcelValue, EvalError> {
+    if args.len() < 3 || args.len() > 4 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let text = match coerce::to_text(&ev.eval_scalar(&args[0], ctx)?) {
+        Ok(s) => s,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let old_text = match coerce::to_text(&ev.eval_scalar(&args[1], ctx)?) {
+        Ok(s) => s,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let new_text = match coerce::to_text(&ev.eval_scalar(&args[2], ctx)?) {
+        Ok(s) => s,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let instance = if args.len() == 4 {
+        match coerce::to_number(&ev.eval_scalar(&args[3], ctx)?) {
+            Ok(n) => {
+                if !n.is_finite() {
+                    return Ok(ExcelValue::Error(ExcelError::Value));
+                }
+                let t = n.trunc();
+                if t < 1.0 {
+                    return Ok(ExcelValue::Error(ExcelError::Value));
+                }
+                if t > u32::MAX as f64 {
+                    return Ok(ExcelValue::Text(text));
+                }
+                Some(t as u32)
+            }
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        }
+    } else {
+        None
+    };
+    Ok(ExcelValue::Text(super::substitute::substitute(
+        &text, &old_text, &new_text, instance,
+    )))
+}
+
+fn fn_find(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    if args.len() < 2 || args.len() > 3 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let find_text = match coerce::to_text(&ev.eval_scalar(&args[0], ctx)?) {
+        Ok(s) => s,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let within_text = match coerce::to_text(&ev.eval_scalar(&args[1], ctx)?) {
+        Ok(s) => s,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let start_num = if args.len() == 3 {
+        match coerce::to_number(&ev.eval_scalar(&args[2], ctx)?) {
+            Ok(n) => {
+                if !n.is_finite() {
+                    return Ok(ExcelValue::Error(ExcelError::Value));
+                }
+                n.trunc() as i64
+            }
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        }
+    } else {
+        1
+    };
+    match super::find::find(&find_text, &within_text, start_num) {
+        Ok(pos) => Ok(ExcelValue::Number(pos)),
+        Err(e) => Ok(ExcelValue::Error(e)),
+    }
+}
+
+fn fn_search(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    if args.len() < 2 || args.len() > 3 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let find_text = match coerce::to_text(&ev.eval_scalar(&args[0], ctx)?) {
+        Ok(s) => s,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let within_text = match coerce::to_text(&ev.eval_scalar(&args[1], ctx)?) {
+        Ok(s) => s,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let start_num = if args.len() == 3 {
+        match coerce::to_number(&ev.eval_scalar(&args[2], ctx)?) {
+            Ok(n) => {
+                if !n.is_finite() {
+                    return Ok(ExcelValue::Error(ExcelError::Value));
+                }
+                n.trunc() as i64
+            }
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        }
+    } else {
+        1
+    };
+    match super::search::search(&find_text, &within_text, start_num) {
+        Ok(pos) => Ok(ExcelValue::Number(pos)),
+        Err(e) => Ok(ExcelValue::Error(e)),
+    }
+}
+
+fn fn_text(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    if args.len() != 2 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let value = ev.eval_scalar(&args[0], ctx)?;
+    if let ExcelValue::Error(e) = value {
+        return Ok(ExcelValue::Error(e));
+    }
+    let fmt_v = ev.eval_scalar(&args[1], ctx)?;
+    if let ExcelValue::Error(e) = fmt_v {
+        return Ok(ExcelValue::Error(e));
+    }
+    let fmt = match coerce::to_text(&fmt_v) {
+        Ok(s) => s,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    match text_format::apply(&value, &fmt, ctx.spec.options.date_system) {
+        Ok(s) => Ok(ExcelValue::Text(s)),
+        Err(e) => Ok(ExcelValue::Error(e)),
+    }
+}
+
+fn fn_replace(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    if args.len() != 4 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let old_text = match coerce::to_text(&ev.eval_scalar(&args[0], ctx)?) {
+        Ok(s) => s,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let start_num = match coerce::to_number(&ev.eval_scalar(&args[1], ctx)?) {
+        Ok(n) => match trunc_start_num(n) {
+            Ok(n) => n,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        },
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let num_chars = match coerce::to_number(&ev.eval_scalar(&args[2], ctx)?) {
+        Ok(n) => match trunc_num_chars(n) {
+            Ok(n) => n,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        },
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let new_text = match coerce::to_text(&ev.eval_scalar(&args[3], ctx)?) {
+        Ok(s) => s,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    Ok(ExcelValue::Text(super::replace::replace(
+        &old_text, start_num, num_chars, &new_text,
+    )))
+}
+
+fn trunc_start_num(n: f64) -> Result<u64, ExcelError> {
+    if !n.is_finite() {
+        return Err(ExcelError::Value);
+    }
+    let t = n.trunc();
+    if t < 1.0 {
+        return Err(ExcelError::Value);
+    }
+    if t > u64::MAX as f64 {
+        Ok(u64::MAX)
+    } else {
+        Ok(t as u64)
+    }
+}
+
+fn trunc_num_chars(n: f64) -> Result<u64, ExcelError> {
+    if !n.is_finite() {
+        return Err(ExcelError::Value);
+    }
+    let t = n.trunc();
+    if t < 0.0 {
+        return Err(ExcelError::Value);
+    }
+    if t > u64::MAX as f64 {
+        Ok(u64::MAX)
+    } else {
+        Ok(t as u64)
+    }
+}
+
+fn fn_pmt(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    if args.len() < 3 || args.len() > 5 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let rate = match coerce_num(ev, &args[0], ctx)? {
+        Ok(n) => n,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let nper = match coerce_num(ev, &args[1], ctx)? {
+        Ok(n) => n,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let pv = match coerce_num(ev, &args[2], ctx)? {
+        Ok(n) => n,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let fv = if args.len() >= 4 {
+        match coerce_num(ev, &args[3], ctx)? {
+            Ok(n) => n,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        }
+    } else {
+        0.0
+    };
+    let typ = if args.len() >= 5 {
+        match coerce_num(ev, &args[4], ctx)? {
+            Ok(n) => n,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        }
+    } else {
+        0.0
+    };
+    match excel_pmt(rate, nper, pv, fv, typ) {
+        Ok(n) => Ok(ExcelValue::Number(n)),
+        Err(e) => Ok(ExcelValue::Error(e)),
+    }
+}
+
+fn coerce_num(
+    ev: &Evaluator,
+    expr: &Expr,
+    ctx: &mut Ctx<'_>,
+) -> Result<Result<f64, ExcelError>, EvalError> {
+    Ok(coerce::to_number(&ev.eval_scalar(expr, ctx)?))
+}
+fn fn_irr(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    if args.is_empty() || args.len() > 2 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let from_range = args[0].is_reference();
+    let values_v = ev.eval_expr(&args[0], ctx)?;
+    let flows = match collect_cashflows(&values_v, from_range) {
+        Ok(v) => v,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let guess = if args.len() == 2 {
+        match coerce::to_number(&ev.eval_scalar(&args[1], ctx)?) {
+            Ok(n) => n,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        }
+    } else {
+        0.1
+    };
+    match super::irr::irr(&flows, guess) {
+        Some(r) => Ok(ExcelValue::Number(r)),
+        None => Ok(ExcelValue::Error(ExcelError::Num)),
+    }
+}
+
+fn collect_cashflows(v: &ExcelValue, from_range: bool) -> Result<Vec<f64>, ExcelError> {
+    let mut out = Vec::new();
+    collect_cashflows_into(v, from_range, &mut out)?;
+    Ok(out)
+}
+
+fn collect_cashflows_into(
+    v: &ExcelValue,
+    from_range: bool,
+    out: &mut Vec<f64>,
+) -> Result<(), ExcelError> {
+    match (v, from_range) {
+        (ExcelValue::Array(rows), _) => {
+            for row in rows {
+                for c in row {
+                    collect_cashflows_into(c, true, out)?;
+                }
+            }
+            Ok(())
+        }
+        (ExcelValue::Error(e), _) => Err(*e),
+        (ExcelValue::Number(n), _) => {
+            if !n.is_finite() {
+                return Err(ExcelError::Num);
+            }
+            out.push(*n);
+            Ok(())
+        }
+        (ExcelValue::Empty | ExcelValue::Bool(_) | ExcelValue::Text(_), true) => Ok(()),
+        (other, false) => match coerce::to_number(other) {
+            Ok(n) if n.is_finite() => {
+                out.push(n);
+                Ok(())
+            }
+            Ok(_) => Err(ExcelError::Num),
+            Err(e) => Err(e),
+        },
+    }
+}
 fn fn_value(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
     if args.len() != 1 {
         return Ok(ExcelValue::Error(ExcelError::Value));

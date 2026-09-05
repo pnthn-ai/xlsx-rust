@@ -27,6 +27,7 @@ pub enum QuirkCategory {
     /// `VLOOKUP` approximate match assumes an ascending sort.
     VlookupApproximateUnsorted,
     /// `IF` short-circuits; unused branch errors do not fire.
+    /// `IFS` does **not** short-circuit (unused pair errors still fire).
     IfShortCircuit,
     /// Date serials and the 1900 leap-year bug (documented, not implemented).
     Date1900LeapYear,
@@ -35,6 +36,7 @@ pub enum QuirkCategory {
     /// Implicit intersection of a range in a scalar context.
     ImplicitIntersection,
     /// Dynamic array / CSE / scalar evaluation mode.
+    /// `FILTER` returns an array value; worksheet spill / `#SPILL!` is not modeled.
     ArrayEvalMode,
     /// Volatile functions (`NOW`, `RAND`, `INDIRECT`, …).
     Volatile,
@@ -46,7 +48,7 @@ pub enum QuirkCategory {
     PrecisionAsDisplayed,
     /// Hidden-row / `SUBTOTAL` semantics.
     HiddenRows,
-    /// Wildcard matching in `VLOOKUP` / `COUNTIF` / `MATCH`.
+    /// Wildcard matching in `VLOOKUP` / `COUNTIF` / `MATCH` / `SEARCH`.
     Wildcards,
     /// Left-to-right Excel error propagation (`#DIV/0!+#VALUE!` keeps `#DIV/0!`).
     ErrorPrecedence,

@@ -1,0 +1,478 @@
+[
+  {
+    "id": "fn.irr-simple",
+    "description": "IRR({-100, 110}) is 10%",
+    "tags": ["irr", "financial"],
+    "formula": "=IRR({-100, 110})",
+    "expected": { "number": 0.1 }
+  },
+  {
+    "id": "fn.irr-simple-range",
+    "description": "IRR of a two-cell column range",
+    "tags": ["irr", "financial"],
+    "formula": "=IRR(A1:A2)",
+    "expected": { "number": 0.1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": -100 },
+          "A2": { "number": 110 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.irr-ms-five-year",
+    "description": "Microsoft example: IRR after five years is ~8.66%",
+    "tags": ["irr", "financial"],
+    "formula": "=IRR(A2:A7)",
+    "expected": { "number": 0.0866309480365316 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A2": { "number": -70000 },
+          "A3": { "number": 12000 },
+          "A4": { "number": 15000 },
+          "A5": { "number": 18000 },
+          "A6": { "number": 21000 },
+          "A7": { "number": 26000 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.irr-ms-four-year",
+    "description": "Microsoft example: IRR after four years is ~-2.12%",
+    "tags": ["irr", "financial"],
+    "formula": "=IRR(A2:A6)",
+    "expected": { "number": -0.0212448482734111 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A2": { "number": -70000 },
+          "A3": { "number": 12000 },
+          "A4": { "number": 15000 },
+          "A5": { "number": 18000 },
+          "A6": { "number": 21000 },
+          "A7": { "number": 26000 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.irr-ms-two-year-guess",
+    "description": "Microsoft example: two-year IRR needs guess -10% → ~-44.35%",
+    "tags": ["irr", "financial"],
+    "formula": "=IRR(A2:A4, -10%)",
+    "expected": { "number": -0.443506941334741 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A2": { "number": -70000 },
+          "A3": { "number": 12000 },
+          "A4": { "number": 15000 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.irr-ms-two-year-default-num",
+    "description": "Default guess 10% Newton-steps below -100% → #NUM! (Excel: supply a guess)",
+    "tags": ["irr", "financial", "errors"],
+    "formula": "=IRR(A2:A4)",
+    "expected": { "error": "#NUM!" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A2": { "number": -70000 },
+          "A3": { "number": 12000 },
+          "A4": { "number": 15000 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.irr-default-guess",
+    "description": "Omitted guess is 0.1; same result as an explicit 0.1",
+    "tags": ["irr", "financial"],
+    "formula": "=IRR({-100, 110}, 0.1)",
+    "expected": { "number": 0.1 }
+  },
+  {
+    "id": "fn.irr-guess-percent",
+    "description": "Guess may be a percent literal (10%)",
+    "tags": ["irr", "financial"],
+    "quirks": ["percent-unary"],
+    "formula": "=IRR({-100, 110}, 10%)",
+    "expected": { "number": 0.1 }
+  },
+  {
+    "id": "fn.irr-zero-occupies-period",
+    "description": "A stored 0 is a period: IRR({-100, 0, 121}) is 10%",
+    "tags": ["irr", "financial"],
+    "formula": "=IRR({-100, 0, 121})",
+    "expected": { "number": 0.1 }
+  },
+  {
+    "id": "fn.irr-empty-skipped",
+    "description": "Empty cells are ignored (compacted), not treated as 0",
+    "tags": ["irr", "financial", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=IRR(A1:A3)",
+    "expected": { "number": 0.1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": -100 },
+          "A3": { "number": 110 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.irr-zero-not-empty",
+    "description": "Zero in the middle is a period; IRR({-100, 0, 110}) is not 10%",
+    "tags": ["irr", "financial"],
+    "formula": "=IRR({-100, 0, 110})",
+    "expected": { "number": 0.0488088481701516 }
+  },
+  {
+    "id": "fn.irr-text-in-range-skipped",
+    "description": "Text in a range is ignored (does not occupy a period)",
+    "tags": ["irr", "financial"],
+    "formula": "=IRR(A1:A3)",
+    "expected": { "number": 0.1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": -100 },
+          "A2": { "text": "x" },
+          "A3": { "number": 110 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.irr-bool-in-range-skipped",
+    "description": "Logicals in a range are ignored",
+    "tags": ["irr", "financial"],
+    "quirks": ["sum-arg-vs-range"],
+    "formula": "=IRR(A1:A3)",
+    "expected": { "number": 0.1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": -100 },
+          "A2": { "bool": true },
+          "A3": { "number": 110 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.irr-numeric-text-in-range-skipped",
+    "description": "Numeric text in a range is still text and is ignored",
+    "tags": ["irr", "financial"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=IRR(A1:A3)",
+    "expected": { "number": 0.1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": -100 },
+          "A2": { "text": "50" },
+          "A3": { "number": 110 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.irr-array-text-skipped",
+    "description": "Text in an array literal is ignored",
+    "tags": ["irr", "financial"],
+    "formula": "=IRR({-100, \"x\", 110})",
+    "expected": { "number": 0.1 }
+  },
+  {
+    "id": "fn.irr-row-range",
+    "description": "A row range is collected left-to-right",
+    "tags": ["irr", "financial"],
+    "formula": "=IRR(A1:B1)",
+    "expected": { "number": 0.1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": -100 },
+          "B1": { "number": 110 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.irr-2d-row-major",
+    "description": "A 2D range is collected row-major: A1, B1, A2, B2",
+    "tags": ["irr", "financial"],
+    "formula": "=IRR(A1:B2)",
+    "expected": { "number": 0.1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": -100 },
+          "B1": { "number": 0 },
+          "A2": { "number": 0 },
+          "B2": { "number": 133.1 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.irr-two-roots-low-guess",
+    "description": "Non-conventional flows: guess 5% finds the 10% root",
+    "tags": ["irr", "financial"],
+    "formula": "=IRR({-100, 230, -132}, 0.05)",
+    "expected": { "number": 0.09999999999999132 }
+  },
+  {
+    "id": "fn.irr-two-roots-high-guess",
+    "description": "Non-conventional flows: guess 25% finds the 20% root",
+    "tags": ["irr", "financial"],
+    "formula": "=IRR({-100, 230, -132}, 0.25)",
+    "expected": { "number": 0.19999999999999948 }
+  },
+  {
+    "id": "fn.irr-rate-zero",
+    "description": "IRR({-100, 100}) is 0",
+    "tags": ["irr", "financial"],
+    "formula": "=IRR({-100, 100})",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.irr-high",
+    "description": "IRR({-100, 200}) is 100%",
+    "tags": ["irr", "financial"],
+    "formula": "=IRR({-100, 200})",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.irr-negative",
+    "description": "A losing project can have a negative IRR",
+    "tags": ["irr", "financial"],
+    "formula": "=IRR({-100, 50, 40})",
+    "expected": { "number": -0.069926474563228 }
+  },
+  {
+    "id": "fn.irr-all-positive-num",
+    "description": "No sign change → #NUM!",
+    "tags": ["irr", "financial", "errors"],
+    "formula": "=IRR({10, 20, 30})",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.irr-all-negative-num",
+    "description": "All outflows → #NUM!",
+    "tags": ["irr", "financial", "errors"],
+    "formula": "=IRR({-10, -20})",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.irr-single-value-num",
+    "description": "A single cash flow cannot change sign → #NUM!",
+    "tags": ["irr", "financial", "errors"],
+    "formula": "=IRR({-100})",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.irr-zeros-num",
+    "description": "Zeros are neither inflow nor outflow → #NUM!",
+    "tags": ["irr", "financial", "errors"],
+    "formula": "=IRR({0, 0, 0})",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.irr-guess-minus-one-num",
+    "description": "Guess -1 makes 1+r = 0; convergence fails → #NUM!",
+    "tags": ["irr", "financial", "errors"],
+    "formula": "=IRR({-100, 110}, -1)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.irr-bad-guess-below-minus-one",
+    "description": "A Newton step to r <= -1 is a failed iteration → #NUM!",
+    "tags": ["irr", "financial", "errors"],
+    "formula": "=IRR({-100, 110}, 2)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.irr-guess-true",
+    "description": "TRUE guess coerces to 1 (still finds the 10% root from this series)",
+    "tags": ["irr", "financial", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=IRR({-100, 50, 80}, TRUE)",
+    "expected": { "number": 0.178708781050336 }
+  },
+  {
+    "id": "fn.irr-guess-false",
+    "description": "FALSE guess coerces to 0",
+    "tags": ["irr", "financial", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=IRR({-100, 110}, FALSE)",
+    "expected": { "number": 0.1 }
+  },
+  {
+    "id": "fn.irr-guess-blank",
+    "description": "Blank guess cell coerces to 0",
+    "tags": ["irr", "financial", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=IRR({-100, 110}, B1)",
+    "expected": { "number": 0.1 },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.irr-guess-text-num",
+    "description": "Numeric text guess is coerced",
+    "tags": ["irr", "financial", "coercion"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=IRR({-100, 110}, \"0.1\")",
+    "expected": { "number": 0.1 }
+  },
+  {
+    "id": "fn.irr-guess-text-bad",
+    "description": "Non-numeric guess is #VALUE!",
+    "tags": ["irr", "financial", "errors"],
+    "formula": "=IRR({-100, 110}, \"x\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.irr-scalar-true-num",
+    "description": "Scalar TRUE coerces to 1 (one value, no sign change) → #NUM!",
+    "tags": ["irr", "financial", "errors"],
+    "quirks": ["sum-arg-vs-range"],
+    "formula": "=IRR(TRUE)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.irr-cell-true-skipped-num",
+    "description": "TRUE in a cell reference is ignored (range semantics) → #NUM!",
+    "tags": ["irr", "financial", "errors"],
+    "quirks": ["sum-arg-vs-range"],
+    "formula": "=IRR(A1)",
+    "expected": { "error": "#NUM!" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": { "A1": { "bool": true } }
+      }]
+    }
+  },
+  {
+    "id": "fn.irr-named-range",
+    "description": "IRR of a defined name that refers to a cash-flow range",
+    "tags": ["irr", "financial", "named"],
+    "formula": "=IRR(Cash)",
+    "expected": { "number": 0.1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": -100 },
+          "A2": { "number": 110 }
+        }
+      }],
+      "names": [{ "name": "Cash", "refers_to": "Sheet1!A1:A2" }]
+    }
+  },
+  {
+    "id": "fn.irr-arity-0",
+    "description": "IRR() is #VALUE!",
+    "tags": ["irr", "financial", "errors"],
+    "formula": "=IRR()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.irr-arity-3",
+    "description": "Three arguments is #VALUE! (NPV is a separate function)",
+    "tags": ["irr", "financial", "errors"],
+    "formula": "=IRR({-100, 110}, 0.1, 1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.irr-err-values",
+    "description": "Error in values propagates",
+    "tags": ["irr", "financial", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=IRR(1/0)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.irr-err-in-range",
+    "description": "First error in the cash-flow range wins",
+    "tags": ["irr", "financial", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=IRR(A1:A3)",
+    "expected": { "error": "#N/A" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": -100 },
+          "A2": { "error": "#N/A" },
+          "A3": { "number": 110 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.irr-err-guess",
+    "description": "Error in guess propagates",
+    "tags": ["irr", "financial", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=IRR({-100, 110}, 1/0)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.irr-err-left-wins",
+    "description": "Left-to-right: values error beats a later guess error",
+    "tags": ["irr", "financial", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=IRR(#DIV/0!, #N/A)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.irr-err-guess-after-ok-values",
+    "description": "Guess is evaluated even when values have no sign change",
+    "tags": ["irr", "financial", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=IRR({1, 2}, 1/0)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.irr-leading-trailing-empty",
+    "description": "Leading and trailing blanks around a valid series are ignored",
+    "tags": ["irr", "financial", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=IRR(A1:A5)",
+    "expected": { "number": 0.1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A2": { "number": -100 },
+          "A3": { "number": 110 }
+        }
+      }]
+    }
+  }
+]
