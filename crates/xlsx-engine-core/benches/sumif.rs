@@ -5,7 +5,7 @@
 
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use xlsx_engine_core::{eval_formula_in, eval_sumif_materialized, CalcCoreEngine};
-use xlsx_types::{Cell, CellAddr, EvalSpec, EvalTarget, ExcelValue, Sheet, Workbook};
+use xlsx_types::{Candidate, Cell, CellAddr, EvalSpec, EvalTarget, ExcelValue, Sheet, Workbook};
 
 const ROWS: u32 = 20_000;
 

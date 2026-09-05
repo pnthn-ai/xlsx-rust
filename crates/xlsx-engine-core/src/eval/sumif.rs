@@ -153,6 +153,12 @@ fn sumif_walk(
         return Ok(ExcelValue::Error(ExcelError::Ref));
     }
 
+    match walk_stored_only(ctx, &crit_sheet, &sum_sheet, range, sum_origin, criterion) {
+        Ok(Some(v)) => return Ok(v),
+        Ok(None) => {}
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    }
+
     let height = range.row_count();
     let width = range.col_count();
     let mut acc = 0.0;
@@ -175,6 +181,52 @@ fn sumif_walk(
         }
     }
     Ok(ExcelValue::Number(acc))
+}
+
+/// Single-borrow walk when no cell in either window is a formula.
+/// Returns `Ok(None)` so the caller can fall back to `eval_cell`.
+fn walk_stored_only(
+    ctx: &Ctx<'_>,
+    crit_sheet: &str,
+    sum_sheet: &str,
+    range: &RangeRef,
+    sum_origin: &RangeRef,
+    criterion: &Criterion,
+) -> Result<Option<ExcelValue>, ExcelError> {
+    let crit_sh = ctx
+        .spec
+        .workbook
+        .sheet(Some(crit_sheet))
+        .map_err(|_| ExcelError::Ref)?;
+    let sum_sh = ctx
+        .spec
+        .workbook
+        .sheet(Some(sum_sheet))
+        .map_err(|_| ExcelError::Ref)?;
+    let height = range.row_count();
+    let width = range.col_count();
+    let mut acc = 0.0;
+    let mut a1 = String::with_capacity(8);
+    for dr in 0..height {
+        for dc in 0..width {
+            let crit_addr = CellAddr::new(range.start.col + dc, range.start.row + dr);
+            match lookup_stored(crit_sh, crit_addr, &mut a1) {
+                Stored::NeedsEval => return Ok(None),
+                Stored::MissingSheet => return Err(ExcelError::Ref),
+                Stored::Value(v) if !criterion.matches(&v) => continue,
+                Stored::Value(_) => {}
+            }
+            let sum_addr = CellAddr::new(sum_origin.start.col + dc, sum_origin.start.row + dr);
+            match lookup_stored(sum_sh, sum_addr, &mut a1) {
+                Stored::NeedsEval => return Ok(None),
+                Stored::MissingSheet => return Err(ExcelError::Ref),
+                Stored::Value(ExcelValue::Error(e)) => return Ok(Some(ExcelValue::Error(e))),
+                Stored::Value(ExcelValue::Number(n)) => acc += n,
+                Stored::Value(_) => {}
+            }
+        }
+    }
+    Ok(Some(ExcelValue::Number(acc)))
 }
 
 fn read_cell(

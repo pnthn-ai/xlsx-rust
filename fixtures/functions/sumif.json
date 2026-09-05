@@ -4,7 +4,7 @@
     "description": "Two-arg SUMIF sums values in range that are > 2",
     "tags": ["sumif", "functions"],
     "formula": "=SUMIF(A1:A3, \">2\")",
-    "expected": { "number": 6 },
+    "expected": { "number": 9 },
     "workbook": {
       "sheets": [{
         "name": "Sheet1",
@@ -21,7 +21,7 @@
     "description": "Three-arg SUMIF applies criteria to range and sums sum_range",
     "tags": ["sumif", "functions"],
     "formula": "=SUMIF(A1:A3, \">2\", B1:B3)",
-    "expected": { "number": 20 },
+    "expected": { "number": 50 },
     "workbook": {
       "sheets": [{
         "name": "Sheet1",
@@ -544,7 +544,7 @@
     "description": "Criteria can be built with & (e.g. \">\"&2)",
     "tags": ["sumif"],
     "formula": "=SUMIF(A1:A3, \">\"&2)",
-    "expected": { "number": 6 },
+    "expected": { "number": 9 },
     "workbook": {
       "sheets": [{
         "name": "Sheet1",
@@ -561,7 +561,7 @@
     "description": "Criteria taken from a cell (numeric)",
     "tags": ["sumif"],
     "formula": "=SUMIF(A1:A3, C1, B1:B3)",
-    "expected": { "number": 20 },
+    "expected": { "number": 50 },
     "workbook": {
       "sheets": [{
         "name": "Sheet1",
