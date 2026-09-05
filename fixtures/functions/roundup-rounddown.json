@@ -199,6 +199,14 @@
     "expected": { "number": 1.15 }
   },
   {
+    "id": "fn.roundup-ieee-15digit-int",
+    "description": "ROUNDUP(7+1E-15, 0) stays 7 — Excel 15-digit leftover is not a fraction",
+    "tags": ["math", "roundup"],
+    "quirks": ["ieee-vs-excel-precision"],
+    "formula": "=ROUNDUP(7+1E-15, 0)",
+    "expected": { "number": 7 }
+  },
+  {
     "id": "fn.roundup-zero",
     "description": "ROUNDUP(0, 5) is 0",
     "tags": ["math", "roundup"],

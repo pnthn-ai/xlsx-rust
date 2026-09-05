@@ -7,11 +7,12 @@
 //! - A signed input is converted to its absolute value, rounded, then the sign
 //!   is reapplied.
 //!
-//! Production uses a table of exact `10^e` (e ≤ 22), integer scaling for
-//! negative `num_digits` (so we never multiply by inexact `0.1`), and a
-//! 15-significant-digit snap so `ROUNDUP(1.1, 2)` stays `1.1` instead of
-//! bumping a binary leftover. The naive path calls `powi` on every invocation
-//! so benches can print a before/after.
+//! Production specialises the common `num_digits` (`0`, `±1`, `±2`, `±3`)
+//! and otherwise uses a table of exact `10^e` (e ≤ 22). Negative
+//! `num_digits` divide by the integer `10^|d|` (never multiply by inexact
+//! `0.1`). A 15-significant-digit snap keeps `ROUNDUP(1.1, 2)` at `1.1`.
+//! The naive path issues two `powi` calls and has no specialised digits so
+//! benches can print a before/after.
 
 /// Exact `10^e` for `e` in `0..=22` (all representable as f64 integers).
 const POW10: [f64; 23] = [
@@ -49,26 +50,76 @@ enum Mode {
 }
 
 /// Production `ROUNDUP` kernel.
+#[inline]
 pub fn roundup(n: f64, digits: i32) -> f64 {
-    excel_round_dir(n, digits, Mode::Up)
+    match digits {
+        0 => toward_or_away_int(n, Mode::Up),
+        1 => scale_dir(n, 10.0, true, Mode::Up),
+        2 => scale_dir(n, 100.0, true, Mode::Up),
+        3 => scale_dir(n, 1_000.0, true, Mode::Up),
+        -1 => scale_dir(n, 10.0, false, Mode::Up),
+        -2 => scale_dir(n, 100.0, false, Mode::Up),
+        -3 => scale_dir(n, 1_000.0, false, Mode::Up),
+        d => excel_round_dir(n, d, Mode::Up),
+    }
 }
 
 /// Production `ROUNDDOWN` kernel.
+#[inline]
 pub fn rounddown(n: f64, digits: i32) -> f64 {
-    excel_round_dir(n, digits, Mode::Down)
+    match digits {
+        0 => toward_or_away_int(n, Mode::Down),
+        1 => scale_dir(n, 10.0, true, Mode::Down),
+        2 => scale_dir(n, 100.0, true, Mode::Down),
+        3 => scale_dir(n, 1_000.0, true, Mode::Down),
+        -1 => scale_dir(n, 10.0, false, Mode::Down),
+        -2 => scale_dir(n, 100.0, false, Mode::Down),
+        -3 => scale_dir(n, 1_000.0, false, Mode::Down),
+        d => excel_round_dir(n, d, Mode::Down),
+    }
 }
 
-/// `powi`-every-call baseline used by the hill-climb bench.
-///
-/// Same Excel semantics as [`roundup`]; slower because it computes `10^digits`
-/// with `f64::powi` instead of a table / integer scale.
+/// Textbook baseline used by the hill-climb bench: two `powi` calls, no
+/// specialized digit paths. Same 15-digit snap as production so results match.
 pub fn roundup_naive(n: f64, digits: i32) -> f64 {
     excel_round_dir_naive(n, digits, Mode::Up)
 }
 
-/// `powi`-every-call baseline used by the hill-climb bench.
+/// Textbook baseline used by the hill-climb bench.
 pub fn rounddown_naive(n: f64, digits: i32) -> f64 {
     excel_round_dir_naive(n, digits, Mode::Down)
+}
+
+/// Integer `num_digits`: snap 15-digit leftovers (`7 + 1e-15` stays 7) then
+/// `ceil` (away) or `trunc` (toward).
+#[inline]
+fn toward_or_away_int(n: f64, mode: Mode) -> f64 {
+    if !n.is_finite() {
+        return n;
+    }
+    if n == 0.0 {
+        return 0.0;
+    }
+    let sign = if n < 0.0 { -1.0 } else { 1.0 };
+    sign * apply(snap_15(n.abs()), mode)
+}
+
+/// Scale by an exact integer power of ten (`p = 10^|digits|`).
+/// `mul` is true for positive `num_digits` (multiply then divide).
+#[inline]
+fn scale_dir(n: f64, p: f64, mul: bool, mode: Mode) -> f64 {
+    if n == 0.0 {
+        return 0.0;
+    }
+    let sign = if n < 0.0 { -1.0 } else { 1.0 };
+    let mag = n.abs();
+    let scaled = if mul { mag * p } else { mag / p };
+    let rounded = apply(snap_15(scaled), mode);
+    if mul {
+        sign * rounded / p
+    } else {
+        sign * rounded * p
+    }
 }
 
 fn excel_round_dir(n: f64, digits: i32, mode: Mode) -> f64 {
@@ -78,20 +129,9 @@ fn excel_round_dir(n: f64, digits: i32, mode: Mode) -> f64 {
     if n == 0.0 {
         return 0.0;
     }
-    let sign = if n.is_sign_negative() { -1.0 } else { 1.0 };
-    let mag = n.abs();
-    if digits == 0 {
-        return sign * apply(snap_15(mag), mode);
-    }
     let e = digits.unsigned_abs();
     let p = pow10_u(e);
-    let scaled = if digits > 0 { mag * p } else { mag / p };
-    let rounded = apply(snap_15(scaled), mode);
-    if digits > 0 {
-        sign * rounded / p
-    } else {
-        sign * rounded * p
-    }
+    scale_dir(n, p, digits > 0, mode)
 }
 
 fn excel_round_dir_naive(n: f64, digits: i32, mode: Mode) -> f64 {
@@ -101,10 +141,21 @@ fn excel_round_dir_naive(n: f64, digits: i32, mode: Mode) -> f64 {
     if n == 0.0 {
         return 0.0;
     }
-    let factor = 10f64.powi(digits);
-    let sign = if n.is_sign_negative() { -1.0 } else { 1.0 };
-    let rounded = apply(snap_15(n.abs() * factor), mode);
-    sign * rounded / factor
+    // Two `powi` calls, no table / digit specialisation. Negative
+    // `num_digits` still divide by the integer `10^|d|` so `* 0.1`
+    // leftovers cannot diverge from production.
+    let e = digits.unsigned_abs() as i32;
+    let p = 10f64.powi(e);
+    let unscale = 10f64.powi(e);
+    let sign = if n < 0.0 { -1.0 } else { 1.0 };
+    let mag = n.abs();
+    let scaled = if digits >= 0 { mag * p } else { mag / p };
+    let rounded = apply(snap_15(scaled), mode);
+    if digits >= 0 {
+        sign * rounded / unscale
+    } else {
+        sign * rounded * unscale
+    }
 }
 
 #[inline]
@@ -222,6 +273,9 @@ mod tests {
         // 1.15 * 100 is 114.999…; snap keeps 1.15 for ROUNDDOWN.
         assert_eq!(both_down(1.15, 2), 1.15);
         assert_eq!(both_up(1.15, 2), 1.15);
+        // 15-digit leftover on the integer path must not bump.
+        assert_eq!(both_up(7.000000000000001, 0), 7.0);
+        assert_eq!(both_down(6.999999999999999, 0), 7.0);
     }
 
     #[test]
@@ -230,5 +284,19 @@ mod tests {
         assert_eq!(both_down(-0.0, 2), 0.0);
         assert!(roundup(f64::INFINITY, 0).is_infinite());
         assert!(rounddown(f64::NAN, 0).is_nan());
+    }
+
+    #[test]
+    fn naive_matches_fast_over_grid() {
+        let digits = [-4, -3, -2, -1, 0, 1, 2, 3, 4];
+        for i in -200i32..=200 {
+            let n = i as f64 * 0.137 + 0.15;
+            for &d in &digits {
+                both_up(n, d);
+                both_down(n, d);
+                both_up(-n, d);
+                both_down(-n, d);
+            }
+        }
     }
 }
