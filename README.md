@@ -130,8 +130,7 @@ Group new cases by what they prove, not by when they were added:
 |---|---|
 | [`fixtures/seed/`](fixtures/seed) | Original gate seed (kept stable; do not duplicate) |
 | [`fixtures/quirks/`](fixtures/quirks) | Excel oddities: type rank, empty duality, coercion, dates, VLOOKUP approx, … |
-| [`fixtures/functions/`](fixtures/functions) | Function families (`SUM`/`AVERAGE`/`COUNT`/`COUNTIF`, logicals, text, lookup, `TYPE`) |
-| [`fixtures/functions/`](fixtures/functions) | Function families (`SUM`/`AVERAGE`/`COUNT`, logicals, text, lookup, `TYPE`, `PMT`) |
+| [`fixtures/functions/`](fixtures/functions) | Function families (`SUM`/`AVERAGE`/`COUNT`/`COUNTIF`, logicals, text, lookup, `TYPE`, `PMT`, `TOCOL`) |
 | [`fixtures/operators/`](fixtures/operators) | Unary/`%`, intersection / union-shaped ranges |
 | [`fixtures/ignored/`](fixtures/ignored) | Documented `ignore` (volatile, locale, precision-as-displayed, hidden rows) |
 
@@ -285,7 +284,7 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 | [`eval/coerce.rs`](crates/xlsx-engine-core/src/eval/coerce.rs) | Arithmetic / `&` / `IF` coercion (`"2"+1` = 3, TRUE → 1, empty → 0) |
 | [`eval/compare.rs`](crates/xlsx-engine-core/src/eval/compare.rs) | 15-digit `=`, case-insensitive text, `TRUE=1`, type ranking (`FALSE>100`) |
 | [`eval/empty.rs`](crates/xlsx-engine-core/src/eval/empty.rs) | Blank ≠ 0 ≠ `""`, but `A1=0` and `A1=""` when `A1` is blank |
-| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Dispatch: aggregators (`SUM`/`SUMIF`/`SUMIFS`/`AVERAGEIF`/`COUNTIF`/`SUMPRODUCT`), logicals (`IF`/`IFS`/`SWITCH`), lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`/`FILTER`/`UNIQUE`), dates (`DATE`/`EOMONTH`/`NETWORKDAYS`/`WEEKDAY`/`WORKDAY`), math (`ROUND`/`ROUNDUP`/`ROUNDDOWN`/`FLOOR`/`CEILING`), text (`LEFT`/`SUBSTITUTE`/`REPLACE`/`FIND`/`SEARCH`/`TEXT`/`TEXTJOIN`/`CONCAT`), financial (`NPV`/`PMT`/`IRR`), `TYPE` / `IS*` |
+| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Dispatch: aggregators (`SUM`/`SUMIF`/`SUMIFS`/`AVERAGEIF`/`COUNTIF`/`SUMPRODUCT`), logicals (`IF`/`IFS`/`SWITCH`), lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`/`FILTER`/`UNIQUE`/`TOCOL`), dates (`DATE`/`EOMONTH`/`NETWORKDAYS`/`WEEKDAY`/`WORKDAY`), math (`ROUND`/`ROUNDUP`/`ROUNDDOWN`/`FLOOR`/`CEILING`), text (`LEFT`/`SUBSTITUTE`/`REPLACE`/`FIND`/`SEARCH`/`TEXT`/`TEXTJOIN`/`CONCAT`), financial (`NPV`/`PMT`/`IRR`), `TYPE` / `IS*` |
 | [`eval/sumif.rs`](crates/xlsx-engine-core/src/eval/sumif.rs) | Excel `SUMIF` kernel (criteria walk, reshape `sum_range`, no array literals) |
 | [`eval/sumifs.rs`](crates/xlsx-engine-core/src/eval/sumifs.rs) | Excel `SUMIFS`: multi-criteria AND, same-shape ranges |
 | [`eval/averageif.rs`](crates/xlsx-engine-core/src/eval/averageif.rs) | Excel `AVERAGEIF` kernel (reshape `average_range`, `#DIV/0!` when empty) |
@@ -301,6 +300,7 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 | [`eval/ifs.rs`](crates/xlsx-engine-core/src/eval/ifs.rs) | `IFS` pair-selection kernel (eager eval, first TRUE, no-match `#N/A`) |
 | [`eval/unique.rs`](crates/xlsx-engine-core/src/eval/unique.rs) | `UNIQUE(array, [by_col], [exactly_once])` hash distinctness |
 | [`eval/filter.rs`](crates/xlsx-engine-core/src/eval/filter.rs) | `FILTER` mask/select kernel (`#CALC!` / `if_empty`, row vs column) |
+| [`eval/tocol.rs`](crates/xlsx-engine-core/src/eval/tocol.rs) | `TOCOL(array, [ignore], [scan_by_col])`: flatten to a column |
 | [`eval/npv.rs`](crates/xlsx-engine-core/src/eval/npv.rs) | Excel `NPV` kernel (period-1 discount, range skip of blanks/text/logicals) |
 | [`eval/irr.rs`](crates/xlsx-engine-core/src/eval/irr.rs) | Excel `IRR` Newton / secant kernel (20 tries, `1e-7` rate, `#NUM!` on failure) |
 | [`text_format.rs`](crates/xlsx-engine-core/src/text_format.rs) | Excel `TEXT` for a documented number/date format subset |
@@ -388,11 +388,19 @@ as one or the other. Documented quirk categories:
   (or columns when `by_col` is TRUE); case-insensitive text; type-strict
   (`1` ≠ `"1"` ≠ `TRUE`); blanks collapse to one empty; `exactly_once` with
   no survivors is `#CALC!`. Result is always an array value.
+- `TOCOL(array, [ignore], [scan_by_col])`: flatten to an n×1 array.
+  `ignore` 0 keeps all (default), 1 drops blanks, 2 drops errors, 3 drops
+  both; other values (after numeric coerce + trunc toward zero) are
+  `#VALUE!`. Stored `""` is text, not a blank. `scan_by_col` FALSE / omitted
+  is row-major; TRUE walks columns. No survivors after ignore → `#CALC!`.
+  Errors in the source are data unless ignored. Nested array cells unnest.
+  Result longer than 1,048,576 rows is `#NUM!`.
 - **Spill limitation:** `evaluate` returns that array. The engine does **not**
   write spilled values into neighboring cells, so occupied destinations never
-  yield `#SPILL!`. Scalar operators (`UNIQUE(...)+1`) take the top-left
-  element (`scalarize`), not a host-aware intersection of a written spill.
-  Use `INDEX` / `SUM` / `COUNTA` to consume the array without a grid write.
+  yield `#SPILL!`. Scalar operators (`UNIQUE(...)+1` / `TOCOL(...)+1`) take
+  the top-left element (`scalarize`), not a host-aware intersection of a
+  written spill. Use `INDEX` / `SUM` / `COUNTA` to consume the array without
+  a grid write.
 - `AVERAGEIF` criteria strings (`">5"`, `"*a*"`, `"="` / `"<>"` blanks), text `"5"` dual-matching numbers, range vs `average_range` reshape from the top-left, no matches / no numeric average cells → `#DIV/0!`, empty criteria cell treated as `0`
 - `PMT(rate, nper, pv, [fv], [type])`: Excel cash-flow sign (pay out is
   negative); `rate=0` is `-(pv+fv)/nper` (`#DIV/0!` if `nper=0`);
@@ -416,6 +424,16 @@ as one or the other. Documented quirk categories:
   is not a boolean-array include — pass a logical/numeric vector (literal or
   range). `*` / `+` criteria broadcasting is not modeled.
 - Excel's ~1,048,576-row array cap is not enforced; size is memory-bounded.
+
+**`TOCOL` spill / model limits** (honest, not hidden behind a broken case):
+
+- TOCOL returns an array **value** (n×1). The snippet workbook has no spill
+  grid, so a blocked cell below the host never yields `#SPILL!`.
+- Excel's 1,048,576-row result cap **is** enforced (`#NUM!`). Occupancy of
+  neighboring cells is not modeled — there is no `#SPILL!` path.
+- Kept blanks stay `Empty` (not coerced to `0`). Microsoft's "blank values
+  return a 0" example is display / arithmetic, not the stored type.
+- `TOROW` / `WRAPCOLS` / `WRAPROWS` are out of scope.
 
 See [`crates/xlsx-types/src/quirk.rs`](crates/xlsx-types/src/quirk.rs). The
 catalog also names `error-precedence`, `percent-unary`, and `range-operators`.

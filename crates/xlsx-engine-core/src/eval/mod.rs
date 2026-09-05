@@ -23,6 +23,7 @@ pub mod npv;
 pub mod switch;
 pub mod ifs;
 pub mod unique;
+pub mod tocol;
 pub mod irr;
 
 use crate::ast::{BinOp, Expr, UnaryOp};

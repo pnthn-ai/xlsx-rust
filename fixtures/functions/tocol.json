@@ -1,0 +1,590 @@
+[
+  {
+    "id": "fn.tocol.row-major-literal",
+    "description": "TOCOL of a 2×2 literal is row-major by default",
+    "tags": ["tocol", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TOCOL({1,2;3,4})",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "number": 2 }],
+        [{ "number": 3 }],
+        [{ "number": 4 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.tocol.scan-by-col",
+    "description": "scan_by_col=TRUE walks top-to-bottom then right",
+    "tags": ["tocol", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TOCOL({1,2;3,4}, 0, TRUE)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "number": 3 }],
+        [{ "number": 2 }],
+        [{ "number": 4 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.tocol.scan-by-col-numeric",
+    "description": "Nonzero numeric scan_by_col is TRUE",
+    "tags": ["tocol", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TOCOL({1,2;3,4}, 0, 1)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "number": 3 }],
+        [{ "number": 2 }],
+        [{ "number": 4 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.tocol.row-vector",
+    "description": "A single row becomes a column in left-to-right order",
+    "tags": ["tocol", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TOCOL({1,2,3})",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "number": 2 }],
+        [{ "number": 3 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.tocol.col-already",
+    "description": "A column input is already a column (identity)",
+    "tags": ["tocol", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TOCOL({1;2;3})",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "number": 2 }],
+        [{ "number": 3 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.tocol.scalar",
+    "description": "TOCOL of a scalar is a 1×1 array",
+    "tags": ["tocol", "functions"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TOCOL(5)",
+    "expected": {
+      "array": [[{ "number": 5 }]]
+    }
+  },
+  {
+    "id": "fn.tocol.one-by-one-literal",
+    "description": "TOCOL of a 1×1 literal is a 1×1 array",
+    "tags": ["tocol", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TOCOL({7})",
+    "expected": {
+      "array": [[{ "number": 7 }]]
+    }
+  },
+  {
+    "id": "fn.tocol.range",
+    "description": "TOCOL of a worksheet 2×2 is row-major",
+    "tags": ["tocol", "functions"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TOCOL(A1:B2)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "number": 2 }],
+        [{ "number": 3 }],
+        [{ "number": 4 }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "number": 2 },
+          "A2": { "number": 3 }, "B2": { "number": 4 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.tocol.range-scan-by-col",
+    "description": "TOCOL(range, 0, TRUE) is column-major",
+    "tags": ["tocol", "functions"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TOCOL(A1:B2, 0, TRUE)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "number": 3 }],
+        [{ "number": 2 }],
+        [{ "number": 4 }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "number": 2 },
+          "A2": { "number": 3 }, "B2": { "number": 4 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.tocol.keep-blanks",
+    "description": "ignore=0 keeps blanks as empty (not coerced to 0)",
+    "tags": ["tocol", "empty"],
+    "quirks": ["array-eval-mode", "empty-cell-duality"],
+    "formula": "=TOCOL(A1:B2)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "empty": null }],
+        [{ "number": 2 }],
+        [{ "number": 3 }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 2 }, "B2": { "number": 3 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.tocol.ignore-blanks",
+    "description": "ignore=1 drops empty cells and keeps values",
+    "tags": ["tocol", "empty"],
+    "quirks": ["array-eval-mode", "empty-cell-duality"],
+    "formula": "=TOCOL(A1:B2, 1)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "number": 2 }],
+        [{ "number": 3 }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 2 }, "B2": { "number": 3 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.tocol.ignore-blanks-scan-by-col",
+    "description": "ignore=1 with scan_by_col walks columns then drops blanks",
+    "tags": ["tocol", "empty"],
+    "quirks": ["array-eval-mode", "empty-cell-duality"],
+    "formula": "=TOCOL(A1:B2, 1, TRUE)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "number": 3 }],
+        [{ "number": 2 }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "number": 2 },
+          "B2": { "number": 3 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.tocol.empty-string-vs-blank",
+    "description": "Stored \"\" is text and is kept when ignore=1; a blank is dropped",
+    "tags": ["tocol", "empty"],
+    "quirks": ["array-eval-mode", "empty-cell-duality"],
+    "formula": "=TOCOL(A1:A3, 1)",
+    "expected": {
+      "array": [
+        [{ "text": "" }],
+        [{ "number": 1 }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "" },
+          "A3": { "number": 1 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.tocol.all-blanks-kept",
+    "description": "All-blank range with ignore=0 is a column of empties, not #CALC!",
+    "tags": ["tocol", "empty"],
+    "quirks": ["array-eval-mode", "empty-cell-duality"],
+    "formula": "=TOCOL(A1:A3)",
+    "expected": {
+      "array": [
+        [{ "empty": null }],
+        [{ "empty": null }],
+        [{ "empty": null }]
+      ]
+    },
+    "workbook": { "sheets": [{ "name": "Sheet1", "cells": {} }] }
+  },
+  {
+    "id": "fn.tocol.all-blanks-ignored",
+    "description": "All-blank range with ignore=1 is #CALC!",
+    "tags": ["tocol", "empty", "errors"],
+    "quirks": ["array-eval-mode", "empty-cell-duality"],
+    "formula": "=TOCOL(A1:A3, 1)",
+    "expected": { "error": "#CALC!" },
+    "workbook": { "sheets": [{ "name": "Sheet1", "cells": {} }] }
+  },
+  {
+    "id": "fn.tocol.keep-errors",
+    "description": "Errors in the source are data when ignore=0",
+    "tags": ["tocol", "errors", "array"],
+    "quirks": ["array-eval-mode", "error-precedence"],
+    "formula": "=TOCOL({1,#N/A;2,3})",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "error": "#N/A" }],
+        [{ "number": 2 }],
+        [{ "number": 3 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.tocol.ignore-errors",
+    "description": "ignore=2 drops error values and keeps blanks",
+    "tags": ["tocol", "errors", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TOCOL({1,#N/A;2,#DIV/0!}, 2)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "number": 2 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.tocol.ignore-blanks-and-errors",
+    "description": "ignore=3 drops blanks and errors",
+    "tags": ["tocol", "empty", "errors"],
+    "quirks": ["array-eval-mode", "empty-cell-duality"],
+    "formula": "=TOCOL(A1:B2, 3)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "number": 2 }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "error": "#N/A" }, "B2": { "number": 2 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.tocol.ignore-errors-all-calc",
+    "description": "ignore=2 with only errors is #CALC!",
+    "tags": ["tocol", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TOCOL({#N/A,#DIV/0!}, 2)",
+    "expected": { "error": "#CALC!" }
+  },
+  {
+    "id": "fn.tocol.ignore-true-is-one",
+    "description": "TRUE ignore coerces to 1 (drop blanks)",
+    "tags": ["tocol", "empty"],
+    "quirks": ["array-eval-mode", "empty-cell-duality"],
+    "formula": "=TOCOL({1,FALSE;2,3}, TRUE)",
+    "notes": "FALSE is a logical, not a blank, so it is kept.",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "bool": false }],
+        [{ "number": 2 }],
+        [{ "number": 3 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.tocol.ignore-truncates",
+    "description": "ignore 1.9 truncates toward zero to 1",
+    "tags": ["tocol", "empty"],
+    "quirks": ["array-eval-mode", "empty-cell-duality"],
+    "formula": "=TOCOL(A1:A2, 1.9)",
+    "expected": {
+      "array": [[{ "number": 4 }]]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": { "A2": { "number": 4 } }
+      }]
+    }
+  },
+  {
+    "id": "fn.tocol.ignore-text-number",
+    "description": "Numeric text ignore coerces (\"2\" → drop errors)",
+    "tags": ["tocol", "errors", "array"],
+    "quirks": ["array-eval-mode", "equality-vs-arithmetic-coercion"],
+    "formula": "=TOCOL({1,#N/A;2,3}, \"2\")",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "number": 2 }],
+        [{ "number": 3 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.tocol.ignore-out-of-range",
+    "description": "ignore 4 is #VALUE!",
+    "tags": ["tocol", "errors"],
+    "formula": "=TOCOL({1,2}, 4)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.tocol.ignore-negative",
+    "description": "Negative ignore is #VALUE!",
+    "tags": ["tocol", "errors"],
+    "formula": "=TOCOL({1,2}, -1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.tocol.ignore-text-value",
+    "description": "Non-numeric text ignore is #VALUE!",
+    "tags": ["tocol", "errors"],
+    "formula": "=TOCOL({1,2}, \"x\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.tocol.scan-text-value",
+    "description": "Text scan_by_col is #VALUE!",
+    "tags": ["tocol", "errors"],
+    "formula": "=TOCOL({1,2}, 0, \"x\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.tocol.error-arg",
+    "description": "A scalar error array argument surfaces",
+    "tags": ["tocol", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=TOCOL(#DIV/0!)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.tocol.error-ltr-array-first",
+    "description": "Array is evaluated before ignore: #N/A beats a later #DIV/0!",
+    "tags": ["tocol", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=TOCOL(#N/A, #DIV/0!)",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.tocol.ignore-error",
+    "description": "Error in ignore surfaces after a valid array",
+    "tags": ["tocol", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=TOCOL({1;2}, #DIV/0!)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.tocol.scan-error",
+    "description": "Error in scan_by_col surfaces after valid array and ignore",
+    "tags": ["tocol", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=TOCOL({1;2}, 0, #DIV/0!)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.tocol.arity-zero",
+    "description": "TOCOL() is #VALUE!",
+    "tags": ["tocol", "errors"],
+    "formula": "=TOCOL()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.tocol.arity-four",
+    "description": "Four arguments are #VALUE!",
+    "tags": ["tocol", "errors"],
+    "formula": "=TOCOL({1}, 0, FALSE, TRUE)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.tocol.types-preserved",
+    "description": "Number, text, logical stay distinct (no UNIQUE-style collapse)",
+    "tags": ["tocol", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TOCOL({1,\"1\",TRUE})",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "text": "1" }],
+        [{ "bool": true }]
+      ]
+    }
+  },
+  {
+    "id": "fn.tocol.nested-unique",
+    "description": "TOCOL of a UNIQUE 2-D result flattens the distinct rows",
+    "tags": ["tocol", "unique", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TOCOL(UNIQUE({1,2;1,2;3,4}))",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "number": 2 }],
+        [{ "number": 3 }],
+        [{ "number": 4 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.tocol.index-nth",
+    "description": "INDEX picks a TOCOL row without writing a spill range",
+    "tags": ["tocol", "index"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=INDEX(TOCOL({1,2;3,4}), 3)",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.tocol.sum",
+    "description": "SUM consumes the TOCOL column (1+2+3+4)",
+    "tags": ["tocol", "sum"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SUM(TOCOL({1,2;3,4}))",
+    "expected": { "number": 10 }
+  },
+  {
+    "id": "fn.tocol.counta-skips-kept-blanks",
+    "description": "COUNTA of TOCOL skips kept empties",
+    "tags": ["tocol", "counta", "empty"],
+    "quirks": ["array-eval-mode", "empty-cell-duality"],
+    "formula": "=COUNTA(TOCOL(A1:A3))",
+    "expected": { "number": 2 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "a" },
+          "A3": { "text": "b" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.tocol.dynamic-array-mode",
+    "description": "array_mode=dynamic-array still returns the TOCOL array (no grid write)",
+    "tags": ["tocol", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TOCOL(A1:B2)",
+    "options": { "array_mode": "dynamic-array" },
+    "expected": {
+      "array": [
+        [{ "number": 10 }],
+        [{ "number": 20 }],
+        [{ "number": 30 }],
+        [{ "number": 40 }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 10 }, "B1": { "number": 20 },
+          "A2": { "number": 30 }, "B2": { "number": 40 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.tocol.no-grid-write",
+    "description": "Occupied cells in the Excel spill zone do not produce #SPILL! — TOCOL returns the array",
+    "notes": "Excel would #SPILL! if TOCOL at B1 needed B2:B4. This model never writes a spill range; neighbors are irrelevant. Pick individual results with INDEX/SUM. Excel's 1,048,576-row result cap is enforced as #NUM! in the kernel (unit-tested); it is not exercised here.",
+    "tags": ["tocol", "spill"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TOCOL(A1:A3)",
+    "at": "Sheet1!B1",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "number": 2 }],
+        [{ "number": 3 }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 2 },
+          "A3": { "number": 3 },
+          "B2": { "text": "blocker" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.tocol.scalar-plus-top-left",
+    "description": "TOCOL+n in a scalar operator takes the top-left value (not host-aware spill intersection)",
+    "notes": "The engine scalarizes arrays to the first element. It does not intersect a written spill with the host cell.",
+    "tags": ["tocol", "arithmetic"],
+    "quirks": ["array-eval-mode", "implicit-intersection"],
+    "formula": "=TOCOL({10,20;30,40})+1",
+    "expected": { "number": 11 }
+  },
+  {
+    "id": "fn.tocol.false-defaults",
+    "description": "Explicit 0,FALSE matches omitted optional args",
+    "tags": ["tocol", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TOCOL({1,2;3,4}, 0, FALSE)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "number": 2 }],
+        [{ "number": 3 }],
+        [{ "number": 4 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.tocol.bools-and-zeros",
+    "description": "FALSE and 0 are kept as their own types; neither is a blank",
+    "tags": ["tocol", "functions", "array"],
+    "quirks": ["array-eval-mode", "empty-cell-duality"],
+    "formula": "=TOCOL({0,FALSE;\"\",1}, 1)",
+    "expected": {
+      "array": [
+        [{ "number": 0 }],
+        [{ "bool": false }],
+        [{ "text": "" }],
+        [{ "number": 1 }]
+      ]
+    }
+  }
+]
