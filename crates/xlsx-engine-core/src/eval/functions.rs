@@ -12,6 +12,7 @@ use xlsx_types::{count_matches, Criterion, EvalError, ExcelError, ExcelValue};
 use crate::dates::{date_serial, eomonth_serial, serial_to_ymd, time_fraction};
 use crate::dates::{date_serial, networkdays_count, serial_to_ymd, time_fraction};
 use crate::dates::{date_serial, serial_to_ymd, time_fraction, weekday};
+use crate::dates::{date_serial, serial_to_ymd, time_fraction, workday_serial};
 use xlsx_types::{EvalError, ExcelError, ExcelValue};
 use xlsx_types::{
     excel_ceiling, excel_ceiling_math, excel_floor, excel_floor_math, EvalError, ExcelError,
@@ -107,6 +108,7 @@ pub(crate) fn dispatch(
         "TIME" => fn_time(ev, args, ctx),
         "EOMONTH" => fn_eomonth(ev, args, ctx),
         "NETWORKDAYS" => fn_networkdays(ev, args, ctx),
+        "WORKDAY" => fn_workday(ev, args, ctx),
         "YEAR" => fn_ymd(ev, args, ctx, YmdPart::Year),
         "MONTH" => fn_ymd(ev, args, ctx, YmdPart::Month),
         "DAY" => fn_ymd(ev, args, ctx, YmdPart::Day),
@@ -854,11 +856,13 @@ fn fn_networkdays(
     args: &[Expr],
     ctx: &mut Ctx<'_>,
 ) -> Result<ExcelValue, EvalError> {
+fn fn_workday(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
     if args.len() < 2 || args.len() > 3 {
         return Ok(ExcelValue::Error(ExcelError::Value));
     }
     let start_v = ev.eval_scalar(&args[0], ctx)?;
     let end_v = ev.eval_scalar(&args[1], ctx)?;
+    let days_v = ev.eval_scalar(&args[1], ctx)?;
     let hol_v = if args.len() == 3 {
         Some(ev.eval_expr(&args[2], ctx)?)
     } else {
@@ -869,6 +873,7 @@ fn fn_networkdays(
         Err(e) => return Ok(ExcelValue::Error(e)),
     };
     let end = match coerce::to_number(&end_v) {
+    let days = match coerce::to_number(&days_v) {
         Ok(n) => n,
         Err(e) => return Ok(ExcelValue::Error(e)),
     };
@@ -905,6 +910,7 @@ fn fn_weekday(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelV
         1
     };
     match weekday(serial, return_type, ctx.spec.options.date_system) {
+    match workday_serial(start, days, &holidays, ctx.spec.options.date_system) {
         Ok(n) => Ok(ExcelValue::Number(n)),
         Err(e) => Ok(ExcelValue::Error(e)),
     }

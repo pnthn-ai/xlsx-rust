@@ -232,6 +232,28 @@ pub fn to_1900_serial(serial: i32, system: DateSystem) -> Result<i32, ExcelError
     }
 }
 
+/// Convert a 1900-system serial back into the workbook-local date system.
+pub fn from_1900_serial(serial_1900: i32, system: DateSystem) -> Result<i32, ExcelError> {
+    match system {
+        DateSystem::Excel1900 => {
+            if serial_1900 < 0 || serial_1900 > EXCEL_MAX_SERIAL_1900 {
+                Err(ExcelError::Num)
+            } else {
+                Ok(serial_1900)
+            }
+        }
+        DateSystem::Excel1904 => {
+            let local = serial_1900
+                .checked_sub(EXCEL1904_EPOCH_IN_1900)
+                .ok_or(ExcelError::Num)?;
+            if local < 0 || local > EXCEL_MAX_SERIAL_1900 - EXCEL1904_EPOCH_IN_1900 {
+                Err(ExcelError::Num)
+            } else {
+                Ok(local)
+            }
+        }
+    }
+}
 fn max_local_serial(system: DateSystem) -> i32 {
     match system {
         DateSystem::Excel1900 => EXCEL_MAX_SERIAL_1900,
@@ -265,7 +287,6 @@ pub fn weekday_count_sat_sun(lo_1900: i32, hi_1900: i32) -> i32 {
     }
     workdays_through(hi_1900) - workdays_through(lo_1900 - 1)
 }
-
 fn workdays_through(n: i32) -> i32 {
     if n < 0 {
         return 0;
@@ -280,6 +301,66 @@ fn workdays_through(n: i32) -> i32 {
 pub fn networkdays_count(
     start: f64,
     end: f64,
+fn invert_workdays_through(w: i64) -> Result<i32, ExcelError> {
+    if w <= 0 {
+        return Err(ExcelError::Num);
+    }
+    let weeks = (w - 1) / 5;
+    let rem = (w - 1) % 5;
+    let t = weeks
+        .checked_mul(7)
+        .and_then(|x| x.checked_add(2 + rem))
+        .ok_or(ExcelError::Num)?;
+    if t < 0 || t > i64::from(EXCEL_MAX_SERIAL_1900) {
+        return Err(ExcelError::Num);
+    }
+    Ok(t as i32)
+}
+
+fn workday_1900_no_holidays(start: i32, days: i32) -> Result<i32, ExcelError> {
+    if days == 0 {
+        return Ok(start);
+    }
+    if days > 0 {
+        let target = i64::from(workdays_through(start)) + i64::from(days);
+        invert_workdays_through(target)
+    } else {
+        let target = i64::from(workdays_through(start - 1)) + i64::from(days) + 1;
+        invert_workdays_through(target)
+    }
+}
+
+fn count_holidays_between(start: i32, end: i32, hols: &[i32]) -> i32 {
+    if end > start {
+        hols.iter().filter(|&&h| h > start && h <= end).count() as i32
+    } else if end < start {
+        hols.iter().filter(|&&h| h >= end && h < start).count() as i32
+    } else {
+        0
+    }
+}
+
+fn workday_1900(start: i32, days: i32, hols: &[i32]) -> Result<i32, ExcelError> {
+    if days == 0 {
+        return Ok(start);
+    }
+    let mut extra = 0i32;
+    loop {
+        let signed_extra = if days > 0 { extra } else { -extra };
+        let total = days.checked_add(signed_extra).ok_or(ExcelError::Num)?;
+        let candidate = workday_1900_no_holidays(start, total)?;
+        let counted = count_holidays_between(start, candidate, hols);
+        if counted == extra {
+            return Ok(candidate);
+        }
+        extra = counted;
+    }
+}
+
+/// Excel `WORKDAY(start, days, [holidays])` with weekend Sat/Sun.
+pub fn workday_serial(
+    start: f64,
+    days: f64,
     holidays: &[f64],
     system: DateSystem,
 ) -> Result<f64, ExcelError> {
@@ -361,6 +442,29 @@ pub fn map_weekday_return_type(type1: i32, return_type: i32) -> Result<f64, Exce
 pub fn weekday(serial: f64, return_type: i32, system: DateSystem) -> Result<f64, ExcelError> {
     let s1900 = serial_as_1900_int(serial, system)?;
     map_weekday_return_type(type1_from_1900_serial(s1900), return_type)
+}
+    if !days.is_finite() {
+        return Err(ExcelError::Num);
+    }
+    let days_t = days.trunc();
+    if days_t.abs() > f64::from(EXCEL_MAX_SERIAL_1900) {
+        return Err(ExcelError::Num);
+    }
+    let days_i = days_t as i32;
+    let start_1900 = to_1900_serial(start_s, system)?;
+
+    let mut hols = Vec::with_capacity(holidays.len());
+    for &h in holidays {
+        let hs = to_1900_serial(truncate_date_serial(h, system)?, system)?;
+        if !is_weekend_sat_sun_1900(hs) {
+            hols.push(hs);
+        }
+    }
+    hols.sort_unstable();
+    hols.dedup();
+
+    let result_1900 = workday_1900(start_1900, days_i, &hols)?;
+    Ok(from_1900_serial(result_1900, system)? as f64)
 }
 #[cfg(test)]
 mod tests {

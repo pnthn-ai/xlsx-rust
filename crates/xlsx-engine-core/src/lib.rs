@@ -22,6 +22,8 @@ pub mod eval;
 pub mod parse;
 pub mod text_format;
 
+pub use dates::workday_serial;
+
 pub use ast::{BinOp, Expr, UnaryOp};
 pub use eval::substitute::{
     substitute as excel_substitute, substitute_naive as excel_substitute_naive,

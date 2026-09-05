@@ -321,6 +321,7 @@ function families above. Workbook input is the snippet type in `xlsx-types` (no
 | [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators, logicals (`IF`/`IFS`/`AND`/…), lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates, math, text, `TYPE` / `IS*` |
 | [`eval/ifs.rs`](crates/xlsx-engine-core/src/eval/ifs.rs) | `IFS` pair-selection kernel (eager eval, first TRUE, no-match `#N/A`) |
 | [`eval/unique.rs`](crates/xlsx-engine-core/src/eval/unique.rs) | `UNIQUE(array, [by_col], [exactly_once])` hash distinctness; returns the array that would spill |
+| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators, logicals, lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates (`DATE`/`TIME`/`YEAR`/`MONTH`/`DAY`/`WORKDAY`), math, text, `TYPE` / `IS*` |
 
 **Implemented:** arithmetic and comparison operators (unary `+/-`, `%`, `^`,
 `&`, space intersection), host-aware implicit intersection, cell refs /
@@ -404,6 +405,9 @@ as one or the other. Documented quirk categories:
 - 1900 leap-year bug (`DATE(1900,2,29)` is serial 60); 1904 date system.
   `WEEKDAY` is O(1) on the serial (`serial % 7`); 1900-01-01 is Sunday in
   Excel (historically Monday). `return_type` 1/2/3/11–17; anything else is `#NUM!`
+- 1900 leap-year bug (`DATE(1900,2,29)` is serial 60); 1904 date system
+- `WORKDAY` skips Sat/Sun (and optional holidays); `days=0` returns the start
+  even on a weekend/holiday; serial 60 is a Wednesday workday
 - Unary `+`/`-` and postfix `%` (`50%` is 0.5, `5%%` is 0.0005)
 - Space intersection (`A1:B2 B2`); non-overlap is `#NULL!`
 - Implicit intersection of a range in a scalar host cell (`A1:A3` at `B2` → `A2`)

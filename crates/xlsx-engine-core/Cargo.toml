@@ -91,3 +91,7 @@ harness = false
 [[bench]]
 name = "unique"
 harness = false
+
+[[bench]]
+name = "workday"
+harness = false

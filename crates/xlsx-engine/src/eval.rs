@@ -3,6 +3,7 @@
 use crate::dates::{date_serial, eomonth_serial, serial_to_ymd, time_fraction};
 use crate::dates::{date_serial, networkdays_count, serial_to_ymd, time_fraction};
 use crate::dates::{date_serial, serial_to_ymd, time_fraction, weekday};
+use crate::dates::{date_serial, serial_to_ymd, time_fraction, workday_serial};
 use crate::parse::{parse, BinOp, Expr, UnaryOp};
 use std::collections::{HashMap, HashSet};
 use xlsx_types::{
@@ -430,6 +431,7 @@ impl Interpreter {
             "TIME" => self.fn_time(args, ctx),
             "EOMONTH" => self.fn_eomonth(args, ctx),
             "NETWORKDAYS" => self.fn_networkdays(args, ctx),
+            "WORKDAY" => self.fn_workday(args, ctx),
             "YEAR" => self.fn_ymd(args, ctx, YmdPart::Year),
             "MONTH" => self.fn_ymd(args, ctx, YmdPart::Month),
             "DAY" => self.fn_ymd(args, ctx, YmdPart::Day),
@@ -1550,11 +1552,13 @@ impl Interpreter {
         };
         match eomonth_serial(start, months, ctx.spec.options.date_system) {
     fn fn_networkdays(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    fn fn_workday(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
         if args.len() < 2 || args.len() > 3 {
             return Ok(ExcelValue::Error(ExcelError::Value));
         }
         let start_v = self.eval_scalar(&args[0], ctx)?;
         let end_v = self.eval_scalar(&args[1], ctx)?;
+        let days_v = self.eval_scalar(&args[1], ctx)?;
         let hol_v = if args.len() == 3 {
             Some(self.eval_expr(&args[2], ctx)?)
         } else {
@@ -1565,6 +1569,7 @@ impl Interpreter {
             Err(e) => return Ok(ExcelValue::Error(e)),
         };
         let end = match self.as_number(&end_v) {
+        let days = match self.as_number(&days_v) {
             Ok(n) => n,
             Err(e) => return Ok(ExcelValue::Error(e)),
         };
@@ -1601,6 +1606,7 @@ impl Interpreter {
             1
         };
         match weekday(serial, return_type, ctx.spec.options.date_system) {
+        match workday_serial(start, days, &holidays, ctx.spec.options.date_system) {
             Ok(n) => Ok(ExcelValue::Number(n)),
             Err(e) => Ok(ExcelValue::Error(e)),
         }
