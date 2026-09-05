@@ -1,0 +1,699 @@
+[
+  {
+    "id": "fn.sumifs.one-pair",
+    "description": "Three-arg SUMIFS is SUMIF with reversed range order",
+    "tags": ["sumifs", "functions"],
+    "formula": "=SUMIFS(B1:B3, A1:A3, \">2\")",
+    "expected": { "number": 50 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "number": 10 },
+          "A2": { "number": 6 }, "B2": { "number": 20 },
+          "A3": { "number": 3 }, "B3": { "number": 30 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.sumifs.and-two",
+    "description": "Two criteria pairs are AND: both must match",
+    "tags": ["sumifs"],
+    "formula": "=SUMIFS(C1:C3, A1:A3, \">1\", B1:B3, \"x\")",
+    "expected": { "number": 20 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "text": "x" }, "C1": { "number": 10 },
+          "A2": { "number": 2 }, "B2": { "text": "x" }, "C2": { "number": 20 },
+          "A3": { "number": 3 }, "B3": { "text": "y" }, "C3": { "number": 30 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.sumifs.and-three",
+    "description": "Three criteria pairs AND together",
+    "tags": ["sumifs"],
+    "formula": "=SUMIFS(D1:D4, A1:A4, 2, B1:B4, \"y\", C1:C4, 1)",
+    "expected": { "number": 60 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "text": "x" }, "C1": { "number": 1 }, "D1": { "number": 10 },
+          "A2": { "number": 2 }, "B2": { "text": "y" }, "C2": { "number": 1 }, "D2": { "number": 20 },
+          "A3": { "number": 3 }, "B3": { "text": "x" }, "C3": { "number": 1 }, "D3": { "number": 30 },
+          "A4": { "number": 2 }, "B4": { "text": "y" }, "C4": { "number": 1 }, "D4": { "number": 40 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.sumifs.and-same-range",
+    "description": "Two criteria on the same range AND together",
+    "tags": ["sumifs"],
+    "formula": "=SUMIFS(B1:B4, A1:A4, \">1\", A1:A4, \"<4\")",
+    "expected": { "number": 50 },
+    "notes": "A=1,2,3,4. >1 AND <4 → rows 2 and 3 → 20+30",
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "number": 10 },
+          "A2": { "number": 2 }, "B2": { "number": 20 },
+          "A3": { "number": 3 }, "B3": { "number": 30 },
+          "A4": { "number": 4 }, "B4": { "number": 40 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.sumifs.shape-mismatch-rows",
+    "description": "Criteria range with a different row count is #VALUE!",
+    "tags": ["sumifs", "errors"],
+    "formula": "=SUMIFS(B1:B3, A1:A2, \">0\")",
+    "expected": { "error": "#VALUE!" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "number": 10 },
+          "A2": { "number": 2 }, "B2": { "number": 20 },
+          "A3": { "number": 3 }, "B3": { "number": 30 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.sumifs.shape-mismatch-orientation",
+    "description": "Same cell count but 3x1 vs 1x3 is #VALUE!",
+    "tags": ["sumifs", "errors"],
+    "formula": "=SUMIFS(A1:A3, B1:D1, \">0\")",
+    "expected": { "error": "#VALUE!" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 10 }, "B1": { "number": 1 }, "C1": { "number": 2 }, "D1": { "number": 3 },
+          "A2": { "number": 20 },
+          "A3": { "number": 30 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.sumifs.no-reshape-from-origin",
+    "description": "Unlike SUMIF, a 1x1 sum_range does not extend to match criteria",
+    "tags": ["sumifs", "errors"],
+    "formula": "=SUMIFS(B1, A1:A3, \">1\")",
+    "expected": { "error": "#VALUE!" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "number": 10 },
+          "A2": { "number": 2 }, "B2": { "number": 20 },
+          "A3": { "number": 3 }, "B3": { "number": 30 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.sumifs.wider-sum-is-value",
+    "description": "Extra columns on sum_range are a shape error, not ignored",
+    "tags": ["sumifs", "errors"],
+    "formula": "=SUMIFS(B1:C2, A1:A2, \">0\")",
+    "expected": { "error": "#VALUE!" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "number": 10 }, "C1": { "number": 100 },
+          "A2": { "number": 2 }, "B2": { "number": 20 }, "C2": { "number": 200 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.sumifs.align-offset",
+    "description": "Same-shape ranges pair by offset, not by absolute address",
+    "tags": ["sumifs"],
+    "formula": "=SUMIFS(C5:C7, A1:A3, \">1\")",
+    "expected": { "number": 50 },
+    "notes": "A2/A3 match → add C6/C7 (20+30), not C2/C3",
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 2 },
+          "A3": { "number": 3 },
+          "C2": { "number": 99 },
+          "C5": { "number": 10 },
+          "C6": { "number": 20 },
+          "C7": { "number": 30 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.sumifs.shape-2d",
+    "description": "Matching 2-D windows walk row-major and AND by offset",
+    "tags": ["sumifs"],
+    "formula": "=SUMIFS(C1:D2, A1:B2, \">2\")",
+    "expected": { "number": 70 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "number": 2 },
+          "A2": { "number": 3 }, "B2": { "number": 4 },
+          "C1": { "number": 10 }, "D1": { "number": 20 },
+          "C2": { "number": 30 }, "D2": { "number": 40 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.sumifs.eq-number",
+    "description": "Numeric criteria matches numbers only",
+    "tags": ["sumifs"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=SUMIFS(B1:B3, A1:A3, 5)",
+    "expected": { "number": 10 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 5 }, "B1": { "number": 10 },
+          "A2": { "text": "5" }, "B2": { "number": 20 },
+          "A3": { "number": 1 }, "B3": { "number": 30 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.sumifs.text-num-dual",
+    "description": "Text criteria \"5\" matches number 5 and text 5",
+    "tags": ["sumifs"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=SUMIFS(B1:B3, A1:A3, \"5\")",
+    "expected": { "number": 30 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 5 }, "B1": { "number": 10 },
+          "A2": { "text": "5" }, "B2": { "number": 20 },
+          "A3": { "number": 1 }, "B3": { "number": 30 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.sumifs.text-eq-casefold",
+    "description": "Text equality is case-insensitive",
+    "tags": ["sumifs"],
+    "quirks": ["case-insensitive-text"],
+    "formula": "=SUMIFS(B1:B3, A1:A3, \"apple\")",
+    "expected": { "number": 5 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "Apple" }, "B1": { "number": 1 },
+          "A2": { "text": "banana" }, "B2": { "number": 2 },
+          "A3": { "text": "APPLE" }, "B3": { "number": 4 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.sumifs.wildcard-star",
+    "description": "* wildcard matches text containing a substring",
+    "tags": ["sumifs"],
+    "quirks": ["wildcards"],
+    "formula": "=SUMIFS(B1:B3, A1:A3, \"*at*\")",
+    "expected": { "number": 3 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "cat" }, "B1": { "number": 1 },
+          "A2": { "text": "catch" }, "B2": { "number": 2 },
+          "A3": { "text": "dog" }, "B3": { "number": 4 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.sumifs.wildcard-qmark",
+    "description": "? wildcard matches exactly one character",
+    "tags": ["sumifs"],
+    "quirks": ["wildcards"],
+    "formula": "=SUMIFS(B1:B3, A1:A3, \"a?\")",
+    "expected": { "number": 2 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "a" }, "B1": { "number": 1 },
+          "A2": { "text": "ab" }, "B2": { "number": 2 },
+          "A3": { "text": "abc" }, "B3": { "number": 4 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.sumifs.wildcard-escape",
+    "description": "~* matches a literal asterisk",
+    "tags": ["sumifs"],
+    "quirks": ["wildcards"],
+    "formula": "=SUMIFS(B1:B3, A1:A3, \"a~*\")",
+    "expected": { "number": 1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "a*" }, "B1": { "number": 1 },
+          "A2": { "text": "ab" }, "B2": { "number": 2 },
+          "A3": { "text": "aX" }, "B3": { "number": 4 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.sumifs.wildcard-star-skips-numbers",
+    "description": "* matches text only, not numbers or blanks",
+    "tags": ["sumifs"],
+    "quirks": ["wildcards"],
+    "formula": "=SUMIFS(B1:B3, A1:A3, \"*\")",
+    "expected": { "number": 20 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 5 }, "B1": { "number": 10 },
+          "A2": { "text": "x" }, "B2": { "number": 20 },
+          "A3": { "number": 1 }, "B3": { "number": 30 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.sumifs.and-wildcard",
+    "description": "Numeric inequality AND a text wildcard",
+    "tags": ["sumifs"],
+    "quirks": ["wildcards"],
+    "formula": "=SUMIFS(C1:C4, A1:A4, \">1\", B1:B4, \"*a*\")",
+    "expected": { "number": 60 },
+    "notes": "rows: (1,cat,10) miss >1; (2,catch,20); (3,dog,30) miss *a*; (4,apple,40)",
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "text": "cat" }, "C1": { "number": 10 },
+          "A2": { "number": 2 }, "B2": { "text": "catch" }, "C2": { "number": 20 },
+          "A3": { "number": 3 }, "B3": { "text": "dog" }, "C3": { "number": 30 },
+          "A4": { "number": 4 }, "B4": { "text": "apple" }, "C4": { "number": 40 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.sumifs.blank-empty-string",
+    "description": "\"\" matches blank cells, not zero",
+    "tags": ["sumifs"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=SUMIFS(B1:B3, A1:A3, \"\")",
+    "expected": { "number": 20 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "number": 10 },
+          "B2": { "number": 20 },
+          "A3": { "number": 2 }, "B3": { "number": 30 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.sumifs.blank-equals-op",
+    "description": "\"=\" matches blanks the same as \"\"",
+    "tags": ["sumifs"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=SUMIFS(B1:B3, A1:A3, \"=\")",
+    "expected": { "number": 20 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "number": 10 },
+          "B2": { "number": 20 },
+          "A3": { "number": 2 }, "B3": { "number": 30 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.sumifs.not-blank",
+    "description": "\"<>\" matches non-blank cells",
+    "tags": ["sumifs"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=SUMIFS(B1:B3, A1:A3, \"<>\")",
+    "expected": { "number": 40 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "number": 10 },
+          "B2": { "number": 20 },
+          "A3": { "number": 2 }, "B3": { "number": 30 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.sumifs.blank-not-zero",
+    "description": "Blank does not match numeric 0",
+    "tags": ["sumifs"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=SUMIFS(B1:B3, A1:A3, 0)",
+    "expected": { "number": 10 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 0 }, "B1": { "number": 10 },
+          "B2": { "number": 20 },
+          "A3": { "number": 1 }, "B3": { "number": 30 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.sumifs.blank-and-gt",
+    "description": "Blank criteria-range cells miss >0; AND with a second pair",
+    "tags": ["sumifs"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=SUMIFS(C1:C3, A1:A3, \">0\", B1:B3, \"x\")",
+    "expected": { "number": 20 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "B1": { "text": "x" }, "C1": { "number": 10 },
+          "A2": { "number": 2 }, "B2": { "text": "x" }, "C2": { "number": 20 },
+          "A3": { "number": 3 }, "B3": { "text": "y" }, "C3": { "number": 30 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.sumifs.bool-not-gt",
+    "description": "TRUE is not a number for >0",
+    "tags": ["sumifs"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=SUMIFS(B1:B2, A1:A2, \">0\")",
+    "expected": { "number": 20 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "bool": true }, "B1": { "number": 10 },
+          "A2": { "number": 2 }, "B2": { "number": 20 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.sumifs.bool-eq",
+    "description": "Boolean criteria matches only that logical",
+    "tags": ["sumifs"],
+    "formula": "=SUMIFS(B1:B2, A1:A2, TRUE)",
+    "expected": { "number": 10 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "bool": true }, "B1": { "number": 10 },
+          "A2": { "number": 2 }, "B2": { "number": 20 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.sumifs.text-true-not-bool",
+    "description": "Text \"TRUE\" does not match boolean TRUE",
+    "tags": ["sumifs"],
+    "formula": "=SUMIFS(B1:B2, A1:A2, \"TRUE\")",
+    "expected": { "number": 0 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "bool": true }, "B1": { "number": 10 },
+          "A2": { "number": 2 }, "B2": { "number": 20 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.sumifs.text-num-not-gt",
+    "description": "Numeric text is not coerced for > comparisons",
+    "tags": ["sumifs"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=SUMIFS(B1:B2, A1:A2, \">5\")",
+    "expected": { "number": 2 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "10" }, "B1": { "number": 1 },
+          "A2": { "number": 10 }, "B2": { "number": 2 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.sumifs.sum-skips-text",
+    "description": "Matched sum cells that are text are skipped (like SUM)",
+    "tags": ["sumifs"],
+    "quirks": ["sum-arg-vs-range"],
+    "formula": "=SUMIFS(B1:B2, A1:A2, 1)",
+    "expected": { "number": 5 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "text": "x" },
+          "A2": { "number": 1 }, "B2": { "number": 5 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.sumifs.error-in-sum",
+    "description": "Error in a matched sum cell propagates",
+    "tags": ["sumifs", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=SUMIFS(B1:B2, A1:A2, 1)",
+    "expected": { "error": "#DIV/0!" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "error": "#DIV/0!" },
+          "A2": { "number": 2 }, "B2": { "number": 5 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.sumifs.error-in-range-skip",
+    "description": "Error in a criteria range does not match >0 and is skipped",
+    "tags": ["sumifs", "errors"],
+    "formula": "=SUMIFS(B1:B2, A1:A2, \">0\")",
+    "expected": { "number": 20 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "error": "#N/A" }, "B1": { "number": 10 },
+          "A2": { "number": 2 }, "B2": { "number": 20 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.sumifs.error-criteria-propagates",
+    "description": "An error criteria value is returned immediately",
+    "tags": ["sumifs", "errors"],
+    "formula": "=SUMIFS(B1:B1, A1:A1, #N/A)",
+    "expected": { "error": "#N/A" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "number": 10 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.sumifs.error-text-matches",
+    "description": "Text \"#N/A\" matches an #N/A cell in the criteria range",
+    "tags": ["sumifs", "errors"],
+    "formula": "=SUMIFS(B1:B2, A1:A2, \"#N/A\")",
+    "expected": { "number": 10 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "error": "#N/A" }, "B1": { "number": 10 },
+          "A2": { "number": 2 }, "B2": { "number": 20 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.sumifs.array-is-value",
+    "description": "SUMIFS requires ranges; array literals are #VALUE!",
+    "tags": ["sumifs", "errors"],
+    "formula": "=SUMIFS({1,2,3}, A1:A3, \">1\")",
+    "expected": { "error": "#VALUE!" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": { "A1": { "number": 1 }, "A2": { "number": 2 }, "A3": { "number": 3 } }
+      }]
+    }
+  },
+  {
+    "id": "fn.sumifs.arity-too-few",
+    "description": "SUMIFS with fewer than three arguments is #VALUE!",
+    "tags": ["sumifs", "errors"],
+    "formula": "=SUMIFS(A1:A2)",
+    "expected": { "error": "#VALUE!" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": { "A1": { "number": 1 } }
+      }]
+    }
+  },
+  {
+    "id": "fn.sumifs.arity-incomplete-pair",
+    "description": "A dangling criteria_range without criteria is #VALUE!",
+    "tags": ["sumifs", "errors"],
+    "formula": "=SUMIFS(B1:B2, A1:A2)",
+    "expected": { "error": "#VALUE!" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "number": 10 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.sumifs.named-range",
+    "description": "Defined names that refer to ranges are accepted",
+    "tags": ["sumifs", "named"],
+    "formula": "=SUMIFS(Amt, Vals, \">1\", Kind, \"x\")",
+    "expected": { "number": 20 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "text": "x" }, "C1": { "number": 10 },
+          "A2": { "number": 2 }, "B2": { "text": "x" }, "C2": { "number": 20 },
+          "A3": { "number": 3 }, "B3": { "text": "y" }, "C3": { "number": 30 }
+        }
+      }],
+      "names": [
+        { "name": "Vals", "refers_to": "Sheet1!A1:A3" },
+        { "name": "Kind", "refers_to": "Sheet1!B1:B3" },
+        { "name": "Amt", "refers_to": "Sheet1!C1:C3" }
+      ]
+    }
+  },
+  {
+    "id": "fn.sumifs.concat-criteria",
+    "description": "Criteria can be built with & (e.g. \">\"&1)",
+    "tags": ["sumifs"],
+    "formula": "=SUMIFS(C1:C3, A1:A3, \">\"&1, B1:B3, \"x\")",
+    "expected": { "number": 20 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "text": "x" }, "C1": { "number": 10 },
+          "A2": { "number": 2 }, "B2": { "text": "x" }, "C2": { "number": 20 },
+          "A3": { "number": 3 }, "B3": { "text": "y" }, "C3": { "number": 30 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.sumifs.cell-criteria",
+    "description": "Criteria taken from cells",
+    "tags": ["sumifs"],
+    "formula": "=SUMIFS(C1:C3, A1:A3, D1, B1:B3, E1)",
+    "expected": { "number": 20 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "text": "x" }, "C1": { "number": 10 },
+          "A2": { "number": 2 }, "B2": { "text": "x" }, "C2": { "number": 20 },
+          "A3": { "number": 3 }, "B3": { "text": "y" }, "C3": { "number": 30 },
+          "D1": { "text": ">1" },
+          "E1": { "text": "x" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.sumifs.no-matches-zero",
+    "description": "No matches returns 0, not #N/A",
+    "tags": ["sumifs"],
+    "formula": "=SUMIFS(B1:B3, A1:A3, \">100\")",
+    "expected": { "number": 0 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "number": 10 },
+          "A2": { "number": 2 }, "B2": { "number": 20 },
+          "A3": { "number": 3 }, "B3": { "number": 30 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.sumifs.formula-cells",
+    "description": "Criteria and sum windows evaluate stored formulas",
+    "tags": ["sumifs"],
+    "formula": "=SUMIFS(C1:C3, A1:A3, \">1\", B1:B3, \"x\")",
+    "expected": { "number": 20 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "formula": "=1", "value": { "number": 1 } },
+          "A2": { "formula": "=1+1", "value": { "number": 2 } },
+          "A3": { "formula": "=3", "value": { "number": 3 } },
+          "B1": { "text": "x" }, "C1": { "number": 10 },
+          "B2": { "text": "x" }, "C2": { "formula": "=10+10", "value": { "number": 20 } },
+          "B3": { "text": "y" }, "C3": { "number": 30 }
+        }
+      }]
+    }
+  }
+]

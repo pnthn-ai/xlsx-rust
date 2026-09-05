@@ -15,7 +15,7 @@ pub mod eval;
 pub mod parse;
 
 pub use ast::{BinOp, Expr, UnaryOp};
-pub use eval::{eval_formula_in, Evaluator};
+pub use eval::{eval_formula_in, eval_sumifs_materialized, Evaluator};
 pub use parse::parse;
 
 use xlsx_types::{Candidate, EvalError, EvalSpec, ExcelValue};
