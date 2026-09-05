@@ -1137,27 +1137,35 @@ impl Interpreter {
     }
 
     fn fn_xlookup(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
-        if args.len() < 3 {
+        if args.len() < 3 || args.len() > 6 {
             return Ok(ExcelValue::Error(ExcelError::Value));
         }
         let lookup = self.eval_scalar(&args[0], ctx)?;
-        if let ExcelValue::Error(e) = lookup {
-            return Ok(ExcelValue::Error(e));
-        }
-        let lookup_vec = flatten_vector(self.eval_expr(&args[1], ctx)?);
-        let return_vec = flatten_vector(self.eval_expr(&args[2], ctx)?);
-        if lookup_vec.len() != return_vec.len() {
-            return Ok(ExcelValue::Error(ExcelError::Value));
-        }
-        for (k, v) in lookup_vec.iter().zip(return_vec.iter()) {
-            if lookup_key_match(&lookup, k, self.semantics) {
-                return Ok(v.clone());
-            }
-        }
-        if args.len() >= 4 {
-            return self.eval_expr(&args[3], ctx);
-        }
-        Ok(ExcelValue::Error(ExcelError::Na))
+        let lookup_array = self.eval_expr(&args[1], ctx)?;
+        let return_array = self.eval_expr(&args[2], ctx)?;
+        let if_not_found = if args.len() >= 4 {
+            Some(self.eval_expr(&args[3], ctx)?)
+        } else {
+            None
+        };
+        let match_mode = if args.len() >= 5 {
+            Some(self.eval_scalar(&args[4], ctx)?)
+        } else {
+            None
+        };
+        let search_mode = if args.len() >= 6 {
+            Some(self.eval_scalar(&args[5], ctx)?)
+        } else {
+            None
+        };
+        Ok(xlsx_engine_core::excel_xlookup(
+            &lookup,
+            &lookup_array,
+            &return_array,
+            if_not_found.as_ref(),
+            match_mode.as_ref(),
+            search_mode.as_ref(),
+        ))
     }
 
     fn fn_index(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {

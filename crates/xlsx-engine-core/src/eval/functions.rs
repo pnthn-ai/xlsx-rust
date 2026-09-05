@@ -2,7 +2,7 @@
 //!
 //! `IFS` lives with the other logicals here; pair selection is [`super::ifs`].
 //! `FILTER` lives with the other lookups here; the mask/select kernel is
-//! [`super::filter`].
+//! [`super::filter`]. `XLOOKUP` match/search lives in [`super::xlookup`].
 //!
 //! Unknown names return `#NAME?` (an Excel value, not [`EvalError`]).
 //! Financial TVM starts with `PMT` (`xlsx_types::excel_pmt`); `PV`/`FV`/`NPER`
@@ -51,7 +51,7 @@ pub(crate) fn dispatch(
         "NOT" => fn_not(ev, args, ctx),
         "VLOOKUP" => fn_vlookup(ev, args, ctx),
         "HLOOKUP" => fn_hlookup(ev, args, ctx),
-        "XLOOKUP" => fn_xlookup(ev, args, ctx),
+        "XLOOKUP" => super::xlookup::eval(ev, args, ctx),
         "FILTER" => fn_filter(ev, args, ctx),
         "INDEX" => fn_index(ev, args, ctx),
         "MATCH" => fn_match(ev, args, ctx),
@@ -427,29 +427,6 @@ fn fn_filter(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelVa
     Ok(super::filter::select(&array, &include, if_empty.as_ref()))
 }
 
-fn fn_xlookup(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
-    if args.len() < 3 {
-        return Ok(ExcelValue::Error(ExcelError::Value));
-    }
-    let lookup = ev.eval_scalar(&args[0], ctx)?;
-    if let ExcelValue::Error(e) = lookup {
-        return Ok(ExcelValue::Error(e));
-    }
-    let lookup_vec = flatten_vector(ev.eval_expr(&args[1], ctx)?);
-    let return_vec = flatten_vector(ev.eval_expr(&args[2], ctx)?);
-    if lookup_vec.len() != return_vec.len() {
-        return Ok(ExcelValue::Error(ExcelError::Value));
-    }
-    for (k, v) in lookup_vec.iter().zip(return_vec.iter()) {
-        if lookup_key_match(&lookup, k) {
-            return Ok(v.clone());
-        }
-    }
-    if args.len() >= 4 {
-        return ev.eval_expr(&args[3], ctx);
-    }
-    Ok(ExcelValue::Error(ExcelError::Na))
-}
 
 fn fn_index(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
     if args.is_empty() {

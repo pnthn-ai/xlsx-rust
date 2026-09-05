@@ -301,6 +301,7 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 | [`eval/ifs.rs`](crates/xlsx-engine-core/src/eval/ifs.rs) | `IFS` pair-selection kernel (eager eval, first TRUE, no-match `#N/A`) |
 | [`eval/unique.rs`](crates/xlsx-engine-core/src/eval/unique.rs) | `UNIQUE(array, [by_col], [exactly_once])` hash distinctness |
 | [`eval/filter.rs`](crates/xlsx-engine-core/src/eval/filter.rs) | `FILTER` mask/select kernel (`#CALC!` / `if_empty`, row vs column) |
+| [`eval/xlookup.rs`](crates/xlsx-engine-core/src/eval/xlookup.rs) | `XLOOKUP` match/search kernel (`match_mode` / `search_mode` / `if_not_found`) |
 | [`eval/npv.rs`](crates/xlsx-engine-core/src/eval/npv.rs) | Excel `NPV` kernel (period-1 discount, range skip of blanks/text/logicals) |
 | [`eval/irr.rs`](crates/xlsx-engine-core/src/eval/irr.rs) | Excel `IRR` Newton / secant kernel (20 tries, `1e-7` rate, `#NUM!` on failure) |
 | [`text_format.rs`](crates/xlsx-engine-core/src/text_format.rs) | Excel `TEXT` for a documented number/date format subset |
@@ -355,6 +356,14 @@ as one or the other. Documented quirk categories:
   `rate = -1` with a kept cash flow is `#DIV/0!`
 - `VLOOKUP` approximate match binary-searches (wrong answers on unsorted data);
   omitted `range_lookup` defaults to approximate. `XLOOKUP` defaults to exact
+  (`match_mode` 0): `*` / `?` are literal unless `match_mode` is 2; exact match
+  is type-strict (`1` ≠ `"1"` ≠ `TRUE`, blank ≠ `0` ≠ `""`). `if_not_found` is
+  used only on a miss (omitted → `#N/A`). `match_mode` `-1` / `1` are next
+  smaller / next larger (linear scan finds the globally closest key; `search_mode`
+  `2` / `-2` binary-search and can return the wrong row on unsorted data, or
+  miss a present key in exact mode). `search_mode` `-1` takes the last duplicate.
+  Wildcard + binary search is `#VALUE!`. A 2-D `return_array` yields a row or
+  column array; a 2-D `lookup_array` is `#VALUE!`.
 - `FILTER(array, include, [if_empty])`: no matches without `if_empty` is
   `#CALC!`; `if_empty` is used only when the filtered set is empty. `include`
   must be a vector matching height (row filter) or width (column filter), or
