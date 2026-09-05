@@ -130,7 +130,7 @@ Group new cases by what they prove, not by when they were added:
 |---|---|
 | [`fixtures/seed/`](fixtures/seed) | Original gate seed (kept stable; do not duplicate) |
 | [`fixtures/quirks/`](fixtures/quirks) | Excel oddities: type rank, empty duality, coercion, dates, VLOOKUP approx, … |
-| [`fixtures/functions/`](fixtures/functions) | Function families (`SUM`/`AVERAGE`/`COUNT`/`COUNTIF`, logicals, text, lookup, `TYPE`) |
+| [`fixtures/functions/`](fixtures/functions) | Function families (`SUM`/`AVERAGE`/`COUNT`/`COUNTIF`/`COUNTIFS`, logicals, text, lookup, `TYPE`) |
 | [`fixtures/functions/`](fixtures/functions) | Function families (`SUM`/`AVERAGE`/`COUNT`, logicals, text, lookup, `TYPE`, `PMT`) |
 | [`fixtures/operators/`](fixtures/operators) | Unary/`%`, intersection / union-shaped ranges |
 | [`fixtures/ignored/`](fixtures/ignored) | Documented `ignore` (volatile, locale, precision-as-displayed, hidden rows) |
@@ -285,9 +285,10 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 | [`eval/coerce.rs`](crates/xlsx-engine-core/src/eval/coerce.rs) | Arithmetic / `&` / `IF` coercion (`"2"+1` = 3, TRUE → 1, empty → 0) |
 | [`eval/compare.rs`](crates/xlsx-engine-core/src/eval/compare.rs) | 15-digit `=`, case-insensitive text, `TRUE=1`, type ranking (`FALSE>100`) |
 | [`eval/empty.rs`](crates/xlsx-engine-core/src/eval/empty.rs) | Blank ≠ 0 ≠ `""`, but `A1=0` and `A1=""` when `A1` is blank |
-| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Dispatch: aggregators (`SUM`/`SUMIF`/`SUMIFS`/`AVERAGEIF`/`COUNTIF`/`SUMPRODUCT`), logicals (`IF`/`IFS`/`SWITCH`), lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`/`FILTER`/`UNIQUE`), dates (`DATE`/`EOMONTH`/`NETWORKDAYS`/`WEEKDAY`/`WORKDAY`), math (`ROUND`/`ROUNDUP`/`ROUNDDOWN`/`FLOOR`/`CEILING`), text (`LEFT`/`SUBSTITUTE`/`REPLACE`/`FIND`/`SEARCH`/`TEXT`/`TEXTJOIN`/`CONCAT`), financial (`NPV`/`PMT`/`IRR`), `TYPE` / `IS*` |
+| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Dispatch: aggregators (`SUM`/`SUMIF`/`SUMIFS`/`AVERAGEIF`/`COUNTIF`/`COUNTIFS`/`SUMPRODUCT`), logicals (`IF`/`IFS`/`SWITCH`), lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`/`FILTER`/`UNIQUE`), dates (`DATE`/`EOMONTH`/`NETWORKDAYS`/`WEEKDAY`/`WORKDAY`), math (`ROUND`/`ROUNDUP`/`ROUNDDOWN`/`FLOOR`/`CEILING`), text (`LEFT`/`SUBSTITUTE`/`REPLACE`/`FIND`/`SEARCH`/`TEXT`/`TEXTJOIN`/`CONCAT`), financial (`NPV`/`PMT`/`IRR`), `TYPE` / `IS*` |
 | [`eval/sumif.rs`](crates/xlsx-engine-core/src/eval/sumif.rs) | Excel `SUMIF` kernel (criteria walk, reshape `sum_range`, no array literals) |
 | [`eval/sumifs.rs`](crates/xlsx-engine-core/src/eval/sumifs.rs) | Excel `SUMIFS`: multi-criteria AND, same-shape ranges |
+| [`eval/countifs.rs`](crates/xlsx-engine-core/src/eval/countifs.rs) | Excel `COUNTIFS`: multi-criteria AND, same-shape ranges, COUNTIF matcher |
 | [`eval/averageif.rs`](crates/xlsx-engine-core/src/eval/averageif.rs) | Excel `AVERAGEIF` kernel (reshape `average_range`, `#DIV/0!` when empty) |
 | [`eval/sumproduct.rs`](crates/xlsx-engine-core/src/eval/sumproduct.rs) | `SUMPRODUCT`: array-context args, boolean 0/1 via `--`/`*`, packed f64 hot path |
 | [`eval/substitute.rs`](crates/xlsx-engine-core/src/eval/substitute.rs) | Excel `SUBSTITUTE` kernel (case-sensitive, nth instance, empty `old_text` no-op) |
@@ -310,7 +311,7 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 `&`, space intersection), host-aware implicit intersection, cell refs /
 ranges / defined names, array literals, error propagation, and the function
 families above. Criterion matching for `SUMIF` / `SUMIFS` / `AVERAGEIF` /
-`COUNTIF` lives in [`xlsx_types::Criterion`](crates/xlsx-types/src/criterion.rs)
+`COUNTIF` / `COUNTIFS` lives in [`xlsx_types::Criterion`](crates/xlsx-types/src/criterion.rs)
 (`compile` vs `parse`). `PMT` lives in
 [`xlsx-types/src/financial.rs`](crates/xlsx-types/src/financial.rs). Workbook
 input is the snippet type in `xlsx-types` (no `.xlsx` IO). Kernels do **not**
@@ -378,12 +379,18 @@ as one or the other. Documented quirk categories:
 - Unary `+`/`-` and postfix `%` (`50%` is 0.5, `5%%` is 0.0005)
 - Space intersection (`A1:B2 B2`); non-overlap is `#NULL!`
 - Implicit intersection of a range in a scalar host cell (`A1:A3` at `B2` → `A2`)
-- Wildcards in exact `VLOOKUP` / `MATCH` / `COUNTIF` (`*` / `?` / `~`) and in `SEARCH` (`*` / `?` / `~`)
+- Wildcards in exact `VLOOKUP` / `MATCH` / `COUNTIF` / `COUNTIFS` (`*` / `?` / `~`) and in `SEARCH` (`*` / `?` / `~`)
 - `SUMIF` criteria strings (`">5"`, `"*a*"`, `"="` / `"<>"` blanks), text `"5"` dual-matching numbers, range vs `sum_range` reshape from the top-left, array literals → `#VALUE!`
 - `COUNTIF` criteria: operators (`= <> > < >= <=`), numeric text matching both
   number and `"2"`, `"TRUE"` coerced to the logical (use `"TRUE*"` for text),
   `""` / `"="` vs `"<>"` blank duality, errors ignored unless the criterion is
   that error
+- `COUNTIFS` is `COUNTIF` matching with `SUMIFS` range geometry: every
+  `criteria_range` must share rows **and** columns (3×1 vs 1×3 is `#VALUE!`;
+  a 1×1 first range does not extend). Pairs AND together by offset. Number
+  `5` matches numeric text `"5"`; `"TRUE"` is the logical; `NA()` counts
+  `#N/A` cells instead of propagating. Array literals are `#VALUE!` (unlike
+  `COUNTIF`). No matches → `0`
 - `UNIQUE(array, [by_col], [exactly_once])`: first-occurrence distinct rows
   (or columns when `by_col` is TRUE); case-insensitive text; type-strict
   (`1` ≠ `"1"` ≠ `TRUE`); blanks collapse to one empty; `exactly_once` with

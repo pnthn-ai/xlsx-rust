@@ -1,0 +1,756 @@
+[
+  {
+    "id": "fn.countifs.one-pair",
+    "description": "Two-arg COUNTIFS is COUNTIF with range-only arguments",
+    "tags": ["countifs", "functions"],
+    "formula": "=COUNTIFS(A1:A3, \">2\")",
+    "expected": { "number": 2 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 6 },
+          "A3": { "number": 3 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.countifs.and-two",
+    "description": "Two criteria pairs are AND: both must match",
+    "tags": ["countifs"],
+    "formula": "=COUNTIFS(A1:A3, \">1\", B1:B3, \"x\")",
+    "expected": { "number": 1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "text": "x" },
+          "A2": { "number": 2 }, "B2": { "text": "x" },
+          "A3": { "number": 3 }, "B3": { "text": "y" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.countifs.and-three",
+    "description": "Three criteria pairs AND together",
+    "tags": ["countifs"],
+    "formula": "=COUNTIFS(A1:A4, 2, B1:B4, \"y\", C1:C4, 1)",
+    "expected": { "number": 2 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "text": "x" }, "C1": { "number": 1 },
+          "A2": { "number": 2 }, "B2": { "text": "y" }, "C2": { "number": 1 },
+          "A3": { "number": 3 }, "B3": { "text": "x" }, "C3": { "number": 1 },
+          "A4": { "number": 2 }, "B4": { "text": "y" }, "C4": { "number": 1 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.countifs.and-same-range",
+    "description": "Two criteria on the same range AND together",
+    "tags": ["countifs"],
+    "formula": "=COUNTIFS(A1:A4, \">1\", A1:A4, \"<4\")",
+    "expected": { "number": 2 },
+    "notes": "A=1,2,3,4. >1 AND <4 → rows 2 and 3",
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 2 },
+          "A3": { "number": 3 },
+          "A4": { "number": 4 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.countifs.shape-mismatch-rows",
+    "description": "Criteria range with a different row count is #VALUE!",
+    "tags": ["countifs", "errors"],
+    "formula": "=COUNTIFS(A1:A3, \">0\", B1:B2, 1)",
+    "expected": { "error": "#VALUE!" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "number": 1 },
+          "A2": { "number": 2 }, "B2": { "number": 1 },
+          "A3": { "number": 3 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.countifs.shape-mismatch-orientation",
+    "description": "Same cell count but 3x1 vs 1x3 is #VALUE!",
+    "tags": ["countifs", "errors"],
+    "formula": "=COUNTIFS(A1:A3, \">0\", B1:D1, \">0\")",
+    "expected": { "error": "#VALUE!" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "number": 1 }, "C1": { "number": 2 }, "D1": { "number": 3 },
+          "A2": { "number": 2 },
+          "A3": { "number": 3 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.countifs.no-reshape-from-origin",
+    "description": "Unlike COUNTIF, a 1x1 first range does not extend to match a taller pair",
+    "tags": ["countifs", "errors"],
+    "formula": "=COUNTIFS(A1, \">1\", B1:B3, 1)",
+    "expected": { "error": "#VALUE!" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "number": 1 },
+          "A2": { "number": 2 }, "B2": { "number": 1 },
+          "A3": { "number": 3 }, "B3": { "number": 1 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.countifs.wider-range-is-value",
+    "description": "Extra columns on a later range are a shape error, not ignored",
+    "tags": ["countifs", "errors"],
+    "formula": "=COUNTIFS(A1:A2, \">0\", B1:C2, 1)",
+    "expected": { "error": "#VALUE!" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "number": 1 }, "C1": { "number": 1 },
+          "A2": { "number": 2 }, "B2": { "number": 1 }, "C2": { "number": 1 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.countifs.align-offset",
+    "description": "Same-shape ranges pair by offset, not by absolute address",
+    "tags": ["countifs"],
+    "formula": "=COUNTIFS(A1:A3, \">1\", C5:C7, \"x\")",
+    "expected": { "number": 1 },
+    "notes": "A2/A3 match >1; C6 is x, C7 is y → only the A2/C6 pair",
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 2 },
+          "A3": { "number": 3 },
+          "C5": { "text": "x" },
+          "C6": { "text": "x" },
+          "C7": { "text": "y" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.countifs.shape-2d",
+    "description": "Matching 2-D windows walk row-major and AND by offset",
+    "tags": ["countifs"],
+    "formula": "=COUNTIFS(A1:B2, \">2\", C1:D2, \">15\")",
+    "expected": { "number": 2 },
+    "notes": "A/B = 1,2 / 3,4; C/D = 10,20 / 30,40. >2 is A2 and B2; >15 is C1 no, D1/C2/D2. AND → A2/C2 and B2/D2",
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "number": 2 },
+          "A2": { "number": 3 }, "B2": { "number": 4 },
+          "C1": { "number": 10 }, "D1": { "number": 20 },
+          "C2": { "number": 30 }, "D2": { "number": 40 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.countifs.eq-number-matches-numeric-text",
+    "description": "Numeric criteria matches both the number and numeric text (COUNTIF family)",
+    "tags": ["countifs"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=COUNTIFS(A1:A3, 5)",
+    "expected": { "number": 2 },
+    "notes": "Unlike SUMIFS(range, 5), COUNTIFS(5) also matches text \"5\"",
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 5 },
+          "A2": { "text": "5" },
+          "A3": { "number": 1 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.countifs.text-num-dual",
+    "description": "Text criteria \"5\" matches number 5 and text 5",
+    "tags": ["countifs"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=COUNTIFS(A1:A3, \"5\")",
+    "expected": { "number": 2 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 5 },
+          "A2": { "text": "5" },
+          "A3": { "number": 1 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.countifs.text-eq-casefold",
+    "description": "Text equality is case-insensitive",
+    "tags": ["countifs"],
+    "quirks": ["case-insensitive-text"],
+    "formula": "=COUNTIFS(A1:A3, \"apple\")",
+    "expected": { "number": 2 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "Apple" },
+          "A2": { "text": "banana" },
+          "A3": { "text": "APPLE" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.countifs.wildcard-star",
+    "description": "* wildcard matches text containing a substring",
+    "tags": ["countifs"],
+    "quirks": ["wildcards"],
+    "formula": "=COUNTIFS(A1:A3, \"*at*\")",
+    "expected": { "number": 2 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "cat" },
+          "A2": { "text": "catch" },
+          "A3": { "text": "dog" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.countifs.wildcard-qmark",
+    "description": "? wildcard matches exactly one character",
+    "tags": ["countifs"],
+    "quirks": ["wildcards"],
+    "formula": "=COUNTIFS(A1:A3, \"a?\")",
+    "expected": { "number": 1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "a" },
+          "A2": { "text": "ab" },
+          "A3": { "text": "abc" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.countifs.wildcard-escape",
+    "description": "~* matches a literal asterisk",
+    "tags": ["countifs"],
+    "quirks": ["wildcards"],
+    "formula": "=COUNTIFS(A1:A3, \"a~*\")",
+    "expected": { "number": 1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "a*" },
+          "A2": { "text": "ab" },
+          "A3": { "text": "aX" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.countifs.wildcard-star-skips-numbers",
+    "description": "* matches text only, not numbers or blanks",
+    "tags": ["countifs"],
+    "quirks": ["wildcards"],
+    "formula": "=COUNTIFS(A1:A3, \"*\")",
+    "expected": { "number": 1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 5 },
+          "A2": { "text": "x" },
+          "A3": { "number": 1 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.countifs.and-wildcard",
+    "description": "Numeric inequality AND a text wildcard",
+    "tags": ["countifs"],
+    "quirks": ["wildcards"],
+    "formula": "=COUNTIFS(A1:A4, \">1\", B1:B4, \"*a*\")",
+    "expected": { "number": 2 },
+    "notes": "rows: (1,cat) miss >1; (2,catch); (3,dog) miss *a*; (4,apple)",
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "text": "cat" },
+          "A2": { "number": 2 }, "B2": { "text": "catch" },
+          "A3": { "number": 3 }, "B3": { "text": "dog" },
+          "A4": { "number": 4 }, "B4": { "text": "apple" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.countifs.blank-empty-string",
+    "description": "\"\" matches blank cells, not zero",
+    "tags": ["countifs"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=COUNTIFS(A1:A3, \"\")",
+    "expected": { "number": 1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A3": { "number": 2 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.countifs.blank-equals-op",
+    "description": "\"=\" matches blanks the same as \"\"",
+    "tags": ["countifs"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=COUNTIFS(A1:A3, \"=\")",
+    "expected": { "number": 1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A3": { "number": 2 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.countifs.not-blank",
+    "description": "\"<>\" matches non-blank cells",
+    "tags": ["countifs"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=COUNTIFS(A1:A3, \"<>\")",
+    "expected": { "number": 2 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A3": { "number": 2 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.countifs.blank-not-zero",
+    "description": "Blank does not match numeric 0",
+    "tags": ["countifs"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=COUNTIFS(A1:A3, 0)",
+    "expected": { "number": 1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 0 },
+          "A3": { "number": 1 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.countifs.blank-and-gt",
+    "description": "Blank criteria-range cells miss >0; AND with a second pair",
+    "tags": ["countifs"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=COUNTIFS(A1:A3, \">0\", B1:B3, \"x\")",
+    "expected": { "number": 1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "B1": { "text": "x" },
+          "A2": { "number": 2 }, "B2": { "text": "x" },
+          "A3": { "number": 3 }, "B3": { "text": "y" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.countifs.bool-not-gt",
+    "description": "TRUE is not a number for >0",
+    "tags": ["countifs"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=COUNTIFS(A1:A2, \">0\")",
+    "expected": { "number": 1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "bool": true },
+          "A2": { "number": 2 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.countifs.bool-eq",
+    "description": "Boolean criteria matches only that logical",
+    "tags": ["countifs"],
+    "formula": "=COUNTIFS(A1:A2, TRUE)",
+    "expected": { "number": 1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "bool": true },
+          "A2": { "number": 2 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.countifs.text-true-is-bool",
+    "description": "Text \"TRUE\" matches boolean TRUE (COUNTIF family, not SUMIFS)",
+    "tags": ["countifs"],
+    "formula": "=COUNTIFS(A1:A2, \"TRUE\")",
+    "expected": { "number": 1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "bool": true },
+          "A2": { "number": 2 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.countifs.text-true-star-is-text",
+    "description": "\"TRUE*\" is a text wildcard and does not match the logical",
+    "tags": ["countifs"],
+    "quirks": ["wildcards"],
+    "formula": "=COUNTIFS(A1:A2, \"TRUE*\")",
+    "expected": { "number": 1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "bool": true },
+          "A2": { "text": "TRUE" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.countifs.text-num-not-gt",
+    "description": "Numeric text is not coerced for > comparisons",
+    "tags": ["countifs"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=COUNTIFS(A1:A2, \">5\")",
+    "expected": { "number": 1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "10" },
+          "A2": { "number": 10 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.countifs.error-in-range-skip",
+    "description": "Error in a criteria range does not match >0 and is skipped",
+    "tags": ["countifs", "errors"],
+    "formula": "=COUNTIFS(A1:A2, \">0\")",
+    "expected": { "number": 1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "error": "#N/A" },
+          "A2": { "number": 2 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.countifs.error-criteria-counts",
+    "description": "NA() as criteria counts #N/A cells; COUNTIFS does not propagate the error",
+    "tags": ["countifs", "errors"],
+    "formula": "=COUNTIFS(A1:A2, NA())",
+    "expected": { "number": 1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "error": "#N/A" },
+          "A2": { "number": 2 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.countifs.error-text-matches",
+    "description": "Text \"#N/A\" matches an #N/A cell in the criteria range",
+    "tags": ["countifs", "errors"],
+    "formula": "=COUNTIFS(A1:A2, \"#N/A\")",
+    "expected": { "number": 1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "error": "#N/A" },
+          "A2": { "number": 2 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.countifs.array-is-value",
+    "description": "COUNTIFS requires ranges; array literals are #VALUE!",
+    "tags": ["countifs", "errors"],
+    "formula": "=COUNTIFS({1,2,3}, \">1\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.countifs.arity-zero",
+    "description": "COUNTIFS() is #VALUE!",
+    "tags": ["countifs", "errors"],
+    "formula": "=COUNTIFS()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.countifs.arity-too-few",
+    "description": "COUNTIFS with one argument is #VALUE!",
+    "tags": ["countifs", "errors"],
+    "formula": "=COUNTIFS(A1:A2)",
+    "expected": { "error": "#VALUE!" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": { "A1": { "number": 1 } }
+      }]
+    }
+  },
+  {
+    "id": "fn.countifs.arity-incomplete-pair",
+    "description": "A dangling criteria_range without criteria is #VALUE!",
+    "tags": ["countifs", "errors"],
+    "formula": "=COUNTIFS(A1:A2, 1, B1:B2)",
+    "expected": { "error": "#VALUE!" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "number": 1 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.countifs.missing-sheet",
+    "description": "A range on a missing sheet is #REF!",
+    "tags": ["countifs", "errors"],
+    "formula": "=COUNTIFS(Nope!A1:A3, 1)",
+    "expected": { "error": "#REF!" }
+  },
+  {
+    "id": "fn.countifs.missing-name",
+    "description": "An undefined name is #NAME?",
+    "tags": ["countifs", "errors"],
+    "formula": "=COUNTIFS(Nope, 1)",
+    "expected": { "error": "#NAME!" }
+  },
+  {
+    "id": "fn.countifs.named-range",
+    "description": "Defined names that refer to ranges are accepted",
+    "tags": ["countifs", "named"],
+    "formula": "=COUNTIFS(Vals, \">1\", Kind, \"x\")",
+    "expected": { "number": 1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "text": "x" },
+          "A2": { "number": 2 }, "B2": { "text": "x" },
+          "A3": { "number": 3 }, "B3": { "text": "y" }
+        }
+      }],
+      "names": [
+        { "name": "Vals", "refers_to": "Sheet1!A1:A3" },
+        { "name": "Kind", "refers_to": "Sheet1!B1:B3" }
+      ]
+    }
+  },
+  {
+    "id": "fn.countifs.concat-criteria",
+    "description": "Criteria can be built with & (e.g. \">\"&1)",
+    "tags": ["countifs"],
+    "formula": "=COUNTIFS(A1:A3, \">\"&1, B1:B3, \"x\")",
+    "expected": { "number": 1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "text": "x" },
+          "A2": { "number": 2 }, "B2": { "text": "x" },
+          "A3": { "number": 3 }, "B3": { "text": "y" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.countifs.cell-criteria",
+    "description": "Criteria taken from cells",
+    "tags": ["countifs"],
+    "formula": "=COUNTIFS(A1:A3, D1, B1:B3, E1)",
+    "expected": { "number": 1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "text": "x" },
+          "A2": { "number": 2 }, "B2": { "text": "x" },
+          "A3": { "number": 3 }, "B3": { "text": "y" },
+          "D1": { "text": ">1" },
+          "E1": { "text": "x" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.countifs.empty-criteria-cell",
+    "description": "An empty criteria cell matches blanks (COUNTIF family)",
+    "tags": ["countifs"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=COUNTIFS(A1:A3, B1)",
+    "expected": { "number": 1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A3": { "number": 2 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.countifs.no-matches-zero",
+    "description": "No matches returns 0, not #N/A",
+    "tags": ["countifs"],
+    "formula": "=COUNTIFS(A1:A3, \">100\")",
+    "expected": { "number": 0 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 2 },
+          "A3": { "number": 3 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.countifs.single-cell",
+    "description": "A 1x1 range is a valid COUNTIFS window",
+    "tags": ["countifs"],
+    "formula": "=COUNTIFS(A1, \"apple\")",
+    "expected": { "number": 1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": { "A1": { "text": "apple" } }
+      }]
+    }
+  },
+  {
+    "id": "fn.countifs.ieee-fuzzy",
+    "description": "Numeric COUNTIFS uses 15-digit equality (0.1+0.2 matches 0.3)",
+    "tags": ["countifs"],
+    "quirks": ["ieee-15-digit"],
+    "formula": "=COUNTIFS(A1, 0.1+0.2)",
+    "expected": { "number": 1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": { "A1": { "number": 0.3 } }
+      }]
+    }
+  },
+  {
+    "id": "fn.countifs.formula-cells",
+    "description": "Criteria windows evaluate stored formulas",
+    "tags": ["countifs"],
+    "formula": "=COUNTIFS(A1:A3, \">1\", B1:B3, \"x\")",
+    "expected": { "number": 1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "formula": "=1", "value": { "number": 1 } },
+          "A2": { "formula": "=1+1", "value": { "number": 2 } },
+          "A3": { "formula": "=3", "value": { "number": 3 } },
+          "B1": { "text": "x" },
+          "B2": { "text": "x" },
+          "B3": { "text": "y" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.countifs.neq-skips-errors",
+    "description": "\"<>5\" counts blanks (blank is not 5) but skips error cells",
+    "tags": ["countifs", "errors"],
+    "formula": "=COUNTIFS(A1:A4, \"<>5\")",
+    "expected": { "number": 2 },
+    "notes": "1 matches, blank matches, 5 does not, #N/A is skipped",
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A3": { "number": 5 },
+          "A4": { "error": "#N/A" }
+        }
+      }]
+    }
+  }
+]

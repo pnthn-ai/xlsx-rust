@@ -6,7 +6,7 @@
 //! - [`eval::coerce`] / [`eval::compare`] / [`eval::empty`] — quirk modules
 //! - [`eval::functions`] — worksheet functions used by the expanded corpus
 //! - [`text_format`] — Excel `TEXT` for a documented number/date format subset
-//! - [`eval::functions`] also dispatches `SUMIF` / `COUNTIF` / `SUMPRODUCT` / `SUBSTITUTE`
+//! - [`eval::functions`] also dispatches `SUMIF` / `COUNTIF` / `COUNTIFS` / `SUMPRODUCT` / `SUBSTITUTE`
 //! - [`eval::concat`] — Excel `CONCAT` (range/array flatten + 32767 cap)
 //! - [`dates::weekday`] — O(1) Excel `WEEKDAY` on the date serial
 //! - [`eval::switch`] — Excel `SWITCH` (exact `=` match, short-circuit vs `IF`)
@@ -53,8 +53,8 @@ pub use eval::textjoin::{
 };
 pub use eval::unique::{unique_apply, unique_apply_naive, unique_eq};
 pub use eval::{
-    eval_averageif_materialized, eval_formula_in, eval_sumif_materialized, eval_sumifs_materialized,
-    Evaluator,
+    eval_averageif_materialized, eval_countifs_materialized, eval_formula_in,
+    eval_sumif_materialized, eval_sumifs_materialized, Evaluator,
 };
 pub use parse::parse;
 
