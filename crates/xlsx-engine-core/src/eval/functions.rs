@@ -5,6 +5,7 @@
 use super::{coerce, compare, excel_pow, Ctx, Evaluator};
 use crate::ast::Expr;
 use crate::dates::{date_serial, serial_to_ymd, time_fraction};
+use crate::text_format;
 use xlsx_types::{EvalError, ExcelError, ExcelValue};
 
 pub(crate) fn dispatch(
@@ -93,6 +94,7 @@ pub(crate) fn dispatch(
         "TRIM" => fn_trim(ev, args, ctx),
         "EXACT" => fn_exact(ev, args, ctx),
         "VALUE" => fn_value(ev, args, ctx),
+        "TEXT" => fn_text(ev, args, ctx),
         "TRUE" => Ok(ExcelValue::Bool(true)),
         "FALSE" => Ok(ExcelValue::Bool(false)),
         _ => Ok(ExcelValue::Error(ExcelError::Name)),
@@ -785,6 +787,28 @@ fn fn_exact(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelVal
         Err(e) => return Ok(ExcelValue::Error(e)),
     };
     Ok(ExcelValue::Bool(a == b))
+}
+
+fn fn_text(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    if args.len() != 2 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let value = ev.eval_scalar(&args[0], ctx)?;
+    if let ExcelValue::Error(e) = value {
+        return Ok(ExcelValue::Error(e));
+    }
+    let fmt_v = ev.eval_scalar(&args[1], ctx)?;
+    if let ExcelValue::Error(e) = fmt_v {
+        return Ok(ExcelValue::Error(e));
+    }
+    let fmt = match coerce::to_text(&fmt_v) {
+        Ok(s) => s,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    match text_format::apply(&value, &fmt, ctx.spec.options.date_system) {
+        Ok(s) => Ok(ExcelValue::Text(s)),
+        Err(e) => Ok(ExcelValue::Error(e)),
+    }
 }
 
 fn fn_value(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {

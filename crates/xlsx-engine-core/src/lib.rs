@@ -5,6 +5,7 @@
 //! - [`eval`] — workbook-backed walker
 //! - [`eval::coerce`] / [`eval::compare`] / [`eval::empty`] — quirk modules
 //! - [`eval::functions`] — worksheet functions used by the expanded corpus
+//! - [`text_format`] — Excel `TEXT` for a documented number/date format subset
 //!
 //! This crate depends only on [`xlsx_types`]. It never reads fixture expected
 //! values; the verification gate (`xlsx-verify`) is the only judge.
@@ -13,6 +14,7 @@ pub mod ast;
 pub mod dates;
 pub mod eval;
 pub mod parse;
+pub mod text_format;
 
 pub use ast::{BinOp, Expr, UnaryOp};
 pub use eval::{eval_formula_in, Evaluator};

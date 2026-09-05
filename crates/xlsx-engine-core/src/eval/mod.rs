@@ -506,4 +506,37 @@ mod tests {
             ExcelValue::Error(ExcelError::Num)
         );
     }
+
+    #[test]
+    fn text_number_and_date_subset() {
+        let wb = Workbook::default();
+        assert_eq!(
+            eval_formula_in(&wb, "=TEXT(1234.567,\"0.00\")").unwrap(),
+            ExcelValue::Text("1234.57".into())
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=TEXT(1234,\"#,##0\")").unwrap(),
+            ExcelValue::Text("1,234".into())
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=TEXT(0.285,\"0.0%\")").unwrap(),
+            ExcelValue::Text("28.5%".into())
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=TEXT(DATE(2024,3,15),\"yyyy-mm-dd\")").unwrap(),
+            ExcelValue::Text("2024-03-15".into())
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=TEXT(\"abc\",\"0.00\")").unwrap(),
+            ExcelValue::Text("abc".into())
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=TEXT(#DIV/0!,\"0\")").unwrap(),
+            ExcelValue::Error(ExcelError::Div0)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=TEXT(1)").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
+        );
+    }
 }
