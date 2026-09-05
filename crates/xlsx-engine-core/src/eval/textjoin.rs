@@ -62,6 +62,9 @@ fn textjoin_eval(
     };
 
     let mut builder = TextJoinBuilder::new(delims);
+    if let Some(hint) = reserve_hint(&args[2..]) {
+        builder.reserve(hint);
+    }
     for arg in &args[2..] {
         let r = if materialize {
             feed_value(&mut builder, &ev.eval_expr(arg, ctx)?, ignore_empty)
@@ -152,6 +155,7 @@ fn feed_range(
         return Err(ExcelError::Ref);
     }
     let mut a1 = String::with_capacity(8);
+    builder.reserve((range.row_count() as usize).saturating_mul(range.col_count() as usize) * 2);
     for addr in range.cells() {
         let v = read_cell(ev, ctx, &sheet_name, addr, &mut a1)?;
         feed_scalar(builder, &v, ignore_empty)?;
@@ -220,8 +224,33 @@ fn write_a1(addr: CellAddr, out: &mut String) {
     for i in (0..n).rev() {
         out.push(buf[i] as char);
     }
-    use std::fmt::Write as _;
-    let _ = write!(out, "{}", addr.row + 1);
+    let mut row = addr.row + 1;
+    let mut digits = [0u8; 10];
+    let mut d = 0usize;
+    while row > 0 {
+        digits[d] = b'0' + (row % 10) as u8;
+        d += 1;
+        row /= 10;
+    }
+    for i in (0..d).rev() {
+        out.push(digits[i] as char);
+    }
+}
+
+fn reserve_hint(args: &[Expr]) -> Option<usize> {
+    let mut n = 0usize;
+    for arg in args {
+        match arg {
+            Expr::Range(r) => {
+                n = n.saturating_add(
+                    (r.row_count() as usize).saturating_mul(r.col_count() as usize) * 2,
+                );
+            }
+            Expr::Cell(_) | Expr::Text(_) => n = n.saturating_add(8),
+            _ => {}
+        }
+    }
+    (n > 0).then_some(n)
 }
 
 fn named_as_range(name: &str, ctx: &Ctx<'_>) -> Result<RangeRef, ExcelError> {
@@ -307,7 +336,6 @@ fn feed_scalar(
 /// Streaming join with cycling delimiters and the 32,767-character cap.
 pub struct TextJoinBuilder {
     delims: Vec<String>,
-    single: Option<String>,
     out: String,
     utf16: usize,
     emitted: usize,
@@ -320,18 +348,16 @@ impl TextJoinBuilder {
         } else {
             delims
         };
-        let single = if delims.len() == 1 {
-            Some(delims[0].clone())
-        } else {
-            None
-        };
         Self {
             delims,
-            single,
             out: String::new(),
             utf16: 0,
             emitted: 0,
         }
+    }
+
+    pub fn reserve(&mut self, additional: usize) {
+        self.out.reserve(additional.min(TEXTJOIN_MAX_CHARS * 3));
     }
 
     pub fn push(&mut self, s: &str, ignore_empty: bool) -> Result<(), ExcelError> {
@@ -339,16 +365,21 @@ impl TextJoinBuilder {
             return Ok(());
         }
         if self.emitted > 0 {
-            let idx = (self.emitted - 1) % self.delims.len();
-            let d = if let Some(ref single) = self.single {
-                single.clone()
-            } else {
-                self.delims[idx].clone()
-            };
-            self.push_raw(&d)?;
+            self.push_delim()?;
         }
         self.push_raw(s)?;
         self.emitted += 1;
+        Ok(())
+    }
+
+    fn push_delim(&mut self) -> Result<(), ExcelError> {
+        let idx = (self.emitted - 1) % self.delims.len();
+        let add = utf16_len(&self.delims[idx]);
+        if self.utf16.saturating_add(add) > TEXTJOIN_MAX_CHARS {
+            return Err(ExcelError::Value);
+        }
+        self.utf16 += add;
+        self.out.push_str(&self.delims[idx]);
         Ok(())
     }
 
@@ -368,7 +399,11 @@ impl TextJoinBuilder {
 }
 
 fn utf16_len(s: &str) -> usize {
-    s.encode_utf16().count()
+    if s.is_ascii() {
+        s.len()
+    } else {
+        s.encode_utf16().count()
+    }
 }
 
 /// Naive collect-then-`join` used only as a microbench baseline for the
