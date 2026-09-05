@@ -292,6 +292,8 @@ pub enum BinOp {
     Gt,
     Le,
     Ge,
+    /// Space (intersect) operator: `A1:B2 B2`.
+    Intersect,
 }
 
 pub fn parse(input: &str) -> Result<Expr, EvalError> {
@@ -433,7 +435,29 @@ impl Parser {
                     expr: Box::new(self.parse_unary()?),
                 })
             }
-            _ => self.parse_postfix(),
+            _ => self.parse_intersect(),
+        }
+    }
+
+    /// Juxtaposed refs are Excel's intersect operator (`A1:B2 B2`).
+    fn parse_intersect(&mut self) -> Result<Expr, EvalError> {
+        let mut left = self.parse_postfix()?;
+        while self.peek_is_ref_start() {
+            let right = self.parse_postfix()?;
+            left = Expr::Binary {
+                op: BinOp::Intersect,
+                left: Box::new(left),
+                right: Box::new(right),
+            };
+        }
+        Ok(left)
+    }
+
+    fn peek_is_ref_start(&self) -> bool {
+        match self.peek() {
+            Token::Ident(id) if looks_like_cell(id) => true,
+            Token::Quoted(_) => true,
+            _ => false,
         }
     }
 
@@ -603,6 +627,17 @@ mod tests {
     fn parse_error_literal() {
         match parse("=#DIV/0!").unwrap() {
             Expr::Error(ExcelError::Div0) => {}
+            other => panic!("{other:?}"),
+        }
+    }
+
+    #[test]
+    fn parse_intersect() {
+        match parse("=A1:B2 B2").unwrap() {
+            Expr::Binary {
+                op: BinOp::Intersect,
+                ..
+            } => {}
             other => panic!("{other:?}"),
         }
     }

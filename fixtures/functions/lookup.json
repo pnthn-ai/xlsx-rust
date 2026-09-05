@@ -1,0 +1,156 @@
+[
+  {
+    "id": "fn.index-row-vector",
+    "description": "INDEX of a 1-row array uses the index as a column",
+    "tags": ["index", "functions"],
+    "formula": "=INDEX({1,2,3}, 2)",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.index-col-vector",
+    "description": "INDEX of a 1-column array uses the index as a row",
+    "tags": ["index", "functions"],
+    "formula": "=INDEX({1;2;3}, 2)",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.index-matrix",
+    "description": "INDEX of a 2-D array",
+    "tags": ["index", "functions"],
+    "formula": "=INDEX({1,2;3,4}, 2, 1)",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.index-oob",
+    "description": "INDEX past the array is #REF!",
+    "tags": ["index", "errors"],
+    "formula": "=INDEX({1,2,3}, 4)",
+    "expected": { "error": "#REF!" }
+  },
+  {
+    "id": "fn.index-range",
+    "description": "INDEX into a worksheet range",
+    "tags": ["index"],
+    "formula": "=INDEX(A1:C3, 2, 3)",
+    "expected": { "text": "f" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "a" }, "B1": { "text": "b" }, "C1": { "text": "c" },
+          "A2": { "text": "d" }, "B2": { "text": "e" }, "C2": { "text": "f" },
+          "A3": { "text": "g" }, "B3": { "text": "h" }, "C3": { "text": "i" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.match-exact",
+    "description": "MATCH exact (match_type 0)",
+    "tags": ["match", "functions"],
+    "formula": "=MATCH(2, {1,2,3}, 0)",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.match-approx-sorted",
+    "description": "MATCH type 1 on sorted data: last key <= lookup",
+    "tags": ["match"],
+    "quirks": ["vlookup-approximate-unsorted"],
+    "formula": "=MATCH(2.5, {1,2,3}, 1)",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.match-approx-below",
+    "description": "MATCH type 1 below the first key is #N/A",
+    "tags": ["match", "errors"],
+    "formula": "=MATCH(0, {1,2,3}, 1)",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.match-casefold",
+    "description": "MATCH exact is case-insensitive",
+    "tags": ["match"],
+    "quirks": ["case-insensitive-text"],
+    "formula": "=MATCH(\"b\", {\"A\";\"B\";\"C\"}, 0)",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.match-wildcard",
+    "description": "MATCH exact supports * wildcards",
+    "tags": ["match"],
+    "quirks": ["wildcards"],
+    "formula": "=MATCH(\"a*\", {\"apple\";\"banana\"}, 0)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.index-match",
+    "description": "INDEX/MATCH exact lookup",
+    "tags": ["index", "match"],
+    "formula": "=INDEX(B1:B3, MATCH(2, A1:A3, 0))",
+    "expected": { "text": "b" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "text": "a" },
+          "A2": { "number": 2 }, "B2": { "text": "b" },
+          "A3": { "number": 3 }, "B3": { "text": "c" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.hlookup-exact",
+    "description": "HLOOKUP exact match",
+    "tags": ["hlookup"],
+    "formula": "=HLOOKUP(2, A1:C2, 2, FALSE)",
+    "expected": { "text": "b" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "number": 2 }, "C1": { "number": 3 },
+          "A2": { "text": "a" }, "B2": { "text": "b" }, "C2": { "text": "c" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.hlookup-approx",
+    "description": "HLOOKUP approximate on a sorted header row",
+    "tags": ["hlookup"],
+    "quirks": ["vlookup-approximate-unsorted"],
+    "formula": "=HLOOKUP(2.5, A1:C2, 2, TRUE)",
+    "expected": { "text": "b" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "number": 2 }, "C1": { "number": 3 },
+          "A2": { "text": "a" }, "B2": { "text": "b" }, "C2": { "text": "c" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.choose-second",
+    "description": "CHOOSE(2, …)",
+    "tags": ["choose"],
+    "formula": "=CHOOSE(2, \"a\", \"b\", \"c\")",
+    "expected": { "text": "b" }
+  },
+  {
+    "id": "fn.choose-truncates",
+    "description": "CHOOSE truncates the index toward zero",
+    "tags": ["choose"],
+    "formula": "=CHOOSE(1.9, \"a\", \"b\")",
+    "expected": { "text": "a" }
+  },
+  {
+    "id": "fn.choose-zero",
+    "description": "CHOOSE(0, …) is #VALUE!",
+    "tags": ["choose", "errors"],
+    "formula": "=CHOOSE(0, \"a\")",
+    "expected": { "error": "#VALUE!" }
+  }
+]

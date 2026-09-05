@@ -1,0 +1,174 @@
+[
+  {
+    "id": "date.serial-epoch",
+    "description": "DATE(1900,1,1) is serial 1",
+    "tags": ["dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=DATE(1900,1,1)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "date.feb-28-1900",
+    "description": "DATE(1900,2,28) is serial 59",
+    "tags": ["dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=DATE(1900,2,28)",
+    "expected": { "number": 59 }
+  },
+  {
+    "id": "date.feb-29-1900-bug",
+    "description": "Excel treats 1900 as a leap year: DATE(1900,2,29) is 60",
+    "tags": ["dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=DATE(1900,2,29)",
+    "expected": { "number": 60 }
+  },
+  {
+    "id": "date.mar-1-1900",
+    "description": "DATE(1900,3,1) is serial 61 (the day after the fictitious leap day)",
+    "tags": ["dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=DATE(1900,3,1)",
+    "expected": { "number": 61 }
+  },
+  {
+    "id": "date.year-of-leap-bug",
+    "description": "YEAR(60) is 1900",
+    "tags": ["dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=YEAR(60)",
+    "expected": { "number": 1900 }
+  },
+  {
+    "id": "date.month-of-leap-bug",
+    "description": "MONTH(60) is 2",
+    "tags": ["dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=MONTH(60)",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "date.day-of-leap-bug",
+    "description": "DAY(60) is 29 — the fictitious February 29, 1900",
+    "tags": ["dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=DAY(60)",
+    "expected": { "number": 29 }
+  },
+  {
+    "id": "date.mar-1-parts",
+    "description": "Serial 61 unpacks as 1900-03-01",
+    "tags": ["dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=YEAR(61)&MONTH(61)&DAY(61)",
+    "expected": { "text": "190031" }
+  },
+  {
+    "id": "date.jan-1-1901",
+    "description": "DATE(1901,1,1) is 367 (1900 has 366 Excel days)",
+    "tags": ["dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=DATE(1901,1,1)",
+    "expected": { "number": 367 }
+  },
+  {
+    "id": "date.y2k",
+    "description": "DATE(2000,1,1) is the well-known serial 36526",
+    "tags": ["dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=DATE(2000,1,1)",
+    "expected": { "number": 36526 }
+  },
+  {
+    "id": "date.y2k-leap-day",
+    "description": "DATE(2000,2,29) is 36585 (2000 is a real leap year)",
+    "tags": ["dates"],
+    "formula": "=DATE(2000,2,29)",
+    "expected": { "number": 36585 }
+  },
+  {
+    "id": "date.month-overflow",
+    "description": "DATE(2000,13,1) rolls into January 2001 = 36892",
+    "tags": ["dates"],
+    "formula": "=DATE(2000,13,1)",
+    "expected": { "number": 36892 }
+  },
+  {
+    "id": "date.two-digit-year",
+    "description": "DATE(0,1,1) uses the +1900 year rule → 1900-01-01 = 1",
+    "tags": ["dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=DATE(0,1,1)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "date.as-number-add",
+    "description": "A date serial participates in arithmetic",
+    "tags": ["dates", "arithmetic"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=DATE(1900,1,1)+1",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "date.time-noon",
+    "description": "TIME(12,0,0) is the fraction 0.5",
+    "tags": ["dates", "time"],
+    "formula": "=TIME(12,0,0)",
+    "expected": { "number": 0.5 }
+  },
+  {
+    "id": "date.time-midnight",
+    "description": "TIME(0,0,0) is 0",
+    "tags": ["dates", "time"],
+    "formula": "=TIME(0,0,0)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "date.time-quarter",
+    "description": "TIME(6,0,0) is 0.25",
+    "tags": ["dates", "time"],
+    "formula": "=TIME(6,0,0)",
+    "expected": { "number": 0.25 }
+  },
+  {
+    "id": "date.time-add",
+    "description": "TIME(12,0,0)+TIME(6,0,0) is 0.75",
+    "tags": ["dates", "time"],
+    "formula": "=TIME(12,0,0)+TIME(6,0,0)",
+    "expected": { "number": 0.75 }
+  },
+  {
+    "id": "date.serial-zero-year",
+    "description": "YEAR(0) is 1900 (the 1900-01-00 fictitious date)",
+    "tags": ["dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=YEAR(0)",
+    "expected": { "number": 1900 }
+  },
+  {
+    "id": "date.serial-zero-day",
+    "description": "DAY(0) is 0",
+    "tags": ["dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=DAY(0)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "date.system-1904-epoch",
+    "description": "DATE(1904,1,1) is serial 0 in the 1904 date system",
+    "tags": ["dates"],
+    "quirks": ["date-system"],
+    "formula": "=DATE(1904,1,1)",
+    "expected": { "number": 0 },
+    "options": { "date_system": "excel1904" }
+  },
+  {
+    "id": "date.system-1904-year-zero",
+    "description": "YEAR(0) is 1904 under the 1904 date system",
+    "tags": ["dates"],
+    "quirks": ["date-system"],
+    "formula": "=YEAR(0)",
+    "expected": { "number": 1904 },
+    "options": { "date_system": "excel1904" }
+  }
+]

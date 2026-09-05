@@ -1,0 +1,150 @@
+[
+  {
+    "id": "fn.int-positive",
+    "description": "INT(1.9) is 1",
+    "tags": ["math"],
+    "formula": "=INT(1.9)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.int-negative",
+    "description": "INT(-1.5) is -2 (toward -∞)",
+    "tags": ["math"],
+    "formula": "=INT(-1.5)",
+    "expected": { "number": -2 }
+  },
+  {
+    "id": "fn.trunc-negative",
+    "description": "TRUNC(-1.5) is -1 (toward 0)",
+    "tags": ["math"],
+    "formula": "=TRUNC(-1.5)",
+    "expected": { "number": -1 }
+  },
+  {
+    "id": "fn.round-half-away-pos",
+    "description": "ROUND(2.5, 0) is 3 (half away from zero)",
+    "tags": ["math"],
+    "formula": "=ROUND(2.5, 0)",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.round-half-away-neg",
+    "description": "ROUND(-1.5, 0) is -2",
+    "tags": ["math"],
+    "formula": "=ROUND(-1.5, 0)",
+    "expected": { "number": -2 }
+  },
+  {
+    "id": "fn.round-one-digit",
+    "description": "ROUND(1.25, 1) is 1.3",
+    "tags": ["math"],
+    "formula": "=ROUND(1.25, 1)",
+    "expected": { "number": 1.3 }
+  },
+  {
+    "id": "fn.round-negative-digits",
+    "description": "ROUND(123, -1) is 120",
+    "tags": ["math"],
+    "formula": "=ROUND(123, -1)",
+    "expected": { "number": 120 }
+  },
+  {
+    "id": "fn.mod-pos",
+    "description": "MOD(3, 2) is 1",
+    "tags": ["math"],
+    "formula": "=MOD(3, 2)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.mod-neg-n",
+    "description": "MOD(-3, 2) is 1 — Excel uses n - d*INT(n/d)",
+    "tags": ["math"],
+    "formula": "=MOD(-3, 2)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.mod-neg-d",
+    "description": "MOD(3, -2) is -1",
+    "tags": ["math"],
+    "formula": "=MOD(3, -2)",
+    "expected": { "number": -1 }
+  },
+  {
+    "id": "fn.sign-neg",
+    "description": "SIGN(-5) is -1",
+    "tags": ["math"],
+    "formula": "=SIGN(-5)",
+    "expected": { "number": -1 }
+  },
+  {
+    "id": "fn.sign-zero",
+    "description": "SIGN(0) is 0",
+    "tags": ["math"],
+    "formula": "=SIGN(0)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.sign-true",
+    "description": "SIGN(TRUE) is 1",
+    "tags": ["math", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=SIGN(TRUE)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.sqrt-four",
+    "description": "SQRT(4) is 2",
+    "tags": ["math"],
+    "formula": "=SQRT(4)",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.power-fn",
+    "description": "POWER(2, 10) is 1024",
+    "tags": ["math"],
+    "formula": "=POWER(2, 10)",
+    "expected": { "number": 1024 }
+  },
+  {
+    "id": "fn.power-zero-zero",
+    "description": "POWER(0, 0) is #NUM!",
+    "tags": ["math", "errors"],
+    "formula": "=POWER(0, 0)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.pi",
+    "description": "PI() is the circle constant",
+    "tags": ["math"],
+    "formula": "=PI()",
+    "expected": { "number": 3.141592653589793 }
+  },
+  {
+    "id": "fn.iseven-two",
+    "description": "ISEVEN(2) is TRUE",
+    "tags": ["math"],
+    "formula": "=ISEVEN(2)",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.iseven-truncates",
+    "description": "ISEVEN(2.9) uses TRUNC → TRUE",
+    "tags": ["math"],
+    "formula": "=ISEVEN(2.9)",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.isodd-neg",
+    "description": "ISODD(-3) is TRUE",
+    "tags": ["math"],
+    "formula": "=ISODD(-3)",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.iseven-text",
+    "description": "ISEVEN(\"x\") is #VALUE!",
+    "tags": ["math", "errors"],
+    "formula": "=ISEVEN(\"x\")",
+    "expected": { "error": "#VALUE!" }
+  }
+]

@@ -1,0 +1,174 @@
+[
+  {
+    "id": "fn.type-number",
+    "description": "TYPE(1) is 1",
+    "tags": ["information"],
+    "formula": "=TYPE(1)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.type-text",
+    "description": "TYPE(\"a\") is 2",
+    "tags": ["information"],
+    "formula": "=TYPE(\"a\")",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.type-bool",
+    "description": "TYPE(TRUE) is 4",
+    "tags": ["information"],
+    "formula": "=TYPE(TRUE)",
+    "expected": { "number": 4 }
+  },
+  {
+    "id": "fn.type-error",
+    "description": "TYPE(#VALUE!) is 16",
+    "tags": ["information", "errors"],
+    "formula": "=TYPE(#VALUE!)",
+    "expected": { "number": 16 }
+  },
+  {
+    "id": "fn.type-array",
+    "description": "TYPE({1,2}) is 64",
+    "tags": ["information", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TYPE({1,2})",
+    "expected": { "number": 64 }
+  },
+  {
+    "id": "fn.type-blank",
+    "description": "TYPE of a blank cell is 1 (number-like)",
+    "tags": ["information", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=TYPE(A1)",
+    "expected": { "number": 1 },
+    "workbook": { "sheets": [{ "name": "Sheet1", "cells": {} }] }
+  },
+  {
+    "id": "fn.error-type-null",
+    "description": "ERROR.TYPE(#NULL!) is 1",
+    "tags": ["information", "errors"],
+    "formula": "=ERROR.TYPE(#NULL!)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.error-type-div0",
+    "description": "ERROR.TYPE(#DIV/0!) is 2",
+    "tags": ["information", "errors"],
+    "formula": "=ERROR.TYPE(#DIV/0!)",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.error-type-value",
+    "description": "ERROR.TYPE(#VALUE!) is 3",
+    "tags": ["information", "errors"],
+    "formula": "=ERROR.TYPE(#VALUE!)",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.error-type-ref",
+    "description": "ERROR.TYPE(#REF!) is 4",
+    "tags": ["information", "errors"],
+    "formula": "=ERROR.TYPE(#REF!)",
+    "expected": { "number": 4 }
+  },
+  {
+    "id": "fn.error-type-name",
+    "description": "ERROR.TYPE(#NAME?) is 5",
+    "tags": ["information", "errors"],
+    "formula": "=ERROR.TYPE(#NAME?)",
+    "expected": { "number": 5 }
+  },
+  {
+    "id": "fn.error-type-num",
+    "description": "ERROR.TYPE(#NUM!) is 6",
+    "tags": ["information", "errors"],
+    "formula": "=ERROR.TYPE(#NUM!)",
+    "expected": { "number": 6 }
+  },
+  {
+    "id": "fn.error-type-na",
+    "description": "ERROR.TYPE(#N/A) is 7",
+    "tags": ["information", "errors"],
+    "formula": "=ERROR.TYPE(#N/A)",
+    "expected": { "number": 7 }
+  },
+  {
+    "id": "fn.error-type-non-error",
+    "description": "ERROR.TYPE(1) is #N/A",
+    "tags": ["information", "errors"],
+    "formula": "=ERROR.TYPE(1)",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.iserr-na-is-false",
+    "description": "ISERR(#N/A) is FALSE — #N/A is excluded",
+    "tags": ["information", "errors"],
+    "formula": "=ISERR(#N/A)",
+    "expected": { "bool": false }
+  },
+  {
+    "id": "fn.iserr-div0",
+    "description": "ISERR(#DIV/0!) is TRUE",
+    "tags": ["information", "errors"],
+    "formula": "=ISERR(#DIV/0!)",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.iserror-na",
+    "description": "ISERROR(#N/A) is TRUE",
+    "tags": ["information", "errors"],
+    "formula": "=ISERROR(#N/A)",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.isna",
+    "description": "ISNA(#N/A) is TRUE",
+    "tags": ["information", "errors"],
+    "formula": "=ISNA(#N/A)",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.islogical-true",
+    "description": "ISLOGICAL(TRUE) is TRUE",
+    "tags": ["information"],
+    "formula": "=ISLOGICAL(TRUE)",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.islogical-one",
+    "description": "ISLOGICAL(1) is FALSE",
+    "tags": ["information"],
+    "formula": "=ISLOGICAL(1)",
+    "expected": { "bool": false }
+  },
+  {
+    "id": "fn.isnontext-number",
+    "description": "ISNONTEXT(1) is TRUE",
+    "tags": ["information"],
+    "formula": "=ISNONTEXT(1)",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.isnontext-text",
+    "description": "ISNONTEXT(\"a\") is FALSE",
+    "tags": ["information"],
+    "formula": "=ISNONTEXT(\"a\")",
+    "expected": { "bool": false }
+  },
+  {
+    "id": "fn.isnontext-error",
+    "description": "ISNONTEXT(#VALUE!) is TRUE",
+    "tags": ["information", "errors"],
+    "formula": "=ISNONTEXT(#VALUE!)",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.isnumber-true-is-false",
+    "description": "ISNUMBER(TRUE) is FALSE even though TRUE=1",
+    "tags": ["information"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=ISNUMBER(TRUE)",
+    "expected": { "bool": false }
+  }
+]

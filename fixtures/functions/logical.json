@@ -1,0 +1,124 @@
+[
+  {
+    "id": "fn.and-true",
+    "description": "AND(TRUE, TRUE) is TRUE",
+    "tags": ["logical"],
+    "formula": "=AND(TRUE, TRUE)",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.and-false",
+    "description": "AND(TRUE, FALSE) is FALSE",
+    "tags": ["logical"],
+    "formula": "=AND(TRUE, FALSE)",
+    "expected": { "bool": false }
+  },
+  {
+    "id": "fn.and-numbers",
+    "description": "AND(1, 2) is TRUE (nonzero is true)",
+    "tags": ["logical"],
+    "formula": "=AND(1, 2)",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.and-zero",
+    "description": "AND(1, 0) is FALSE",
+    "tags": ["logical"],
+    "formula": "=AND(1, 0)",
+    "expected": { "bool": false }
+  },
+  {
+    "id": "fn.and-text-value",
+    "description": "AND(\"x\") is #VALUE!",
+    "tags": ["logical", "errors"],
+    "formula": "=AND(\"x\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.and-no-args",
+    "description": "AND() with no arguments is #VALUE!",
+    "tags": ["logical", "errors"],
+    "formula": "=AND()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.and-range-skips-blank",
+    "description": "AND of a range skips blanks",
+    "tags": ["logical", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=AND(A1:A3)",
+    "expected": { "bool": true },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "bool": true },
+          "A3": { "bool": true }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.or-true",
+    "description": "OR(FALSE, TRUE) is TRUE",
+    "tags": ["logical"],
+    "formula": "=OR(FALSE, TRUE)",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.or-false",
+    "description": "OR(FALSE, FALSE) is FALSE",
+    "tags": ["logical"],
+    "formula": "=OR(FALSE, FALSE)",
+    "expected": { "bool": false }
+  },
+  {
+    "id": "fn.xor-odd",
+    "description": "XOR(TRUE, FALSE) is TRUE",
+    "tags": ["logical"],
+    "formula": "=XOR(TRUE, FALSE)",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.xor-even",
+    "description": "XOR(TRUE, TRUE) is FALSE",
+    "tags": ["logical"],
+    "formula": "=XOR(TRUE, TRUE)",
+    "expected": { "bool": false }
+  },
+  {
+    "id": "fn.xor-three",
+    "description": "XOR of three TRUEs is TRUE (odd count)",
+    "tags": ["logical"],
+    "formula": "=XOR(TRUE, TRUE, TRUE)",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.not-true",
+    "description": "NOT(TRUE) is FALSE",
+    "tags": ["logical"],
+    "formula": "=NOT(TRUE)",
+    "expected": { "bool": false }
+  },
+  {
+    "id": "fn.not-zero",
+    "description": "NOT(0) is TRUE",
+    "tags": ["logical"],
+    "formula": "=NOT(0)",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.not-five",
+    "description": "NOT(5) is FALSE",
+    "tags": ["logical"],
+    "formula": "=NOT(5)",
+    "expected": { "bool": false }
+  },
+  {
+    "id": "fn.not-text",
+    "description": "NOT(\"x\") is #VALUE!",
+    "tags": ["logical", "errors"],
+    "formula": "=NOT(\"x\")",
+    "expected": { "error": "#VALUE!" }
+  }
+]

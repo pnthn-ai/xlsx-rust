@@ -1,0 +1,255 @@
+[
+  {
+    "id": "agg.sum-text-literal",
+    "description": "SUM(\"2\") coerces a scalar numeric string",
+    "tags": ["sum", "functions"],
+    "quirks": ["sum-arg-vs-range"],
+    "formula": "=SUM(\"2\")",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "agg.sum-false-literal",
+    "description": "SUM(FALSE) as a literal is 0",
+    "tags": ["sum", "functions"],
+    "quirks": ["sum-arg-vs-range"],
+    "formula": "=SUM(FALSE)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "agg.sum-mixed-scalars",
+    "description": "SUM(1, TRUE, \"2\") = 4",
+    "tags": ["sum", "functions"],
+    "quirks": ["sum-arg-vs-range"],
+    "formula": "=SUM(1, TRUE, \"2\")",
+    "expected": { "number": 4 }
+  },
+  {
+    "id": "agg.sum-range-bool-and-text",
+    "description": "SUM skips both logicals and text in a range",
+    "tags": ["sum", "functions"],
+    "quirks": ["sum-arg-vs-range"],
+    "formula": "=SUM(A1:A4)",
+    "expected": { "number": 3 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "bool": true },
+          "A3": { "text": "2" },
+          "A4": { "number": 2 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "agg.sum-array-skips-logical",
+    "description": "SUM of an array literal skips TRUE (arrays are range-like)",
+    "tags": ["sum", "array"],
+    "quirks": ["sum-arg-vs-range", "array-eval-mode"],
+    "formula": "=SUM({1, TRUE, 2})",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "agg.sum-array-true-only",
+    "description": "SUM({TRUE}) is 0",
+    "tags": ["sum", "array"],
+    "quirks": ["sum-arg-vs-range"],
+    "formula": "=SUM({TRUE})",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "agg.average-scalars",
+    "description": "AVERAGE(1, 2, 3) is 2",
+    "tags": ["average", "functions"],
+    "formula": "=AVERAGE(1, 2, 3)",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "agg.average-true-literal",
+    "description": "AVERAGE(TRUE) coerces the scalar logical to 1",
+    "tags": ["average", "functions"],
+    "quirks": ["sum-arg-vs-range"],
+    "formula": "=AVERAGE(TRUE)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "agg.average-range-skips-logical",
+    "description": "AVERAGE skips TRUE in a range (avg of 1 and 3)",
+    "tags": ["average", "functions"],
+    "quirks": ["sum-arg-vs-range"],
+    "formula": "=AVERAGE(A1:A3)",
+    "expected": { "number": 2 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "bool": true },
+          "A3": { "number": 3 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "agg.average-empty-range",
+    "description": "AVERAGE of a blank range is #DIV/0!",
+    "tags": ["average", "empty", "errors"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=AVERAGE(A1:A3)",
+    "expected": { "error": "#DIV/0!" },
+    "workbook": { "sheets": [{ "name": "Sheet1", "cells": {} }] }
+  },
+  {
+    "id": "agg.average-all-text-range",
+    "description": "AVERAGE of a text-only range is #DIV/0!",
+    "tags": ["average", "errors"],
+    "quirks": ["sum-arg-vs-range"],
+    "formula": "=AVERAGE(A1:A2)",
+    "expected": { "error": "#DIV/0!" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": { "A1": { "text": "x" }, "A2": { "text": "y" } }
+      }]
+    }
+  },
+  {
+    "id": "agg.count-scalars-mixed",
+    "description": "COUNT(1, \"x\", TRUE, \"2\") counts 1, TRUE, and \"2\"",
+    "tags": ["count", "functions"],
+    "quirks": ["sum-arg-vs-range"],
+    "formula": "=COUNT(1, \"x\", TRUE, \"2\")",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "agg.count-range-skips-logical-text",
+    "description": "COUNT of a range ignores TRUE and text",
+    "tags": ["count", "functions"],
+    "quirks": ["sum-arg-vs-range"],
+    "formula": "=COUNT(A1:A4)",
+    "expected": { "number": 2 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "bool": true },
+          "A3": { "text": "2" },
+          "A4": { "number": 2 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "agg.count-true-cell",
+    "description": "COUNT(A1) is 0 when A1 holds TRUE",
+    "tags": ["count", "functions"],
+    "quirks": ["sum-arg-vs-range"],
+    "formula": "=COUNT(A1)",
+    "expected": { "number": 0 },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": { "A1": { "bool": true } } }]
+    }
+  },
+  {
+    "id": "agg.counta-mixed-range",
+    "description": "COUNTA counts numbers, text, and logicals but not blanks",
+    "tags": ["count", "functions"],
+    "quirks": ["sum-arg-vs-range"],
+    "formula": "=COUNTA(A1:A4)",
+    "expected": { "number": 3 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "text": "x" },
+          "A3": { "bool": false },
+          "A4": { "empty": null }
+        }
+      }]
+    }
+  },
+  {
+    "id": "agg.counta-true-literal",
+    "description": "COUNTA(TRUE) is 1",
+    "tags": ["count", "functions"],
+    "formula": "=COUNTA(TRUE)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "agg.product-scalars",
+    "description": "PRODUCT(2, 3, 4) is 24",
+    "tags": ["product", "functions"],
+    "formula": "=PRODUCT(2, 3, 4)",
+    "expected": { "number": 24 }
+  },
+  {
+    "id": "agg.product-empty",
+    "description": "PRODUCT of a blank range is 0",
+    "tags": ["product", "empty"],
+    "formula": "=PRODUCT(A1:A3)",
+    "expected": { "number": 0 },
+    "workbook": { "sheets": [{ "name": "Sheet1", "cells": {} }] }
+  },
+  {
+    "id": "agg.product-range-skips-text",
+    "description": "PRODUCT skips text in a range",
+    "tags": ["product", "functions"],
+    "quirks": ["sum-arg-vs-range"],
+    "formula": "=PRODUCT(A1:A3)",
+    "expected": { "number": 6 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 2 },
+          "A2": { "text": "x" },
+          "A3": { "number": 3 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "agg.min-range",
+    "description": "MIN skips text in a range",
+    "tags": ["min", "functions"],
+    "quirks": ["sum-arg-vs-range"],
+    "formula": "=MIN(A1:A3)",
+    "expected": { "number": 2 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 5 },
+          "A2": { "text": "x" },
+          "A3": { "number": 2 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "agg.max-scalars",
+    "description": "MAX(1, 9, 3) is 9",
+    "tags": ["max", "functions"],
+    "formula": "=MAX(1, 9, 3)",
+    "expected": { "number": 9 }
+  },
+  {
+    "id": "agg.min-empty-range",
+    "description": "MIN of a blank range is 0",
+    "tags": ["min", "empty"],
+    "formula": "=MIN(A1:A3)",
+    "expected": { "number": 0 },
+    "workbook": { "sheets": [{ "name": "Sheet1", "cells": {} }] }
+  },
+  {
+    "id": "agg.sum-non-numeric-text-literal",
+    "description": "SUM(\"x\") is #VALUE!",
+    "tags": ["sum", "errors"],
+    "quirks": ["sum-arg-vs-range"],
+    "formula": "=SUM(\"x\")",
+    "expected": { "error": "#VALUE!" }
+  }
+]

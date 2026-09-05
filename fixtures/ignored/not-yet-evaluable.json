@@ -1,0 +1,67 @@
+[
+  {
+    "id": "ignore.now-volatile",
+    "description": "NOW() is volatile — no stable golden without a frozen clock",
+    "tags": ["volatile"],
+    "quirks": ["volatile"],
+    "formula": "=NOW()",
+    "ignore": "Volatile; result depends on wall-clock time. Do not invent a golden."
+  },
+  {
+    "id": "ignore.today-volatile",
+    "description": "TODAY() is volatile",
+    "tags": ["volatile"],
+    "quirks": ["volatile"],
+    "formula": "=TODAY()",
+    "ignore": "Volatile date; not evaluable without a pinned evaluation instant."
+  },
+  {
+    "id": "ignore.rand-volatile",
+    "description": "RAND() is volatile",
+    "tags": ["volatile"],
+    "quirks": ["volatile"],
+    "formula": "=RAND()",
+    "ignore": "Volatile random; no deterministic expected value."
+  },
+  {
+    "id": "ignore.indirect",
+    "description": "INDIRECT is volatile and path-dependent",
+    "tags": ["volatile"],
+    "quirks": ["volatile"],
+    "formula": "=INDIRECT(\"A1\")",
+    "ignore": "INDIRECT is volatile and not in the seed-compliant function set."
+  },
+  {
+    "id": "ignore.locale-semicolon-args",
+    "description": "de-DE argument separator is ';' — not parsed in en-US seed stub",
+    "tags": ["locale"],
+    "quirks": ["locale"],
+    "formula": "=SUM(1; 2)",
+    "options": { "locale": "de-de" },
+    "ignore": "Locale argument separators are modeled on EvalOptions but not implemented by the seed stub. Do not invent a parse."
+  },
+  {
+    "id": "ignore.precision-as-displayed",
+    "description": "Precision as displayed is a workbook display option, not a formula",
+    "tags": ["precision"],
+    "quirks": ["precision-as-displayed"],
+    "formula": "=1/3",
+    "ignore": "Precision-as-displayed depends on cell number format / workbook option; not representable as a stable formula golden here."
+  },
+  {
+    "id": "ignore.hidden-rows-subtotal",
+    "description": "SUBTOTAL hidden-row semantics need a hidden-row model the snippet lacks",
+    "tags": ["subtotal"],
+    "quirks": ["hidden-rows"],
+    "formula": "=SUBTOTAL(109, A1:A3)",
+    "ignore": "Snippet workbooks have no hidden-row metadata, so 109-vs-9 SUBTOTAL behavior cannot be recorded honestly."
+  },
+  {
+    "id": "ignore.offset-volatile",
+    "description": "OFFSET is volatile",
+    "tags": ["volatile"],
+    "quirks": ["volatile"],
+    "formula": "=OFFSET(A1, 0, 0)",
+    "ignore": "OFFSET is volatile; seed stub does not implement it."
+  }
+]
