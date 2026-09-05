@@ -2,7 +2,8 @@
 //!
 //! `IFS` lives with the other logicals here; pair selection is [`super::ifs`].
 //! `FILTER` lives with the other lookups here; the mask/select kernel is
-//! [`super::filter`].
+//! [`super::filter`]. `TAKE` lives with the other lookups; the slice kernel
+//! is [`super::take`].
 //!
 //! Unknown names return `#NAME?` (an Excel value, not [`EvalError`]).
 //! Financial TVM starts with `PMT` (`xlsx_types::excel_pmt`); `PV`/`FV`/`NPER`
@@ -53,6 +54,7 @@ pub(crate) fn dispatch(
         "HLOOKUP" => fn_hlookup(ev, args, ctx),
         "XLOOKUP" => fn_xlookup(ev, args, ctx),
         "FILTER" => fn_filter(ev, args, ctx),
+        "TAKE" => fn_take(ev, args, ctx),
         "INDEX" => fn_index(ev, args, ctx),
         "MATCH" => fn_match(ev, args, ctx),
         "CHOOSE" => fn_choose(ev, args, ctx),
@@ -413,6 +415,26 @@ fn fn_hlookup(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelV
 /// Excel `FILTER(array, include, [if_empty])`.
 ///
 /// Arity 2 or 3. Omitted `if_empty` + no matches → `#CALC!`.
+/// Excel `TAKE(array, rows, [cols])`. Counts evaluate as scalars; the
+/// array is not implicit-intersected. See [`super::take`].
+fn fn_take(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    if args.is_empty() || args.len() > 3 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let array = ev.eval_expr(&args[0], ctx)?;
+    let rows = if args.len() >= 2 {
+        Some(ev.eval_scalar(&args[1], ctx)?)
+    } else {
+        None
+    };
+    let cols = if args.len() >= 3 {
+        Some(ev.eval_scalar(&args[2], ctx)?)
+    } else {
+        None
+    };
+    Ok(super::take::take(&array, rows.as_ref(), cols.as_ref()))
+}
+
 fn fn_filter(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
     if args.len() < 2 || args.len() > 3 {
         return Ok(ExcelValue::Error(ExcelError::Value));

@@ -8,22 +8,23 @@ pub mod coerce;
 pub mod compare;
 pub mod concat;
 pub mod empty;
-pub mod find;
 pub mod filter;
+pub mod find;
 pub mod functions;
-pub mod substitute;
-pub mod sumif;
-pub mod sumproduct;
+pub mod ifs;
+pub mod irr;
+pub mod npv;
 pub mod replace;
-pub mod sumifs;
-pub mod textjoin;
 pub mod round;
 pub mod search;
-pub mod npv;
+pub mod substitute;
+pub mod sumif;
+pub mod sumifs;
+pub mod sumproduct;
 pub mod switch;
-pub mod ifs;
+pub mod take;
+pub mod textjoin;
 pub mod unique;
-pub mod irr;
 
 use crate::ast::{BinOp, Expr, UnaryOp};
 use crate::parse::parse;
@@ -273,7 +274,11 @@ impl Evaluator {
         Ok(ExcelValue::Array(rows))
     }
 
-    pub(crate) fn eval_named(&self, name: &str, ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    pub(crate) fn eval_named(
+        &self,
+        name: &str,
+        ctx: &mut Ctx<'_>,
+    ) -> Result<ExcelValue, EvalError> {
         let def = match ctx.spec.workbook.defined_name(name) {
             Ok(d) => d,
             Err(_) => return Ok(ExcelValue::Error(ExcelError::Name)),
@@ -880,6 +885,33 @@ mod tests {
             ExcelValue::Error(ExcelError::Value)
         );
     }
+    #[test]
+    fn take_first_last_and_zero() {
+        let wb = Workbook::default();
+        assert_eq!(
+            eval_formula_in(&wb, "=TAKE({1;2;3}, 2)").unwrap(),
+            ExcelValue::Array(vec![
+                vec![ExcelValue::Number(1.0)],
+                vec![ExcelValue::Number(2.0)]
+            ])
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=TAKE({1;2;3}, -2)").unwrap(),
+            ExcelValue::Array(vec![
+                vec![ExcelValue::Number(2.0)],
+                vec![ExcelValue::Number(3.0)]
+            ])
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=TAKE({1;2;3}, 0)").unwrap(),
+            ExcelValue::Error(ExcelError::Calc)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=TAKE({1,2,3;4,5,6}, 1, -2)").unwrap(),
+            ExcelValue::Array(vec![vec![ExcelValue::Number(2.0), ExcelValue::Number(3.0)]])
+        );
+    }
+
     #[test]
     fn unique_literal_and_exactly_once() {
         let wb = Workbook::default();
