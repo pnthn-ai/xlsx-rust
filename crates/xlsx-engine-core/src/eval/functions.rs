@@ -1,11 +1,13 @@
 //! Worksheet functions implemented with Excel-compatible semantics.
 //!
 //! Unknown names return `#NAME?` (an Excel value, not [`EvalError`]).
+//! Financial TVM starts with `PMT` (`xlsx_types::excel_pmt`); `PV`/`FV`/`NPER`
+//! are later workstreams.
 
 use super::{coerce, compare, excel_pow, Ctx, Evaluator};
 use crate::ast::Expr;
 use crate::dates::{date_serial, serial_to_ymd, time_fraction};
-use xlsx_types::{EvalError, ExcelError, ExcelValue};
+use xlsx_types::{excel_pmt, EvalError, ExcelError, ExcelValue};
 
 pub(crate) fn dispatch(
     ev: &Evaluator,
@@ -95,6 +97,8 @@ pub(crate) fn dispatch(
         "VALUE" => fn_value(ev, args, ctx),
         "TRUE" => Ok(ExcelValue::Bool(true)),
         "FALSE" => Ok(ExcelValue::Bool(false)),
+        // Financial (TVM). PV / FV / NPER are later workstreams.
+        "PMT" => fn_pmt(ev, args, ctx),
         _ => Ok(ExcelValue::Error(ExcelError::Name)),
     }
 }
@@ -785,6 +789,52 @@ fn fn_exact(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelVal
         Err(e) => return Ok(ExcelValue::Error(e)),
     };
     Ok(ExcelValue::Bool(a == b))
+}
+
+fn fn_pmt(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    if args.len() < 3 || args.len() > 5 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let rate = match coerce_num(ev, &args[0], ctx)? {
+        Ok(n) => n,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let nper = match coerce_num(ev, &args[1], ctx)? {
+        Ok(n) => n,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let pv = match coerce_num(ev, &args[2], ctx)? {
+        Ok(n) => n,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let fv = if args.len() >= 4 {
+        match coerce_num(ev, &args[3], ctx)? {
+            Ok(n) => n,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        }
+    } else {
+        0.0
+    };
+    let typ = if args.len() >= 5 {
+        match coerce_num(ev, &args[4], ctx)? {
+            Ok(n) => n,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        }
+    } else {
+        0.0
+    };
+    match excel_pmt(rate, nper, pv, fv, typ) {
+        Ok(n) => Ok(ExcelValue::Number(n)),
+        Err(e) => Ok(ExcelValue::Error(e)),
+    }
+}
+
+fn coerce_num(
+    ev: &Evaluator,
+    expr: &Expr,
+    ctx: &mut Ctx<'_>,
+) -> Result<Result<f64, ExcelError>, EvalError> {
+    Ok(coerce::to_number(&ev.eval_scalar(expr, ctx)?))
 }
 
 fn fn_value(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {

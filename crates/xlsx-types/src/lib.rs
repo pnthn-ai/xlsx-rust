@@ -10,6 +10,7 @@
 pub mod cell;
 pub mod error;
 pub mod eval;
+pub mod financial;
 pub mod quirk;
 pub mod value;
 pub mod workbook;
@@ -19,6 +20,7 @@ pub use error::ExcelError;
 pub use eval::{
     ArrayMode, Candidate, DateSystem, EvalError, EvalOptions, EvalSpec, EvalTarget, Locale,
 };
+pub use financial::pmt as excel_pmt;
 pub use quirk::QuirkCategory;
 pub use value::{excel_num_eq, excel_round_15, ExcelType, ExcelValue};
 pub use workbook::{Cell, DefinedName, Sheet, Workbook, WorkbookError};

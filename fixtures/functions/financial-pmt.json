@@ -1,0 +1,278 @@
+[
+  {
+    "id": "fn.pmt.ms-loan-10mo",
+    "description": "Microsoft PMT example: monthly payment on 8% / 10 months / $10,000",
+    "tags": ["pmt", "financial"],
+    "notes": "support.microsoft.com PMT: ($1,037.03). Golden is the OpenFormula 6.12.36 identity.",
+    "formula": "=PMT(8%/12, 10, 10000)",
+    "expected": { "number": -1037.03208935916 }
+  },
+  {
+    "id": "fn.pmt.ms-loan-cells",
+    "description": "Same Microsoft loan via cell refs (A2=8%, A3=10, A4=10000)",
+    "tags": ["pmt", "financial"],
+    "formula": "=PMT(A2/12, A3, A4)",
+    "expected": { "number": -1037.03208935916 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A2": { "number": 0.08 },
+          "A3": { "number": 10 },
+          "A4": { "number": 10000 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.pmt.ms-loan-begin",
+    "description": "Microsoft PMT example: same loan, type=1 (beginning of period)",
+    "tags": ["pmt", "financial"],
+    "notes": "support.microsoft.com PMT: ($1,030.16).",
+    "formula": "=PMT(8%/12, 10, 10000, 0, 1)",
+    "expected": { "number": -1030.16432717798 }
+  },
+  {
+    "id": "fn.pmt.ms-sinking",
+    "description": "Microsoft PMT example: monthly savings to reach $50,000 in 18 years at 6%",
+    "tags": ["pmt", "financial"],
+    "notes": "support.microsoft.com PMT: ($129.08). pv=0, fv=50000.",
+    "formula": "=PMT(6%/12, 18*12, 0, 50000)",
+    "expected": { "number": -129.081160867995 }
+  },
+  {
+    "id": "fn.pmt.mortgage-30y",
+    "description": "30-year monthly mortgage at 5% on $200,000",
+    "tags": ["pmt", "financial"],
+    "formula": "=PMT(0.05/12, 360, 200000)",
+    "expected": { "number": -1073.64324602428 }
+  },
+  {
+    "id": "fn.pmt.mortgage-30y-begin",
+    "description": "Same mortgage with type=1",
+    "tags": ["pmt", "financial"],
+    "formula": "=PMT(0.05/12, 360, 200000, 0, 1)",
+    "expected": { "number": -1069.18829479596 }
+  },
+  {
+    "id": "fn.pmt.yearly",
+    "description": "Annual PMT(8%, 10, 10000) — units must match",
+    "tags": ["pmt", "financial"],
+    "formula": "=PMT(0.08, 10, 10000)",
+    "expected": { "number": -1490.29488697075 }
+  },
+  {
+    "id": "fn.pmt.zero-rate",
+    "description": "rate=0 is straight-line: -(pv+fv)/nper",
+    "tags": ["pmt", "financial"],
+    "formula": "=PMT(0, 10, 1000)",
+    "expected": { "number": -100 }
+  },
+  {
+    "id": "fn.pmt.zero-rate-fv",
+    "description": "rate=0 with a balloon fv",
+    "tags": ["pmt", "financial"],
+    "formula": "=PMT(0, 10, 1000, 500)",
+    "expected": { "number": -150 }
+  },
+  {
+    "id": "fn.pmt.balloon",
+    "description": "Loan with remaining fv (balloon)",
+    "tags": ["pmt", "financial"],
+    "formula": "=PMT(0.05, 5, 10000, 1000)",
+    "expected": { "number": -2490.72277941095 }
+  },
+  {
+    "id": "fn.pmt.annuity-inflow",
+    "description": "Negative pv (cash received) yields a positive PMT",
+    "tags": ["pmt", "financial"],
+    "formula": "=PMT(0.05, 10, -10000)",
+    "expected": { "number": 1295.04574965457 }
+  },
+  {
+    "id": "fn.pmt.neg-rate",
+    "description": "Negative rate (deflation) is allowed when 1+rate > 0",
+    "tags": ["pmt", "financial"],
+    "formula": "=PMT(-0.05, 10, 1000)",
+    "expected": { "number": -74.6065359345489 }
+  },
+  {
+    "id": "fn.pmt.frac-nper",
+    "description": "nper is not truncated; fractional periods are allowed",
+    "tags": ["pmt", "financial"],
+    "formula": "=PMT(0.1, 10.5, 1000)",
+    "expected": { "number": -158.128043036274 }
+  },
+  {
+    "id": "fn.pmt.neg-nper",
+    "description": "Negative nper is a valid TVM input (solve-backwards)",
+    "tags": ["pmt", "financial"],
+    "formula": "=PMT(0.1, -10, 1000)",
+    "expected": { "number": 62.7453948825115 }
+  },
+  {
+    "id": "fn.pmt.long-horizon",
+    "description": "Large integer nper stays finite (100-year monthly at 5%)",
+    "tags": ["pmt", "financial", "perf"],
+    "formula": "=PMT(0.05/12, 1200, 100000)",
+    "expected": { "number": -419.522906310491 }
+  },
+  {
+    "id": "fn.pmt.small-rate",
+    "description": "Tiny rate uses expm1 so (1+r)^n-1 does not cancel",
+    "tags": ["pmt", "financial", "perf"],
+    "quirks": ["ieee-vs-excel-precision"],
+    "formula": "=PMT(0.00000001, 360, 100000)",
+    "expected": { "number": -277.778279166967 }
+  },
+  {
+    "id": "fn.pmt.percent-unary",
+    "description": "Rate written with postfix % (8%/12)",
+    "tags": ["pmt", "financial"],
+    "quirks": ["percent-unary"],
+    "formula": "=PMT(8%/12, 10, 10000)",
+    "expected": { "number": -1037.03208935916 }
+  },
+  {
+    "id": "fn.pmt.text-number",
+    "description": "Numeric text coerces like arithmetic",
+    "tags": ["pmt", "financial", "coercion"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=PMT(\"0.1\", \"10\", \"1000\")",
+    "expected": { "number": -162.745394882512 }
+  },
+  {
+    "id": "fn.pmt.true-type",
+    "description": "TRUE coerces to type=1",
+    "tags": ["pmt", "financial", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=PMT(0.1, 10, 1000, 0, TRUE)",
+    "expected": { "number": -147.950358984101 }
+  },
+  {
+    "id": "fn.pmt.false-type",
+    "description": "FALSE coerces to type=0 (end of period)",
+    "tags": ["pmt", "financial", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=PMT(0.1, 10, 1000, 0, FALSE)",
+    "expected": { "number": -162.745394882512 }
+  },
+  {
+    "id": "fn.pmt.empty-optional",
+    "description": "Blank fv/type cells coerce to 0",
+    "tags": ["pmt", "financial", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=PMT(A1, A2, A3, A4, A5)",
+    "expected": { "number": -162.745394882512 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 0.1 },
+          "A2": { "number": 10 },
+          "A3": { "number": 1000 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.pmt.rate-minus-one",
+    "description": "rate=-1 and type=0: (1+rate)^nper=0 → PMT = fv*rate / (1+rate*type)",
+    "tags": ["pmt", "financial"],
+    "formula": "=PMT(-1, 1, 100)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.pmt.rate-minus-one-fv",
+    "description": "rate=-1 with fv: payment is fv*rate (type=0)",
+    "tags": ["pmt", "financial"],
+    "formula": "=PMT(-1, 1, 100, 50)",
+    "expected": { "number": -50 }
+  },
+  {
+    "id": "fn.pmt.rate-minus-one-begin",
+    "description": "rate=-1 and type=1 makes 1+rate*type=0 → #NUM!",
+    "tags": ["pmt", "financial"],
+    "formula": "=PMT(-1, 1, 100, 0, 1)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.pmt.neg-base-frac-nper",
+    "description": "(1+rate)<0 and non-integer nper is #NUM! (same as POWER)",
+    "tags": ["pmt", "financial"],
+    "formula": "=PMT(-2, 1.5, 1000)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.pmt.neg-base-int-nper",
+    "description": "Negative (1+rate) with integer nper is allowed",
+    "tags": ["pmt", "financial"],
+    "formula": "=PMT(-2, 3, 1000)",
+    "expected": { "number": 1000 }
+  },
+  {
+    "id": "fn.pmt.nper-zero",
+    "description": "nper=0 with nonzero rate is #NUM! (annuity factor is 0)",
+    "tags": ["pmt", "financial", "errors"],
+    "formula": "=PMT(0.1, 0, 1000)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.pmt.nper-zero-zero-rate",
+    "description": "rate=0 and nper=0 is #DIV/0! (straight-line path divides by nper)",
+    "tags": ["pmt", "financial", "errors"],
+    "formula": "=PMT(0, 0, 1000)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.pmt.overflow",
+    "description": "(1+rate)^nper overflow is #NUM! (same as POWER)",
+    "tags": ["pmt", "financial", "errors"],
+    "formula": "=PMT(0.5, 2000, 1000)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.pmt.too-few-args",
+    "description": "PMT requires rate, nper, pv",
+    "tags": ["pmt", "financial", "errors"],
+    "formula": "=PMT(0.1, 10)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.pmt.no-args",
+    "description": "PMT() is #VALUE!",
+    "tags": ["pmt", "financial", "errors"],
+    "formula": "=PMT()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.pmt.too-many-args",
+    "description": "More than five arguments is #VALUE!",
+    "tags": ["pmt", "financial", "errors"],
+    "formula": "=PMT(0.1, 10, 1000, 0, 0, 0)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.pmt.text-rate",
+    "description": "Non-numeric text rate is #VALUE!",
+    "tags": ["pmt", "financial", "errors"],
+    "formula": "=PMT(\"x\", 10, 1000)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.pmt.error-left",
+    "description": "Left-to-right error precedence: first arg error wins",
+    "tags": ["pmt", "financial", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=PMT(#DIV/0!, #VALUE!, 1)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.pmt.error-second",
+    "description": "Second-arg error surfaces when rate is fine",
+    "tags": ["pmt", "financial", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=PMT(0.1, #NAME?, #N/A)",
+    "expected": { "error": "#NAME?" }
+  }
+]
