@@ -305,6 +305,8 @@ function families above. Workbook input is the snippet type in `xlsx-types` (no
 | [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators (`SUM`/`SUMIFS`/…), logicals, lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates, math, text, `TYPE` / `IS*` |
 | [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators (incl. `AVERAGEIF`), logicals, lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates, math, text, `TYPE` / `IS*` |
 | [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators, logicals, lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates, math, text (`TEXTJOIN` / `LEFT` / …), `TYPE` / `IS*` |
+| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators, logicals, lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates, math (`ROUND`/`ROUNDUP`/`ROUNDDOWN`/…), text, `TYPE` / `IS*` |
+| [`eval/round.rs`](crates/xlsx-engine-core/src/eval/round.rs) | Excel `ROUNDUP` / `ROUNDDOWN` kernel (away / toward zero, negative `num_digits`, 15-digit snap) |
 
 **Implemented:** arithmetic and comparison operators (unary `+/-`, `%`, `^`,
 `&`, space intersection), host-aware implicit intersection, cell refs /
@@ -322,6 +324,7 @@ colors/conditions, `*`/`_`/`?`, trailing-comma scaling, time (`h`/`s`),
 month/day names. Non-numeric text is returned unchanged.
 families above (including `TEXTJOIN` with cycling delimiters and
 `ignore_empty`). Workbook input is the snippet type in `xlsx-types` (no
+families above (including `ROUNDUP` / `ROUNDDOWN`). Workbook input is the snippet type in `xlsx-types` (no
 `.xlsx` IO).
 
 **Deferred / in progress:** full function library, locale argument separators,

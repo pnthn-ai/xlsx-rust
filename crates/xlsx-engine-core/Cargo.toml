@@ -47,3 +47,7 @@ harness = false
 [[bench]]
 name = "textjoin"
 harness = false
+
+[[bench]]
+name = "roundup_rounddown"
+harness = false

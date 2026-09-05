@@ -27,6 +27,9 @@ pub use eval::replace::{replace as excel_replace, replace_naive as excel_replace
 pub use eval::find::{find as excel_find, find_naive as excel_find_naive};
 pub use eval::textjoin::{
     eval_textjoin_formula, textjoin_naive_join, TextJoinBuilder, TEXTJOIN_MAX_CHARS,
+pub use eval::round::{
+    rounddown as excel_rounddown, rounddown_naive as excel_rounddown_naive,
+    roundup as excel_roundup, roundup_naive as excel_roundup_naive,
 };
 pub use eval::{eval_formula_in, Evaluator};
 pub use eval::{eval_formula_in, eval_sumifs_materialized, Evaluator};

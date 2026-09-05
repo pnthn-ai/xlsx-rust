@@ -388,6 +388,8 @@ impl Interpreter {
             "INT" => self.fn_int(args, ctx),
             "TRUNC" => self.fn_trunc(args, ctx),
             "ROUND" => self.fn_round(args, ctx),
+            "ROUNDUP" => self.fn_round_dir(args, ctx, true),
+            "ROUNDDOWN" => self.fn_round_dir(args, ctx, false),
             "MOD" => self.fn_mod(args, ctx),
             "SQRT" => self.fn_sqrt(args, ctx),
             "POWER" => self.fn_power(args, ctx),
@@ -1144,6 +1146,31 @@ impl Interpreter {
             Err(e) => return Ok(ExcelValue::Error(e)),
         };
         Ok(ExcelValue::Number(excel_round_half_away(n, digits)))
+    }
+
+    fn fn_round_dir(
+        &self,
+        args: &[Expr],
+        ctx: &mut Ctx<'_>,
+        up: bool,
+    ) -> Result<ExcelValue, EvalError> {
+        if args.len() != 2 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        let n = match self.as_number(&self.eval_scalar(&args[0], ctx)?) {
+            Ok(n) => n,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        let digits = match self.as_number(&self.eval_scalar(&args[1], ctx)?) {
+            Ok(d) => d.trunc() as i32,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        let out = if up {
+            excel_roundup(n, digits)
+        } else {
+            excel_rounddown(n, digits)
+        };
+        Ok(ExcelValue::Number(out))
     }
 
     fn fn_mod(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
@@ -2220,6 +2247,85 @@ fn excel_round_half_away(n: f64, digits: i32) -> f64 {
         (x - 0.5).ceil()
     };
     rounded / factor
+}
+
+/// Excel `ROUNDUP`: abs, away from zero, reapply sign. Table + 15-digit snap.
+fn excel_roundup(n: f64, digits: i32) -> f64 {
+    excel_round_dir(n, digits, true)
+}
+
+/// Excel `ROUNDDOWN`: abs, toward zero, reapply sign.
+fn excel_rounddown(n: f64, digits: i32) -> f64 {
+    excel_round_dir(n, digits, false)
+}
+
+const POW10: [f64; 23] = [
+    1.0,
+    10.0,
+    100.0,
+    1_000.0,
+    10_000.0,
+    100_000.0,
+    1_000_000.0,
+    10_000_000.0,
+    100_000_000.0,
+    1_000_000_000.0,
+    10_000_000_000.0,
+    100_000_000_000.0,
+    1_000_000_000_000.0,
+    10_000_000_000_000.0,
+    100_000_000_000_000.0,
+    1_000_000_000_000_000.0,
+    10_000_000_000_000_000.0,
+    100_000_000_000_000_000.0,
+    1_000_000_000_000_000_000.0,
+    10_000_000_000_000_000_000.0,
+    100_000_000_000_000_000_000.0,
+    1_000_000_000_000_000_000_000.0,
+    10_000_000_000_000_000_000_000.0,
+];
+
+fn excel_round_dir(n: f64, digits: i32, up: bool) -> f64 {
+    if !n.is_finite() {
+        return n;
+    }
+    if n == 0.0 {
+        return 0.0;
+    }
+    let sign = if n.is_sign_negative() { -1.0 } else { 1.0 };
+    let mag = n.abs();
+    let apply = |x: f64| {
+        if up {
+            x.ceil()
+        } else {
+            x.trunc()
+        }
+    };
+    let snap = |x: f64| {
+        let r = x.round();
+        let tol = x.abs() * 1e-14 + 1e-14;
+        if (x - r).abs() <= tol {
+            r
+        } else {
+            x
+        }
+    };
+    if digits == 0 {
+        return sign * apply(snap(mag));
+    }
+    let e = digits.unsigned_abs() as usize;
+    let p = if e < POW10.len() {
+        POW10[e]
+    } else {
+        10f64.powi(e as i32)
+    };
+    let scaled = if digits > 0 { mag * p } else { mag / p };
+    let rounded = apply(snap(scaled));
+    if digits > 0 {
+        sign * rounded / p
+    } else {
+        sign * rounded * p
+    }
 }
 
 fn excel_trunc(n: f64, digits: i32) -> f64 {
