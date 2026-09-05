@@ -1,4 +1,5 @@
-//! Shared Excel criteria for `SUMIF` / `COUNTIF` / `SUMIFS` / `AVERAGEIF`.
+//! Shared Excel criteria for `SUMIF` / `COUNTIF` / `SUMIFS` / `AVERAGEIF` /
+//! `AVERAGEIFS`.
 //!
 //! Two constructors preserve function-family semantics:
 //! - [`Criterion::compile`] — SUMIF-family: error criteria propagate, number
@@ -564,7 +565,7 @@ pub fn excel_wildcard(pat: &str, text: &str) -> bool {
 
 }
 
-/// Compiled Excel criteria used by SUMIF / COUNTIF / SUMIFS / AVERAGEIF.
+/// Compiled Excel criteria used by SUMIF / COUNTIF / SUMIFS / AVERAGEIF / AVERAGEIFS.
 #[derive(Clone, Debug)]
 pub struct Criterion {
     inner: Inner,
@@ -577,7 +578,7 @@ enum Inner {
 }
 
 impl Criterion {
-    /// SUMIF / SUMIFS / AVERAGEIF constructor.
+    /// SUMIF / SUMIFS / AVERAGEIF / AVERAGEIFS constructor.
     pub fn compile(v: &ExcelValue) -> Result<Self, ExcelError> {
         Ok(Self {
             inner: Inner::SumIf(sumif_style::Criterion::compile(v)?),

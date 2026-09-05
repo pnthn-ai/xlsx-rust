@@ -40,6 +40,7 @@ pub(crate) fn dispatch(
         "COUNTIF" => fn_countif(ev, args, ctx),
         "SUMIFS" => super::sumifs::fn_sumifs(ev, args, ctx),
         "AVERAGEIF" => super::averageif::fn_averageif(ev, args, ctx),
+        "AVERAGEIFS" => super::averageifs::fn_averageifs(ev, args, ctx),
         "IF" => fn_if(ev, args, ctx),
         "IFS" => fn_ifs(ev, args, ctx),
         "IFERROR" => fn_iferror(ev, args, ctx),
