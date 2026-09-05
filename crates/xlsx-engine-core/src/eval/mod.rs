@@ -506,4 +506,31 @@ mod tests {
             ExcelValue::Error(ExcelError::Num)
         );
     }
+
+    #[test]
+    fn pmt_microsoft_loan_and_errors() {
+        let wb = Workbook::default();
+        match eval_formula_in(&wb, "=PMT(8%/12,10,10000)").unwrap() {
+            ExcelValue::Number(n) => {
+                assert_eq!((n * 100.0).round() as i64, -103_703, "got {n}")
+            }
+            other => panic!("expected number, got {other:?}"),
+        }
+        assert_eq!(
+            eval_formula_in(&wb, "=PMT(0,0,1000)").unwrap(),
+            ExcelValue::Error(ExcelError::Div0)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=PMT(0.1,0,1000)").unwrap(),
+            ExcelValue::Error(ExcelError::Num)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=PMT(0.1,10)").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=PMT()").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
+        );
+    }
 }
