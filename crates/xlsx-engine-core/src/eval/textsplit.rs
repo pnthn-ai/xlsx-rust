@@ -344,7 +344,67 @@ fn split_parts_fast(
         }
         return split_str_find(text, d, ignore_empty);
     }
-    split_multi(text, delims, ignore_empty, case_insensitive)
+    let ascii_ci = case_insensitive
+        && text.is_ascii()
+        && delims.iter().all(|d| d.is_ascii());
+    if ascii_ci && delims.len() == 1 {
+        return split_ascii_ci_one(text, &delims[0], ignore_empty);
+    }
+    split_multi(text, delims, ignore_empty, case_insensitive, ascii_ci)
+}
+
+/// Case-insensitive split on one ASCII delimiter. `is_ascii` is checked once
+/// by the caller — do not re-walk the haystack on every hit.
+fn split_ascii_ci_one(text: &str, delim: &str, ignore_empty: bool) -> Vec<String> {
+    if delim.is_empty() {
+        return vec![text.to_string()];
+    }
+    let hay = text.as_bytes();
+    let needle = delim.as_bytes();
+    if needle.len() > hay.len() {
+        return vec![text.to_string()];
+    }
+    let mut out = Vec::new();
+    let mut start = 0usize;
+    let dlen = needle.len();
+    let mut i = 0usize;
+    let mut found = false;
+    while i + dlen <= hay.len() {
+        if bytes_eq_ci(&hay[i..i + dlen], needle) {
+            found = true;
+            if !(ignore_empty && i == start) {
+                out.push(text[start..i].to_string());
+            }
+            start = i + dlen;
+            i = start;
+        } else {
+            i += 1;
+        }
+    }
+    if !found {
+        return vec![text.to_string()];
+    }
+    if !(ignore_empty && start == hay.len()) {
+        out.push(text[start..].to_string());
+    }
+    out
+}
+
+fn find_bytes_ci(hay: &[u8], needle: &[u8]) -> Option<usize> {
+    if needle.len() > hay.len() {
+        return None;
+    }
+    let last = hay.len() - needle.len();
+    for i in 0..=last {
+        if bytes_eq_ci(&hay[i..i + needle.len()], needle) {
+            return Some(i);
+        }
+    }
+    None
+}
+
+fn bytes_eq_ci(a: &[u8], b: &[u8]) -> bool {
+    a.len() == b.len() && a.iter().zip(b.iter()).all(|(x, y)| x.eq_ignore_ascii_case(y))
 }
 
 fn split_ascii_byte(text: &str, delim: u8, ignore_empty: bool) -> Vec<String> {
@@ -394,14 +454,15 @@ fn split_multi(
     delims: &[String],
     ignore_empty: bool,
     case_insensitive: bool,
+    ascii_ci: bool,
 ) -> Vec<String> {
-    match next_match(text, delims, case_insensitive) {
-        None => return vec![text.to_string()],
-        Some(_) => {}
+    let first = next_match(text, delims, case_insensitive, ascii_ci);
+    if first.is_none() {
+        return vec![text.to_string()];
     }
     let mut out = Vec::new();
     let mut start = 0usize;
-    while let Some((rel, dlen)) = next_match(&text[start..], delims, case_insensitive) {
+    while let Some((rel, dlen)) = next_match(&text[start..], delims, case_insensitive, ascii_ci) {
         let end = start + rel;
         if !(ignore_empty && end == start) {
             out.push(text[start..end].to_string());
@@ -418,13 +479,18 @@ fn split_multi(
 }
 
 /// Earliest byte index, then longest delimiter, then first listed.
-fn next_match(hay: &str, delims: &[String], case_insensitive: bool) -> Option<(usize, usize)> {
+fn next_match(
+    hay: &str,
+    delims: &[String],
+    case_insensitive: bool,
+    ascii_ci: bool,
+) -> Option<(usize, usize)> {
     let mut best: Option<(usize, usize)> = None;
     for d in delims {
         if d.is_empty() {
             continue;
         }
-        let Some(i) = find_delim(hay, d, case_insensitive) else {
+        let Some(i) = find_delim(hay, d, case_insensitive, ascii_ci) else {
             continue;
         };
         let len = d.len();
@@ -440,37 +506,21 @@ fn next_match(hay: &str, delims: &[String], case_insensitive: bool) -> Option<(u
     best
 }
 
-fn find_delim(hay: &str, needle: &str, case_insensitive: bool) -> Option<usize> {
+fn find_delim(hay: &str, needle: &str, case_insensitive: bool, ascii_ci: bool) -> Option<usize> {
     if !case_insensitive {
         return hay.find(needle);
     }
-    find_ascii_ci(hay, needle)
+    if ascii_ci {
+        return find_bytes_ci(hay.as_bytes(), needle.as_bytes());
+    }
+    find_chars_ci(hay, needle)
 }
 
-fn find_ascii_ci(hay: &str, needle: &str) -> Option<usize> {
+fn find_chars_ci(hay: &str, needle: &str) -> Option<usize> {
     if needle.is_empty() {
         return Some(0);
     }
-    if hay.is_ascii() && needle.is_ascii() {
-        let h = hay.as_bytes();
-        let n = needle.as_bytes();
-        if n.len() > h.len() {
-            return None;
-        }
-        let last = h.len() - n.len();
-        for i in 0..=last {
-            if h[i..i + n.len()]
-                .iter()
-                .zip(n.iter())
-                .all(|(a, b)| a.eq_ignore_ascii_case(b))
-            {
-                return Some(i);
-            }
-        }
-        return None;
-    }
     let nchars: Vec<char> = needle.chars().collect();
-    let nlen = nchars.len();
     for (byte_idx, _) in hay.char_indices() {
         let mut it = hay[byte_idx..].chars();
         let mut ok = true;
@@ -486,7 +536,6 @@ fn find_ascii_ci(hay: &str, needle: &str) -> Option<usize> {
         if ok {
             return Some(byte_idx);
         }
-        let _ = nlen;
     }
     None
 }
