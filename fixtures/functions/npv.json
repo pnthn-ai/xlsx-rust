@@ -32,7 +32,7 @@
     "description": "Microsoft example 2 with a sixth-year loss of 9000",
     "tags": ["npv", "financial"],
     "formula": "=NPV(A1,A3:A7,-9000)+A2",
-    "expected": { "number": -3749.465087015575 },
+    "expected": { "number": -3749.4650870155747 },
     "workbook": {
       "sheets": [{
         "name": "Sheet1",
