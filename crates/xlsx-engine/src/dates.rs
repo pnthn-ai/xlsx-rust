@@ -193,6 +193,92 @@ pub fn serial_to_ymd(serial: f64, system: DateSystem) -> Result<(i32, u32, u32),
     Err(ExcelError::Num)
 }
 
+/// Convert a workbook-local date serial into the 1900 system.
+pub fn to_1900_serial(serial: i32, system: DateSystem) -> Result<i32, ExcelError> {
+    match system {
+        DateSystem::Excel1900 => Ok(serial),
+        DateSystem::Excel1904 => serial
+            .checked_add(EXCEL1904_EPOCH_IN_1900)
+            .ok_or(ExcelError::Num),
+    }
+}
+
+fn max_local_serial(system: DateSystem) -> i32 {
+    match system {
+        DateSystem::Excel1900 => EXCEL_MAX_SERIAL_1900,
+        DateSystem::Excel1904 => EXCEL_MAX_SERIAL_1900 - EXCEL1904_EPOCH_IN_1900,
+    }
+}
+
+/// Truncate a coerced date argument to a whole serial in `system`.
+pub fn truncate_date_serial(n: f64, system: DateSystem) -> Result<i32, ExcelError> {
+    if !n.is_finite() {
+        return Err(ExcelError::Num);
+    }
+    let s = n.trunc();
+    let max = max_local_serial(system) as f64;
+    if s < 0.0 || s > max {
+        return Err(ExcelError::Num);
+    }
+    Ok(s as i32)
+}
+
+/// Excel 1900-system weekend: serial 1 is Sunday, so `n % 7` is 0 (Sat) or 1 (Sun).
+pub fn is_weekend_sat_sun_1900(serial_1900: i32) -> bool {
+    let w = serial_1900.rem_euclid(7);
+    w == 0 || w == 1
+}
+
+/// Mon–Fri count in `[lo, hi]` inclusive, 1900-system serials. O(1).
+pub fn weekday_count_sat_sun(lo_1900: i32, hi_1900: i32) -> i32 {
+    if hi_1900 < lo_1900 {
+        return 0;
+    }
+    workdays_through(hi_1900) - workdays_through(lo_1900 - 1)
+}
+
+fn workdays_through(n: i32) -> i32 {
+    if n < 0 {
+        return 0;
+    }
+    let complete = (n + 1) / 7;
+    let rem = (n + 1) % 7;
+    let extra = if rem <= 2 { 0 } else { rem - 2 };
+    complete * 5 + extra
+}
+
+/// Excel `NETWORKDAYS(start, end, [holidays])` with weekend Sat/Sun.
+pub fn networkdays_count(
+    start: f64,
+    end: f64,
+    holidays: &[f64],
+    system: DateSystem,
+) -> Result<f64, ExcelError> {
+    let start_s = truncate_date_serial(start, system)?;
+    let end_s = truncate_date_serial(end, system)?;
+    let start_1900 = to_1900_serial(start_s, system)?;
+    let end_1900 = to_1900_serial(end_s, system)?;
+    let sign = if start_s <= end_s { 1 } else { -1 };
+    let (lo, hi) = if start_1900 <= end_1900 {
+        (start_1900, end_1900)
+    } else {
+        (end_1900, start_1900)
+    };
+    let mut work = weekday_count_sat_sun(lo, hi);
+    let mut hols = Vec::with_capacity(holidays.len());
+    for &h in holidays {
+        hols.push(to_1900_serial(truncate_date_serial(h, system)?, system)?);
+    }
+    hols.sort_unstable();
+    hols.dedup();
+    for h in hols {
+        if h >= lo && h <= hi && !is_weekend_sat_sun_1900(h) {
+            work -= 1;
+        }
+    }
+    Ok((sign * work) as f64)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -193,6 +193,103 @@ pub fn serial_to_ymd(serial: f64, system: DateSystem) -> Result<(i32, u32, u32),
     Err(ExcelError::Num)
 }
 
+/// Convert a workbook-local date serial into the 1900 system.
+pub fn to_1900_serial(serial: i32, system: DateSystem) -> Result<i32, ExcelError> {
+    match system {
+        DateSystem::Excel1900 => Ok(serial),
+        DateSystem::Excel1904 => serial
+            .checked_add(EXCEL1904_EPOCH_IN_1900)
+            .ok_or(ExcelError::Num),
+    }
+}
+
+fn max_local_serial(system: DateSystem) -> i32 {
+    match system {
+        DateSystem::Excel1900 => EXCEL_MAX_SERIAL_1900,
+        DateSystem::Excel1904 => EXCEL_MAX_SERIAL_1900 - EXCEL1904_EPOCH_IN_1900,
+    }
+}
+
+/// Truncate a coerced date argument to a whole serial in `system`.
+///
+/// Negative / non-finite / past-9999-12-31 values are `#NUM!`. Serial 0 is
+/// valid (1900-01-00, or 1904-01-01 in the 1904 system).
+pub fn truncate_date_serial(n: f64, system: DateSystem) -> Result<i32, ExcelError> {
+    if !n.is_finite() {
+        return Err(ExcelError::Num);
+    }
+    let s = n.trunc();
+    let max = max_local_serial(system) as f64;
+    if s < 0.0 || s > max {
+        return Err(ExcelError::Num);
+    }
+    Ok(s as i32)
+}
+
+/// Excel 1900-system weekend: serial 1 is Sunday, so `n % 7` is 0 (Sat) or 1 (Sun).
+///
+/// Serial 60 (the fictitious 1900-02-29) is a Wednesday — a workday.
+pub fn is_weekend_sat_sun_1900(serial_1900: i32) -> bool {
+    let w = serial_1900.rem_euclid(7);
+    w == 0 || w == 1
+}
+
+/// Mon–Fri count in `[lo, hi]` inclusive, 1900-system serials. O(1).
+pub fn weekday_count_sat_sun(lo_1900: i32, hi_1900: i32) -> i32 {
+    if hi_1900 < lo_1900 {
+        return 0;
+    }
+    workdays_through(hi_1900) - workdays_through(lo_1900 - 1)
+}
+
+/// Number of Mon–Fri serials in `(-∞, n]` (1900 system). Serial 0 is Saturday.
+fn workdays_through(n: i32) -> i32 {
+    if n < 0 {
+        return 0;
+    }
+    let complete = (n + 1) / 7;
+    let rem = (n + 1) % 7;
+    // Partial week starting at serial 0: Sat, Sun, Mon, Tue, Wed, Thu, Fri.
+    let extra = if rem <= 2 { 0 } else { rem - 2 };
+    complete * 5 + extra
+}
+
+/// Excel `NETWORKDAYS(start, end, [holidays])` with weekend Sat/Sun.
+///
+/// Inclusive of both ends. `start > end` yields the negated forward count.
+/// Holiday serials are truncated, de-duplicated, and ignored when they fall
+/// on a weekend or outside `[min(start,end), max(start,end)]`.
+pub fn networkdays_count(
+    start: f64,
+    end: f64,
+    holidays: &[f64],
+    system: DateSystem,
+) -> Result<f64, ExcelError> {
+    let start_s = truncate_date_serial(start, system)?;
+    let end_s = truncate_date_serial(end, system)?;
+    let start_1900 = to_1900_serial(start_s, system)?;
+    let end_1900 = to_1900_serial(end_s, system)?;
+    let sign = if start_s <= end_s { 1 } else { -1 };
+    let (lo, hi) = if start_1900 <= end_1900 {
+        (start_1900, end_1900)
+    } else {
+        (end_1900, start_1900)
+    };
+    let mut work = weekday_count_sat_sun(lo, hi);
+    let mut hols = Vec::with_capacity(holidays.len());
+    for &h in holidays {
+        hols.push(to_1900_serial(truncate_date_serial(h, system)?, system)?);
+    }
+    hols.sort_unstable();
+    hols.dedup();
+    for h in hols {
+        if h >= lo && h <= hi && !is_weekend_sat_sun_1900(h) {
+            work -= 1;
+        }
+    }
+    Ok((sign * work) as f64)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -251,5 +348,112 @@ mod tests {
         assert_eq!(time_fraction(12.0, 0.0, 0.0).unwrap(), 0.5);
         assert_eq!(time_fraction(6.0, 0.0, 0.0).unwrap(), 0.25);
         assert_eq!(time_fraction(18.0, 0.0, 0.0).unwrap(), 0.75);
+    }
+
+    fn d(y: i32, m: i32, day: i32) -> f64 {
+        date_serial(y, m, day, DateSystem::Excel1900).unwrap()
+    }
+
+    fn nd(start: f64, end: f64, hols: &[f64]) -> f64 {
+        networkdays_count(start, end, hols, DateSystem::Excel1900).unwrap()
+    }
+
+    #[test]
+    fn networkdays_ms_examples() {
+        let start = d(2012, 10, 1);
+        let end = d(2013, 3, 1);
+        let h1 = d(2012, 11, 22);
+        let h2 = d(2012, 12, 4);
+        let h3 = d(2013, 1, 21);
+        assert_eq!(start, 41183.0);
+        assert_eq!(end, 41334.0);
+        assert_eq!(nd(start, end, &[]), 110.0);
+        assert_eq!(nd(start, end, &[h1]), 109.0);
+        assert_eq!(nd(start, end, &[h1, h2, h3]), 107.0);
+        assert_eq!(nd(end, start, &[]), -110.0);
+        assert_eq!(nd(end, start, &[h1, h2, h3]), -107.0);
+    }
+
+    #[test]
+    fn networkdays_week_edges() {
+        assert_eq!(nd(d(2024, 1, 2), d(2024, 1, 2), &[]), 1.0);
+        assert_eq!(nd(d(2024, 1, 6), d(2024, 1, 6), &[]), 0.0);
+        assert_eq!(nd(d(2024, 1, 1), d(2024, 1, 5), &[]), 5.0);
+        assert_eq!(nd(d(2024, 1, 1), d(2024, 1, 7), &[]), 5.0);
+        assert_eq!(nd(d(2024, 1, 5), d(2024, 1, 1), &[]), -5.0);
+        assert_eq!(nd(1.0, 1.0, &[]), 0.0);
+        assert_eq!(nd(7.0, 7.0, &[]), 0.0);
+        assert_eq!(nd(2.0, 2.0, &[]), 1.0);
+        assert_eq!(nd(0.0, 0.0, &[]), 0.0);
+        assert_eq!(nd(1.0, 7.0, &[]), 5.0);
+        assert_eq!(nd(0.0, 2.0, &[]), 1.0);
+    }
+
+    #[test]
+    fn networkdays_serial_60_leap_bug() {
+        let s = DateSystem::Excel1900;
+        assert_eq!(networkdays_count(60.0, 60.0, &[], s).unwrap(), 1.0);
+        assert_eq!(networkdays_count(59.0, 61.0, &[], s).unwrap(), 3.0);
+        assert_eq!(
+            networkdays_count(d(1900, 2, 1), d(1900, 3, 5), &[], s).unwrap(),
+            24.0
+        );
+        assert_eq!(
+            networkdays_count(d(1900, 2, 1), d(1900, 3, 5), &[60.0], s).unwrap(),
+            23.0
+        );
+        assert!(!is_weekend_sat_sun_1900(60));
+        assert!(is_weekend_sat_sun_1900(1));
+        assert!(is_weekend_sat_sun_1900(7));
+    }
+
+    #[test]
+    fn networkdays_holidays() {
+        let start = d(2024, 1, 1);
+        let end = d(2024, 1, 7);
+        assert_eq!(nd(start, end, &[d(2024, 1, 6)]), 5.0);
+        assert_eq!(nd(start, end, &[d(2024, 1, 1)]), 4.0);
+        assert_eq!(nd(start, end, &[d(2024, 1, 1), d(2024, 1, 1)]), 4.0);
+        assert_eq!(nd(start, end, &[d(2023, 12, 25)]), 5.0);
+        assert_eq!(nd(start, end, &[d(2024, 1, 1), d(2024, 1, 2)]), 3.0);
+        assert_eq!(nd(start, end, &[1.5, 1.9]), 5.0);
+    }
+
+    #[test]
+    fn networkdays_truncates_fractions() {
+        assert_eq!(nd(d(2024, 1, 1) + 0.9, d(2024, 1, 5) + 0.1, &[]), 5.0);
+    }
+
+    #[test]
+    fn networkdays_rejects_out_of_range() {
+        let s = DateSystem::Excel1900;
+        assert_eq!(networkdays_count(-1.0, 10.0, &[], s), Err(ExcelError::Num));
+        assert_eq!(
+            networkdays_count(1.0, (EXCEL_MAX_SERIAL_1900 as f64) + 1.0, &[], s),
+            Err(ExcelError::Num)
+        );
+        assert_eq!(
+            networkdays_count(1.0, 7.0, &[-1.0], s),
+            Err(ExcelError::Num)
+        );
+    }
+
+    #[test]
+    fn networkdays_system_1904() {
+        let s = DateSystem::Excel1904;
+        assert_eq!(networkdays_count(0.0, 4.0, &[], s).unwrap(), 3.0);
+        assert_eq!(networkdays_count(0.0, 0.0, &[], s).unwrap(), 1.0);
+        assert_eq!(networkdays_count(0.0, 4.0, &[0.0], s).unwrap(), 2.0);
+    }
+
+    #[test]
+    fn weekday_count_matches_walk_on_prefix() {
+        for lo in 0..40 {
+            for hi in lo..40 {
+                let fast = weekday_count_sat_sun(lo, hi);
+                let walk: i32 = (lo..=hi).filter(|&s| !is_weekend_sat_sun_1900(s)).count() as i32;
+                assert_eq!(fast, walk, "[{lo}, {hi}]");
+            }
+        }
     }
 }
