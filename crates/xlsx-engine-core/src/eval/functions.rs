@@ -93,6 +93,7 @@ pub(crate) fn dispatch(
         "TRIM" => fn_trim(ev, args, ctx),
         "EXACT" => fn_exact(ev, args, ctx),
         "VALUE" => fn_value(ev, args, ctx),
+        "IRR" => fn_irr(ev, args, ctx),
         "TRUE" => Ok(ExcelValue::Bool(true)),
         "FALSE" => Ok(ExcelValue::Bool(false)),
         _ => Ok(ExcelValue::Error(ExcelError::Name)),
@@ -785,6 +786,70 @@ fn fn_exact(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelVal
         Err(e) => return Ok(ExcelValue::Error(e)),
     };
     Ok(ExcelValue::Bool(a == b))
+}
+
+fn fn_irr(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    if args.is_empty() || args.len() > 2 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let from_range = args[0].is_reference();
+    let values_v = ev.eval_expr(&args[0], ctx)?;
+    let flows = match collect_cashflows(&values_v, from_range) {
+        Ok(v) => v,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let guess = if args.len() == 2 {
+        match coerce::to_number(&ev.eval_scalar(&args[1], ctx)?) {
+            Ok(n) => n,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        }
+    } else {
+        0.1
+    };
+    match super::irr::irr(&flows, guess) {
+        Some(r) => Ok(ExcelValue::Number(r)),
+        None => Ok(ExcelValue::Error(ExcelError::Num)),
+    }
+}
+
+fn collect_cashflows(v: &ExcelValue, from_range: bool) -> Result<Vec<f64>, ExcelError> {
+    let mut out = Vec::new();
+    collect_cashflows_into(v, from_range, &mut out)?;
+    Ok(out)
+}
+
+fn collect_cashflows_into(
+    v: &ExcelValue,
+    from_range: bool,
+    out: &mut Vec<f64>,
+) -> Result<(), ExcelError> {
+    match (v, from_range) {
+        (ExcelValue::Array(rows), _) => {
+            for row in rows {
+                for c in row {
+                    collect_cashflows_into(c, true, out)?;
+                }
+            }
+            Ok(())
+        }
+        (ExcelValue::Error(e), _) => Err(*e),
+        (ExcelValue::Number(n), _) => {
+            if !n.is_finite() {
+                return Err(ExcelError::Num);
+            }
+            out.push(*n);
+            Ok(())
+        }
+        (ExcelValue::Empty | ExcelValue::Bool(_) | ExcelValue::Text(_), true) => Ok(()),
+        (other, false) => match coerce::to_number(other) {
+            Ok(n) if n.is_finite() => {
+                out.push(n);
+                Ok(())
+            }
+            Ok(_) => Err(ExcelError::Num),
+            Err(e) => Err(e),
+        },
+    }
 }
 
 fn fn_value(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
