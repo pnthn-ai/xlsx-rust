@@ -1,0 +1,430 @@
+[
+  {
+    "id": "fn.filter.col-basic",
+    "description": "FILTER of a column keeps TRUE rows",
+    "tags": ["filter", "functions"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=FILTER({1;2;3}, {TRUE;FALSE;TRUE})",
+    "expected": { "array": [[{ "number": 1 }], [{ "number": 3 }]] }
+  },
+  {
+    "id": "fn.filter.col-single",
+    "description": "One matching row is still a 1×1 array",
+    "tags": ["filter"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=FILTER({1;2;3}, {FALSE;TRUE;FALSE})",
+    "expected": { "array": [[{ "number": 2 }]] }
+  },
+  {
+    "id": "fn.filter.col-all",
+    "description": "All-TRUE include returns the whole column",
+    "tags": ["filter"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=FILTER({1;2}, {TRUE;TRUE})",
+    "expected": { "array": [[{ "number": 1 }], [{ "number": 2 }]] }
+  },
+  {
+    "id": "fn.filter.row-basic",
+    "description": "FILTER of a row vector keeps TRUE columns",
+    "tags": ["filter"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=FILTER({1,2,3}, {TRUE,FALSE,TRUE})",
+    "expected": { "array": [[{ "number": 1 }, { "number": 3 }]] }
+  },
+  {
+    "id": "fn.filter.matrix-rows",
+    "description": "2-D FILTER with a column include drops FALSE rows",
+    "tags": ["filter"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=FILTER({1,2;3,4;5,6}, {TRUE;FALSE;TRUE})",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 2 }],
+        [{ "number": 5 }, { "number": 6 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.filter.matrix-cols",
+    "description": "2-D FILTER with a row include drops FALSE columns",
+    "tags": ["filter"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=FILTER({1,2,3;4,5,6}, {TRUE,FALSE,TRUE})",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 3 }],
+        [{ "number": 4 }, { "number": 6 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.filter.calc-empty",
+    "description": "No matches and omitted if_empty is #CALC!",
+    "tags": ["filter", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=FILTER({1;2}, {FALSE;FALSE})",
+    "expected": { "error": "#CALC!" },
+    "notes": "Excel cannot return an empty array. Supply if_empty to avoid #CALC!."
+  },
+  {
+    "id": "fn.filter.calc-matrix-empty",
+    "description": "No matching rows of a matrix is #CALC!",
+    "tags": ["filter", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=FILTER({1,2;3,4}, {FALSE;FALSE})",
+    "expected": { "error": "#CALC!" }
+  },
+  {
+    "id": "fn.filter.if-empty-text",
+    "description": "if_empty text replaces #CALC! when nothing matches",
+    "tags": ["filter"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=FILTER({1;2}, {FALSE;FALSE}, \"none\")",
+    "expected": { "text": "none" }
+  },
+  {
+    "id": "fn.filter.if-empty-number",
+    "description": "if_empty 0 is a number, not #CALC!",
+    "tags": ["filter"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=FILTER({1}, {FALSE}, 0)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.filter.if-empty-empty-string",
+    "description": "if_empty \"\" displays nothing instead of #CALC!",
+    "tags": ["filter"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=FILTER({1}, {FALSE}, \"\")",
+    "expected": { "text": "" }
+  },
+  {
+    "id": "fn.filter.if-empty-array",
+    "description": "if_empty may itself be an array",
+    "tags": ["filter"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=FILTER({1}, {FALSE}, {\"a\",\"b\"})",
+    "expected": { "array": [[{ "text": "a" }, { "text": "b" }]] }
+  },
+  {
+    "id": "fn.filter.if-empty-unused",
+    "description": "if_empty is ignored when at least one row matches",
+    "tags": ["filter"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=FILTER({1;2}, {TRUE;FALSE}, \"none\")",
+    "expected": { "array": [[{ "number": 1 }]] }
+  },
+  {
+    "id": "fn.filter.if-empty-unused-div0",
+    "description": "Unused if_empty 1/0 does not replace a non-empty FILTER",
+    "tags": ["filter", "errors"],
+    "quirks": ["array-eval-mode", "if-short-circuit"],
+    "formula": "=FILTER({1}, {TRUE}, 1/0)",
+    "expected": { "array": [[{ "number": 1 }]] },
+    "notes": "if_empty is evaluated but used only when the filtered set is empty."
+  },
+  {
+    "id": "fn.filter.if-empty-used-div0",
+    "description": "Empty result with if_empty 1/0 is #DIV/0!",
+    "tags": ["filter", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=FILTER({1}, {FALSE}, 1/0)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.filter.dim-mismatch",
+    "description": "include height must match array rows",
+    "tags": ["filter", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=FILTER({1;2;3}, {TRUE;FALSE})",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.filter.dim-row-vs-col",
+    "description": "A row include cannot filter a column vector (same length is not enough)",
+    "tags": ["filter", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=FILTER({1;2;3}, {TRUE,FALSE,TRUE})",
+    "expected": { "error": "#VALUE!" },
+    "notes": "include must share height (column filter) or width (row filter)."
+  },
+  {
+    "id": "fn.filter.include-2d",
+    "description": "A 2-D include is #VALUE! (include must be a vector or scalar)",
+    "tags": ["filter", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=FILTER({1,2;3,4}, {TRUE,FALSE;FALSE,TRUE})",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.filter.include-error",
+    "description": "An error inside include is returned (even if earlier cells are TRUE)",
+    "tags": ["filter", "errors"],
+    "quirks": ["array-eval-mode", "error-precedence"],
+    "formula": "=FILTER({1;2}, {TRUE;#DIV/0!})",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.filter.include-text",
+    "description": "Text include cells are #VALUE! (\"TRUE\" is not a logical)",
+    "tags": ["filter", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=FILTER({1}, {\"TRUE\"})",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.filter.include-number",
+    "description": "Numeric include: nonzero is TRUE, 0 is FALSE",
+    "tags": ["filter"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=FILTER({1;2;3}, {1;0;2})",
+    "expected": { "array": [[{ "number": 1 }], [{ "number": 3 }]] }
+  },
+  {
+    "id": "fn.filter.include-blank-false",
+    "description": "A blank include cell is FALSE",
+    "tags": ["filter", "empty"],
+    "quirks": ["array-eval-mode", "empty-cell-duality"],
+    "formula": "=FILTER({1;2}, {A1;TRUE})",
+    "expected": { "array": [[{ "number": 2 }]] },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.filter.array-error-skipped",
+    "description": "Errors in non-matching array rows are skipped",
+    "tags": ["filter", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=FILTER({#DIV/0!;2}, {FALSE;TRUE})",
+    "expected": { "array": [[{ "number": 2 }]] }
+  },
+  {
+    "id": "fn.filter.array-error-kept",
+    "description": "Errors in matching array rows appear in the result",
+    "tags": ["filter", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=FILTER({#DIV/0!;2}, {TRUE;FALSE})",
+    "expected": { "array": [[{ "error": "#DIV/0!" }]] }
+  },
+  {
+    "id": "fn.filter.array-top-error",
+    "description": "A top-level array error is returned",
+    "tags": ["filter", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=FILTER(#N/A, TRUE)",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.filter.include-top-error",
+    "description": "A top-level include error is returned",
+    "tags": ["filter", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=FILTER({1}, #N/A)",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.filter.no-args",
+    "description": "FILTER() is #VALUE! (too few arguments)",
+    "tags": ["filter", "errors"],
+    "formula": "=FILTER()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.filter.one-arg",
+    "description": "FILTER({1}) is #VALUE! (include is required)",
+    "tags": ["filter", "errors"],
+    "formula": "=FILTER({1})",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.filter.too-many-args",
+    "description": "A fourth argument is #VALUE!",
+    "tags": ["filter", "errors"],
+    "formula": "=FILTER({1}, TRUE, \"x\", 1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.filter.range-col",
+    "description": "FILTER a worksheet column by a logical column",
+    "tags": ["filter"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=FILTER(A1:A4, B1:B4)",
+    "expected": { "array": [[{ "text": "a" }], [{ "text": "c" }]] },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "a" }, "B1": { "bool": true },
+          "A2": { "text": "b" }, "B2": { "bool": false },
+          "A3": { "text": "c" }, "B3": { "bool": true },
+          "A4": { "text": "d" }, "B4": { "bool": false }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.filter.range-matrix",
+    "description": "FILTER a 2-D range by a side column of 1/0",
+    "tags": ["filter"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=FILTER(A1:B3, C1:C3)",
+    "expected": {
+      "array": [
+        [{ "number": 10 }, { "text": "x" }],
+        [{ "number": 30 }, { "text": "z" }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 10 }, "B1": { "text": "x" }, "C1": { "number": 1 },
+          "A2": { "number": 20 }, "B2": { "text": "y" }, "C2": { "number": 0 },
+          "A3": { "number": 30 }, "B3": { "text": "z" }, "C3": { "number": 1 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.filter.sum",
+    "description": "SUM of a FILTER result aggregates the kept values",
+    "tags": ["filter", "sum"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SUM(FILTER({1;2;3}, {TRUE;FALSE;TRUE}))",
+    "expected": { "number": 4 }
+  },
+  {
+    "id": "fn.filter.type-array",
+    "description": "TYPE of a FILTER result is 64 (array)",
+    "tags": ["filter", "information"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TYPE(FILTER({1;2}, {TRUE;FALSE}))",
+    "expected": { "number": 64 }
+  },
+  {
+    "id": "fn.filter.broadcast-true",
+    "description": "Scalar TRUE include keeps every row",
+    "tags": ["filter"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=FILTER({1;2}, TRUE)",
+    "expected": { "array": [[{ "number": 1 }], [{ "number": 2 }]] }
+  },
+  {
+    "id": "fn.filter.broadcast-false-calc",
+    "description": "Scalar FALSE include with no if_empty is #CALC!",
+    "tags": ["filter", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=FILTER({1;2}, FALSE)",
+    "expected": { "error": "#CALC!" }
+  },
+  {
+    "id": "fn.filter.broadcast-false-if-empty",
+    "description": "Scalar FALSE include uses if_empty",
+    "tags": ["filter"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=FILTER({1;2}, FALSE, \"x\")",
+    "expected": { "text": "x" }
+  },
+  {
+    "id": "fn.filter.scalar-array",
+    "description": "FILTER of a scalar with TRUE is a 1×1 array",
+    "tags": ["filter"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=FILTER(5, TRUE)",
+    "expected": { "array": [[{ "number": 5 }]] }
+  },
+  {
+    "id": "fn.filter.iferror-calc",
+    "description": "IFERROR swallows FILTER #CALC!",
+    "tags": ["filter", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=IFERROR(FILTER({1}, {FALSE}), 0)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.filter.nested",
+    "description": "FILTER of a FILTER result",
+    "tags": ["filter"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=FILTER(FILTER({1;2;3}, {TRUE;TRUE;FALSE}), {FALSE;TRUE})",
+    "expected": { "array": [[{ "number": 2 }]] }
+  },
+  {
+    "id": "fn.filter.bool-keep",
+    "description": "FILTER preserves logicals in the array",
+    "tags": ["filter"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=FILTER({TRUE;FALSE}, {TRUE;TRUE})",
+    "expected": { "array": [[{ "bool": true }], [{ "bool": false }]] }
+  },
+  {
+    "id": "fn.filter.text-rows",
+    "description": "FILTER keeps matching text rows",
+    "tags": ["filter"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=FILTER({\"a\";\"b\";\"c\"}, {TRUE;FALSE;TRUE})",
+    "expected": { "array": [[{ "text": "a" }], [{ "text": "c" }]] }
+  },
+  {
+    "id": "fn.filter.empty-cell-kept",
+    "description": "A blank cell in a matching row stays empty",
+    "tags": ["filter", "empty"],
+    "quirks": ["array-eval-mode", "empty-cell-duality"],
+    "formula": "=FILTER(A1:A3, {TRUE;TRUE;TRUE})",
+    "expected": {
+      "array": [[{ "number": 1 }], [{ "empty": null }], [{ "number": 3 }]]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A3": { "number": 3 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.filter.isna-calc",
+    "description": "ISNA of FILTER #CALC! is FALSE (#CALC! is not #N/A)",
+    "tags": ["filter", "information"],
+    "formula": "=ISNA(FILTER({1}, {FALSE}))",
+    "expected": { "bool": false }
+  },
+  {
+    "id": "fn.filter.iserror-calc",
+    "description": "ISERROR of FILTER #CALC! is TRUE",
+    "tags": ["filter", "information"],
+    "formula": "=ISERROR(FILTER({1}, {FALSE}))",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.filter.array-compare-include-not-modeled",
+    "description": "FILTER(A1:A3, A1:A3>1) needs array-eval of >; not modeled",
+    "tags": ["filter"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=FILTER(A1:A3, A1:A3>1)",
+    "expected": { "array": [[{ "number": 2 }], [{ "number": 3 }]] },
+    "ignore": "Operators scalarize ranges, so A1:A3>1 is not a boolean vector. Supply include as a logical/numeric vector. Array broadcasting of comparisons is a documented model limit.",
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 2 },
+          "A3": { "number": 3 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.filter.spill-occupancy-not-modeled",
+    "description": "#SPILL! from a blocked spill range is not produced",
+    "tags": ["filter"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=FILTER({1;2;3}, {TRUE;TRUE;TRUE})",
+    "expected": { "array": [[{ "number": 1 }], [{ "number": 2 }], [{ "number": 3 }]] },
+    "ignore": "Workbook snippets have no spill grid. FILTER returns an array value; #SPILL! from occupied cells below/right of the host is not modeled."
+  }
+]

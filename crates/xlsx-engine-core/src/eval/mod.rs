@@ -9,6 +9,7 @@ pub mod compare;
 pub mod concat;
 pub mod empty;
 pub mod find;
+pub mod filter;
 pub mod functions;
 pub mod substitute;
 pub mod sumif;
@@ -645,6 +646,26 @@ mod tests {
         assert_eq!(
             eval_formula_in(&wb, "=NOTAFUNCTION(1)").unwrap(),
             ExcelValue::Error(ExcelError::Name)
+        );
+    }
+
+    #[test]
+    fn filter_calc_and_if_empty() {
+        let wb = Workbook::default();
+        assert_eq!(
+            eval_formula_in(&wb, "=FILTER({1;2}, {FALSE;FALSE})").unwrap(),
+            ExcelValue::Error(ExcelError::Calc)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=FILTER({1;2}, {FALSE;FALSE}, \"none\")").unwrap(),
+            ExcelValue::Text("none".into())
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=FILTER({1;2;3}, {TRUE;FALSE;TRUE})").unwrap(),
+            ExcelValue::Array(vec![
+                vec![ExcelValue::Number(1.0)],
+                vec![ExcelValue::Number(3.0)]
+            ])
         );
     }
 
