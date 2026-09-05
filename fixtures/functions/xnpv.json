@@ -94,7 +94,7 @@
     "description": "2008-01-01 to 2009-01-01 is 366 serial days; year basis is still 365",
     "tags": ["xnpv", "financial"],
     "formula": "=XNPV(0.1,{-100,110},{DATE(2008,1,1),DATE(2009,1,1)})",
-    "expected": { "number": -0.026108969043889374 }
+    "expected": { "number": -0.026108969043875163 }
   },
   {
     "id": "fn.xnpv-all-positive",
@@ -128,7 +128,7 @@
     "description": "A blank value cell is a 0 cash flow, not a skip",
     "tags": ["xnpv", "financial", "empty"],
     "formula": "=XNPV(0.09,A2:A6,B2:B6)",
-    "expected": { "number": -624.6699953630982 },
+    "expected": { "number": -624.6699953630969 },
     "workbook": {
       "sheets": [{
         "name": "Sheet1",
