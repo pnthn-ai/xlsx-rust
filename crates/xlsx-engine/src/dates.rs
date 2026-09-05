@@ -222,7 +222,8 @@ pub fn eomonth_serial(start: f64, months: f64, system: DateSystem) -> Result<f64
         }
     }
 }
-/// Convert a workbook-local date serial into the 1900 system.
+
+
 pub fn to_1900_serial(serial: i32, system: DateSystem) -> Result<i32, ExcelError> {
     match system {
         DateSystem::Excel1900 => Ok(serial),
@@ -254,6 +255,7 @@ pub fn from_1900_serial(serial_1900: i32, system: DateSystem) -> Result<i32, Exc
         }
     }
 }
+
 fn max_local_serial(system: DateSystem) -> i32 {
     match system {
         DateSystem::Excel1900 => EXCEL_MAX_SERIAL_1900,
@@ -280,13 +282,6 @@ pub fn is_weekend_sat_sun_1900(serial_1900: i32) -> bool {
     w == 0 || w == 1
 }
 
-/// Mon–Fri count in `[lo, hi]` inclusive, 1900-system serials. O(1).
-pub fn weekday_count_sat_sun(lo_1900: i32, hi_1900: i32) -> i32 {
-    if hi_1900 < lo_1900 {
-        return 0;
-    }
-    workdays_through(hi_1900) - workdays_through(lo_1900 - 1)
-}
 fn workdays_through(n: i32) -> i32 {
     if n < 0 {
         return 0;
@@ -297,10 +292,6 @@ fn workdays_through(n: i32) -> i32 {
     complete * 5 + extra
 }
 
-/// Excel `NETWORKDAYS(start, end, [holidays])` with weekend Sat/Sun.
-pub fn networkdays_count(
-    start: f64,
-    end: f64,
 fn invert_workdays_through(w: i64) -> Result<i32, ExcelError> {
     if w <= 0 {
         return Err(ExcelError::Num);
@@ -365,6 +356,46 @@ pub fn workday_serial(
     system: DateSystem,
 ) -> Result<f64, ExcelError> {
     let start_s = truncate_date_serial(start, system)?;
+    if !days.is_finite() {
+        return Err(ExcelError::Num);
+    }
+    let days_t = days.trunc();
+    if days_t.abs() > f64::from(EXCEL_MAX_SERIAL_1900) {
+        return Err(ExcelError::Num);
+    }
+    let days_i = days_t as i32;
+    let start_1900 = to_1900_serial(start_s, system)?;
+
+    let mut hols = Vec::with_capacity(holidays.len());
+    for &h in holidays {
+        let hs = to_1900_serial(truncate_date_serial(h, system)?, system)?;
+        if !is_weekend_sat_sun_1900(hs) {
+            hols.push(hs);
+        }
+    }
+    hols.sort_unstable();
+    hols.dedup();
+
+    let result_1900 = workday_1900(start_1900, days_i, &hols)?;
+    Ok(from_1900_serial(result_1900, system)? as f64)
+}
+
+/// Mon–Fri count in `[lo, hi]` inclusive, 1900-system serials. O(1).
+pub fn weekday_count_sat_sun(lo_1900: i32, hi_1900: i32) -> i32 {
+    if hi_1900 < lo_1900 {
+        return 0;
+    }
+    workdays_through(hi_1900) - workdays_through(lo_1900 - 1)
+}
+
+/// Excel `NETWORKDAYS(start, end, [holidays])` with weekend Sat/Sun.
+pub fn networkdays_count(
+    start: f64,
+    end: f64,
+    holidays: &[f64],
+    system: DateSystem,
+) -> Result<f64, ExcelError> {
+    let start_s = truncate_date_serial(start, system)?;
     let end_s = truncate_date_serial(end, system)?;
     let start_1900 = to_1900_serial(start_s, system)?;
     let end_1900 = to_1900_serial(end_s, system)?;
@@ -387,8 +418,7 @@ pub fn workday_serial(
         }
     }
     Ok((sign * work) as f64)
-}
-/// Integer 1900-system serial for a date value (time fraction discarded).
+
 pub fn serial_as_1900_int(serial: f64, system: DateSystem) -> Result<i32, ExcelError> {
     if !serial.is_finite() || serial < 0.0 {
         return Err(ExcelError::Num);
@@ -443,29 +473,8 @@ pub fn weekday(serial: f64, return_type: i32, system: DateSystem) -> Result<f64,
     let s1900 = serial_as_1900_int(serial, system)?;
     map_weekday_return_type(type1_from_1900_serial(s1900), return_type)
 }
-    if !days.is_finite() {
-        return Err(ExcelError::Num);
-    }
-    let days_t = days.trunc();
-    if days_t.abs() > f64::from(EXCEL_MAX_SERIAL_1900) {
-        return Err(ExcelError::Num);
-    }
-    let days_i = days_t as i32;
-    let start_1900 = to_1900_serial(start_s, system)?;
 
-    let mut hols = Vec::with_capacity(holidays.len());
-    for &h in holidays {
-        let hs = to_1900_serial(truncate_date_serial(h, system)?, system)?;
-        if !is_weekend_sat_sun_1900(hs) {
-            hols.push(hs);
-        }
-    }
-    hols.sort_unstable();
-    hols.dedup();
 
-    let result_1900 = workday_1900(start_1900, days_i, &hols)?;
-    Ok(from_1900_serial(result_1900, system)? as f64)
-}
 #[cfg(test)]
 mod tests {
     use super::*;

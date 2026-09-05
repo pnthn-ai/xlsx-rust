@@ -524,19 +524,11 @@ fn intersect_ranges(a: &RangeRef, b: &RangeRef) -> Option<RangeRef> {
 /// Evaluate a `SUMIF(...)` formula with the materializing implementation.
 /// Used only by the Criterion microbench as the pre-hill-climb baseline.
 pub fn eval_sumif_materialized(
-/// Evaluate a `SUMIFS(...)` formula with the materializing implementation.
-/// Used only by the Criterion microbench as the pre-hill-climb baseline.
-pub fn eval_sumifs_materialized(
-/// Evaluate an `AVERAGEIF(...)` formula with the materializing implementation.
-/// Used only by the Criterion microbench as the pre-hill-climb baseline.
-pub fn eval_averageif_materialized(
     workbook: &Workbook,
     formula: &str,
 ) -> Result<ExcelValue, EvalError> {
     let spec = EvalSpec {
         case_id: "sumif-bench".into(),
-        case_id: "sumifs-bench".into(),
-        case_id: "averageif-bench".into(),
         workbook: workbook.clone(),
         target: EvalTarget::formula(formula),
         options: Default::default(),
@@ -555,10 +547,60 @@ pub fn eval_averageif_materialized(
             sumif::sumif_materialized(&Evaluator, &args, &mut ctx)
         }
         _ => Err(EvalError::Other("expected SUMIF call".into())),
+    }
+}
+
+/// Evaluate a `SUMIFS(...)` formula with the materializing implementation.
+/// Used only by the Criterion microbench as the pre-hill-climb baseline.
+pub fn eval_sumifs_materialized(
+    workbook: &Workbook,
+    formula: &str,
+) -> Result<ExcelValue, EvalError> {
+    let spec = EvalSpec {
+        case_id: "sumifs-bench".into(),
+        workbook: workbook.clone(),
+        target: EvalTarget::formula(formula),
+        options: Default::default(),
+    };
+    let ast = parse(formula)?;
+    let current_sheet = spec.workbook.default_sheet_name().to_string();
+    let mut ctx = Ctx {
+        spec: &spec,
+        current_sheet,
+        depth: 0,
+        visiting: HashSet::new(),
+        host: spec.default_cell().addr,
+    };
+    match ast {
         Expr::Call { name, args } if name.eq_ignore_ascii_case("SUMIFS") => {
             sumifs::sumifs_materialized(&Evaluator, &args, &mut ctx)
         }
         _ => Err(EvalError::Other("expected SUMIFS call".into())),
+    }
+}
+
+/// Evaluate an `AVERAGEIF(...)` formula with the materializing implementation.
+/// Used only by the Criterion microbench as the pre-hill-climb baseline.
+pub fn eval_averageif_materialized(
+    workbook: &Workbook,
+    formula: &str,
+) -> Result<ExcelValue, EvalError> {
+    let spec = EvalSpec {
+        case_id: "averageif-bench".into(),
+        workbook: workbook.clone(),
+        target: EvalTarget::formula(formula),
+        options: Default::default(),
+    };
+    let ast = parse(formula)?;
+    let current_sheet = spec.workbook.default_sheet_name().to_string();
+    let mut ctx = Ctx {
+        spec: &spec,
+        current_sheet,
+        depth: 0,
+        visiting: HashSet::new(),
+        host: spec.default_cell().addr,
+    };
+    match ast {
         Expr::Call { name, args } if name.eq_ignore_ascii_case("AVERAGEIF") => {
             averageif::averageif_materialized(&Evaluator, &args, &mut ctx)
         }

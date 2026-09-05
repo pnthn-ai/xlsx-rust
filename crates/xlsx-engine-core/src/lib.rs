@@ -27,34 +27,35 @@ pub mod text_format;
 pub use dates::workday_serial;
 
 pub use ast::{BinOp, Expr, UnaryOp};
-pub use eval::substitute::{
-    substitute as excel_substitute, substitute_naive as excel_substitute_naive,
-};
-pub use eval::sumproduct::{product_sum, product_sum_naive, product_sum_packed};
-pub use eval::{eval_formula_in, eval_sumif_materialized, Evaluator};
-pub use eval::replace::{replace as excel_replace, replace_naive as excel_replace_naive};
+pub use dates::{weekday as excel_weekday, weekday_naive as excel_weekday_naive};
+pub use eval::concat::{concat_naive_join, eval_concat_formula, ConcatBuilder, CONCAT_MAX_CHARS};
+pub use eval::filter::{select as excel_filter, select_naive as excel_filter_naive};
 pub use eval::find::{find as excel_find, find_naive as excel_find_naive};
-pub use eval::textjoin::{
-    eval_textjoin_formula, textjoin_naive_join, TextJoinBuilder, TEXTJOIN_MAX_CHARS,
+pub use eval::ifs::{select as excel_ifs, select_naive as excel_ifs_naive};
+pub use eval::irr::{irr as excel_irr, irr_naive as excel_irr_naive, MAX_ITERS as IRR_MAX_ITERS};
+pub use eval::npv::{npv as excel_npv, npv_naive as excel_npv_naive};
+pub use eval::replace::{replace as excel_replace, replace_naive as excel_replace_naive};
 pub use eval::round::{
     rounddown as excel_rounddown, rounddown_naive as excel_rounddown_naive,
     roundup as excel_roundup, roundup_naive as excel_roundup_naive,
 };
-pub use eval::concat::{concat_naive_join, eval_concat_formula, ConcatBuilder, CONCAT_MAX_CHARS};
 pub use eval::search::{search as excel_search, search_naive as excel_search_naive};
-pub use dates::{weekday as excel_weekday, weekday_naive as excel_weekday_naive};
-pub use eval::npv::{npv as excel_npv, npv_naive as excel_npv_naive};
+pub use eval::substitute::{
+    substitute as excel_substitute, substitute_naive as excel_substitute_naive,
+};
+pub use eval::sumproduct::{product_sum, product_sum_naive, product_sum_packed};
 pub use eval::switch::{
     first_match as excel_switch_first_match, first_match_naive as excel_switch_first_match_naive,
     pick_evaluated as excel_switch_pick_evaluated,
 };
-pub use eval::ifs::{select as excel_ifs, select_naive as excel_ifs_naive};
+pub use eval::textjoin::{
+    eval_textjoin_formula, textjoin_naive_join, TextJoinBuilder, TEXTJOIN_MAX_CHARS,
+};
 pub use eval::unique::{unique_apply, unique_apply_naive, unique_eq};
-pub use eval::filter::{select as excel_filter, select_naive as excel_filter_naive};
-pub use eval::irr::{irr as excel_irr, irr_naive as excel_irr_naive, MAX_ITERS as IRR_MAX_ITERS};
-pub use eval::{eval_formula_in, Evaluator};
-pub use eval::{eval_formula_in, eval_sumifs_materialized, Evaluator};
-pub use eval::{eval_averageif_materialized, eval_formula_in, Evaluator};
+pub use eval::{
+    eval_averageif_materialized, eval_formula_in, eval_sumif_materialized, eval_sumifs_materialized,
+    Evaluator,
+};
 pub use parse::parse;
 
 use xlsx_types::{Candidate, EvalError, EvalSpec, ExcelValue};

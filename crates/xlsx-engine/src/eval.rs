@@ -1,21 +1,15 @@
 //! Seed-scoped evaluator with Excel-like and intentionally naive semantics.
 
-use crate::dates::{date_serial, eomonth_serial, serial_to_ymd, time_fraction};
-use crate::dates::{date_serial, networkdays_count, serial_to_ymd, time_fraction};
-use crate::dates::{date_serial, serial_to_ymd, time_fraction, weekday};
-use crate::dates::{date_serial, serial_to_ymd, time_fraction, workday_serial};
+use crate::dates::{
+    date_serial, eomonth_serial, networkdays_count, serial_to_ymd, time_fraction, weekday,
+    workday_serial,
+};
 use crate::parse::{parse, BinOp, Expr, UnaryOp};
 use std::collections::{HashMap, HashSet};
 use xlsx_types::{
-    count_matches, excel_num_eq, ArrayMode, CellAddr, CellRef, Criterion, EvalError, EvalSpec,
+    count_matches, excel_ceiling, excel_ceiling_math, excel_floor, excel_floor_math, excel_num_eq,
+    excel_pmt, excel_round_15, ArrayMode, CellAddr, CellRef, Criterion, EvalError, EvalSpec,
     EvalTarget, ExcelError, ExcelValue, RangeRef, Workbook,
-    excel_num_eq, ArrayMode, CellAddr, CellRef, Criterion, EvalError, EvalSpec, EvalTarget,
-    ExcelError, ExcelValue, RangeRef, Workbook,
-    excel_ceiling, excel_ceiling_math, excel_floor, excel_floor_math, excel_num_eq, ArrayMode,
-    CellAddr, CellRef, EvalError, EvalSpec, EvalTarget, ExcelError, ExcelValue, RangeRef, Workbook,
-    excel_num_eq, excel_round_15, ArrayMode, CellAddr, CellRef, EvalError, EvalSpec, EvalTarget,
-    excel_num_eq, excel_pmt, ArrayMode, CellAddr, CellRef, EvalError, EvalSpec, EvalTarget,
-    ExcelError, ExcelValue, RangeRef, Workbook,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -1573,14 +1567,17 @@ impl Interpreter {
             Err(e) => return Ok(ExcelValue::Error(e)),
         };
         match eomonth_serial(start, months, ctx.spec.options.date_system) {
+            Ok(n) => Ok(ExcelValue::Number(n)),
+            Err(e) => Ok(ExcelValue::Error(e)),
+        }
+    }
+
     fn fn_networkdays(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
-    fn fn_workday(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
         if args.len() < 2 || args.len() > 3 {
             return Ok(ExcelValue::Error(ExcelError::Value));
         }
         let start_v = self.eval_scalar(&args[0], ctx)?;
         let end_v = self.eval_scalar(&args[1], ctx)?;
-        let days_v = self.eval_scalar(&args[1], ctx)?;
         let hol_v = if args.len() == 3 {
             Some(self.eval_expr(&args[2], ctx)?)
         } else {
@@ -1591,7 +1588,6 @@ impl Interpreter {
             Err(e) => return Ok(ExcelValue::Error(e)),
         };
         let end = match self.as_number(&end_v) {
-        let days = match self.as_number(&days_v) {
             Ok(n) => n,
             Err(e) => return Ok(ExcelValue::Error(e)),
         };
@@ -1602,6 +1598,42 @@ impl Interpreter {
             }
         }
         match networkdays_count(start, end, &holidays, ctx.spec.options.date_system) {
+            Ok(n) => Ok(ExcelValue::Number(n)),
+            Err(e) => Ok(ExcelValue::Error(e)),
+        }
+    }
+
+    fn fn_workday(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.len() < 2 || args.len() > 3 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        let start_v = self.eval_scalar(&args[0], ctx)?;
+        let days_v = self.eval_scalar(&args[1], ctx)?;
+        let hol_v = if args.len() == 3 {
+            Some(self.eval_expr(&args[2], ctx)?)
+        } else {
+            None
+        };
+        let start = match self.as_number(&start_v) {
+            Ok(n) => n,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        let days = match self.as_number(&days_v) {
+            Ok(n) => n,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        let mut holidays = Vec::new();
+        if let Some(v) = hol_v {
+            if let Some(e) = self.collect_holiday_serials(&v, &mut holidays) {
+                return Ok(ExcelValue::Error(e));
+            }
+        }
+        match workday_serial(start, days, &holidays, ctx.spec.options.date_system) {
+            Ok(n) => Ok(ExcelValue::Number(n)),
+            Err(e) => Ok(ExcelValue::Error(e)),
+        }
+    }
+
     fn fn_weekday(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
         if args.is_empty() || args.len() > 2 {
             return Ok(ExcelValue::Error(ExcelError::Value));
@@ -1628,13 +1660,12 @@ impl Interpreter {
             1
         };
         match weekday(serial, return_type, ctx.spec.options.date_system) {
-        match workday_serial(start, days, &holidays, ctx.spec.options.date_system) {
             Ok(n) => Ok(ExcelValue::Number(n)),
             Err(e) => Ok(ExcelValue::Error(e)),
         }
     }
 
-    fn collect_holiday_serials(&self, v: &ExcelValue, out: &mut Vec<f64>) -> Option<ExcelError> {
+        fn collect_holiday_serials(&self, v: &ExcelValue, out: &mut Vec<f64>) -> Option<ExcelError> {
         match v {
             ExcelValue::Array(rows) => {
                 for row in rows {
@@ -1657,6 +1688,7 @@ impl Interpreter {
             },
         }
     }
+
     fn fn_ymd(
         &self,
         args: &[Expr],
@@ -1833,7 +1865,60 @@ impl Interpreter {
         };
         let instance = if args.len() == 4 {
             match self.as_number(&self.eval_scalar(&args[3], ctx)?) {
+                Ok(n) => {
+                    if !n.is_finite() {
+                        return Ok(ExcelValue::Error(ExcelError::Value));
+                    }
+                    let t = n.trunc();
+                    if t < 1.0 {
+                        return Ok(ExcelValue::Error(ExcelError::Value));
+                    }
+                    if t > u32::MAX as f64 {
+                        return Ok(ExcelValue::Text(text));
+                    }
+                    Some(t as u32)
+                }
+                Err(e) => return Ok(ExcelValue::Error(e)),
+            }
+        } else {
+            None
+        };
+        Ok(ExcelValue::Text(excel_substitute(
+            &text, &old_text, &new_text, instance,
+        )))
+    }
+
     fn fn_find(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.len() < 2 || args.len() > 3 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        let find_text = match self.as_text(&self.eval_scalar(&args[0], ctx)?) {
+            Ok(s) => s,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        let within_text = match self.as_text(&self.eval_scalar(&args[1], ctx)?) {
+            Ok(s) => s,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        let start_num = if args.len() == 3 {
+            match self.as_number(&self.eval_scalar(&args[2], ctx)?) {
+                Ok(n) => {
+                    if !n.is_finite() {
+                        return Ok(ExcelValue::Error(ExcelError::Value));
+                    }
+                    n.trunc() as i64
+                }
+                Err(e) => return Ok(ExcelValue::Error(e)),
+            }
+        } else {
+            1
+        };
+        match excel_find(&find_text, &within_text, start_num) {
+            Ok(pos) => Ok(ExcelValue::Number(pos)),
+            Err(e) => Ok(ExcelValue::Error(e)),
+        }
+    }
+
     fn fn_search(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
         if args.len() < 2 || args.len() > 3 {
             return Ok(ExcelValue::Error(ExcelError::Value));
@@ -1852,24 +1937,19 @@ impl Interpreter {
                     if !n.is_finite() {
                         return Ok(ExcelValue::Error(ExcelError::Value));
                     }
-                    let t = n.trunc();
-                    if t < 1.0 {
-                        return Ok(ExcelValue::Error(ExcelError::Value));
-                    }
-                    if t > u32::MAX as f64 {
-                        return Ok(ExcelValue::Text(text));
-                    }
-                    Some(t as u32)
                     n.trunc() as i64
                 }
                 Err(e) => return Ok(ExcelValue::Error(e)),
             }
         } else {
-            None
+            1
         };
-        Ok(ExcelValue::Text(excel_substitute(
-            &text, &old_text, &new_text, instance,
-        )))
+        match excel_search(&find_text, &within_text, start_num) {
+            Ok(pos) => Ok(ExcelValue::Number(pos)),
+            Err(e) => Ok(ExcelValue::Error(e)),
+        }
+    }
+
     fn fn_text(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
         if args.len() != 2 {
             return Ok(ExcelValue::Error(ExcelError::Value));
@@ -1890,6 +1970,8 @@ impl Interpreter {
             Ok(s) => Ok(ExcelValue::Text(s)),
             Err(e) => Ok(ExcelValue::Error(e)),
         }
+    }
+
     fn fn_replace(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
         if args.len() != 4 {
             return Ok(ExcelValue::Error(ExcelError::Value));
@@ -1919,19 +2001,10 @@ impl Interpreter {
         Ok(ExcelValue::Text(excel_replace(
             &old_text, start_num, num_chars, &new_text,
         )))
-            1
-        };
-        match excel_find(&find_text, &within_text, start_num) {
-            1
-        };
-        match excel_search(&find_text, &within_text, start_num) {
-            Ok(pos) => Ok(ExcelValue::Number(pos)),
-            Err(e) => Ok(ExcelValue::Error(e)),
-        }
+    }
+
     fn fn_npv(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
         if args.len() < 2 {
-    fn fn_pmt(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
-        if args.len() < 3 || args.len() > 5 {
             return Ok(ExcelValue::Error(ExcelError::Value));
         }
         let rate = match self.as_number(&self.eval_scalar(&args[0], ctx)?) {
@@ -1955,6 +2028,16 @@ impl Interpreter {
             return Ok(ExcelValue::Error(ExcelError::Num));
         }
         Ok(ExcelValue::Number(sum))
+    }
+
+    fn fn_pmt(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.len() < 3 || args.len() > 5 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        let rate = match self.as_number(&self.eval_scalar(&args[0], ctx)?) {
+            Ok(n) => n,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
         let nper = match self.as_number(&self.eval_scalar(&args[1], ctx)?) {
             Ok(n) => n,
             Err(e) => return Ok(ExcelValue::Error(e)),
@@ -1965,6 +2048,26 @@ impl Interpreter {
         };
         let fv = if args.len() >= 4 {
             match self.as_number(&self.eval_scalar(&args[3], ctx)?) {
+                Ok(n) => n,
+                Err(e) => return Ok(ExcelValue::Error(e)),
+            }
+        } else {
+            0.0
+        };
+        let typ = if args.len() >= 5 {
+            match self.as_number(&self.eval_scalar(&args[4], ctx)?) {
+                Ok(n) => n,
+                Err(e) => return Ok(ExcelValue::Error(e)),
+            }
+        } else {
+            0.0
+        };
+        match excel_pmt(rate, nper, pv, fv, typ) {
+            Ok(n) => Ok(ExcelValue::Number(n)),
+            Err(e) => Ok(ExcelValue::Error(e)),
+        }
+    }
+
     fn fn_irr(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
         if args.is_empty() || args.len() > 2 {
             return Ok(ExcelValue::Error(ExcelError::Value));
