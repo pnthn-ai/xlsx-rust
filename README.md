@@ -283,12 +283,13 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 | [`eval/coerce.rs`](crates/xlsx-engine-core/src/eval/coerce.rs) | Arithmetic / `&` / `IF` coercion (`"2"+1` = 3, TRUE → 1, empty → 0) |
 | [`eval/compare.rs`](crates/xlsx-engine-core/src/eval/compare.rs) | 15-digit `=`, case-insensitive text, `TRUE=1`, type ranking (`FALSE>100`) |
 | [`eval/empty.rs`](crates/xlsx-engine-core/src/eval/empty.rs) | Blank ≠ 0 ≠ `""`, but `A1=0` and `A1=""` when `A1` is blank |
-| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | `SUM`, `IF` (short-circuit), `VLOOKUP`, `IFERROR`, `ABS`, `N`, `IS*` |
+| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators, logicals, lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates, math, text, `TYPE` / `IS*` |
 
-**Implemented for this PR:** arithmetic and comparison operators (unary `+/-`,
-`%`, `^`, `&`), cell refs / ranges / defined names, array literals, error
-propagation (`#DIV/0!` vs `EvalError`), and the functions above. Workbook
-input is the snippet type in `xlsx-types` (no `.xlsx` IO).
+**Implemented:** arithmetic and comparison operators (unary `+/-`, `%`, `^`,
+`&`, space intersection), host-aware implicit intersection, cell refs /
+ranges / defined names, array literals, error propagation, and the function
+families above. Workbook input is the snippet type in `xlsx-types` (no
+`.xlsx` IO).
 
 **Deferred / in progress:** full function library, locale argument separators,
 live Excel oracle, and performance bakeoff. The fixture corpus is expanded

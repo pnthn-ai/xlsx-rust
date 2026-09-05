@@ -395,10 +395,14 @@ impl Interpreter {
             "ISLOGICAL" => self.fn_is(args, ctx, |v| matches!(v, ExcelValue::Bool(_))),
             "ISNONTEXT" => self.fn_is(args, ctx, |v| !matches!(v, ExcelValue::Text(_))),
             "ISERROR" => self.fn_is(args, ctx, |v| matches!(v, ExcelValue::Error(_))),
-            "ISERR" => self.fn_is(args, ctx, |v| {
-                matches!(v, ExcelValue::Error(e) if *e != ExcelError::Na)
+            "ISERR" => self.fn_is(
+                args,
+                ctx,
+                |v| matches!(v, ExcelValue::Error(e) if *e != ExcelError::Na),
+            ),
+            "ISNA" => self.fn_is(args, ctx, |v| {
+                matches!(v, ExcelValue::Error(ExcelError::Na))
             }),
-            "ISNA" => self.fn_is(args, ctx, |v| matches!(v, ExcelValue::Error(ExcelError::Na))),
             "ISEVEN" => self.fn_even_odd(args, ctx, true),
             "ISODD" => self.fn_even_odd(args, ctx, false),
             "DATE" => self.fn_date(args, ctx),
@@ -615,7 +619,8 @@ impl Interpreter {
         let header: Vec<ExcelValue> = (0..width).map(|c| rows[0][c].clone()).collect();
         let keys: Vec<Vec<ExcelValue>> = header.into_iter().map(|k| vec![k]).collect();
         let col = if !approx {
-            keys.iter().position(|k| lookup_key_match(&lookup, &k[0], self.semantics))
+            keys.iter()
+                .position(|k| lookup_key_match(&lookup, &k[0], self.semantics))
         } else {
             approx_upper_bound(&keys, &lookup, self.semantics)
         };
@@ -1037,7 +1042,10 @@ impl Interpreter {
         let out: String = if left {
             chars.iter().take(take).collect()
         } else {
-            chars.iter().skip(chars.len().saturating_sub(take)).collect()
+            chars
+                .iter()
+                .skip(chars.len().saturating_sub(take))
+                .collect()
         };
         Ok(ExcelValue::Text(out))
     }
@@ -1416,7 +1424,9 @@ impl AggAcc {
     fn finish(self) -> ExcelValue {
         match self.kind {
             AggKind::Sum => ExcelValue::Number(self.sum),
-            AggKind::Product => ExcelValue::Number(if self.count == 0 { 0.0 } else { self.product }),
+            AggKind::Product => {
+                ExcelValue::Number(if self.count == 0 { 0.0 } else { self.product })
+            }
             AggKind::Average => {
                 if self.count == 0 {
                     ExcelValue::Error(ExcelError::Div0)

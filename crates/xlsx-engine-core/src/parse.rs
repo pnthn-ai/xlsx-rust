@@ -2,8 +2,8 @@
 //!
 //! Coverage: operators, parentheses, cell refs (optional `$` and sheet
 //! qualification), ranges, defined names, literals (number / text / bool /
-//! error / array), and function calls. Locale-specific argument separators
-//! and the intersection/union operators are deferred.
+//! error / array), function calls, and space intersection (`A1:B2 B2`).
+//! Locale-specific argument separators and the union operator are deferred.
 
 use crate::ast::{BinOp, Expr, UnaryOp};
 use xlsx_types::{CellAddr, CellRef, EvalError, ExcelError, RangeRef};
@@ -396,7 +396,29 @@ impl Parser {
                     expr: Box::new(self.parse_unary()?),
                 })
             }
-            _ => self.parse_postfix(),
+            _ => self.parse_intersect(),
+        }
+    }
+
+    /// Juxtaposed refs are Excel's intersect operator (`A1:B2 B2`).
+    fn parse_intersect(&mut self) -> Result<Expr, EvalError> {
+        let mut left = self.parse_postfix()?;
+        while self.peek_is_ref_start() {
+            let right = self.parse_postfix()?;
+            left = Expr::Binary {
+                op: BinOp::Intersect,
+                left: Box::new(left),
+                right: Box::new(right),
+            };
+        }
+        Ok(left)
+    }
+
+    fn peek_is_ref_start(&self) -> bool {
+        match self.peek() {
+            Token::Ident(id) if looks_like_cell(id) => true,
+            Token::Quoted(_) => true,
+            _ => false,
         }
     }
 
@@ -600,6 +622,17 @@ mod tests {
                 assert_eq!(rows.len(), 2);
                 assert_eq!(rows[0].len(), 2);
             }
+            other => panic!("{other:?}"),
+        }
+    }
+
+    #[test]
+    fn parse_intersect() {
+        match parse("=A1:B2 B2").unwrap() {
+            Expr::Binary {
+                op: BinOp::Intersect,
+                ..
+            } => {}
             other => panic!("{other:?}"),
         }
     }

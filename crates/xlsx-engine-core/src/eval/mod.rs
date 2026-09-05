@@ -12,7 +12,8 @@ use crate::ast::{BinOp, Expr, UnaryOp};
 use crate::parse::parse;
 use std::collections::HashSet;
 use xlsx_types::{
-    CellRef, EvalError, EvalSpec, EvalTarget, ExcelError, ExcelValue, RangeRef, Workbook,
+    ArrayMode, CellAddr, CellRef, EvalError, EvalSpec, EvalTarget, ExcelError, ExcelValue,
+    RangeRef, Workbook,
 };
 
 pub struct Evaluator;
@@ -22,6 +23,7 @@ pub(crate) struct Ctx<'a> {
     current_sheet: String,
     depth: usize,
     visiting: HashSet<String>,
+    host: CellAddr,
 }
 
 impl Evaluator {
@@ -40,6 +42,7 @@ impl Evaluator {
             current_sheet,
             depth: 0,
             visiting: HashSet::new(),
+            host: spec.default_cell().addr,
         };
         match &spec.target {
             EvalTarget::Formula { formula, at } => {
@@ -47,16 +50,25 @@ impl Evaluator {
                     if let Some(sheet) = &at.sheet {
                         ctx.current_sheet = sheet.clone();
                     }
+                    ctx.host = at.addr;
                 }
                 self.eval_formula(formula, &mut ctx)
             }
-            EvalTarget::Cell { cell } => self.eval_cell(cell, &mut ctx),
+            EvalTarget::Cell { cell } => {
+                ctx.host = cell.addr;
+                self.eval_cell(cell, &mut ctx)
+            }
             EvalTarget::Named { name } => self.eval_named(name, &mut ctx),
         }
     }
 
     fn eval_formula(&self, formula: &str, ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
         let ast = parse(formula)?;
+        if matches!(ctx.spec.options.array_mode, ArrayMode::Scalar) {
+            if let Expr::Range(r) = &ast {
+                return self.implicit_intersect_range(r, ctx);
+            }
+        }
         self.eval_expr(&ast, ctx)
     }
 
@@ -115,10 +127,13 @@ impl Evaluator {
         let stored = sheet.get(cell.addr).cloned();
         let result = if let Some(c) = stored {
             if let Some(formula) = c.formula {
-                let prev = ctx.current_sheet.clone();
+                let prev_sheet = ctx.current_sheet.clone();
+                let prev_host = ctx.host;
                 ctx.current_sheet = sheet_name;
+                ctx.host = cell.addr;
                 let v = self.eval_formula(&formula, ctx)?;
-                ctx.current_sheet = prev;
+                ctx.current_sheet = prev_sheet;
+                ctx.host = prev_host;
                 Ok(v)
             } else {
                 Ok(c.value.unwrap_or(ExcelValue::Empty))
@@ -179,7 +194,7 @@ impl Evaluator {
         expr: &Expr,
         ctx: &mut Ctx<'_>,
     ) -> Result<ExcelValue, EvalError> {
-        let v = coerce::scalarize(self.eval_expr(expr, ctx)?);
+        let v = self.eval_scalar(expr, ctx)?;
         if let ExcelValue::Error(e) = v {
             return Ok(ExcelValue::Error(e));
         }
@@ -206,8 +221,11 @@ impl Evaluator {
         right: &Expr,
         ctx: &mut Ctx<'_>,
     ) -> Result<ExcelValue, EvalError> {
-        let l = coerce::scalarize(self.eval_expr(left, ctx)?);
-        let r = coerce::scalarize(self.eval_expr(right, ctx)?);
+        if op == BinOp::Intersect {
+            return self.eval_intersect(left, right, ctx);
+        }
+        let l = self.eval_scalar(left, ctx)?;
+        let r = self.eval_scalar(right, ctx)?;
         if let ExcelValue::Error(e) = l {
             return Ok(ExcelValue::Error(e));
         }
@@ -219,7 +237,7 @@ impl Evaluator {
             BinOp::Sub => arith(&l, &r, |a, b| a - b),
             BinOp::Mul => arith(&l, &r, |a, b| a * b),
             BinOp::Div => div(&l, &r),
-            BinOp::Pow => arith(&l, &r, |a, b| a.powf(b)),
+            BinOp::Pow => excel_pow(&l, &r),
             BinOp::Concat => concat(&l, &r),
             BinOp::Eq => ExcelValue::Bool(compare::equal(&l, &r)),
             BinOp::Ne => ExcelValue::Bool(!compare::equal(&l, &r)),
@@ -233,7 +251,88 @@ impl Evaluator {
                 ExcelValue::Bool(compare::ordered(&l, &r, std::cmp::Ordering::Greater, true))
             }
             BinOp::Ge => ExcelValue::Bool(compare::ordered(&l, &r, std::cmp::Ordering::Less, true)),
+            BinOp::Intersect => unreachable!("intersect handled above"),
         })
+    }
+
+    pub(crate) fn eval_scalar(
+        &self,
+        expr: &Expr,
+        ctx: &mut Ctx<'_>,
+    ) -> Result<ExcelValue, EvalError> {
+        match expr {
+            Expr::Range(r) => {
+                if matches!(ctx.spec.options.array_mode, ArrayMode::DynamicArray) {
+                    Ok(coerce::scalarize(self.eval_range(r, ctx)?))
+                } else {
+                    self.implicit_intersect_range(r, ctx)
+                }
+            }
+            other => Ok(coerce::scalarize(self.eval_expr(other, ctx)?)),
+        }
+    }
+
+    fn implicit_intersect_range(
+        &self,
+        range: &RangeRef,
+        ctx: &mut Ctx<'_>,
+    ) -> Result<ExcelValue, EvalError> {
+        let host = ctx.host;
+        let sc = range.start.col;
+        let ec = range.end.col;
+        let sr = range.start.row;
+        let er = range.end.row;
+        let picked = if sc == ec {
+            if host.row >= sr && host.row <= er {
+                Some(CellAddr::new(sc, host.row))
+            } else {
+                None
+            }
+        } else if sr == er {
+            if host.col >= sc && host.col <= ec {
+                Some(CellAddr::new(host.col, sr))
+            } else {
+                None
+            }
+        } else if host.col >= sc && host.col <= ec && host.row >= sr && host.row <= er {
+            Some(CellAddr::new(host.col, host.row))
+        } else {
+            None
+        };
+        match picked {
+            Some(addr) => self.eval_cell(
+                &CellRef {
+                    sheet: range.sheet.clone(),
+                    addr,
+                },
+                ctx,
+            ),
+            None => Ok(ExcelValue::Error(ExcelError::Value)),
+        }
+    }
+
+    fn eval_intersect(
+        &self,
+        left: &Expr,
+        right: &Expr,
+        ctx: &mut Ctx<'_>,
+    ) -> Result<ExcelValue, EvalError> {
+        match intersect_exprs(left, right) {
+            Ok(range) => {
+                if range.start == range.end {
+                    self.eval_cell(
+                        &CellRef {
+                            sheet: range.sheet,
+                            addr: range.start,
+                        },
+                        ctx,
+                    )
+                } else {
+                    self.eval_range(&range, ctx)
+                }
+            }
+            Err(e) => Ok(ExcelValue::Error(e)),
+        }
     }
 }
 
@@ -257,6 +356,66 @@ fn concat(l: &ExcelValue, r: &ExcelValue) -> ExcelValue {
         (Ok(a), Ok(b)) => ExcelValue::Text(format!("{a}{b}")),
         (Err(e), _) | (_, Err(e)) => ExcelValue::Error(e),
     }
+}
+
+/// Excel `^` / `POWER`: `0^0` and negative^non-integer are `#NUM!`.
+pub(crate) fn excel_pow(l: &ExcelValue, r: &ExcelValue) -> ExcelValue {
+    match (coerce::to_number(l), coerce::to_number(r)) {
+        (Ok(a), Ok(b)) => {
+            if a == 0.0 && b == 0.0 {
+                return ExcelValue::Error(ExcelError::Num);
+            }
+            if a < 0.0 && b.fract() != 0.0 {
+                return ExcelValue::Error(ExcelError::Num);
+            }
+            let n = a.powf(b);
+            if !n.is_finite() {
+                return ExcelValue::Error(ExcelError::Num);
+            }
+            ExcelValue::Number(n)
+        }
+        (Err(e), _) | (_, Err(e)) => ExcelValue::Error(e),
+    }
+}
+
+fn intersect_exprs(left: &Expr, right: &Expr) -> Result<RangeRef, ExcelError> {
+    let a = expr_as_range(left)?;
+    let b = expr_as_range(right)?;
+    intersect_ranges(&a, &b).ok_or(ExcelError::Null)
+}
+
+fn expr_as_range(expr: &Expr) -> Result<RangeRef, ExcelError> {
+    match expr {
+        Expr::Cell(c) => Ok(RangeRef::new(c.sheet.clone(), c.addr, c.addr)),
+        Expr::Range(r) => Ok(r.clone()),
+        Expr::Binary {
+            op: BinOp::Intersect,
+            left,
+            right,
+        } => intersect_exprs(left, right),
+        _ => Err(ExcelError::Value),
+    }
+}
+
+fn intersect_ranges(a: &RangeRef, b: &RangeRef) -> Option<RangeRef> {
+    let sheet = match (&a.sheet, &b.sheet) {
+        (Some(x), Some(y)) if !x.eq_ignore_ascii_case(y) => return None,
+        (Some(x), _) => Some(x.clone()),
+        (_, Some(y)) => Some(y.clone()),
+        _ => None,
+    };
+    let c1 = a.start.col.max(b.start.col);
+    let r1 = a.start.row.max(b.start.row);
+    let c2 = a.end.col.min(b.end.col);
+    let r2 = a.end.row.min(b.end.row);
+    if c1 > c2 || r1 > r2 {
+        return None;
+    }
+    Some(RangeRef::new(
+        sheet,
+        CellAddr::new(c1, r1),
+        CellAddr::new(c2, r2),
+    ))
 }
 
 /// Ad-hoc evaluation helper for unit tests (no Candidate trait required).
@@ -336,6 +495,15 @@ mod tests {
         assert_eq!(
             eval_formula_in(&wb, "=-5+2").unwrap(),
             ExcelValue::Number(-3.0)
+        );
+    }
+
+    #[test]
+    fn pow_zero_zero_is_num() {
+        let wb = Workbook::default();
+        assert_eq!(
+            eval_formula_in(&wb, "=0^0").unwrap(),
+            ExcelValue::Error(ExcelError::Num)
         );
     }
 }

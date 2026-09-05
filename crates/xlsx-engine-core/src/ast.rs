@@ -50,6 +50,8 @@ pub enum BinOp {
     Gt,
     Le,
     Ge,
+    /// Space (intersect) operator: `A1:B2 B2`.
+    Intersect,
 }
 
 impl Expr {
