@@ -8,22 +8,22 @@ pub mod coerce;
 pub mod compare;
 pub mod concat;
 pub mod empty;
-pub mod find;
 pub mod filter;
+pub mod find;
 pub mod functions;
-pub mod substitute;
-pub mod sumif;
-pub mod sumproduct;
+pub mod ifs;
+pub mod irr;
+pub mod npv;
 pub mod replace;
-pub mod sumifs;
-pub mod textjoin;
 pub mod round;
 pub mod search;
-pub mod npv;
+pub mod substitute;
+pub mod sumif;
+pub mod sumifs;
+pub mod sumproduct;
 pub mod switch;
-pub mod ifs;
+pub mod textjoin;
 pub mod unique;
-pub mod irr;
 
 use crate::ast::{BinOp, Expr, UnaryOp};
 use crate::parse::parse;
@@ -273,7 +273,11 @@ impl Evaluator {
         Ok(ExcelValue::Array(rows))
     }
 
-    pub(crate) fn eval_named(&self, name: &str, ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    pub(crate) fn eval_named(
+        &self,
+        name: &str,
+        ctx: &mut Ctx<'_>,
+    ) -> Result<ExcelValue, EvalError> {
         let def = match ctx.spec.workbook.defined_name(name) {
             Ok(d) => d,
             Err(_) => return Ok(ExcelValue::Error(ExcelError::Name)),
@@ -926,6 +930,33 @@ mod tests {
         );
         assert_eq!(
             eval_formula_in(&wb, "=PMT()").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
+        );
+    }
+    #[test]
+    fn effect_microsoft_and_errors() {
+        let wb = Workbook::default();
+        match eval_formula_in(&wb, "=EFFECT(0.0525,4)").unwrap() {
+            ExcelValue::Number(n) => {
+                let published = 0.0535426673707582;
+                assert!((n - published).abs() / published < 1e-12, "got {n}")
+            }
+            other => panic!("expected number, got {other:?}"),
+        }
+        assert_eq!(
+            eval_formula_in(&wb, "=EFFECT(0.1,1)").unwrap(),
+            ExcelValue::Number(0.1)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=EFFECT(0,12)").unwrap(),
+            ExcelValue::Error(ExcelError::Num)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=EFFECT(0.05)").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=EFFECT()").unwrap(),
             ExcelValue::Error(ExcelError::Value)
         );
     }

@@ -1,7 +1,7 @@
 //! Time-value-of-money helpers used by worksheet financial functions.
 //!
-//! Pure math: no workbook, no fixture goldens. `PMT` is first; `PV` / `FV` /
-//! `NPER` are expected to reuse [`pow_term`] later.
+//! Pure math: no workbook, no fixture goldens. `PMT` and `EFFECT` live here;
+//! `PV` / `FV` / `NPER` / `NOMINAL` are expected to reuse [`pow_term`] later.
 
 use crate::error::ExcelError;
 
@@ -67,6 +67,69 @@ pub fn pmt(rate: f64, nper: f64, pv: f64, fv: f64, typ: f64) -> Result<f64, Exce
     finite(-(pv * term + fv) * rate / (type_scale * term_m1))
 }
 
+/// Excel / OpenFormula `EFFECT(nominal_rate, npery)`.
+///
+/// OpenFormula 6.12.19 (Excel `TRUNC` on `npery` before the power):
+///
+/// ```text
+/// EFFECT = (1 + nominal / npery)^npery − 1
+/// ```
+///
+/// Domain (support.microsoft.com EFFECT):
+/// - non-finite inputs → `#NUM!`
+/// - `nominal_rate ≤ 0` or truncated `npery < 1` → `#NUM!`
+/// - overflow / non-finite result → `#NUM!` (same as `POWER`)
+///
+/// Production path:
+/// - truncated `npery == 1` is the identity `nominal`
+/// - `npery == 2` is `nominal + (nominal/2)^2`
+/// - otherwise [`pow_term`]: integer `powi` when `|r/n| ≥ 1e-5`, else
+///   `expm1(n · ln1p(r/n))` so `(1+ε)^n − 1` does not cancel
+#[inline]
+pub fn effect(nominal: f64, npery: f64) -> Result<f64, ExcelError> {
+    let n = trunc_npery(nominal, npery)?;
+    if n == 1.0 {
+        return finite(nominal);
+    }
+    if n == 2.0 {
+        let half = nominal * 0.5;
+        return finite(nominal + half * half);
+    }
+    let period = nominal / n;
+    if !period.is_finite() {
+        return Err(ExcelError::Num);
+    }
+    let (_, term_m1) = pow_term(1.0 + period, period, n)?;
+    finite(term_m1)
+}
+
+/// Textbook `(1 + nominal/npery).powf(npery) - 1` baseline (same domain as
+/// [`effect`]). Used as the microbench naive path.
+#[inline]
+pub fn effect_naive(nominal: f64, npery: f64) -> Result<f64, ExcelError> {
+    let n = trunc_npery(nominal, npery)?;
+    let one_plus = 1.0 + nominal / n;
+    if !one_plus.is_finite() {
+        return Err(ExcelError::Num);
+    }
+    finite(one_plus.powf(n) - 1.0)
+}
+
+#[inline]
+fn trunc_npery(nominal: f64, npery: f64) -> Result<f64, ExcelError> {
+    if !nominal.is_finite() || !npery.is_finite() {
+        return Err(ExcelError::Num);
+    }
+    if nominal <= 0.0 {
+        return Err(ExcelError::Num);
+    }
+    let n = npery.trunc();
+    if n < 1.0 {
+        return Err(ExcelError::Num);
+    }
+    Ok(n)
+}
+
 /// `( (1+rate)^nper , (1+rate)^nper - 1 )` without allocating.
 ///
 /// Small `|rate|` uses `expm1(nper * ln1p(rate))` so the annuity factor does
@@ -114,7 +177,15 @@ mod tests {
     fn close(actual: f64, expected: f64) {
         assert!(
             excel_num_eq(actual, expected),
-            "pmt mismatch: got {actual} expected {expected}"
+            "financial mismatch: got {actual} expected {expected}"
+        );
+    }
+
+    fn close_rel(actual: f64, expected: f64) {
+        let scale = actual.abs().max(expected.abs()).max(1.0);
+        assert!(
+            (actual - expected).abs() / scale < 1e-12,
+            "financial rel mismatch: got {actual} expected {expected}"
         );
     }
 
@@ -194,6 +265,96 @@ mod tests {
         assert!(
             elapsed.as_millis() < 400,
             "80k PMT calls took {elapsed:?} (expected a cheap closed form)"
+        );
+    }
+
+    #[test]
+    fn effect_microsoft_quarterly() {
+        // support.microsoft.com EFFECT(0.0525, 4) = 0.0535426673707582
+        // IEEE powi of the OpenFormula identity is ~1 ULP from that print.
+        close_rel(effect(0.0525, 4.0).unwrap(), 0.0535426673707582);
+        close_rel(effect_naive(0.0525, 4.0).unwrap(), 0.0535426673707582);
+    }
+
+    #[test]
+    fn effect_npery_one_is_identity() {
+        assert_eq!(effect(0.1, 1.0).unwrap(), 0.1);
+        assert_eq!(effect(2.5, 1.0).unwrap(), 2.5);
+    }
+
+    #[test]
+    fn effect_npery_two_closed_form() {
+        close(effect(0.1, 2.0).unwrap(), 0.1025);
+        close(effect(0.1, 2.0).unwrap(), effect_naive(0.1, 2.0).unwrap());
+    }
+
+    #[test]
+    fn effect_truncates_npery_toward_zero() {
+        close(effect(0.1, 12.9).unwrap(), effect(0.1, 12.0).unwrap());
+        assert_eq!(effect(0.1, 1.9).unwrap(), 0.1);
+    }
+
+    #[test]
+    fn effect_domain_errors() {
+        assert_eq!(effect(0.0, 12.0), Err(ExcelError::Num));
+        assert_eq!(effect(-0.05, 12.0), Err(ExcelError::Num));
+        assert_eq!(effect(0.05, 0.0), Err(ExcelError::Num));
+        assert_eq!(effect(0.05, 0.9), Err(ExcelError::Num));
+        assert_eq!(effect(0.05, -1.0), Err(ExcelError::Num));
+        assert_eq!(effect(f64::INFINITY, 12.0), Err(ExcelError::Num));
+        assert_eq!(effect(0.05, f64::NAN), Err(ExcelError::Num));
+        assert_eq!(effect(1e200, 2.0), Err(ExcelError::Num));
+    }
+
+    #[test]
+    fn effect_common_frequencies_match_naive() {
+        for &(r, n) in &[
+            (0.05, 4.0),
+            (0.08, 12.0),
+            (0.12, 12.0),
+            (0.05, 52.0),
+            (0.06, 365.0),
+            (0.01, 12.0),
+            (2.0, 12.0),
+        ] {
+            close_rel(effect(r, n).unwrap(), effect_naive(r, n).unwrap());
+        }
+    }
+
+    #[test]
+    fn effect_tiny_rate_does_not_cancel() {
+        let tiny = effect(1e-16, 12.0).unwrap();
+        assert!(
+            tiny > 0.0 && tiny < 1e-15,
+            "tiny-rate EFFECT should stay near the nominal, got {tiny}"
+        );
+        // powf(1+ε, n) − 1 cancels to 0 in IEEE; naive is the contrast.
+        assert_eq!(effect_naive(1e-16, 12.0).unwrap(), 0.0);
+    }
+
+    #[test]
+    fn effect_large_npery_approaches_continuous() {
+        let discrete = effect(0.05, 1_000_000.0).unwrap();
+        let continuous = 0.05f64.exp_m1();
+        assert!(
+            (discrete - continuous).abs() < 1e-8,
+            "EFFECT(0.05, 1e6)={discrete} should approach expm1(0.05)={continuous}"
+        );
+    }
+
+    #[test]
+    fn effect_hot_path_many_calls() {
+        let start = std::time::Instant::now();
+        let mut acc = 0.0f64;
+        for i in 0..80_000u32 {
+            let r = 0.01 + f64::from(i) * 1e-8;
+            acc += effect(r, 12.0).unwrap();
+        }
+        let elapsed = start.elapsed();
+        assert!(acc.is_finite());
+        assert!(
+            elapsed.as_millis() < 400,
+            "80k EFFECT calls took {elapsed:?} (expected a cheap closed form)"
         );
     }
 }
