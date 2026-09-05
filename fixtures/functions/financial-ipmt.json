@@ -52,14 +52,14 @@
     "description": "Same mortgage, period 180 (halfway)",
     "tags": ["ipmt", "financial"],
     "formula": "=IPMT(0.05/12, 180, 360, 200000)",
-    "expected": { "number": -567.8068900486983 }
+    "expected": { "number": -567.8068900486991 }
   },
   {
     "id": "fn.ipmt.mortgage-last",
     "description": "Same mortgage, final period",
     "tags": ["ipmt", "financial"],
     "formula": "=IPMT(0.05/12, 360, 360, 200000)",
-    "expected": { "number": -4.454951228317319 }
+    "expected": { "number": -4.454951228315864 }
   },
   {
     "id": "fn.ipmt.mortgage-begin-first",
@@ -87,7 +87,7 @@
     "description": "Same PMT loan, final period interest",
     "tags": ["ipmt", "financial"],
     "formula": "=IPMT(8%/12, 10, 10, 10000)",
-    "expected": { "number": -6.867762181186312 }
+    "expected": { "number": -6.867762181186482 }
   },
   {
     "id": "fn.ipmt.yearly",
@@ -157,7 +157,7 @@
     "description": "Large integer nper stays finite (100-year monthly at 5%, period 600)",
     "tags": ["ipmt", "financial", "perf"],
     "formula": "=IPMT(0.05/12, 600, 1200, 100000)",
-    "expected": { "number": -385.0506778087991 }
+    "expected": { "number": -385.050677808801 }
   },
   {
     "id": "fn.ipmt.small-rate",

@@ -13,11 +13,7 @@ fn bench_ipmt(c: &mut Criterion) {
     bench_fn(c, "IPMT", |g| {
         let wb = Workbook::default();
 
-        let ms = formula_spec(
-            "ipmt.ms_month1",
-            "=IPMT(10%/12, 1, 36, 8000)",
-            wb.clone(),
-        );
+        let ms = formula_spec("ipmt.ms_month1", "=IPMT(10%/12, 1, 36, 8000)", wb.clone());
         g.bench_function("ms_month1", |b| {
             b.iter(|| black_box(eval_calc_core(black_box(&ms))))
         });

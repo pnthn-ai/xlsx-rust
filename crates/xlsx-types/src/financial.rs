@@ -395,11 +395,15 @@ mod tests {
         let rate = 0.1;
         let payment = pmt(rate, 2.0, 1_000.0, 0.0, 1.0).unwrap();
         // Annuity-due: first payment cuts principal immediately; interest
-        // (Excel sign) is −(pv + pmt) · rate.
-        ipmt_close(
-            ipmt(rate, 2.0, 2.0, 1_000.0, 0.0, 1.0).unwrap(),
-            -(1_000.0 + payment) * rate,
+        // (Excel sign) is −(pv + pmt) · rate. Reconstructing from PMT has
+        // one extra rounding, so compare with a tight absolute tolerance.
+        let actual = ipmt(rate, 2.0, 2.0, 1_000.0, 0.0, 1.0).unwrap();
+        let expected = -(1_000.0 + payment) * rate;
+        assert!(
+            (actual - expected).abs() < 1e-12,
+            "annuity-due period-2 IPMT {actual} vs reduced-balance {expected}"
         );
+        assert!(actual < 0.0, "loan interest should be an outflow");
     }
 
     #[test]
@@ -418,10 +422,7 @@ mod tests {
             ipmt(0.1, 11.0, 10.0, 1_000.0, 0.0, 0.0),
             Err(ExcelError::Num)
         );
-        assert_eq!(
-            ipmt(0.1, 1.0, 0.0, 1_000.0, 0.0, 0.0),
-            Err(ExcelError::Num)
-        );
+        assert_eq!(ipmt(0.1, 1.0, 0.0, 1_000.0, 0.0, 0.0), Err(ExcelError::Num));
         assert_eq!(
             ipmt(0.1, -1.0, 10.0, 1_000.0, 0.0, 0.0),
             Err(ExcelError::Num)
@@ -435,10 +436,7 @@ mod tests {
         // type=1, per=1: short-circuit 0 (even though PMT(-1, …, type=1) is #NUM!)
         assert_eq!(ipmt(-1.0, 1.0, 1.0, 100.0, 0.0, 1.0).unwrap(), 0.0);
         // type=1, per>1: divide by 1+rate = 0 → #NUM!
-        assert_eq!(
-            ipmt(-1.0, 2.0, 2.0, 100.0, 0.0, 1.0),
-            Err(ExcelError::Num)
-        );
+        assert_eq!(ipmt(-1.0, 2.0, 2.0, 100.0, 0.0, 1.0), Err(ExcelError::Num));
     }
 
     #[test]
@@ -496,15 +494,7 @@ mod tests {
         let mut acc = 0.0f64;
         let rate = 0.05 / 12.0;
         for i in 0..80_000u32 {
-            acc += ipmt(
-                rate,
-                12.0,
-                360.0,
-                200_000.0 + f64::from(i),
-                0.0,
-                0.0,
-            )
-            .unwrap();
+            acc += ipmt(rate, 12.0, 360.0, 200_000.0 + f64::from(i), 0.0, 0.0).unwrap();
         }
         let elapsed = start.elapsed();
         assert!(acc.is_finite());
