@@ -24,6 +24,7 @@ pub mod switch;
 pub mod ifs;
 pub mod unique;
 pub mod irr;
+pub mod xirr;
 
 use crate::ast::{BinOp, Expr, UnaryOp};
 use crate::parse::parse;
