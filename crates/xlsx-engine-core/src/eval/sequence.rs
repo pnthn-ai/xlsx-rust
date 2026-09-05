@@ -248,7 +248,10 @@ mod tests {
     fn matrix_row_major() {
         assert_eq!(
             both_eq(2.0, 3.0, 1.0, 1.0),
-            ExcelValue::Array(vec![vec![n(1.0), n(2.0), n(3.0)], vec![n(4.0), n(5.0), n(6.0)]])
+            ExcelValue::Array(vec![
+                vec![n(1.0), n(2.0), n(3.0)],
+                vec![n(4.0), n(5.0), n(6.0)]
+            ])
         );
     }
 
@@ -299,17 +302,38 @@ mod tests {
 
     #[test]
     fn zero_dim_is_calc() {
-        assert_eq!(sequence(0.0, 1.0, 1.0, 1.0), ExcelValue::Error(ExcelError::Calc));
-        assert_eq!(sequence(1.0, 0.0, 1.0, 1.0), ExcelValue::Error(ExcelError::Calc));
-        assert_eq!(sequence(0.5, 1.0, 1.0, 1.0), ExcelValue::Error(ExcelError::Calc));
-        assert_eq!(sequence(-0.5, 1.0, 1.0, 1.0), ExcelValue::Error(ExcelError::Calc));
+        assert_eq!(
+            sequence(0.0, 1.0, 1.0, 1.0),
+            ExcelValue::Error(ExcelError::Calc)
+        );
+        assert_eq!(
+            sequence(1.0, 0.0, 1.0, 1.0),
+            ExcelValue::Error(ExcelError::Calc)
+        );
+        assert_eq!(
+            sequence(0.5, 1.0, 1.0, 1.0),
+            ExcelValue::Error(ExcelError::Calc)
+        );
+        assert_eq!(
+            sequence(-0.5, 1.0, 1.0, 1.0),
+            ExcelValue::Error(ExcelError::Calc)
+        );
     }
 
     #[test]
     fn negative_dim_is_value() {
-        assert_eq!(sequence(-1.0, 1.0, 1.0, 1.0), ExcelValue::Error(ExcelError::Value));
-        assert_eq!(sequence(1.0, -2.0, 1.0, 1.0), ExcelValue::Error(ExcelError::Value));
-        assert_eq!(sequence(-1.9, 1.0, 1.0, 1.0), ExcelValue::Error(ExcelError::Value));
+        assert_eq!(
+            sequence(-1.0, 1.0, 1.0, 1.0),
+            ExcelValue::Error(ExcelError::Value)
+        );
+        assert_eq!(
+            sequence(1.0, -2.0, 1.0, 1.0),
+            ExcelValue::Error(ExcelError::Value)
+        );
+        assert_eq!(
+            sequence(-1.9, 1.0, 1.0, 1.0),
+            ExcelValue::Error(ExcelError::Value)
+        );
     }
 
     #[test]
@@ -354,7 +378,11 @@ mod tests {
                 assert_eq!(rows[0], vec![n(10.0), n(12.0), n(14.0)]);
                 assert_eq!(
                     rows[4_095],
-                    vec![n(10.0 + 4_095.0 * 3.0 * 2.0), n(12.0 + 4_095.0 * 3.0 * 2.0), n(14.0 + 4_095.0 * 3.0 * 2.0)]
+                    vec![
+                        n(10.0 + 4_095.0 * 3.0 * 2.0),
+                        n(12.0 + 4_095.0 * 3.0 * 2.0),
+                        n(14.0 + 4_095.0 * 3.0 * 2.0)
+                    ]
                 );
             }
             other => panic!("{other:?}"),

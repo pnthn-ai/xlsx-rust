@@ -113,10 +113,7 @@ fn evaluate_bench(rows: u32, cols: u32) {
     let ms = time_it(EVAL_ITERS, || {
         black_box(engine.evaluate(black_box(&spec)).unwrap());
     });
-    println!(
-        "evaluate SEQUENCE({rows},{cols})  {:>12}/call",
-        fmt_dur(ms)
-    );
+    println!("evaluate SEQUENCE({rows},{cols})  {:>12}/call", fmt_dur(ms));
 }
 
 fn main() {
