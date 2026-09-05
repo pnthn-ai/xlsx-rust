@@ -1,0 +1,412 @@
+[
+  {
+    "id": "fn.floor-ms-3.7",
+    "description": "FLOOR(3.7, 2) is 2 (Microsoft example)",
+    "tags": ["math", "floor"],
+    "formula": "=FLOOR(3.7, 2)",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.floor-ms-both-neg",
+    "description": "FLOOR(-2.5, -2) is -2 — both negative, toward zero",
+    "tags": ["math", "floor"],
+    "formula": "=FLOOR(-2.5, -2)",
+    "expected": { "number": -2 }
+  },
+  {
+    "id": "fn.floor-ms-pos-neg-sig",
+    "description": "FLOOR(2.5, -2) is #NUM! — positive number, negative significance",
+    "tags": ["math", "floor", "errors"],
+    "formula": "=FLOOR(2.5, -2)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.floor-ms-tenth",
+    "description": "FLOOR(1.58, 0.1) is 1.5",
+    "tags": ["math", "floor"],
+    "formula": "=FLOOR(1.58, 0.1)",
+    "expected": { "number": 1.5 }
+  },
+  {
+    "id": "fn.floor-ms-hundredth",
+    "description": "FLOOR(0.234, 0.01) is 0.23",
+    "tags": ["math", "floor"],
+    "formula": "=FLOOR(0.234, 0.01)",
+    "expected": { "number": 0.23 }
+  },
+  {
+    "id": "fn.floor-neg-pos-sig",
+    "description": "FLOOR(-1.5, 1) is -2 — negative number, positive significance, away from zero",
+    "tags": ["math", "floor"],
+    "formula": "=FLOOR(-1.5, 1)",
+    "expected": { "number": -2 }
+  },
+  {
+    "id": "fn.floor-neg-pos-sig-2",
+    "description": "FLOOR(-2.5, 2) is -4 (toward −∞)",
+    "tags": ["math", "floor"],
+    "formula": "=FLOOR(-2.5, 2)",
+    "expected": { "number": -4 }
+  },
+  {
+    "id": "fn.floor-neg-neg-toward-zero",
+    "description": "FLOOR(-1.99, -1) is -1 (toward zero)",
+    "tags": ["math", "floor"],
+    "formula": "=FLOOR(-1.99, -1)",
+    "expected": { "number": -1 }
+  },
+  {
+    "id": "fn.floor-below-significance",
+    "description": "FLOOR(45, 50) is 0",
+    "tags": ["math", "floor"],
+    "formula": "=FLOOR(45, 50)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.floor-nickel",
+    "description": "FLOOR(8.26, 0.05) is 8.25",
+    "tags": ["math", "floor"],
+    "formula": "=FLOOR(8.26, 0.05)",
+    "expected": { "number": 8.25 }
+  },
+  {
+    "id": "fn.floor-exact-multiple",
+    "description": "FLOOR(6, 3) is 6 — already a multiple, no change",
+    "tags": ["math", "floor"],
+    "formula": "=FLOOR(6, 3)",
+    "expected": { "number": 6 }
+  },
+  {
+    "id": "fn.floor-zero-number",
+    "description": "FLOOR(0, 1) is 0",
+    "tags": ["math", "floor"],
+    "formula": "=FLOOR(0, 1)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.floor-zero-neg-sig",
+    "description": "FLOOR(0, -1) is 0 — zero is not a positive/negative sign clash",
+    "tags": ["math", "floor"],
+    "formula": "=FLOOR(0, -1)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.floor-zero-sig-nonzero",
+    "description": "FLOOR(15, 0) is #DIV/0!",
+    "tags": ["math", "floor", "errors"],
+    "formula": "=FLOOR(15, 0)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.floor-zero-sig-zero",
+    "description": "FLOOR(0, 0) is 0 — zero number short-circuits the divide",
+    "tags": ["math", "floor"],
+    "formula": "=FLOOR(0, 0)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.floor-true",
+    "description": "FLOOR(TRUE, 1) coerces TRUE → 1",
+    "tags": ["math", "floor", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=FLOOR(TRUE, 1)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.floor-numeric-text",
+    "description": "FLOOR(\"2.5\", 1) is 2",
+    "tags": ["math", "floor", "coercion"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=FLOOR(\"2.5\", 1)",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.floor-text",
+    "description": "FLOOR(\"x\", 1) is #VALUE!",
+    "tags": ["math", "floor", "errors"],
+    "formula": "=FLOOR(\"x\", 1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.floor-arity-one",
+    "description": "FLOOR(1) is #VALUE! — significance is required",
+    "tags": ["math", "floor", "errors"],
+    "formula": "=FLOOR(1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.floor-arity-zero",
+    "description": "FLOOR() is #VALUE!",
+    "tags": ["math", "floor", "errors"],
+    "formula": "=FLOOR()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.floor-err-ltr",
+    "description": "FLOOR(#DIV/0!, #N/A) keeps #DIV/0! (left-to-right)",
+    "tags": ["math", "floor", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=FLOOR(1/0, NA())",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.floor-blank-number",
+    "description": "FLOOR of a blank cell is FLOOR(0, 1) = 0",
+    "tags": ["math", "floor", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=FLOOR(A1, 1)",
+    "expected": { "number": 0 },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.floor-blank-sig",
+    "description": "Blank significance coerces to 0 → #DIV/0!",
+    "tags": ["math", "floor", "empty", "errors"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=FLOOR(1, A1)",
+    "expected": { "error": "#DIV/0!" },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.ceiling-ms-2.5",
+    "description": "CEILING(2.5, 1) is 3 (Microsoft example)",
+    "tags": ["math", "ceiling"],
+    "formula": "=CEILING(2.5, 1)",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.ceiling-ms-both-neg",
+    "description": "CEILING(-2.5, -2) is -4 — both negative, away from zero",
+    "tags": ["math", "ceiling"],
+    "formula": "=CEILING(-2.5, -2)",
+    "expected": { "number": -4 }
+  },
+  {
+    "id": "fn.ceiling-ms-neg-pos-sig",
+    "description": "CEILING(-2.5, 2) is -2 — toward zero",
+    "tags": ["math", "ceiling"],
+    "formula": "=CEILING(-2.5, 2)",
+    "expected": { "number": -2 }
+  },
+  {
+    "id": "fn.ceiling-ms-tenth-exact",
+    "description": "CEILING(1.5, 0.1) is 1.5 — already a multiple",
+    "tags": ["math", "ceiling"],
+    "formula": "=CEILING(1.5, 0.1)",
+    "expected": { "number": 1.5 }
+  },
+  {
+    "id": "fn.ceiling-ms-hundredth",
+    "description": "CEILING(0.234, 0.01) is 0.24",
+    "tags": ["math", "ceiling"],
+    "formula": "=CEILING(0.234, 0.01)",
+    "expected": { "number": 0.24 }
+  },
+  {
+    "id": "fn.ceiling-pos-neg-sig",
+    "description": "CEILING(2.5, -2) is #NUM!",
+    "tags": ["math", "ceiling", "errors"],
+    "formula": "=CEILING(2.5, -2)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.ceiling-neg-pos-toward-zero",
+    "description": "CEILING(-1.5, 1) is -1",
+    "tags": ["math", "ceiling"],
+    "formula": "=CEILING(-1.5, 1)",
+    "expected": { "number": -1 }
+  },
+  {
+    "id": "fn.ceiling-neg-neg",
+    "description": "CEILING(-1.99, -1) is -2",
+    "tags": ["math", "ceiling"],
+    "formula": "=CEILING(-1.99, -1)",
+    "expected": { "number": -2 }
+  },
+  {
+    "id": "fn.ceiling-nickel",
+    "description": "CEILING(4.42, 0.05) is 4.45 (Microsoft price example)",
+    "tags": ["math", "ceiling"],
+    "formula": "=CEILING(4.42, 0.05)",
+    "expected": { "number": 4.45 }
+  },
+  {
+    "id": "fn.ceiling-exact-multiple",
+    "description": "CEILING(6, 3) is 6",
+    "tags": ["math", "ceiling"],
+    "formula": "=CEILING(6, 3)",
+    "expected": { "number": 6 }
+  },
+  {
+    "id": "fn.ceiling-zero-sig-nonzero",
+    "description": "CEILING(15, 0) is #DIV/0!",
+    "tags": ["math", "ceiling", "errors"],
+    "formula": "=CEILING(15, 0)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.ceiling-zero-sig-zero",
+    "description": "CEILING(0, 0) is 0",
+    "tags": ["math", "ceiling"],
+    "formula": "=CEILING(0, 0)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.ceiling-numeric-text",
+    "description": "CEILING(\"2.5\", 1) is 3",
+    "tags": ["math", "ceiling", "coercion"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=CEILING(\"2.5\", 1)",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.ceiling-text",
+    "description": "CEILING(\"x\", 1) is #VALUE!",
+    "tags": ["math", "ceiling", "errors"],
+    "formula": "=CEILING(\"x\", 1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.ceiling-arity-one",
+    "description": "CEILING(1) is #VALUE!",
+    "tags": ["math", "ceiling", "errors"],
+    "formula": "=CEILING(1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.ceiling-err-ltr",
+    "description": "CEILING(#DIV/0!, #N/A) keeps #DIV/0!",
+    "tags": ["math", "ceiling", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=CEILING(1/0, NA())",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.ceiling-blank-sig",
+    "description": "Blank significance coerces to 0 → #DIV/0!",
+    "tags": ["math", "ceiling", "empty", "errors"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=CEILING(1, A1)",
+    "expected": { "error": "#DIV/0!" },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.ceiling-fp-already-multiple",
+    "description": "CEILING(1.2, 0.1) is 1.2 — 15-digit multiple, not IEEE ceil drift to 1.3",
+    "tags": ["math", "ceiling"],
+    "quirks": ["ieee-vs-excel-precision"],
+    "formula": "=CEILING(1.2, 0.1)",
+    "expected": { "number": 1.2 }
+  },
+  {
+    "id": "fn.floor-math-default",
+    "description": "FLOOR.MATH(2.5) is 2 — omitted significance is 1",
+    "tags": ["math", "floor-math"],
+    "formula": "=FLOOR.MATH(2.5)",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.floor-math-neg-default",
+    "description": "FLOOR.MATH(-2.5) is -3 — toward −∞",
+    "tags": ["math", "floor-math"],
+    "formula": "=FLOOR.MATH(-2.5)",
+    "expected": { "number": -3 }
+  },
+  {
+    "id": "fn.floor-math-neg-sig",
+    "description": "FLOOR.MATH(-2.5, 2) is -4",
+    "tags": ["math", "floor-math"],
+    "formula": "=FLOOR.MATH(-2.5, 2)",
+    "expected": { "number": -4 }
+  },
+  {
+    "id": "fn.floor-math-mode-toward-zero",
+    "description": "FLOOR.MATH(-2.5, 2, 1) is -2 — mode nonzero rounds toward zero",
+    "tags": ["math", "floor-math"],
+    "formula": "=FLOOR.MATH(-2.5, 2, 1)",
+    "expected": { "number": -2 }
+  },
+  {
+    "id": "fn.floor-math-ignores-sig-sign",
+    "description": "FLOOR.MATH(-2.5, -2) is -4 — significance sign is ignored",
+    "tags": ["math", "floor-math"],
+    "formula": "=FLOOR.MATH(-2.5, -2)",
+    "expected": { "number": -4 }
+  },
+  {
+    "id": "fn.floor-math-zero-sig",
+    "description": "FLOOR.MATH(15, 0) is 0 — unlike classic FLOOR",
+    "tags": ["math", "floor-math"],
+    "formula": "=FLOOR.MATH(15, 0)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.floor-math-tenth",
+    "description": "FLOOR.MATH(1.58, 0.1) is 1.5",
+    "tags": ["math", "floor-math"],
+    "formula": "=FLOOR.MATH(1.58, 0.1)",
+    "expected": { "number": 1.5 }
+  },
+  {
+    "id": "fn.ceiling-math-default",
+    "description": "CEILING.MATH(2.5) is 3",
+    "tags": ["math", "ceiling-math"],
+    "formula": "=CEILING.MATH(2.5)",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.ceiling-math-neg-default",
+    "description": "CEILING.MATH(-2.5) is -2 — toward +∞",
+    "tags": ["math", "ceiling-math"],
+    "formula": "=CEILING.MATH(-2.5)",
+    "expected": { "number": -2 }
+  },
+  {
+    "id": "fn.ceiling-math-neg-sig",
+    "description": "CEILING.MATH(-2.5, 2) is -2",
+    "tags": ["math", "ceiling-math"],
+    "formula": "=CEILING.MATH(-2.5, 2)",
+    "expected": { "number": -2 }
+  },
+  {
+    "id": "fn.ceiling-math-mode-away",
+    "description": "CEILING.MATH(-2.5, 2, -1) is -4 — nonzero mode away from zero",
+    "tags": ["math", "ceiling-math"],
+    "formula": "=CEILING.MATH(-2.5, 2, -1)",
+    "expected": { "number": -4 }
+  },
+  {
+    "id": "fn.ceiling-math-ignores-sig-sign",
+    "description": "CEILING.MATH(-2.5, -2) is -2 — significance sign is ignored",
+    "tags": ["math", "ceiling-math"],
+    "formula": "=CEILING.MATH(-2.5, -2)",
+    "expected": { "number": -2 }
+  },
+  {
+    "id": "fn.ceiling-math-zero-sig",
+    "description": "CEILING.MATH(15, 0) is 0 — unlike classic CEILING",
+    "tags": ["math", "ceiling-math"],
+    "formula": "=CEILING.MATH(15, 0)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.ceiling-math-hundredth",
+    "description": "CEILING.MATH(0.234, 0.01) is 0.24",
+    "tags": ["math", "ceiling-math"],
+    "formula": "=CEILING.MATH(0.234, 0.01)",
+    "expected": { "number": 0.24 }
+  },
+  {
+    "id": "fn.floor-math-arity-zero",
+    "description": "FLOOR.MATH() is #VALUE!",
+    "tags": ["math", "floor-math", "errors"],
+    "formula": "=FLOOR.MATH()",
+    "expected": { "error": "#VALUE!" }
+  }
+]
