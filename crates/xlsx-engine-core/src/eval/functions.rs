@@ -25,6 +25,7 @@ pub(crate) fn dispatch(
         "IF" => fn_if(ev, args, ctx),
         "IFERROR" => fn_iferror(ev, args, ctx),
         "IFNA" => fn_ifna(ev, args, ctx),
+        "SWITCH" => fn_switch(ev, args, ctx),
         "AND" => fn_and_or(ev, args, ctx, AndOr::And),
         "OR" => fn_and_or(ev, args, ctx, AndOr::Or),
         "XOR" => fn_and_or(ev, args, ctx, AndOr::Xor),
@@ -158,6 +159,42 @@ fn fn_ifna(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValu
         ev.eval_expr(&args[1], ctx)
     } else {
         Ok(v)
+    }
+}
+
+/// `SWITCH(expression, value1, result1, …, [default])`.
+///
+/// Exact `=` match, first hit wins, unused branches are not evaluated.
+/// See [`super::switch`].
+fn fn_switch(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    if args.len() < 3 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let expr = ev.eval_scalar(&args[0], ctx)?;
+    if let ExcelValue::Error(e) = expr {
+        return Ok(ExcelValue::Error(e));
+    }
+    let has_default = args.len() % 2 == 0;
+    let pair_end = if has_default {
+        args.len() - 1
+    } else {
+        args.len()
+    };
+    let mut i = 1;
+    while i < pair_end {
+        let value = ev.eval_scalar(&args[i], ctx)?;
+        if let ExcelValue::Error(e) = value {
+            return Ok(ExcelValue::Error(e));
+        }
+        if super::switch::matches(&expr, &value) {
+            return ev.eval_expr(&args[i + 1], ctx);
+        }
+        i += 2;
+    }
+    if has_default {
+        ev.eval_expr(&args[args.len() - 1], ctx)
+    } else {
+        Ok(ExcelValue::Error(ExcelError::Na))
     }
 }
 

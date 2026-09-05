@@ -283,12 +283,13 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 | [`eval/coerce.rs`](crates/xlsx-engine-core/src/eval/coerce.rs) | Arithmetic / `&` / `IF` coercion (`"2"+1` = 3, TRUE → 1, empty → 0) |
 | [`eval/compare.rs`](crates/xlsx-engine-core/src/eval/compare.rs) | 15-digit `=`, case-insensitive text, `TRUE=1`, type ranking (`FALSE>100`) |
 | [`eval/empty.rs`](crates/xlsx-engine-core/src/eval/empty.rs) | Blank ≠ 0 ≠ `""`, but `A1=0` and `A1=""` when `A1` is blank |
-| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators, logicals, lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates, math, text, `TYPE` / `IS*` |
+| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators, logicals (`IF`/`SWITCH`/`AND`/…), lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates, math, text, `TYPE` / `IS*` |
+| [`eval/switch.rs`](crates/xlsx-engine-core/src/eval/switch.rs) | Excel `SWITCH` exact-match kernel (first hit, default / `#N/A`) |
 
 **Implemented:** arithmetic and comparison operators (unary `+/-`, `%`, `^`,
 `&`, space intersection), host-aware implicit intersection, cell refs /
 ranges / defined names, array literals, error propagation, and the function
-families above. Workbook input is the snippet type in `xlsx-types` (no
+families above (including `SWITCH`). Workbook input is the snippet type in `xlsx-types` (no
 `.xlsx` IO).
 
 **Deferred / in progress:** full function library, locale argument separators,
@@ -316,6 +317,10 @@ as one or the other. Documented quirk categories:
 - `VLOOKUP` approximate match binary-searches (wrong answers on unsorted data);
   omitted `range_lookup` defaults to approximate. `XLOOKUP` defaults to exact
 - `IF` short-circuits; `AND` / `OR` do not (`AND(FALSE, 1/0)` is `#DIV/0!`)
+- `SWITCH(expression, value1, result1, …, [default])` uses Excel `=` (not `IF`
+  truthiness: `IF(2, …)` is true, `SWITCH(2, TRUE, …)` does not match). First
+  hit wins; unused values/results are not evaluated. No match and no default
+  is `#N/A` (a nested `IF` missing an else is `FALSE`). `*` / `?` are literal.
 - Error precedence is left-to-right (`#DIV/0!+#VALUE!` keeps `#DIV/0!`)
 - 1900 leap-year bug (`DATE(1900,2,29)` is serial 60); 1904 date system
 - Unary `+`/`-` and postfix `%` (`50%` is 0.5, `5%%` is 0.0005)
