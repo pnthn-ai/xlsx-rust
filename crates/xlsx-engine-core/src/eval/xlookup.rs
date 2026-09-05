@@ -343,7 +343,14 @@ fn find_index_on_flat(
 ) -> Option<usize> {
     let col: Vec<Vec<ExcelValue>> = flat.iter().cloned().map(|v| vec![v]).collect();
     let m = Matrix::Array(&col);
-    find_index(lookup, &m, Axis::Vertical, flat.len(), match_mode, search_mode)
+    find_index(
+        lookup,
+        &m,
+        Axis::Vertical,
+        flat.len(),
+        match_mode,
+        search_mode,
+    )
 }
 
 fn scan(
@@ -367,7 +374,12 @@ fn scan(
         }
         if matches!(match_mode, MatchMode::NextSmaller | MatchMode::NextLarger)
             && approx_candidate(lookup, key, match_mode)
-            && better_approx(lookup, key, best.map(|b| lookup_at(keys, axis, b)), match_mode)
+            && better_approx(
+                lookup,
+                key,
+                best.map(|b| lookup_at(keys, axis, b)),
+                match_mode,
+            )
         {
             best = Some(i);
         }
@@ -462,12 +474,7 @@ fn bisect_left(keys: &Matrix<'_>, axis: Axis, n: usize, lookup: &ExcelValue) -> 
 }
 
 /// Last index where `key <= lookup` on an ascending list.
-fn bisect_right_leq(
-    keys: &Matrix<'_>,
-    axis: Axis,
-    n: usize,
-    lookup: &ExcelValue,
-) -> Option<usize> {
+fn bisect_right_leq(keys: &Matrix<'_>, axis: Axis, n: usize, lookup: &ExcelValue) -> Option<usize> {
     let mut lo = 0usize;
     let mut hi = n;
     while lo < hi {
@@ -666,7 +673,14 @@ mod tests {
         let keys = col(&[n(1.0), n(5.0)]);
         let ret = col(&[t("a"), t("b")]);
         assert_eq!(
-            xl(n(9.0), keys.clone(), ret.clone(), Some(t("miss")), None, None),
+            xl(
+                n(9.0),
+                keys.clone(),
+                ret.clone(),
+                Some(t("miss")),
+                None,
+                None
+            ),
             t("miss")
         );
         assert_eq!(
@@ -687,7 +701,14 @@ mod tests {
         let keys = col(&[n(5.0), n(5.0), n(5.0)]);
         let ret = col(&[t("a"), t("b"), t("c")]);
         assert_eq!(
-            xl(n(5.0), keys.clone(), ret.clone(), None, Some(n(0.0)), Some(n(1.0))),
+            xl(
+                n(5.0),
+                keys.clone(),
+                ret.clone(),
+                None,
+                Some(n(0.0)),
+                Some(n(1.0))
+            ),
             t("a")
         );
         assert_eq!(
@@ -701,15 +722,36 @@ mod tests {
         let keys = col(&[n(1.0), n(5.0), n(10.0)]);
         let ret = col(&[t("a"), t("b"), t("c")]);
         assert_eq!(
-            xl(n(6.0), keys.clone(), ret.clone(), Some(t("miss")), Some(n(-1.0)), None),
+            xl(
+                n(6.0),
+                keys.clone(),
+                ret.clone(),
+                Some(t("miss")),
+                Some(n(-1.0)),
+                None
+            ),
             t("b")
         );
         assert_eq!(
-            xl(n(6.0), keys.clone(), ret.clone(), Some(t("miss")), Some(n(1.0)), None),
+            xl(
+                n(6.0),
+                keys.clone(),
+                ret.clone(),
+                Some(t("miss")),
+                Some(n(1.0)),
+                None
+            ),
             t("c")
         );
         assert_eq!(
-            xl(n(0.0), keys.clone(), ret.clone(), Some(t("miss")), Some(n(-1.0)), None),
+            xl(
+                n(0.0),
+                keys.clone(),
+                ret.clone(),
+                Some(t("miss")),
+                Some(n(-1.0)),
+                None
+            ),
             t("miss")
         );
         assert_eq!(
@@ -723,7 +765,14 @@ mod tests {
         let keys = col(&[t("apple"), t("a*")]);
         let ret = col(&[n(1.0), n(2.0)]);
         assert_eq!(
-            xl(t("a*"), keys.clone(), ret.clone(), Some(t("miss")), Some(n(0.0)), None),
+            xl(
+                t("a*"),
+                keys.clone(),
+                ret.clone(),
+                Some(t("miss")),
+                Some(n(0.0)),
+                None
+            ),
             n(2.0)
         );
         assert_eq!(
@@ -741,7 +790,14 @@ mod tests {
             t("num")
         );
         assert_eq!(
-            xl(ExcelValue::Bool(true), keys.clone(), ret.clone(), None, None, None),
+            xl(
+                ExcelValue::Bool(true),
+                keys.clone(),
+                ret.clone(),
+                None,
+                None,
+                None
+            ),
             t("bool")
         );
         assert_eq!(xl(t("1"), keys, ret, None, None, None), t("text"));
@@ -766,11 +822,25 @@ mod tests {
         let keys = col(&[n(1.0), n(10.0), n(5.0)]);
         let ret = col(&[t("a"), t("b"), t("c")]);
         assert_eq!(
-            xl(n(5.0), keys.clone(), ret.clone(), Some(t("miss")), Some(n(0.0)), Some(n(1.0))),
+            xl(
+                n(5.0),
+                keys.clone(),
+                ret.clone(),
+                Some(t("miss")),
+                Some(n(0.0)),
+                Some(n(1.0))
+            ),
             t("c")
         );
         assert_eq!(
-            xl(n(5.0), keys, ret, Some(t("miss")), Some(n(0.0)), Some(n(2.0))),
+            xl(
+                n(5.0),
+                keys,
+                ret,
+                Some(t("miss")),
+                Some(n(0.0)),
+                Some(n(2.0))
+            ),
             t("miss")
         );
     }
@@ -780,7 +850,14 @@ mod tests {
         let keys = col(&[n(1.0), n(10.0), n(5.0)]);
         let ret = col(&[t("a"), t("b"), t("c")]);
         assert_eq!(
-            xl(n(6.0), keys, ret, Some(t("miss")), Some(n(-1.0)), Some(n(2.0))),
+            xl(
+                n(6.0),
+                keys,
+                ret,
+                Some(t("miss")),
+                Some(n(-1.0)),
+                Some(n(2.0))
+            ),
             t("a")
         );
     }
@@ -898,7 +975,14 @@ mod tests {
                 );
             }
         }
-        both_eq(&t("a*"), &col(&[t("apple"), t("a*")]), &col(&[n(1.0), n(2.0)]), None, Some(&n(2.0)), None);
+        both_eq(
+            &t("a*"),
+            &col(&[t("apple"), t("a*")]),
+            &col(&[n(1.0), n(2.0)]),
+            None,
+            Some(&n(2.0)),
+            None,
+        );
     }
 
     #[test]
@@ -908,15 +992,15 @@ mod tests {
         let ret = col(&(0..n_keys).map(|i| n((i * 3) as f64)).collect::<Vec<_>>());
         both_eq(&n(1_000.0), &keys, &ret, None, Some(&n(0.0)), Some(&n(1.0)));
         both_eq(&n(1_000.0), &keys, &ret, None, Some(&n(0.0)), Some(&n(2.0)));
-        both_eq(&n(1_000.5), &keys, &ret, Some(&t("miss")), Some(&n(-1.0)), Some(&n(2.0)));
-        let got = xlookup(
-            &n(1_000.0),
+        both_eq(
+            &n(1_000.5),
             &keys,
             &ret,
-            None,
-            Some(&n(0.0)),
+            Some(&t("miss")),
+            Some(&n(-1.0)),
             Some(&n(2.0)),
         );
+        let got = xlookup(&n(1_000.0), &keys, &ret, None, Some(&n(0.0)), Some(&n(2.0)));
         assert_eq!(got, n(3_000.0));
     }
 }
