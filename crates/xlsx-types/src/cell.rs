@@ -64,7 +64,16 @@ impl CellAddr {
     }
 
     pub fn a1(self) -> String {
-        format!("{}{}", col_name(self.col), self.row + 1)
+        let mut s = String::with_capacity(8);
+        self.write_a1(&mut s);
+        s
+    }
+
+    /// Append this address in A1 form without allocating a fresh `String`.
+    pub fn write_a1(self, out: &mut String) {
+        write_col_name(self.col, out);
+        use std::fmt::Write;
+        let _ = write!(out, "{}", self.row + 1);
     }
 }
 
@@ -204,16 +213,24 @@ fn parse_col(s: &str) -> Option<u32> {
     n.checked_sub(1)
 }
 
-fn col_name(mut col: u32) -> String {
-    let mut buf = Vec::new();
+#[cfg(test)]
+fn col_name(col: u32) -> String {
+    let mut s = String::with_capacity(3);
+    write_col_name(col, &mut s);
+    s
+}
+
+fn write_col_name(mut col: u32, out: &mut String) {
+    let mut buf = [0u8; 4];
+    let mut i = 4;
     col += 1;
     while col > 0 {
         col -= 1;
-        buf.push(b'A' + (col % 26) as u8);
+        i -= 1;
+        buf[i] = b'A' + (col % 26) as u8;
         col /= 26;
     }
-    buf.reverse();
-    String::from_utf8(buf).unwrap()
+    out.push_str(std::str::from_utf8(&buf[i..]).unwrap());
 }
 
 /// Split `Sheet1!A1` or `'My Sheet'!A1`.

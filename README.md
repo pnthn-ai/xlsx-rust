@@ -129,7 +129,7 @@ Group new cases by what they prove, not by when they were added:
 |---|---|
 | [`fixtures/seed/`](fixtures/seed) | Original gate seed (kept stable; do not duplicate) |
 | [`fixtures/quirks/`](fixtures/quirks) | Excel oddities: type rank, empty duality, coercion, dates, VLOOKUP approx, … |
-| [`fixtures/functions/`](fixtures/functions) | Function families (`SUM`/`AVERAGE`/`COUNT`, logicals, text, lookup, `TYPE`) |
+| [`fixtures/functions/`](fixtures/functions) | Function families (`SUM`/`AVERAGE`/`COUNT`/`COUNTIF`, logicals, text, lookup, `TYPE`) |
 | [`fixtures/operators/`](fixtures/operators) | Unary/`%`, intersection / union-shaped ranges |
 | [`fixtures/ignored/`](fixtures/ignored) | Documented `ignore` (volatile, locale, precision-as-displayed, hidden rows) |
 
@@ -283,12 +283,12 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 | [`eval/coerce.rs`](crates/xlsx-engine-core/src/eval/coerce.rs) | Arithmetic / `&` / `IF` coercion (`"2"+1` = 3, TRUE → 1, empty → 0) |
 | [`eval/compare.rs`](crates/xlsx-engine-core/src/eval/compare.rs) | 15-digit `=`, case-insensitive text, `TRUE=1`, type ranking (`FALSE>100`) |
 | [`eval/empty.rs`](crates/xlsx-engine-core/src/eval/empty.rs) | Blank ≠ 0 ≠ `""`, but `A1=0` and `A1=""` when `A1` is blank |
-| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators, logicals, lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates, math, text, `TYPE` / `IS*` |
+| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators (`SUM`/`COUNT`/`COUNTIF`/…), logicals, lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates, math, text, `TYPE` / `IS*` |
 
 **Implemented:** arithmetic and comparison operators (unary `+/-`, `%`, `^`,
 `&`, space intersection), host-aware implicit intersection, cell refs /
-ranges / defined names, array literals, error propagation, and the function
-families above. Workbook input is the snippet type in `xlsx-types` (no
+ranges / defined names, array literals, error propagation, `COUNTIF`, and the
+function families above. Workbook input is the snippet type in `xlsx-types` (no
 `.xlsx` IO).
 
 **Deferred / in progress:** full function library, locale argument separators,
@@ -321,7 +321,11 @@ as one or the other. Documented quirk categories:
 - Unary `+`/`-` and postfix `%` (`50%` is 0.5, `5%%` is 0.0005)
 - Space intersection (`A1:B2 B2`); non-overlap is `#NULL!`
 - Implicit intersection of a range in a scalar host cell (`A1:A3` at `B2` → `A2`)
-- Wildcards in exact `VLOOKUP` / `MATCH` (`*` / `?`)
+- Wildcards in exact `VLOOKUP` / `MATCH` / `COUNTIF` (`*` / `?` / `~`)
+- `COUNTIF` criteria: operators (`= <> > < >= <=`), numeric text matching both
+  number and `"2"`, `"TRUE"` coerced to the logical (use `"TRUE*"` for text),
+  `""` / `"="` vs `"<>"` blank duality, errors ignored unless the criterion is
+  that error
 - Circular refs modeled as `#CIRCULAR!`
 - Volatile / locale / precision-as-displayed / hidden-row `SUBTOTAL` are
   catalogued as `ignore` until they can be evaluated honestly

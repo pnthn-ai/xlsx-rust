@@ -1,13 +1,14 @@
 //! Shared Excel-compatible types for the xlsx-rust verification stack.
 //!
 //! Crate boundaries:
-//! - **xlsx-types** — values, errors, workbook snippets, [`Candidate`] trait
+//! - **xlsx-types** — values, errors, COUNTIF criteria, workbook snippets, [`Candidate`] trait
 //! - **xlsx-oracle** — trusted expected-result source
 //! - **xlsx-verify** — corpus + compare + report + CLI
 //! - **xlsx-engine-core** — real `calc-core` formula engine
 //! - **xlsx-engine** — stub candidates (`seed-compliant`, `naive`) that demonstrate the gate
 
 pub mod cell;
+pub mod criterion;
 pub mod error;
 pub mod eval;
 pub mod quirk;
@@ -15,6 +16,7 @@ pub mod value;
 pub mod workbook;
 
 pub use cell::{AddrError, CellAddr, CellRef, RangeRef};
+pub use criterion::{count_matches, excel_wildcard, Criterion};
 pub use error::ExcelError;
 pub use eval::{
     ArrayMode, Candidate, DateSystem, EvalError, EvalOptions, EvalSpec, EvalTarget, Locale,

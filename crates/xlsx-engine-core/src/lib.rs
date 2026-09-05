@@ -5,6 +5,7 @@
 //! - [`eval`] — workbook-backed walker
 //! - [`eval::coerce`] / [`eval::compare`] / [`eval::empty`] — quirk modules
 //! - [`eval::functions`] — worksheet functions used by the expanded corpus
+//!   (including `COUNTIF`)
 //!
 //! This crate depends only on [`xlsx_types`]. It never reads fixture expected
 //! values; the verification gate (`xlsx-verify`) is the only judge.

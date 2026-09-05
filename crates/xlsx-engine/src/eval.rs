@@ -4,8 +4,8 @@ use crate::dates::{date_serial, serial_to_ymd, time_fraction};
 use crate::parse::{parse, BinOp, Expr, UnaryOp};
 use std::collections::HashSet;
 use xlsx_types::{
-    excel_num_eq, ArrayMode, CellAddr, CellRef, EvalError, EvalSpec, EvalTarget, ExcelError,
-    ExcelValue, RangeRef, Workbook,
+    count_matches, excel_num_eq, ArrayMode, CellAddr, CellRef, Criterion, EvalError, EvalSpec,
+    EvalTarget, ExcelError, ExcelValue, RangeRef, Workbook,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -363,6 +363,7 @@ impl Interpreter {
             "COUNT" => self.fn_agg(args, ctx, AggKind::Count),
             "COUNTA" => self.fn_agg(args, ctx, AggKind::CountA),
             "COUNTBLANK" => self.fn_agg(args, ctx, AggKind::CountBlank),
+            "COUNTIF" => self.fn_countif(args, ctx),
             "IF" => self.fn_if(args, ctx),
             "IFERROR" => self.fn_iferror(args, ctx),
             "IFNA" => self.fn_ifna(args, ctx),
@@ -442,6 +443,20 @@ impl Interpreter {
             }
         }
         Ok(acc.finish())
+    }
+
+    fn fn_countif(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.len() != 2 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        if let Some(sheet) = countif_range_sheet(&args[0], ctx) {
+            if ctx.spec.workbook.sheet(Some(sheet)).is_err() {
+                return Ok(ExcelValue::Error(ExcelError::Ref));
+            }
+        }
+        let crit = Criterion::parse(&self.eval_scalar(&args[1], ctx)?);
+        let v = self.eval_expr(&args[0], ctx)?;
+        Ok(ExcelValue::Number(count_matches(&v, &crit) as f64))
     }
 
     fn fn_if(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
@@ -1560,6 +1575,14 @@ fn lookup_key_match(lookup: &ExcelValue, key: &ExcelValue, sem: Semantics) -> bo
     match sem {
         Semantics::ExcelSeed => matches!(excel_eq(lookup, key), ExcelValue::Bool(true)),
         Semantics::Naive => matches!(naive_eq(lookup, key), ExcelValue::Bool(true)),
+    }
+}
+
+fn countif_range_sheet<'a>(expr: &'a Expr, ctx: &'a Ctx<'_>) -> Option<&'a str> {
+    match expr {
+        Expr::Range(r) => Some(r.sheet.as_deref().unwrap_or(ctx.current_sheet.as_str())),
+        Expr::Cell(c) => Some(c.sheet.as_deref().unwrap_or(ctx.current_sheet.as_str())),
+        _ => None,
     }
 }
 
