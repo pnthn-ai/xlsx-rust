@@ -55,3 +55,7 @@ harness = false
 [[bench]]
 name = "concat"
 harness = false
+
+[[bench]]
+name = "eomonth"
+harness = false
