@@ -40,6 +40,7 @@ backend can be wired later through `xlsx-oracle` without changing candidates.
 | [`crates/xlsx-verify`](crates/xlsx-verify) | Corpus loader, comparison, verdict report, `xlsx-verify` CLI |
 | [`crates/xlsx-engine-core`](crates/xlsx-engine-core) | Real formula engine (`calc-core`): parser, evaluator, quirk modules |
 | [`crates/xlsx-engine`](crates/xlsx-engine) | Stub candidates: `seed-compliant` (expanded-corpus pass path) and `naive` (intentional fail path) |
+| [`crates/xlsx-bench`](crates/xlsx-bench) | Shared Criterion harness: large-snippet builders, one-file-per-function benches, JSON/CSV snapshots |
 
 `xlsx-engine` stubs remain so the gate still has an explicit pass/fail demo.
 `calc-core` is the serious default; it does **not** read fixture expected
@@ -283,7 +284,8 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 | [`eval/coerce.rs`](crates/xlsx-engine-core/src/eval/coerce.rs) | Arithmetic / `&` / `IF` coercion (`"2"+1` = 3, TRUE → 1, empty → 0) |
 | [`eval/compare.rs`](crates/xlsx-engine-core/src/eval/compare.rs) | 15-digit `=`, case-insensitive text, `TRUE=1`, type ranking (`FALSE>100`) |
 | [`eval/empty.rs`](crates/xlsx-engine-core/src/eval/empty.rs) | Blank ≠ 0 ≠ `""`, but `A1=0` and `A1=""` when `A1` is blank |
-| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators, logicals, lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates, math, text, `TYPE` / `IS*` |
+| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators, logicals, lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates, math, text (`LEFT`/`SUBSTITUTE`/…), `TYPE` / `IS*` |
+| [`eval/substitute.rs`](crates/xlsx-engine-core/src/eval/substitute.rs) | Excel `SUBSTITUTE` kernel (case-sensitive, nth instance, empty `old_text` no-op) |
 
 **Implemented:** arithmetic and comparison operators (unary `+/-`, `%`, `^`,
 `&`, space intersection), host-aware implicit intersection, cell refs /
@@ -339,3 +341,80 @@ cargo run -p xlsx-verify -- --help
 ```
 
 Headless: libraries + CLI only. No GUI, no COM automation in CI.
+
+## Performance harness (per-function hill-climbing)
+
+Correctness is the **hard gate**. Benches are advisory: they measure time-to-compute
+so parallel agents can hill-climb a single function, but a faster result that
+fails `xlsx-verify` is not a win.
+
+```bash
+# 1. Correctness first (must stay exit 0)
+cargo test --workspace
+cargo run -p xlsx-verify -- --candidate calc-core
+
+# 2. Then measure (Criterion; not part of cargo test)
+cargo bench -p xlsx-bench --bench fn_sum
+
+# Optional 100k-cell case (slower)
+XLSX_BENCH_LARGE=1 cargo bench -p xlsx-bench --bench fn_sum
+
+# Compact JSON/CSV snapshot for a later Excel-oracle comparison.
+# Does NOT call live Excel; records calc-core wall time + the computed value.
+cargo run -p xlsx-bench -- --function SUM --rows 10000 --format json
+cargo run -p xlsx-bench -- --function SUM --rows 10000 --format csv -o /tmp/sum.csv
+```
+
+Criterion also writes `target/criterion/fn_sum/**/estimates.json` (and HTML
+under `target/criterion/report/`). The snapshot schema is a smaller envelope
+(`candidate`, `oracle: "none"`, per-row `mean_ns` / `result`) so a future
+oracle bakeoff can land without changing bench files.
+
+### How to add a function bench
+
+Convention: **one Excel function → one bench file → one Criterion group**.
+
+1. Copy [`crates/xlsx-bench/benches/fn_sum.rs`](crates/xlsx-bench/benches/fn_sum.rs)
+   to `crates/xlsx-bench/benches/fn_<name>.rs` (`<name>` = lowercase function
+   id: `average`, `vlookup`, `xlookup`, `error_type`, …).
+2. Register it in [`crates/xlsx-bench/Cargo.toml`](crates/xlsx-bench/Cargo.toml):
+
+   ```toml
+   [[bench]]
+   name = "fn_average"
+   harness = false
+   ```
+
+3. Call `xlsx_bench::bench_fn(c, "AVERAGE", |g| { ... })`. That helper forces
+   the group name `fn_average` so agents do not fight over Criterion ids.
+4. Build 10k–100k cell inputs with the snippet helpers — do **not** hand-write
+   fixture JSON at this scale:
+
+   ```rust
+   use xlsx_bench::prelude::*;
+
+   let range = numeric_column(10_000, |i| (i + 1) as f64);
+   let spec = range.call_spec("average.10k", "AVERAGE");
+   // workbook/spec constructed once, outside iter
+   g.throughput(Throughput::Elements(range.cell_count));
+   g.bench_function("range_10k", |b| {
+       b.iter(|| black_box(eval_calc_core(black_box(&spec))))
+   });
+   ```
+
+   Helpers: `numeric_column`, `numeric_grid` / `grid`, `mixed_column` (number /
+   blank / text / bool cycle), `SnippetBuilder` for custom shapes.
+5. Time **only** `Candidate::evaluate`. Setup (range fill, `EvalSpec`) stays
+   outside `iter`.
+6. Do not expand the quirk corpus for a bench-only PR. Do not rewrite
+   calc-core except tiny hooks the bench actually needs.
+
+`cargo bench` is **not** a correctness signal. Before claiming a performance
+win:
+
+1. `cargo test --workspace` exits 0.
+2. `xlsx-verify --candidate calc-core` exits 0.
+3. The JSON report has `summary.failed == 0` and `summary.errored == 0`.
+
+Skipped (`ignore`) fixtures still do not count as a pass. Hill-climb under
+that gate, not around it.

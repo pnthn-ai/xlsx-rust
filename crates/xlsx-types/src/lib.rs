@@ -6,6 +6,7 @@
 //! - **xlsx-verify** — corpus + compare + report + CLI
 //! - **xlsx-engine-core** — real `calc-core` formula engine
 //! - **xlsx-engine** — stub candidates (`seed-compliant`, `naive`) that demonstrate the gate
+//! - **xlsx-bench** — Criterion harness + large-snippet builders (advisory timings only)
 
 pub mod cell;
 pub mod error;
