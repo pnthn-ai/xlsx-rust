@@ -929,4 +929,32 @@ mod tests {
             ExcelValue::Error(ExcelError::Value)
         );
     }
+    #[test]
+    fn cumprinc_microsoft_loan_and_errors() {
+        let wb = Workbook::default();
+        match eval_formula_in(&wb, "=CUMPRINC(9%/12,30*12,125000,13,24,0)").unwrap() {
+            ExcelValue::Number(n) => {
+                assert_eq!((n * 100.0).round() as i64, -93_411, "got {n}")
+            }
+            other => panic!("expected number, got {other:?}"),
+        }
+        match eval_formula_in(&wb, "=CUMPRINC(9%/12,360,125000,1,1,0)").unwrap() {
+            ExcelValue::Number(n) => {
+                assert_eq!((n * 100.0).round() as i64, -6_828, "got {n}")
+            }
+            other => panic!("expected number, got {other:?}"),
+        }
+        assert_eq!(
+            eval_formula_in(&wb, "=CUMPRINC(0,360,125000,1,1,0)").unwrap(),
+            ExcelValue::Error(ExcelError::Num)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=CUMPRINC(0.01,360,125000,1,1)").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=CUMPRINC()").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
+        );
+    }
 }

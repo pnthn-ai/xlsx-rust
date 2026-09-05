@@ -5,8 +5,8 @@
 //! [`super::filter`].
 //!
 //! Unknown names return `#NAME?` (an Excel value, not [`EvalError`]).
-//! Financial TVM starts with `PMT` (`xlsx_types::excel_pmt`); `PV`/`FV`/`NPER`
-//! are later workstreams.
+//! Financial TVM: `PMT` / `CUMPRINC` (`xlsx_types::excel_pmt` /
+//! `xlsx_types::excel_cumprinc`); `PV`/`FV`/`NPER` are later workstreams.
 
 use super::{coerce, compare, excel_pow, Ctx, Evaluator};
 use crate::ast::Expr;
@@ -16,8 +16,8 @@ use crate::dates::{
 };
 use crate::text_format;
 use xlsx_types::{
-    count_matches, excel_ceiling, excel_ceiling_math, excel_floor, excel_floor_math, excel_pmt,
-    Criterion, EvalError, ExcelError, ExcelValue,
+    count_matches, excel_ceiling, excel_ceiling_math, excel_cumprinc, excel_floor,
+    excel_floor_math, excel_pmt, Criterion, EvalError, ExcelError, ExcelValue,
 };
 
 pub(crate) fn dispatch(
@@ -138,6 +138,7 @@ pub(crate) fn dispatch(
         "FALSE" => Ok(ExcelValue::Bool(false)),
         // Financial (TVM). PV / FV / NPER are later workstreams.
         "PMT" => fn_pmt(ev, args, ctx),
+        "CUMPRINC" => fn_cumprinc(ev, args, ctx),
         _ => Ok(ExcelValue::Error(ExcelError::Name)),
     }
 }
@@ -1380,6 +1381,40 @@ fn fn_pmt(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue
         0.0
     };
     match excel_pmt(rate, nper, pv, fv, typ) {
+        Ok(n) => Ok(ExcelValue::Number(n)),
+        Err(e) => Ok(ExcelValue::Error(e)),
+    }
+}
+
+fn fn_cumprinc(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    if args.len() != 6 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let rate = match coerce_num(ev, &args[0], ctx)? {
+        Ok(n) => n,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let nper = match coerce_num(ev, &args[1], ctx)? {
+        Ok(n) => n,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let pv = match coerce_num(ev, &args[2], ctx)? {
+        Ok(n) => n,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let start = match coerce_num(ev, &args[3], ctx)? {
+        Ok(n) => n,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let end = match coerce_num(ev, &args[4], ctx)? {
+        Ok(n) => n,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let typ = match coerce_num(ev, &args[5], ctx)? {
+        Ok(n) => n,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    match excel_cumprinc(rate, nper, pv, start, end, typ) {
         Ok(n) => Ok(ExcelValue::Number(n)),
         Err(e) => Ok(ExcelValue::Error(e)),
     }
