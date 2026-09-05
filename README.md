@@ -285,7 +285,7 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 | [`eval/coerce.rs`](crates/xlsx-engine-core/src/eval/coerce.rs) | Arithmetic / `&` / `IF` coercion (`"2"+1` = 3, TRUE → 1, empty → 0) |
 | [`eval/compare.rs`](crates/xlsx-engine-core/src/eval/compare.rs) | 15-digit `=`, case-insensitive text, `TRUE=1`, type ranking (`FALSE>100`) |
 | [`eval/empty.rs`](crates/xlsx-engine-core/src/eval/empty.rs) | Blank ≠ 0 ≠ `""`, but `A1=0` and `A1=""` when `A1` is blank |
-| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Dispatch: aggregators (`SUM`/`SUMIF`/`SUMIFS`/`AVERAGEIF`/`COUNTIF`/`SUMPRODUCT`), logicals (`IF`/`IFS`/`SWITCH`), lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`/`FILTER`/`UNIQUE`), dates (`DATE`/`EOMONTH`/`NETWORKDAYS`/`WEEKDAY`/`WORKDAY`), math (`ROUND`/`ROUNDUP`/`ROUNDDOWN`/`FLOOR`/`CEILING`), text (`LEFT`/`SUBSTITUTE`/`REPLACE`/`FIND`/`SEARCH`/`TEXT`/`TEXTJOIN`/`CONCAT`), financial (`NPV`/`PMT`/`IRR`), `TYPE` / `IS*` |
+| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Dispatch: aggregators (`SUM`/`SUMIF`/`SUMIFS`/`AVERAGEIF`/`COUNTIF`/`SUMPRODUCT`), logicals (`IF`/`IFS`/`SWITCH`), lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`/`FILTER`/`UNIQUE`/`CHOOSEROWS`), dates (`DATE`/`EOMONTH`/`NETWORKDAYS`/`WEEKDAY`/`WORKDAY`), math (`ROUND`/`ROUNDUP`/`ROUNDDOWN`/`FLOOR`/`CEILING`), text (`LEFT`/`SUBSTITUTE`/`REPLACE`/`FIND`/`SEARCH`/`TEXT`/`TEXTJOIN`/`CONCAT`), financial (`NPV`/`PMT`/`IRR`), `TYPE` / `IS*` |
 | [`eval/sumif.rs`](crates/xlsx-engine-core/src/eval/sumif.rs) | Excel `SUMIF` kernel (criteria walk, reshape `sum_range`, no array literals) |
 | [`eval/sumifs.rs`](crates/xlsx-engine-core/src/eval/sumifs.rs) | Excel `SUMIFS`: multi-criteria AND, same-shape ranges |
 | [`eval/averageif.rs`](crates/xlsx-engine-core/src/eval/averageif.rs) | Excel `AVERAGEIF` kernel (reshape `average_range`, `#DIV/0!` when empty) |
@@ -301,6 +301,7 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 | [`eval/ifs.rs`](crates/xlsx-engine-core/src/eval/ifs.rs) | `IFS` pair-selection kernel (eager eval, first TRUE, no-match `#N/A`) |
 | [`eval/unique.rs`](crates/xlsx-engine-core/src/eval/unique.rs) | `UNIQUE(array, [by_col], [exactly_once])` hash distinctness |
 | [`eval/filter.rs`](crates/xlsx-engine-core/src/eval/filter.rs) | `FILTER` mask/select kernel (`#CALC!` / `if_empty`, row vs column) |
+| [`eval/chooserows.rs`](crates/xlsx-engine-core/src/eval/chooserows.rs) | `CHOOSEROWS(array, row_num1, …)` pick kernel (negative index / `#VALUE!`) |
 | [`eval/npv.rs`](crates/xlsx-engine-core/src/eval/npv.rs) | Excel `NPV` kernel (period-1 discount, range skip of blanks/text/logicals) |
 | [`eval/irr.rs`](crates/xlsx-engine-core/src/eval/irr.rs) | Excel `IRR` Newton / secant kernel (20 tries, `1e-7` rate, `#NUM!` on failure) |
 | [`text_format.rs`](crates/xlsx-engine-core/src/text_format.rs) | Excel `TEXT` for a documented number/date format subset |
@@ -388,9 +389,17 @@ as one or the other. Documented quirk categories:
   (or columns when `by_col` is TRUE); case-insensitive text; type-strict
   (`1` ≠ `"1"` ≠ `TRUE`); blanks collapse to one empty; `exactly_once` with
   no survivors is `#CALC!`. Result is always an array value.
+- `CHOOSEROWS(array, row_num1, [row_num2], …)`: pick listed rows in listed
+  order. Positive `row_num` is 1-based from the top; **negative** counts from
+  the bottom (`-1` = last row). `0` or `|row_num|` past the height is
+  `#VALUE!` (not `INDEX`'s `#REF!`). `FALSE` / blank coerce to `0` →
+  `#VALUE!`; `TRUE` is row 1. Fractional `row_num` is truncated toward zero
+  (`1.9` → 1, `-1.9` → `-1`; modeled `TRUNC`, live Excel not in CI). Each
+  `row_num` may be a scalar or an array (row-major flatten). Duplicates are
+  kept. Result is always an array value.
 - **Spill limitation:** `evaluate` returns that array. The engine does **not**
   write spilled values into neighboring cells, so occupied destinations never
-  yield `#SPILL!`. Scalar operators (`UNIQUE(...)+1`) take the top-left
+  yield `#SPILL!`. Scalar operators (`UNIQUE(...)+1` / `CHOOSEROWS(...)+1`) take the top-left
   element (`scalarize`), not a host-aware intersection of a written spill.
   Use `INDEX` / `SUM` / `COUNTA` to consume the array without a grid write.
 - `AVERAGEIF` criteria strings (`">5"`, `"*a*"`, `"="` / `"<>"` blanks), text `"5"` dual-matching numbers, range vs `average_range` reshape from the top-left, no matches / no numeric average cells → `#DIV/0!`, empty criteria cell treated as `0`
@@ -416,6 +425,18 @@ as one or the other. Documented quirk categories:
   is not a boolean-array include — pass a logical/numeric vector (literal or
   range). `*` / `+` criteria broadcasting is not modeled.
 - Excel's ~1,048,576-row array cap is not enforced; size is memory-bounded.
+
+**`CHOOSEROWS` index / `#VALUE!` / spill notes** (honest):
+
+- Negative indices are from the end; they are **not** `INDEX` (`INDEX(..., -1)`
+  is `#REF!`). Out-of-range and `0` are `#VALUE!`, not `#REF!`.
+- Fractional truncation is toward zero (`TRUNC`), matching `CHOOSE` / `INDEX`
+  in this engine. That is a modeled rule — CI has no live Excel oracle.
+- `SEQUENCE` is not implemented. Reverse a column with explicit negatives
+  (`CHOOSEROWS(a, -1, -2, -3)`), not `CHOOSEROWS(a, SEQUENCE(...))`.
+- Same spill limit as `UNIQUE` / `FILTER`: evaluate returns the array that
+  would spill; occupied neighbors never yield `#SPILL!`. Scalar operators
+  take the top-left pick.
 
 See [`crates/xlsx-types/src/quirk.rs`](crates/xlsx-types/src/quirk.rs). The
 catalog also names `error-precedence`, `percent-unary`, and `range-operators`.
