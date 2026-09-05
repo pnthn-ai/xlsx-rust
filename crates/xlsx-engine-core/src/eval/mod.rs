@@ -7,6 +7,7 @@ pub mod coerce;
 pub mod compare;
 pub mod empty;
 pub mod functions;
+pub mod sumproduct;
 
 use crate::ast::{BinOp, Expr, UnaryOp};
 use crate::parse::parse;
@@ -108,7 +109,11 @@ impl Evaluator {
         out
     }
 
-    fn eval_cell(&self, cell: &CellRef, ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    pub(crate) fn eval_cell(
+        &self,
+        cell: &CellRef,
+        ctx: &mut Ctx<'_>,
+    ) -> Result<ExcelValue, EvalError> {
         let sheet_name = cell
             .sheet
             .clone()
@@ -145,7 +150,11 @@ impl Evaluator {
         result
     }
 
-    fn eval_range(&self, range: &RangeRef, ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    pub(crate) fn eval_range(
+        &self,
+        range: &RangeRef,
+        ctx: &mut Ctx<'_>,
+    ) -> Result<ExcelValue, EvalError> {
         let sheet = range
             .sheet
             .clone()
@@ -170,7 +179,7 @@ impl Evaluator {
         Ok(ExcelValue::Array(rows))
     }
 
-    fn eval_named(&self, name: &str, ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    pub(crate) fn eval_named(&self, name: &str, ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
         let def = match ctx.spec.workbook.defined_name(name) {
             Ok(d) => d,
             Err(_) => return Ok(ExcelValue::Error(ExcelError::Name)),
@@ -311,7 +320,7 @@ impl Evaluator {
         }
     }
 
-    fn eval_intersect(
+    pub(crate) fn eval_intersect(
         &self,
         left: &Expr,
         right: &Expr,
@@ -343,7 +352,7 @@ fn arith(l: &ExcelValue, r: &ExcelValue, f: impl Fn(f64, f64) -> f64) -> ExcelVa
     }
 }
 
-fn div(l: &ExcelValue, r: &ExcelValue) -> ExcelValue {
+pub(crate) fn div(l: &ExcelValue, r: &ExcelValue) -> ExcelValue {
     match (coerce::to_number(l), coerce::to_number(r)) {
         (Ok(_), Ok(b)) if b == 0.0 => ExcelValue::Error(ExcelError::Div0),
         (Ok(a), Ok(b)) => ExcelValue::Number(a / b),
@@ -351,7 +360,7 @@ fn div(l: &ExcelValue, r: &ExcelValue) -> ExcelValue {
     }
 }
 
-fn concat(l: &ExcelValue, r: &ExcelValue) -> ExcelValue {
+pub(crate) fn concat(l: &ExcelValue, r: &ExcelValue) -> ExcelValue {
     match (coerce::to_text(l), coerce::to_text(r)) {
         (Ok(a), Ok(b)) => ExcelValue::Text(format!("{a}{b}")),
         (Err(e), _) | (_, Err(e)) => ExcelValue::Error(e),
@@ -504,6 +513,27 @@ mod tests {
         assert_eq!(
             eval_formula_in(&wb, "=0^0").unwrap(),
             ExcelValue::Error(ExcelError::Num)
+        );
+    }
+
+    #[test]
+    fn sumproduct_arrays_and_bool_coercion() {
+        let wb = Workbook::default();
+        assert_eq!(
+            eval_formula_in(&wb, "=SUMPRODUCT({1,2,3},{4,5,6})").unwrap(),
+            ExcelValue::Number(32.0)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=SUMPRODUCT({TRUE,FALSE,TRUE})").unwrap(),
+            ExcelValue::Number(0.0)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=SUMPRODUCT({--TRUE,--FALSE,--TRUE})").unwrap(),
+            ExcelValue::Number(2.0)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=SUMPRODUCT({1,2},{1,2,3})").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
         );
     }
 }

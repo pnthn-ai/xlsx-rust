@@ -15,6 +15,7 @@ pub(crate) fn dispatch(
 ) -> Result<ExcelValue, EvalError> {
     match name.to_ascii_uppercase().as_str() {
         "SUM" => fn_agg(ev, args, ctx, AggKind::Sum),
+        "SUMPRODUCT" => super::sumproduct::eval(ev, args, ctx),
         "PRODUCT" => fn_agg(ev, args, ctx, AggKind::Product),
         "AVERAGE" => fn_agg(ev, args, ctx, AggKind::Average),
         "MIN" => fn_agg(ev, args, ctx, AggKind::Min),

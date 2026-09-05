@@ -1,0 +1,284 @@
+[
+  {
+    "id": "fn.sumproduct.two-arrays",
+    "description": "SUMPRODUCT multiplies corresponding elements then sums",
+    "tags": ["sumproduct", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SUMPRODUCT({1,2,3},{4,5,6})",
+    "expected": { "number": 32 }
+  },
+  {
+    "id": "fn.sumproduct.three-arrays",
+    "description": "SUMPRODUCT of three arrays multiplies all corresponding elements",
+    "tags": ["sumproduct", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SUMPRODUCT({1,2},{3,4},{5,6})",
+    "expected": { "number": 63 }
+  },
+  {
+    "id": "fn.sumproduct.2d",
+    "description": "SUMPRODUCT of matching 2-D arrays",
+    "tags": ["sumproduct", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SUMPRODUCT({1,2;3,4},{5,6;7,8})",
+    "expected": { "number": 70 }
+  },
+  {
+    "id": "fn.sumproduct.single-array",
+    "description": "Single-array SUMPRODUCT sums the values",
+    "tags": ["sumproduct", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SUMPRODUCT({1,2,3})",
+    "expected": { "number": 6 }
+  },
+  {
+    "id": "fn.sumproduct.single-array-2d",
+    "description": "Single 2-D array SUMPRODUCT sums every element",
+    "tags": ["sumproduct", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SUMPRODUCT({1,2;3,4})",
+    "expected": { "number": 10 }
+  },
+  {
+    "id": "fn.sumproduct.scalar",
+    "description": "SUMPRODUCT of two scalars is their product",
+    "tags": ["sumproduct", "functions"],
+    "formula": "=SUMPRODUCT(2, 3)",
+    "expected": { "number": 6 }
+  },
+  {
+    "id": "fn.sumproduct.no-args",
+    "description": "SUMPRODUCT() with no arguments is #VALUE!",
+    "tags": ["sumproduct", "errors"],
+    "formula": "=SUMPRODUCT()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.sumproduct.mismatch-literal",
+    "description": "Mismatched array lengths are #VALUE!",
+    "tags": ["sumproduct", "errors", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SUMPRODUCT({1,2},{1,2,3})",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.sumproduct.mismatch-row-col",
+    "description": "1×3 vs 3×1 arrays are #VALUE! (dimensions must match)",
+    "tags": ["sumproduct", "errors", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SUMPRODUCT({1,2,3},{1;2;3})",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.sumproduct.mismatch-range",
+    "description": "Mismatched range sizes are #VALUE!",
+    "tags": ["sumproduct", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SUMPRODUCT(A1:A3, B1:B2)",
+    "expected": { "error": "#VALUE!" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 2 },
+          "A3": { "number": 3 },
+          "B1": { "number": 4 },
+          "B2": { "number": 5 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.sumproduct.bool-uncoerced",
+    "description": "Uncoerced TRUE/FALSE in SUMPRODUCT are treated as 0",
+    "tags": ["sumproduct", "functions", "array"],
+    "quirks": ["array-eval-mode", "bool-number-equality"],
+    "formula": "=SUMPRODUCT({TRUE,FALSE,TRUE})",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.sumproduct.bool-double-unary",
+    "description": "--TRUE/--FALSE coerces logicals to 1/0 before the sum",
+    "tags": ["sumproduct", "functions", "array"],
+    "quirks": ["array-eval-mode", "percent-unary", "bool-number-equality"],
+    "formula": "=SUMPRODUCT({--TRUE,--FALSE,--TRUE})",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.sumproduct.bool-times-one",
+    "description": "TRUE/FALSE * 1 inside SUMPRODUCT becomes 1/0",
+    "tags": ["sumproduct", "functions", "array"],
+    "quirks": ["array-eval-mode", "bool-number-equality"],
+    "formula": "=SUMPRODUCT({TRUE,FALSE,TRUE}*{1,1,1})",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.sumproduct.bool-times-values",
+    "description": "Boolean mask * values: TRUE*10 + FALSE*20 + TRUE*30",
+    "tags": ["sumproduct", "functions", "array"],
+    "quirks": ["array-eval-mode", "bool-number-equality"],
+    "formula": "=SUMPRODUCT({TRUE,FALSE,TRUE}*{10,20,30})",
+    "expected": { "number": 40 }
+  },
+  {
+    "id": "fn.sumproduct.text-is-zero",
+    "description": "Text entries are treated as 0, not coerced",
+    "tags": ["sumproduct", "functions", "array"],
+    "quirks": ["array-eval-mode", "sum-arg-vs-range"],
+    "formula": "=SUMPRODUCT({1,\"x\",3},{4,5,6})",
+    "expected": { "number": 22 }
+  },
+  {
+    "id": "fn.sumproduct.numeric-text-is-zero",
+    "description": "Numeric-looking text is still 0 (unlike SUM of a scalar)",
+    "tags": ["sumproduct", "functions", "array"],
+    "quirks": ["array-eval-mode", "sum-arg-vs-range"],
+    "formula": "=SUMPRODUCT({\"2\",3},{1,1})",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.sumproduct.empty-cells",
+    "description": "Empty cells contribute 0 to the product-sum",
+    "tags": ["sumproduct", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=SUMPRODUCT(A1:A3, B1:B3)",
+    "expected": { "number": 22 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A3": { "number": 3 },
+          "B1": { "number": 4 },
+          "B3": { "number": 6 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.sumproduct.empty-range",
+    "description": "SUMPRODUCT of blank ranges is 0",
+    "tags": ["sumproduct", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=SUMPRODUCT(A1:A3, B1:B3)",
+    "expected": { "number": 0 },
+    "workbook": { "sheets": [{ "name": "Sheet1", "cells": {} }] }
+  },
+  {
+    "id": "fn.sumproduct.range-pair",
+    "description": "SUMPRODUCT of two equal-sized ranges",
+    "tags": ["sumproduct", "functions"],
+    "formula": "=SUMPRODUCT(A1:A3, B1:B3)",
+    "expected": { "number": 32 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 2 },
+          "A3": { "number": 3 },
+          "B1": { "number": 4 },
+          "B2": { "number": 5 },
+          "B3": { "number": 6 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.sumproduct.range-bool-uncoerced",
+    "description": "TRUE in a range is 0 unless coerced",
+    "tags": ["sumproduct", "functions"],
+    "quirks": ["sum-arg-vs-range", "bool-number-equality"],
+    "formula": "=SUMPRODUCT(A1:A3, B1:B3)",
+    "expected": { "number": 18 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "bool": true },
+          "A3": { "number": 3 },
+          "B1": { "number": 4 },
+          "B2": { "number": 5 },
+          "B3": { "number": 6 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.sumproduct.nested-compare-mul",
+    "description": "(range>1)*values coerces the boolean mask to 0/1",
+    "tags": ["sumproduct", "functions"],
+    "quirks": ["array-eval-mode", "bool-number-equality"],
+    "formula": "=SUMPRODUCT((A1:A3>1)*B1:B3)",
+    "expected": { "number": 50 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 2 },
+          "A3": { "number": 3 },
+          "B1": { "number": 10 },
+          "B2": { "number": 20 },
+          "B3": { "number": 30 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.sumproduct.nested-double-unary",
+    "description": "SUMPRODUCT(--(range=\"x\"), values) counts matching rows",
+    "tags": ["sumproduct", "functions"],
+    "quirks": ["array-eval-mode", "percent-unary", "case-insensitive-text"],
+    "formula": "=SUMPRODUCT(--(A1:A3=\"x\"), B1:B3)",
+    "expected": { "number": 40 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "x" },
+          "A2": { "text": "y" },
+          "A3": { "text": "X" },
+          "B1": { "number": 10 },
+          "B2": { "number": 20 },
+          "B3": { "number": 30 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.sumproduct.nested-add-then-sum",
+    "description": "Array addition inside SUMPRODUCT is element-wise, then summed",
+    "tags": ["sumproduct", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SUMPRODUCT({1,2}+{3,4})",
+    "expected": { "number": 10 }
+  },
+  {
+    "id": "fn.sumproduct.nested-sum-fn",
+    "description": "Nested SUM is a scalar argument: SUMPRODUCT(SUM(range), 2)",
+    "tags": ["sumproduct", "functions"],
+    "formula": "=SUMPRODUCT(SUM(A1:A3), 2)",
+    "expected": { "number": 12 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 2 },
+          "A3": { "number": 3 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.sumproduct.error-propagates",
+    "description": "An error in either array surfaces",
+    "tags": ["sumproduct", "errors", "array"],
+    "quirks": ["error-precedence"],
+    "formula": "=SUMPRODUCT({1,#DIV/0!},{2,3})",
+    "expected": { "error": "#DIV/0!" }
+  }
+]

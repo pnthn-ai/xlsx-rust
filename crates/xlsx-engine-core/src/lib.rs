@@ -15,6 +15,7 @@ pub mod eval;
 pub mod parse;
 
 pub use ast::{BinOp, Expr, UnaryOp};
+pub use eval::sumproduct::{product_sum, product_sum_naive, product_sum_packed};
 pub use eval::{eval_formula_in, Evaluator};
 pub use parse::parse;
 
