@@ -20,6 +20,7 @@ pub mod round;
 pub mod search;
 pub mod npv;
 pub mod switch;
+pub mod ifs;
 
 use crate::ast::{BinOp, Expr, UnaryOp};
 use crate::parse::parse;
@@ -617,6 +618,23 @@ mod tests {
         assert_eq!(
             eval_formula_in(&wb, "=IF(TRUE, 1, 1/0)").unwrap(),
             ExcelValue::Number(1.0)
+        );
+    }
+
+    #[test]
+    fn ifs_does_not_short_circuit() {
+        let wb = Workbook::default();
+        assert_eq!(
+            eval_formula_in(&wb, "=IFS(TRUE, 1, FALSE, 1/0)").unwrap(),
+            ExcelValue::Error(ExcelError::Div0)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=IFS(FALSE, 1, FALSE, 2)").unwrap(),
+            ExcelValue::Error(ExcelError::Na)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=IFS(FALSE, 1, TRUE, 9)").unwrap(),
+            ExcelValue::Number(9.0)
         );
     }
 

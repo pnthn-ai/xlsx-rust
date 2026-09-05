@@ -318,6 +318,8 @@ function families above. Workbook input is the snippet type in `xlsx-types` (no
 | [`eval/npv.rs`](crates/xlsx-engine-core/src/eval/npv.rs) | Excel `NPV` kernel (period-1 discount, range skip of blanks/text/logicals) |
 | [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators, logicals (`IF`/`SWITCH`/`AND`/…), lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates, math, text, `TYPE` / `IS*` |
 | [`eval/switch.rs`](crates/xlsx-engine-core/src/eval/switch.rs) | Excel `SWITCH` exact-match kernel (first hit, default / `#N/A`) |
+| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators, logicals (`IF`/`IFS`/`AND`/…), lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates, math, text, `TYPE` / `IS*` |
+| [`eval/ifs.rs`](crates/xlsx-engine-core/src/eval/ifs.rs) | `IFS` pair-selection kernel (eager eval, first TRUE, no-match `#N/A`) |
 
 **Implemented:** arithmetic and comparison operators (unary `+/-`, `%`, `^`,
 `&`, space intersection), host-aware implicit intersection, cell refs /
@@ -347,6 +349,10 @@ ranges / defined names, array literals, error propagation, `CONCAT` (arrays
 and ranges flattened row-major; result over 32,767 UTF-16 units is
 `#VALUE!`), and the function families above. Workbook input is the snippet
 type in `xlsx-types` (no `.xlsx` IO).
+families above (including `IFS`). Workbook input is the snippet type in
+`xlsx-types` (no `.xlsx` IO).
+
+`IFS` kernel bench: `cargo bench -p xlsx-engine-core --bench ifs`.
 
 **Deferred / in progress:** full function library, locale argument separators,
 live Excel oracle, and performance bakeoff. The fixture corpus is expanded
@@ -387,6 +393,9 @@ as one or the other. Documented quirk categories:
   truthiness: `IF(2, …)` is true, `SWITCH(2, TRUE, …)` does not match). First
   hit wins; unused values/results are not evaluated. No match and no default
   is `#N/A` (a nested `IF` missing an else is `FALSE`). `*` / `?` are literal.
+- `IF` short-circuits; `AND` / `OR` / `IFS` do not (`AND(FALSE, 1/0)` is `#DIV/0!`;
+  `IFS(TRUE, 1, FALSE, 1/0)` is `#DIV/0!`). Unmatched `IFS` is `#N/A` (use a
+  final `TRUE` pair as the default).
 - Error precedence is left-to-right (`#DIV/0!+#VALUE!` keeps `#DIV/0!`)
 - 1900 leap-year bug (`DATE(1900,2,29)` is serial 60); 1904 date system;
   `EOMONTH` inherits it (`EOMONTH(59,0)` / `EOMONTH(60,0)` are both 60)

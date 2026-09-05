@@ -27,6 +27,7 @@ pub enum QuirkCategory {
     /// `VLOOKUP` approximate match assumes an ascending sort.
     VlookupApproximateUnsorted,
     /// `IF` short-circuits; unused branch errors do not fire.
+    /// `IFS` does **not** short-circuit (unused pair errors still fire).
     IfShortCircuit,
     /// Date serials and the 1900 leap-year bug (documented, not implemented).
     Date1900LeapYear,

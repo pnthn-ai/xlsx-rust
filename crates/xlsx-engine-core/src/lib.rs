@@ -10,6 +10,7 @@
 //! - [`eval::concat`] — Excel `CONCAT` (range/array flatten + 32767 cap)
 //! - [`dates::weekday`] — O(1) Excel `WEEKDAY` on the date serial
 //! - [`eval::switch`] — Excel `SWITCH` (exact `=` match, short-circuit vs `IF`)
+//! - [`eval::ifs`] — `IFS` pair-selection kernel (eager; no-match `#N/A`)
 //!
 //! This crate depends only on [`xlsx_types`]. It never reads fixture expected
 //! values; the verification gate (`xlsx-verify`) is the only judge.
@@ -42,6 +43,7 @@ pub use eval::switch::{
     first_match as excel_switch_first_match, first_match_naive as excel_switch_first_match_naive,
     pick_evaluated as excel_switch_pick_evaluated,
 };
+pub use eval::ifs::{select as excel_ifs, select_naive as excel_ifs_naive};
 pub use eval::{eval_formula_in, Evaluator};
 pub use eval::{eval_formula_in, eval_sumifs_materialized, Evaluator};
 pub use eval::{eval_averageif_materialized, eval_formula_in, Evaluator};
