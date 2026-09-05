@@ -11,6 +11,7 @@ pub mod empty;
 pub mod find;
 pub mod filter;
 pub mod functions;
+pub mod hstack;
 pub mod substitute;
 pub mod sumif;
 pub mod sumproduct;
@@ -880,6 +881,42 @@ mod tests {
             ExcelValue::Error(ExcelError::Value)
         );
     }
+    #[test]
+    fn hstack_literals_pad_and_index() {
+        let wb = Workbook::default();
+        assert_eq!(
+            eval_formula_in(&wb, "=HSTACK({1;2;3},{4;5;6})").unwrap(),
+            ExcelValue::Array(vec![
+                vec![ExcelValue::Number(1.0), ExcelValue::Number(4.0)],
+                vec![ExcelValue::Number(2.0), ExcelValue::Number(5.0)],
+                vec![ExcelValue::Number(3.0), ExcelValue::Number(6.0)],
+            ])
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=HSTACK({1;2;3},4)").unwrap(),
+            ExcelValue::Array(vec![
+                vec![ExcelValue::Number(1.0), ExcelValue::Number(4.0)],
+                vec![ExcelValue::Number(2.0), ExcelValue::Error(ExcelError::Na)],
+                vec![ExcelValue::Number(3.0), ExcelValue::Error(ExcelError::Na)],
+            ])
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=INDEX(HSTACK({1;2},{3}),2,2)").unwrap(),
+            ExcelValue::Error(ExcelError::Na)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=HSTACK()").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=HSTACK(#DIV/0!,1)").unwrap(),
+            ExcelValue::Array(vec![vec![
+                ExcelValue::Error(ExcelError::Div0),
+                ExcelValue::Number(1.0)
+            ]])
+        );
+    }
+
     #[test]
     fn unique_literal_and_exactly_once() {
         let wb = Workbook::default();

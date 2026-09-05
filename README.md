@@ -285,7 +285,7 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 | [`eval/coerce.rs`](crates/xlsx-engine-core/src/eval/coerce.rs) | Arithmetic / `&` / `IF` coercion (`"2"+1` = 3, TRUE → 1, empty → 0) |
 | [`eval/compare.rs`](crates/xlsx-engine-core/src/eval/compare.rs) | 15-digit `=`, case-insensitive text, `TRUE=1`, type ranking (`FALSE>100`) |
 | [`eval/empty.rs`](crates/xlsx-engine-core/src/eval/empty.rs) | Blank ≠ 0 ≠ `""`, but `A1=0` and `A1=""` when `A1` is blank |
-| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Dispatch: aggregators (`SUM`/`SUMIF`/`SUMIFS`/`AVERAGEIF`/`COUNTIF`/`SUMPRODUCT`), logicals (`IF`/`IFS`/`SWITCH`), lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`/`FILTER`/`UNIQUE`), dates (`DATE`/`EOMONTH`/`NETWORKDAYS`/`WEEKDAY`/`WORKDAY`), math (`ROUND`/`ROUNDUP`/`ROUNDDOWN`/`FLOOR`/`CEILING`), text (`LEFT`/`SUBSTITUTE`/`REPLACE`/`FIND`/`SEARCH`/`TEXT`/`TEXTJOIN`/`CONCAT`), financial (`NPV`/`PMT`/`IRR`), `TYPE` / `IS*` |
+| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Dispatch: aggregators (`SUM`/`SUMIF`/`SUMIFS`/`AVERAGEIF`/`COUNTIF`/`SUMPRODUCT`), logicals (`IF`/`IFS`/`SWITCH`), lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`/`FILTER`/`UNIQUE`/`HSTACK`), dates (`DATE`/`EOMONTH`/`NETWORKDAYS`/`WEEKDAY`/`WORKDAY`), math (`ROUND`/`ROUNDUP`/`ROUNDDOWN`/`FLOOR`/`CEILING`), text (`LEFT`/`SUBSTITUTE`/`REPLACE`/`FIND`/`SEARCH`/`TEXT`/`TEXTJOIN`/`CONCAT`), financial (`NPV`/`PMT`/`IRR`), `TYPE` / `IS*` |
 | [`eval/sumif.rs`](crates/xlsx-engine-core/src/eval/sumif.rs) | Excel `SUMIF` kernel (criteria walk, reshape `sum_range`, no array literals) |
 | [`eval/sumifs.rs`](crates/xlsx-engine-core/src/eval/sumifs.rs) | Excel `SUMIFS`: multi-criteria AND, same-shape ranges |
 | [`eval/averageif.rs`](crates/xlsx-engine-core/src/eval/averageif.rs) | Excel `AVERAGEIF` kernel (reshape `average_range`, `#DIV/0!` when empty) |
@@ -301,6 +301,7 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 | [`eval/ifs.rs`](crates/xlsx-engine-core/src/eval/ifs.rs) | `IFS` pair-selection kernel (eager eval, first TRUE, no-match `#N/A`) |
 | [`eval/unique.rs`](crates/xlsx-engine-core/src/eval/unique.rs) | `UNIQUE(array, [by_col], [exactly_once])` hash distinctness |
 | [`eval/filter.rs`](crates/xlsx-engine-core/src/eval/filter.rs) | `FILTER` mask/select kernel (`#CALC!` / `if_empty`, row vs column) |
+| [`eval/hstack.rs`](crates/xlsx-engine-core/src/eval/hstack.rs) | `HSTACK(array1, [array2], …)`: left-to-right append, `#N/A` height pad |
 | [`eval/npv.rs`](crates/xlsx-engine-core/src/eval/npv.rs) | Excel `NPV` kernel (period-1 discount, range skip of blanks/text/logicals) |
 | [`eval/irr.rs`](crates/xlsx-engine-core/src/eval/irr.rs) | Excel `IRR` Newton / secant kernel (20 tries, `1e-7` rate, `#NUM!` on failure) |
 | [`text_format.rs`](crates/xlsx-engine-core/src/text_format.rs) | Excel `TEXT` for a documented number/date format subset |
@@ -388,11 +389,22 @@ as one or the other. Documented quirk categories:
   (or columns when `by_col` is TRUE); case-insensitive text; type-strict
   (`1` ≠ `"1"` ≠ `TRUE`); blanks collapse to one empty; `exactly_once` with
   no survivors is `#CALC!`. Result is always an array value.
+- `HSTACK(array1, [array2], …)`: appends arguments left-to-right. Result
+  height is the max row count; result width is the sum of column counts.
+  A shorter argument is padded with `#N/A` in the extra rows (not blank,
+  not `0`). In-bounds blank cells stay `Empty` — this engine does not
+  invent the `0` that Microsoft’s published example table sometimes shows
+  for a source blank. A 0-row / 0-column array is ignored; if every
+  argument is ignored the result is `#CALC!` (Excel cannot return a 0×0
+  array). `HSTACK()` is `#VALUE!`. Scalars, including scalar errors, are
+  1×1 and are stacked (a leading `#DIV/0!` does not abort the call).
+  Result is always an array value.
 - **Spill limitation:** `evaluate` returns that array. The engine does **not**
   write spilled values into neighboring cells, so occupied destinations never
-  yield `#SPILL!`. Scalar operators (`UNIQUE(...)+1`) take the top-left
-  element (`scalarize`), not a host-aware intersection of a written spill.
-  Use `INDEX` / `SUM` / `COUNTA` to consume the array without a grid write.
+  yield `#SPILL!`. Scalar operators (`UNIQUE(...)+1`, `HSTACK(...)+1`) take
+  the top-left element (`scalarize`), not a host-aware intersection of a
+  written spill. Use `INDEX` / `SUM` / `COUNTA` to consume the array without
+  a grid write.
 - `AVERAGEIF` criteria strings (`">5"`, `"*a*"`, `"="` / `"<>"` blanks), text `"5"` dual-matching numbers, range vs `average_range` reshape from the top-left, no matches / no numeric average cells → `#DIV/0!`, empty criteria cell treated as `0`
 - `PMT(rate, nper, pv, [fv], [type])`: Excel cash-flow sign (pay out is
   negative); `rate=0` is `-(pv+fv)/nper` (`#DIV/0!` if `nper=0`);
@@ -416,6 +428,21 @@ as one or the other. Documented quirk categories:
   is not a boolean-array include — pass a logical/numeric vector (literal or
   range). `*` / `+` criteria broadcasting is not modeled.
 - Excel's ~1,048,576-row array cap is not enforced; size is memory-bounded.
+
+**`HSTACK` spill / pad / `#N/A` height quirks** (honest, not hidden behind a
+broken case):
+
+- HSTACK returns an array **value**. Occupied cells in the Excel spill zone
+  never yield `#SPILL!`.
+- Height padding is `#N/A`: `ISNA` true, `COUNTA` counts the pad, `COUNTBLANK`
+  does not, `SUM` surfaces `#N/A`. That is different from an in-bounds blank
+  (`Empty`), which `COUNTBLANK` does count.
+- `IFNA` / `IFERROR` here unwrap only a **scalar** error. `IFNA(HSTACK(...),"")`
+  therefore does **not** blank pad cells the way Excel’s dynamic-array `IFNA`
+  would after a spill. Pick a pad with `INDEX`.
+- Omitted arguments (`HSTACK(a,,b)`) do not parse. Excel would treat the hole
+  as a missing optional; this parser requires an expression.
+- The 254-argument cap and worksheet array-size caps are not enforced.
 
 See [`crates/xlsx-types/src/quirk.rs`](crates/xlsx-types/src/quirk.rs). The
 catalog also names `error-precedence`, `percent-unary`, and `range-operators`.

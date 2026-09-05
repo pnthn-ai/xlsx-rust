@@ -1,0 +1,441 @@
+[
+  {
+    "id": "fn.hstack.two-cols",
+    "description": "HSTACK of two equal-height columns",
+    "tags": ["hstack", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=HSTACK({1;2;3},{4;5;6})",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 4 }],
+        [{ "number": 2 }, { "number": 5 }],
+        [{ "number": 3 }, { "number": 6 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.hstack.two-rows",
+    "description": "HSTACK of two row vectors is one wider row",
+    "tags": ["hstack", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=HSTACK({1,2},{3,4})",
+    "expected": {
+      "array": [[{ "number": 1 }, { "number": 2 }, { "number": 3 }, { "number": 4 }]]
+    }
+  },
+  {
+    "id": "fn.hstack.matrix-plus-col",
+    "description": "2-D block plus a column of the same height",
+    "tags": ["hstack", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=HSTACK({1,2;3,4},{5;6})",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 2 }, { "number": 5 }],
+        [{ "number": 3 }, { "number": 4 }, { "number": 6 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.hstack.scalars",
+    "description": "Scalars are 1×1 arrays stacked left to right",
+    "tags": ["hstack", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=HSTACK(1,2,3)",
+    "expected": {
+      "array": [[{ "number": 1 }, { "number": 2 }, { "number": 3 }]]
+    }
+  },
+  {
+    "id": "fn.hstack.single-scalar",
+    "description": "HSTACK of a scalar is a 1×1 array",
+    "tags": ["hstack", "functions"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=HSTACK(5)",
+    "expected": {
+      "array": [[{ "number": 5 }]]
+    }
+  },
+  {
+    "id": "fn.hstack.single-array",
+    "description": "HSTACK of one array returns that array",
+    "tags": ["hstack", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=HSTACK({1,2;3,4})",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 2 }],
+        [{ "number": 3 }, { "number": 4 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.hstack.pad-right-short",
+    "description": "Shorter right argument is padded with #N/A (not blank, not 0)",
+    "tags": ["hstack", "errors", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=HSTACK({1;2;3},4)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 4 }],
+        [{ "number": 2 }, { "error": "#N/A" }],
+        [{ "number": 3 }, { "error": "#N/A" }]
+      ]
+    },
+    "notes": "Excel height-pads with #N/A. IFNA(HSTACK(...),\"\") would blank those cells after a live spill; this engine's IFNA is not element-wise."
+  },
+  {
+    "id": "fn.hstack.pad-left-short",
+    "description": "Shorter left argument is padded with #N/A on later rows",
+    "tags": ["hstack", "errors", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=HSTACK({1,2},{3;4;5})",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 2 }, { "number": 3 }],
+        [{ "error": "#N/A" }, { "error": "#N/A" }, { "number": 4 }],
+        [{ "error": "#N/A" }, { "error": "#N/A" }, { "number": 5 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.hstack.pad-three-args",
+    "description": "Three arguments: height is the max; each short block pads independently",
+    "tags": ["hstack", "errors", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=HSTACK({1;2;3},{10,11},{7})",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 10 }, { "number": 11 }, { "number": 7 }],
+        [{ "number": 2 }, { "error": "#N/A" }, { "error": "#N/A" }, { "error": "#N/A" }],
+        [{ "number": 3 }, { "error": "#N/A" }, { "error": "#N/A" }, { "error": "#N/A" }]
+      ]
+    }
+  },
+  {
+    "id": "fn.hstack.index-pad-isna",
+    "description": "INDEX of a height-pad cell is #N/A (ISNA true)",
+    "tags": ["hstack", "index", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=INDEX(HSTACK({1;2;3},4),2,2)",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.hstack.index-real-cell",
+    "description": "INDEX picks a real stacked value, not a pad",
+    "tags": ["hstack", "index"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=INDEX(HSTACK({1;2;3},{4;5;6}),2,2)",
+    "expected": { "number": 5 }
+  },
+  {
+    "id": "fn.hstack.sum-equal",
+    "description": "SUM consumes an equal-height HSTACK",
+    "tags": ["hstack", "sum"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SUM(HSTACK({1;2},{3;4}))",
+    "expected": { "number": 10 }
+  },
+  {
+    "id": "fn.hstack.sum-pad-is-na",
+    "description": "SUM of a height-padded HSTACK is #N/A (pad errors participate)",
+    "tags": ["hstack", "sum", "errors"],
+    "quirks": ["array-eval-mode", "error-precedence"],
+    "formula": "=SUM(HSTACK({1;2;3},4))",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.hstack.counta-counts-pad",
+    "description": "COUNTA counts pad #N/A cells (they are not blank)",
+    "tags": ["hstack", "counta"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=COUNTA(HSTACK({1;2;3},4))",
+    "expected": { "number": 6 },
+    "notes": "2×3 result: three numbers from the left, one number + two #N/A from the right."
+  },
+  {
+    "id": "fn.hstack.countblank-skips-pad",
+    "description": "COUNTBLANK does not treat pad #N/A as blank",
+    "tags": ["hstack", "countblank"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=COUNTBLANK(HSTACK({1;2;3},4))",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.hstack.in-bounds-blank-stays-empty",
+    "description": "An in-bounds blank stays Empty; it is not coerced to 0 and is not #N/A",
+    "tags": ["hstack", "empty"],
+    "quirks": ["array-eval-mode", "empty-cell-duality"],
+    "formula": "=HSTACK(A1:A3,B1:B3)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 4 }],
+        [{ "empty": null }, { "number": 5 }],
+        [{ "number": 3 }, { "number": 6 }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A3": { "number": 3 },
+          "B1": { "number": 4 },
+          "B2": { "number": 5 },
+          "B3": { "number": 6 }
+        }
+      }]
+    },
+    "notes": "Microsoft’s published HSTACK table sometimes shows 0 for a source blank. This engine keeps Empty, matching UNIQUE/FILTER range blanks."
+  },
+  {
+    "id": "fn.hstack.countblank-in-bounds",
+    "description": "COUNTBLANK sees in-bounds empties but not height-pad #N/A",
+    "tags": ["hstack", "countblank", "empty"],
+    "quirks": ["array-eval-mode", "empty-cell-duality"],
+    "formula": "=COUNTBLANK(HSTACK(A1:A3,B1))",
+    "expected": { "number": 1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A3": { "number": 3 },
+          "B1": { "number": 9 }
+        }
+      }]
+    },
+    "notes": "Result is 3×2: A2 empty (counts), B2/B3 are #N/A pads (do not)."
+  },
+  {
+    "id": "fn.hstack.empty-string-vs-blank",
+    "description": "Stored \"\" is text and is not used as height padding",
+    "tags": ["hstack", "empty"],
+    "quirks": ["array-eval-mode", "empty-cell-duality"],
+    "formula": "=HSTACK(A1:A2,B1:B2)",
+    "expected": {
+      "array": [
+        [{ "text": "" }, { "number": 1 }],
+        [{ "empty": null }, { "number": 2 }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "" },
+          "B1": { "number": 1 },
+          "B2": { "number": 2 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.hstack.range",
+    "description": "HSTACK of two worksheet columns",
+    "tags": ["hstack", "functions"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=HSTACK(A1:A3,B1:B3)",
+    "expected": {
+      "array": [
+        [{ "text": "a" }, { "number": 10 }],
+        [{ "text": "b" }, { "number": 20 }],
+        [{ "text": "c" }, { "number": 30 }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "a" }, "B1": { "number": 10 },
+          "A2": { "text": "b" }, "B2": { "number": 20 },
+          "A3": { "text": "c" }, "B3": { "number": 30 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.hstack.range-plus-literal",
+    "description": "Worksheet range stacked with an array literal",
+    "tags": ["hstack", "functions"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=HSTACK(A1:A2,{9;8})",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 9 }],
+        [{ "number": 2 }, { "number": 8 }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 2 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.hstack.types-preserved",
+    "description": "Number / text / bool / empty / error stay distinct in the stack",
+    "tags": ["hstack", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=HSTACK({1;\"x\";TRUE},{#N/A;FALSE;0})",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "error": "#N/A" }],
+        [{ "text": "x" }, { "bool": false }],
+        [{ "bool": true }, { "number": 0 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.hstack.scalar-error-stacked",
+    "description": "A scalar error is a 1×1 array, not a function-level abort",
+    "tags": ["hstack", "errors"],
+    "quirks": ["array-eval-mode", "error-precedence"],
+    "formula": "=HSTACK(#DIV/0!,1)",
+    "expected": {
+      "array": [[{ "error": "#DIV/0!" }, { "number": 1 }]]
+    },
+    "notes": "Unlike UNIQUE(#DIV/0!), which surfaces the scalar error, HSTACK treats it as a cell."
+  },
+  {
+    "id": "fn.hstack.error-inside-kept",
+    "description": "Errors already inside an array stay in place",
+    "tags": ["hstack", "errors", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=HSTACK({1,#DIV/0!},{2})",
+    "expected": {
+      "array": [[{ "number": 1 }, { "error": "#DIV/0!" }, { "number": 2 }]]
+    }
+  },
+  {
+    "id": "fn.hstack.empty-array-ignored",
+    "description": "A 0-row array is ignored; stacking it with a real array keeps the real one",
+    "tags": ["hstack", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=HSTACK({}, {1;2})",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "number": 2 }]
+      ]
+    },
+    "notes": "Excel: empty arrays are ignored. {} parses here as a 0-row array."
+  },
+  {
+    "id": "fn.hstack.all-empty-is-calc",
+    "description": "Every argument ignored (0-row arrays) is #CALC! — no 0×0 result",
+    "tags": ["hstack", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=HSTACK({}, {})",
+    "expected": { "error": "#CALC!" }
+  },
+  {
+    "id": "fn.hstack.arity-zero",
+    "description": "HSTACK() is #VALUE!",
+    "tags": ["hstack", "errors"],
+    "formula": "=HSTACK()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.hstack.nested",
+    "description": "HSTACK of HSTACK appends further to the right",
+    "tags": ["hstack", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=HSTACK(HSTACK({1;2},{3;4}),{5;6})",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 3 }, { "number": 5 }],
+        [{ "number": 2 }, { "number": 4 }, { "number": 6 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.hstack.filter-input",
+    "description": "HSTACK can take a FILTER result as an argument",
+    "tags": ["hstack", "filter"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=HSTACK(FILTER({1;2;3},{TRUE;FALSE;TRUE}),{9;8})",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 9 }],
+        [{ "number": 3 }, { "number": 8 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.hstack.dynamic-array-mode",
+    "description": "array_mode=dynamic-array still returns the HSTACK array (no grid write)",
+    "tags": ["hstack", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=HSTACK(A1:A2,B1:B2)",
+    "options": { "array_mode": "dynamic-array" },
+    "expected": {
+      "array": [
+        [{ "number": 10 }, { "number": 30 }],
+        [{ "number": 20 }, { "number": 40 }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 10 }, "B1": { "number": 30 },
+          "A2": { "number": 20 }, "B2": { "number": 40 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.hstack.no-grid-write",
+    "description": "Occupied cells in the Excel spill zone do not produce #SPILL! — HSTACK returns the array",
+    "notes": "Excel would #SPILL! if HSTACK at C1 needed C1:D2 and D1 was occupied. This model never writes a spill range; neighbors are irrelevant. Pick cells with INDEX/SUM.",
+    "tags": ["hstack", "spill"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=HSTACK(A1:A2,B1:B2)",
+    "at": "Sheet1!C1",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 3 }],
+        [{ "number": 2 }, { "number": 4 }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "number": 3 },
+          "A2": { "number": 2 }, "B2": { "number": 4 },
+          "D1": { "text": "blocker" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.hstack.scalar-plus-top-left",
+    "description": "HSTACK+n in a scalar operator takes the top-left cell (not host-aware spill intersection)",
+    "notes": "The engine scalarizes arrays to the first element. It does not intersect a written spill with the host cell.",
+    "tags": ["hstack", "arithmetic"],
+    "quirks": ["array-eval-mode", "implicit-intersection"],
+    "formula": "=HSTACK({10;20},{30;40})+1",
+    "expected": { "number": 11 }
+  },
+  {
+    "id": "fn.hstack.ifna-not-elementwise",
+    "description": "IFNA around HSTACK does not blank pad #N/A — the result is still an array",
+    "tags": ["hstack", "ifna"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=IFNA(HSTACK({1;2;3},4),\"\")",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 4 }],
+        [{ "number": 2 }, { "error": "#N/A" }],
+        [{ "number": 3 }, { "error": "#N/A" }]
+      ]
+    },
+    "notes": "Honest model limit: IFNA/IFERROR unwrap only a scalar #N/A/#error, not each pad cell. Excel's dynamic-array IFNA would replace pads with \"\"."
+  }
+]

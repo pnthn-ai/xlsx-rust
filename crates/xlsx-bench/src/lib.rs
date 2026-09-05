@@ -169,6 +169,24 @@ mod tests {
     }
 
     #[test]
+    fn hstack_two_cols_is_wide_array() {
+        let range = numeric_grid(4, 2, |r, c| (r * 10 + c) as f64);
+        let spec = formula_spec(
+            "hstack.4x2",
+            "=HSTACK(A1:A4,B1:B4)",
+            range.workbook,
+        );
+        match eval_calc_core(&spec) {
+            ExcelValue::Array(rows) => {
+                assert_eq!(rows.len(), 4);
+                assert_eq!(rows[0], vec![ExcelValue::Number(0.0), ExcelValue::Number(1.0)]);
+                assert_eq!(rows[3], vec![ExcelValue::Number(30.0), ExcelValue::Number(31.0)]);
+            }
+            other => panic!("expected array, got {other:?}"),
+        }
+    }
+
+    #[test]
     fn grid_a1_and_count() {
         let range = numeric_grid(3, 2, |r, c| (r * 10 + c) as f64);
         assert_eq!(range.a1_range(), "A1:B3");
