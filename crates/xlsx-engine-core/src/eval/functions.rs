@@ -2,7 +2,8 @@
 //!
 //! `IFS` lives with the other logicals here; pair selection is [`super::ifs`].
 //! `FILTER` lives with the other lookups here; the mask/select kernel is
-//! [`super::filter`].
+//! [`super::filter`]. `SEQUENCE` is the dynamic-array generator
+//! ([`super::sequence`]).
 //!
 //! Unknown names return `#NAME?` (an Excel value, not [`EvalError`]).
 //! Financial TVM starts with `PMT` (`xlsx_types::excel_pmt`); `PV`/`FV`/`NPER`
@@ -53,6 +54,7 @@ pub(crate) fn dispatch(
         "HLOOKUP" => fn_hlookup(ev, args, ctx),
         "XLOOKUP" => fn_xlookup(ev, args, ctx),
         "FILTER" => fn_filter(ev, args, ctx),
+        "SEQUENCE" => super::sequence::eval(ev, args, ctx),
         "INDEX" => fn_index(ev, args, ctx),
         "MATCH" => fn_match(ev, args, ctx),
         "CHOOSE" => fn_choose(ev, args, ctx),

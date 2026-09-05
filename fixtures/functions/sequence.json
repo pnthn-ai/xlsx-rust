@@ -1,0 +1,468 @@
+[
+  {
+    "id": "fn.sequence.col-default",
+    "description": "SEQUENCE(4) is a 4×1 column 1..4",
+    "tags": ["sequence", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SEQUENCE(4)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "number": 2 }],
+        [{ "number": 3 }],
+        [{ "number": 4 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.sequence.row",
+    "description": "SEQUENCE(1,5) is a 1×5 row 1..5",
+    "tags": ["sequence", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SEQUENCE(1,5)",
+    "expected": {
+      "array": [[{ "number": 1 }, { "number": 2 }, { "number": 3 }, { "number": 4 }, { "number": 5 }]]
+    }
+  },
+  {
+    "id": "fn.sequence.ms-4x5",
+    "description": "Microsoft example SEQUENCE(4,5) fills row-major from 1",
+    "tags": ["sequence", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SEQUENCE(4,5)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 2 }, { "number": 3 }, { "number": 4 }, { "number": 5 }],
+        [{ "number": 6 }, { "number": 7 }, { "number": 8 }, { "number": 9 }, { "number": 10 }],
+        [{ "number": 11 }, { "number": 12 }, { "number": 13 }, { "number": 14 }, { "number": 15 }],
+        [{ "number": 16 }, { "number": 17 }, { "number": 18 }, { "number": 19 }, { "number": 20 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.sequence.ms-start-step",
+    "description": "Microsoft example SEQUENCE(4,5,100,10)",
+    "tags": ["sequence", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SEQUENCE(4,5,100,10)",
+    "expected": {
+      "array": [
+        [{ "number": 100 }, { "number": 110 }, { "number": 120 }, { "number": 130 }, { "number": 140 }],
+        [{ "number": 150 }, { "number": 160 }, { "number": 170 }, { "number": 180 }, { "number": 190 }],
+        [{ "number": 200 }, { "number": 210 }, { "number": 220 }, { "number": 230 }, { "number": 240 }],
+        [{ "number": 250 }, { "number": 260 }, { "number": 270 }, { "number": 280 }, { "number": 290 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.sequence.start-step-col",
+    "description": "SEQUENCE(3,1,10,5) is 10,15,20",
+    "tags": ["sequence", "functions"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SEQUENCE(3,1,10,5)",
+    "expected": {
+      "array": [[{ "number": 10 }], [{ "number": 15 }], [{ "number": 20 }]]
+    }
+  },
+  {
+    "id": "fn.sequence.negative-step",
+    "description": "Negative step decrements",
+    "tags": ["sequence", "functions"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SEQUENCE(3,1,10,-2)",
+    "expected": {
+      "array": [[{ "number": 10 }], [{ "number": 8 }], [{ "number": 6 }]]
+    }
+  },
+  {
+    "id": "fn.sequence.zero-step",
+    "description": "Step 0 repeats start in every cell",
+    "tags": ["sequence", "functions"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SEQUENCE(2,2,5,0)",
+    "expected": {
+      "array": [
+        [{ "number": 5 }, { "number": 5 }],
+        [{ "number": 5 }, { "number": 5 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.sequence.fractional-step",
+    "description": "Fractional start/step stay numeric",
+    "tags": ["sequence", "functions"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SEQUENCE(3,1,1,0.5)",
+    "expected": {
+      "array": [[{ "number": 1 }], [{ "number": 1.5 }], [{ "number": 2 }]]
+    }
+  },
+  {
+    "id": "fn.sequence.one-by-one",
+    "description": "SEQUENCE(1) is a 1×1 array, not a bare scalar",
+    "tags": ["sequence", "functions"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SEQUENCE(1)",
+    "expected": { "array": [[{ "number": 1 }]] }
+  },
+  {
+    "id": "fn.sequence.one-by-one-custom",
+    "description": "SEQUENCE(1,1,7) is a 1×1 array holding 7",
+    "tags": ["sequence", "functions"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SEQUENCE(1,1,7)",
+    "expected": { "array": [[{ "number": 7 }]] }
+  },
+  {
+    "id": "fn.sequence.trunc-rows",
+    "description": "rows 2.9 truncates toward zero to 2",
+    "tags": ["sequence", "functions"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SEQUENCE(2.9)",
+    "expected": { "array": [[{ "number": 1 }], [{ "number": 2 }]] }
+  },
+  {
+    "id": "fn.sequence.trunc-cols",
+    "description": "columns 3.7 truncates toward zero to 3",
+    "tags": ["sequence", "functions"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SEQUENCE(1,3.7)",
+    "expected": { "array": [[{ "number": 1 }, { "number": 2 }, { "number": 3 }]] }
+  },
+  {
+    "id": "fn.sequence.true-is-one",
+    "description": "TRUE coerces to 1 row",
+    "tags": ["sequence", "functions"],
+    "quirks": ["array-eval-mode", "bool-number-equality"],
+    "formula": "=SEQUENCE(TRUE)",
+    "expected": { "array": [[{ "number": 1 }]] }
+  },
+  {
+    "id": "fn.sequence.false-is-calc",
+    "description": "FALSE coerces to 0 rows → #CALC!",
+    "tags": ["sequence", "errors"],
+    "quirks": ["array-eval-mode", "bool-number-equality"],
+    "formula": "=SEQUENCE(FALSE)",
+    "expected": { "error": "#CALC!" }
+  },
+  {
+    "id": "fn.sequence.zero-rows-calc",
+    "description": "SEQUENCE(0) is #CALC! (empty array is not allowed)",
+    "tags": ["sequence", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SEQUENCE(0)",
+    "expected": { "error": "#CALC!" }
+  },
+  {
+    "id": "fn.sequence.zero-cols-calc",
+    "description": "SEQUENCE(1,0) is #CALC!",
+    "tags": ["sequence", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SEQUENCE(1,0)",
+    "expected": { "error": "#CALC!" }
+  },
+  {
+    "id": "fn.sequence.frac-below-one-calc",
+    "description": "SEQUENCE(0.5) truncates to 0 → #CALC!",
+    "tags": ["sequence", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SEQUENCE(0.5)",
+    "expected": { "error": "#CALC!" }
+  },
+  {
+    "id": "fn.sequence.neg-frac-calc",
+    "description": "SEQUENCE(-0.5) truncates toward zero to 0 → #CALC!",
+    "tags": ["sequence", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SEQUENCE(-0.5)",
+    "expected": { "error": "#CALC!" }
+  },
+  {
+    "id": "fn.sequence.neg-rows-value",
+    "description": "Negative rows after truncation is #VALUE!",
+    "tags": ["sequence", "errors"],
+    "formula": "=SEQUENCE(-1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.sequence.neg-cols-value",
+    "description": "Negative columns after truncation is #VALUE!",
+    "tags": ["sequence", "errors"],
+    "formula": "=SEQUENCE(1,-2)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.sequence.neg-trunc-value",
+    "description": "SEQUENCE(-1.9) truncates to -1 → #VALUE!",
+    "tags": ["sequence", "errors"],
+    "formula": "=SEQUENCE(-1.9)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.sequence.numeric-text",
+    "description": "Numeric text rows coerce",
+    "tags": ["sequence", "functions"],
+    "quirks": ["array-eval-mode", "equality-vs-arithmetic-coercion"],
+    "formula": "=SEQUENCE(\"4\")",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "number": 2 }],
+        [{ "number": 3 }],
+        [{ "number": 4 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.sequence.text-value",
+    "description": "Non-numeric text is #VALUE!",
+    "tags": ["sequence", "errors"],
+    "formula": "=SEQUENCE(\"x\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.sequence.blank-calc",
+    "description": "Blank rows cell coerces to 0 → #CALC!",
+    "tags": ["sequence", "errors", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=SEQUENCE(A1)",
+    "expected": { "error": "#CALC!" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {}
+      }]
+    }
+  },
+  {
+    "id": "fn.sequence.cell-args",
+    "description": "rows/columns/start/step from cells",
+    "tags": ["sequence", "functions"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SEQUENCE(A1,B1,C1,D1)",
+    "expected": {
+      "array": [
+        [{ "number": 10 }, { "number": 13 }],
+        [{ "number": 16 }, { "number": 19 }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 2 },
+          "B1": { "number": 2 },
+          "C1": { "number": 10 },
+          "D1": { "number": 3 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.sequence.percent-half-calc",
+    "description": "50% is 0.5 rows → #CALC!",
+    "tags": ["sequence", "errors"],
+    "quirks": ["percent-unary"],
+    "formula": "=SEQUENCE(50%)",
+    "expected": { "error": "#CALC!" }
+  },
+  {
+    "id": "fn.sequence.percent-one",
+    "description": "150% is 1.5 → one row",
+    "tags": ["sequence", "functions"],
+    "quirks": ["percent-unary", "array-eval-mode"],
+    "formula": "=SEQUENCE(150%)",
+    "expected": { "array": [[{ "number": 1 }]] }
+  },
+  {
+    "id": "fn.sequence.arity-zero",
+    "description": "SEQUENCE() is #VALUE! (rows is required)",
+    "tags": ["sequence", "errors"],
+    "formula": "=SEQUENCE()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.sequence.arity-five",
+    "description": "Five arguments are #VALUE!",
+    "tags": ["sequence", "errors"],
+    "formula": "=SEQUENCE(1,1,1,1,1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.sequence.err-rows",
+    "description": "Error in rows surfaces",
+    "tags": ["sequence", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=SEQUENCE(#DIV/0!)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.sequence.err-ltr-rows-first",
+    "description": "rows is evaluated first: #N/A beats a later #DIV/0!",
+    "tags": ["sequence", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=SEQUENCE(#N/A, #DIV/0!)",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.sequence.err-cols",
+    "description": "Error in columns surfaces after a valid rows",
+    "tags": ["sequence", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=SEQUENCE(2, #DIV/0!)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.sequence.err-start",
+    "description": "Error in start surfaces after valid size",
+    "tags": ["sequence", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=SEQUENCE(2,1,#N/A)",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.sequence.err-step",
+    "description": "Error in step surfaces after valid start",
+    "tags": ["sequence", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=SEQUENCE(2,1,1,#DIV/0!)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.sequence.index-nth",
+    "description": "INDEX picks a SEQUENCE cell without writing a spill range",
+    "tags": ["sequence", "index"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=INDEX(SEQUENCE(3,3),2,3)",
+    "expected": { "number": 6 }
+  },
+  {
+    "id": "fn.sequence.sum",
+    "description": "SUM consumes the SEQUENCE array (1+2+3+4)",
+    "tags": ["sequence", "sum"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SUM(SEQUENCE(4))",
+    "expected": { "number": 10 }
+  },
+  {
+    "id": "fn.sequence.sum-matrix",
+    "description": "SUM of SEQUENCE(2,3) is 21",
+    "tags": ["sequence", "sum"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SUM(SEQUENCE(2,3))",
+    "expected": { "number": 21 }
+  },
+  {
+    "id": "fn.sequence.counta",
+    "description": "COUNTA of SEQUENCE counts every generated cell",
+    "tags": ["sequence", "counta"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=COUNTA(SEQUENCE(2,3))",
+    "expected": { "number": 6 }
+  },
+  {
+    "id": "fn.sequence.nested-rows",
+    "description": "SEQUENCE of a 1×1 SEQUENCE scalarizes rows to 1",
+    "tags": ["sequence", "functions"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SEQUENCE(SEQUENCE(1),3)",
+    "expected": {
+      "array": [[{ "number": 1 }, { "number": 2 }, { "number": 3 }]]
+    }
+  },
+  {
+    "id": "fn.sequence.scalarize-plus",
+    "description": "SEQUENCE(...)+1 scalarizes to the top-left cell",
+    "tags": ["sequence"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SEQUENCE(3)+1",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.sequence.dynamic-array-mode",
+    "description": "array_mode=dynamic-array still returns the SEQUENCE array (no grid write)",
+    "tags": ["sequence", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SEQUENCE(A1)",
+    "options": { "array_mode": "dynamic-array" },
+    "expected": {
+      "array": [[{ "number": 1 }], [{ "number": 2 }], [{ "number": 3 }]]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 3 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.sequence.no-grid-write",
+    "description": "Occupied cells in the Excel spill zone do not produce #SPILL! — SEQUENCE returns the array",
+    "notes": "Excel would #SPILL! if SEQUENCE(3) at B1 needed B2:B3. This model never writes a spill range; neighbors are irrelevant. Pick individual results with INDEX/SUM.",
+    "tags": ["sequence", "spill"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SEQUENCE(3)",
+    "at": "Sheet1!B1",
+    "expected": {
+      "array": [[{ "number": 1 }], [{ "number": 2 }], [{ "number": 3 }]]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "B2": { "number": 99 },
+          "B3": { "text": "blocked" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.sequence.oversize-rows",
+    "description": "rows above the 2^24 cell safety cap is #VALUE! without allocating",
+    "notes": "Model limit: SEQUENCE_MAX_CELLS = 16,777,216. Excel would #SPILL! at the sheet edge; this engine has no spill grid.",
+    "tags": ["sequence", "errors", "limits"],
+    "formula": "=SEQUENCE(16777217)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.sequence.oversize-product",
+    "description": "rows*columns above the 2^24 cell safety cap is #VALUE!",
+    "notes": "5000×5000 = 25,000,000 > 16,777,216. Documented model cap, not Excel sheet-edge #SPILL!.",
+    "tags": ["sequence", "errors", "limits"],
+    "formula": "=SEQUENCE(5000,5000)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.sequence.oversize-huge",
+    "description": "SEQUENCE(1E20) is #VALUE! (does not attempt a 1e20-row alloc)",
+    "tags": ["sequence", "errors", "limits"],
+    "formula": "=SEQUENCE(1E20)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.sequence.isna-calc",
+    "description": "ISNA of SEQUENCE #CALC! is FALSE",
+    "tags": ["sequence", "information"],
+    "formula": "=ISNA(SEQUENCE(0))",
+    "expected": { "bool": false }
+  },
+  {
+    "id": "fn.sequence.iserror-calc",
+    "description": "ISERROR of SEQUENCE #CALC! is TRUE",
+    "tags": ["sequence", "information"],
+    "formula": "=ISERROR(SEQUENCE(0))",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.sequence.date-start",
+    "description": "start may be a DATE serial; step 1 is the next day",
+    "tags": ["sequence", "dates"],
+    "quirks": ["array-eval-mode", "date-1900-leap-year"],
+    "formula": "=SEQUENCE(3,1,DATE(2020,1,1),1)",
+    "expected": {
+      "array": [[{ "number": 43831 }], [{ "number": 43832 }], [{ "number": 43833 }]]
+    }
+  }
+]
