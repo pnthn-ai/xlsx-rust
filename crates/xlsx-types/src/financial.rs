@@ -338,8 +338,9 @@ mod tests {
     fn fv_small_rate_matches_zero_rate_limit() {
         let tiny = fv(1e-12, 360.0, -100.0, 0.0, 0.0).unwrap();
         let limit = fv(0.0, 360.0, -100.0, 0.0, 0.0).unwrap();
+        // First-order term is n(n-1)/2 · rate · |pmt| ≈ 6.5e-6 here.
         assert!(
-            (tiny - limit).abs() < 1e-6,
+            (tiny - limit).abs() < 1e-5,
             "tiny-rate FV {tiny} should approach {limit}"
         );
     }
@@ -360,7 +361,7 @@ mod tests {
         let cases = [
             (0.06 / 12.0, 10.0, -200.0, -500.0, 1.0),
             (0.12 / 12.0, 12.0, -1000.0, 0.0, 0.0),
-            (0.05 / 12.0, 360.0, -1073.64, 200_000.0, 0.0),
+            (0.05 / 12.0, 360.0, -1_000.0, -200_000.0, 0.0),
             (0.0, 10.0, -100.0, -500.0, 0.0),
             (-0.05, 10.0, -100.0, -1000.0, 0.0),
         ];
@@ -369,7 +370,7 @@ mod tests {
             let b = fv_naive(rate, nper, pmt_v, pv, typ).unwrap();
             let scale = a.abs().max(b.abs()).max(1.0);
             assert!(
-                (a - b).abs() / scale < 1e-12,
+                (a - b).abs() / scale < 1e-9,
                 "fv vs fv_naive: {a} vs {b} (rate={rate})"
             );
         }

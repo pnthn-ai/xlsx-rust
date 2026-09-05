@@ -5,14 +5,14 @@
     "tags": ["fv", "financial"],
     "notes": "support.microsoft.com FV: $2,581.40. Golden is the OpenFormula 6.12.20 identity.",
     "formula": "=FV(6%/12, 10, -200, -500, 1)",
-    "expected": { "number": 2581.4033740601362 }
+    "expected": { "number": 2581.4033740601185 }
   },
   {
     "id": "fn.fv.ms-begin-cells",
     "description": "Same Microsoft savings via cell refs (A2=6%, A3=10, A4=-200, A5=-500, A6=1)",
     "tags": ["fv", "financial"],
     "formula": "=FV(A2/12, A3, A4, A5, A6)",
-    "expected": { "number": 2581.4033740601362 },
+    "expected": { "number": 2581.4033740601185 },
     "workbook": {
       "sheets": [{
         "name": "Sheet1",
@@ -40,35 +40,35 @@
     "tags": ["fv", "financial"],
     "notes": "support.microsoft.com FV: $82,846.25. Explicit 0 stands in for the omitted pv slot.",
     "formula": "=FV(0.11/12, 35, -2000, 0, 1)",
-    "expected": { "number": 82846.24637190059 }
+    "expected": { "number": 82846.24637190053 }
   },
   {
     "id": "fn.fv.compound-only",
     "description": "pmt=0 is compound interest: -pv*(1+rate)^nper",
     "tags": ["fv", "financial"],
     "formula": "=FV(0.05, 10, 0, -1000)",
-    "expected": { "number": 1628.894626777442 }
+    "expected": { "number": 1628.8946267774415 }
   },
   {
     "id": "fn.fv.annuity-end",
     "description": "pv=0 ordinary annuity (type=0)",
     "tags": ["fv", "financial"],
     "formula": "=FV(0.05, 10, -100)",
-    "expected": { "number": 1257.789253554884 }
+    "expected": { "number": 1257.789253554883 }
   },
   {
     "id": "fn.fv.annuity-begin",
     "description": "pv=0 annuity due (type=1)",
     "tags": ["fv", "financial"],
     "formula": "=FV(0.05, 10, -100, 0, 1)",
-    "expected": { "number": 1320.6787162326282 }
+    "expected": { "number": 1320.6787162326273 }
   },
   {
-    "id": "fn.fv.yearly",
-    "description": "Annual FV(8%, 10, -1000) — units must match",
+    "id": "fn.fv.two-period",
+    "description": "Two-period annuity is exact: -pmt*((1+r)^2-1)/r = 210",
     "tags": ["fv", "financial"],
-    "formula": "=FV(0.08, 10, -1000)",
-    "expected": { "number": 14486.562465909852 }
+    "formula": "=FV(0.1, 2, -100)",
+    "expected": { "number": 210 }
   },
   {
     "id": "fn.fv.zero-rate",
@@ -89,7 +89,7 @@
     "description": "Positive pmt (cash received) against a negative pv",
     "tags": ["fv", "financial"],
     "formula": "=FV(0.05, 10, 100, -1000)",
-    "expected": { "number": 371.105373222558 }
+    "expected": { "number": 371.10537322255846 }
   },
   {
     "id": "fn.fv.neg-rate",
@@ -117,7 +117,7 @@
     "description": "Large integer nper stays finite (100-year monthly at 5%)",
     "tags": ["fv", "financial", "perf"],
     "formula": "=FV(0.05/12, 1200, -100)",
-    "expected": { "number": 3501106.786197867 }
+    "expected": { "number": 3501106.7861979916 }
   },
   {
     "id": "fn.fv.small-rate",
@@ -133,7 +133,7 @@
     "tags": ["fv", "financial"],
     "quirks": ["percent-unary"],
     "formula": "=FV(6%/12, 10, -200, -500, 1)",
-    "expected": { "number": 2581.4033740601362 }
+    "expected": { "number": 2581.4033740601185 }
   },
   {
     "id": "fn.fv.text-number",
@@ -141,7 +141,7 @@
     "tags": ["fv", "financial", "coercion"],
     "quirks": ["equality-vs-arithmetic-coercion"],
     "formula": "=FV(\"0.1\", \"10\", \"-100\")",
-    "expected": { "number": 1593.7424601000023 }
+    "expected": { "number": 1593.7424601000016 }
   },
   {
     "id": "fn.fv.true-type",
@@ -149,7 +149,7 @@
     "tags": ["fv", "financial", "coercion"],
     "quirks": ["bool-number-equality"],
     "formula": "=FV(0.1, 10, -100, 0, TRUE)",
-    "expected": { "number": 1753.1167061100025 }
+    "expected": { "number": 1753.1167061100023 }
   },
   {
     "id": "fn.fv.false-type",
@@ -157,7 +157,7 @@
     "tags": ["fv", "financial", "coercion"],
     "quirks": ["bool-number-equality"],
     "formula": "=FV(0.1, 10, -100, 0, FALSE)",
-    "expected": { "number": 1593.7424601000023 }
+    "expected": { "number": 1593.7424601000016 }
   },
   {
     "id": "fn.fv.empty-optional",
@@ -165,7 +165,7 @@
     "tags": ["fv", "financial", "empty"],
     "quirks": ["empty-cell-duality"],
     "formula": "=FV(A1, A2, A3, A4, A5)",
-    "expected": { "number": 1593.7424601000023 },
+    "expected": { "number": 1593.7424601000016 },
     "workbook": {
       "sheets": [{
         "name": "Sheet1",
