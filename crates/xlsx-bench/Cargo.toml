@@ -22,3 +22,7 @@ path = "src/bin/xlsx-bench-snapshot.rs"
 [[bench]]
 name = "fn_sum"
 harness = false
+
+[[bench]]
+name = "fn_nper"
+harness = false

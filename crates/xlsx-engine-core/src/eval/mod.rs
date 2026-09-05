@@ -929,4 +929,38 @@ mod tests {
             ExcelValue::Error(ExcelError::Value)
         );
     }
+
+    #[test]
+    fn nper_microsoft_and_errors() {
+        let wb = Workbook::default();
+        match eval_formula_in(&wb, "=NPER(12%/12,-100,-1000,10000,1)").unwrap() {
+            ExcelValue::Number(n) => {
+                assert!((n - 59.67386567429462).abs() < 1e-9, "got {n}")
+            }
+            other => panic!("expected number, got {other:?}"),
+        }
+        match eval_formula_in(&wb, "=NPER(0.05/12, PMT(0.05/12, 360, 200000), 200000)").unwrap()
+        {
+            ExcelValue::Number(n) => {
+                assert!((n - 360.0).abs() < 1e-8, "invert got {n}")
+            }
+            other => panic!("expected number, got {other:?}"),
+        }
+        assert_eq!(
+            eval_formula_in(&wb, "=NPER(0,0,1000)").unwrap(),
+            ExcelValue::Error(ExcelError::Div0)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=NPER(0.1,-10,100)").unwrap(),
+            ExcelValue::Error(ExcelError::Num)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=NPER(0.1,10)").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=NPER()").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
+        );
+    }
 }
