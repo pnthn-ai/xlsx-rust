@@ -87,13 +87,27 @@ fn spec(workbook: Workbook, formula: &str) -> EvalSpec {
 }
 
 fn expected_two_numeric() -> f64 {
-    // i%10 in {6,7,8,9} AND i%3 == 1 → C = i%10+1 in {7,8,9,10}, equally often.
-    8.5
+    // C = i%10+1 when i%10 in {6,7,8,9} AND i%3 == 1.
+    // 20000 is not a multiple of 30, so the four residues are not equally often.
+    let (sum, count) = (0..ROWS).fold((0.0, 0u64), |(sum, count), i| {
+        if i % 10 > 5 && i % 3 == 1 {
+            (sum + (i % 10) as f64 + 1.0, count + 1)
+        } else {
+            (sum, count)
+        }
+    });
+    sum / count as f64
 }
 
 fn expected_three_numeric() -> f64 {
-    // additionally i%2 == 0 → only the even residues (7 and 9).
-    8.0
+    let (sum, count) = (0..ROWS).fold((0.0, 0u64), |(sum, count), i| {
+        if i % 10 > 5 && i % 3 == 1 && i % 2 == 0 {
+            (sum + (i % 10) as f64 + 1.0, count + 1)
+        } else {
+            (sum, count)
+        }
+    });
+    sum / count as f64
 }
 
 fn bench_averageifs(c: &mut Criterion) {
