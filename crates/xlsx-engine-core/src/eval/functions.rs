@@ -1,5 +1,7 @@
 //! Worksheet functions implemented with Excel-compatible semantics.
 //!
+//! `IFS` lives with the other logicals here; pair selection is [`super::ifs`].
+//!
 //! Unknown names return `#NAME?` (an Excel value, not [`EvalError`]).
 
 use super::{coerce, compare, excel_pow, Ctx, Evaluator};
@@ -23,6 +25,7 @@ pub(crate) fn dispatch(
         "COUNTA" => fn_agg(ev, args, ctx, AggKind::CountA),
         "COUNTBLANK" => fn_agg(ev, args, ctx, AggKind::CountBlank),
         "IF" => fn_if(ev, args, ctx),
+        "IFS" => fn_ifs(ev, args, ctx),
         "IFERROR" => fn_iferror(ev, args, ctx),
         "IFNA" => fn_ifna(ev, args, ctx),
         "AND" => fn_and_or(ev, args, ctx, AndOr::And),
@@ -135,6 +138,24 @@ fn fn_if(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue,
     } else {
         Ok(ExcelValue::Bool(false))
     }
+}
+
+/// Excel `IFS`: evaluate every pair (no short-circuit), first TRUE wins,
+/// no match → `#N/A`. Odd / empty arity is `#VALUE!`.
+fn fn_ifs(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    if args.is_empty() || args.len() % 2 == 1 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let mut first_err = None;
+    let mut first_true = None;
+    let mut i = 0;
+    while i + 1 < args.len() {
+        let cond = ev.eval_scalar(&args[i], ctx)?;
+        let val = ev.eval_expr(&args[i + 1], ctx)?;
+        super::ifs::fold_pair(&cond, val, &mut first_err, &mut first_true);
+        i += 2;
+    }
+    Ok(super::ifs::finish(first_err, first_true))
 }
 
 fn fn_iferror(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {

@@ -1,0 +1,435 @@
+[
+  {
+    "id": "fn.ifs-first-true",
+    "description": "IFS returns the value of the first TRUE test",
+    "tags": ["ifs", "logical"],
+    "formula": "=IFS(TRUE, 1, TRUE, 2)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.ifs-later-true",
+    "description": "IFS(FALSE, 1, TRUE, 2) is 2",
+    "tags": ["ifs", "logical"],
+    "formula": "=IFS(FALSE, 1, TRUE, 2)",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.ifs-third-true",
+    "description": "Third pair wins when the first two tests are FALSE",
+    "tags": ["ifs", "logical"],
+    "formula": "=IFS(FALSE, 1, FALSE, 2, TRUE, 3)",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.ifs-no-match-na",
+    "description": "IFS with every test FALSE is #N/A",
+    "tags": ["ifs", "errors"],
+    "formula": "=IFS(FALSE, 1, FALSE, 2)",
+    "expected": { "error": "#N/A" },
+    "notes": "Excel has no built-in default; unmatched IFS is #N/A, not FALSE."
+  },
+  {
+    "id": "fn.ifs-single-false-na",
+    "description": "IFS(FALSE, 1) is #N/A",
+    "tags": ["ifs", "errors"],
+    "formula": "=IFS(FALSE, 1)",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.ifs-true-default",
+    "description": "TRUE as the last test is the default branch",
+    "tags": ["ifs", "logical"],
+    "formula": "=IFS(FALSE, 1, FALSE, 2, TRUE, 9)",
+    "expected": { "number": 9 }
+  },
+  {
+    "id": "fn.ifs-true-fn-default",
+    "description": "TRUE() as the last test is also a default",
+    "tags": ["ifs", "logical"],
+    "formula": "=IFS(FALSE, \"a\", TRUE(), \"b\")",
+    "expected": { "text": "b" }
+  },
+  {
+    "id": "fn.ifs-no-short-unused-value-div0",
+    "description": "IFS evaluates unused values: IFS(TRUE, 1, FALSE, 1/0) is #DIV/0!",
+    "tags": ["ifs", "errors"],
+    "quirks": ["if-short-circuit", "error-precedence"],
+    "formula": "=IFS(TRUE, 1, FALSE, 1/0)",
+    "expected": { "error": "#DIV/0!" },
+    "notes": "Contrast with IF(TRUE, 1, 1/0) which is 1. Excel IFS does not short-circuit."
+  },
+  {
+    "id": "fn.ifs-no-short-unused-cond-div0",
+    "description": "IFS evaluates later tests: IFS(TRUE, 1, 1/0, 2) is #DIV/0!",
+    "tags": ["ifs", "errors"],
+    "quirks": ["if-short-circuit", "error-precedence"],
+    "formula": "=IFS(TRUE, 1, 1/0, 2)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.ifs-false-pair-value-div0",
+    "description": "A FALSE pair's value is still evaluated: IFS(FALSE, 1/0, TRUE, 2) is #DIV/0!",
+    "tags": ["ifs", "errors"],
+    "quirks": ["if-short-circuit", "error-precedence"],
+    "formula": "=IFS(FALSE, 1/0, TRUE, 2)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.ifs-false-only-value-div0",
+    "description": "IFS(FALSE, 1/0) is #DIV/0! (value evaluated before the no-match #N/A)",
+    "tags": ["ifs", "errors"],
+    "quirks": ["if-short-circuit", "error-precedence"],
+    "formula": "=IFS(FALSE, 1/0)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.ifs-later-text-cond-is-value",
+    "description": "A later non-logical test is #VALUE! even after a TRUE match",
+    "tags": ["ifs", "errors"],
+    "quirks": ["if-short-circuit"],
+    "formula": "=IFS(TRUE, 1, \"x\", 2)",
+    "expected": { "error": "#VALUE!" },
+    "notes": "Excel evaluates every logical_test. Text is not coerced."
+  },
+  {
+    "id": "fn.ifs-if-does-short-circuit",
+    "description": "Contrast: IF(TRUE, 1, 1/0) is 1",
+    "tags": ["if", "ifs", "errors"],
+    "quirks": ["if-short-circuit"],
+    "formula": "=IF(TRUE, 1, 1/0)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.ifs-condition-error",
+    "description": "IFS(1/0, 1, TRUE, 2) is #DIV/0!",
+    "tags": ["ifs", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=IFS(1/0, 1, TRUE, 2)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.ifs-matched-value-error",
+    "description": "IFS(TRUE, 1/0) is #DIV/0!",
+    "tags": ["ifs", "errors"],
+    "formula": "=IFS(TRUE, 1/0)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.ifs-error-ltr-div0-beats-na",
+    "description": "Left-to-right: IFS(#DIV/0!, 1, #N/A, 2) keeps #DIV/0!",
+    "tags": ["ifs", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=IFS(#DIV/0!, 1, #N/A, 2)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.ifs-error-ltr-na-beats-later-div0",
+    "description": "IFS(TRUE, #N/A, 1/0, 2) keeps #N/A",
+    "tags": ["ifs", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=IFS(TRUE, #N/A, 1/0, 2)",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.ifs-na-condition",
+    "description": "IFS(NA(), 1, TRUE, 2) is #N/A",
+    "tags": ["ifs", "errors"],
+    "formula": "=IFS(NA(), 1, TRUE, 2)",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.ifs-text-cond-value",
+    "description": "IFS(\"TRUE\", 1) is #VALUE! — text is not a logical",
+    "tags": ["ifs", "errors"],
+    "formula": "=IFS(\"TRUE\", 1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.ifs-text-cond-x",
+    "description": "IFS(\"x\", 1, TRUE, 2) is #VALUE!",
+    "tags": ["ifs", "errors"],
+    "formula": "=IFS(\"x\", 1, TRUE, 2)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.ifs-number-nonzero",
+    "description": "IFS(2, 9) is 9 (nonzero is TRUE)",
+    "tags": ["ifs", "logical"],
+    "formula": "=IFS(2, 9)",
+    "expected": { "number": 9 }
+  },
+  {
+    "id": "fn.ifs-number-zero-then-later",
+    "description": "IFS(0, 1, 3, 4) is 4",
+    "tags": ["ifs", "logical"],
+    "formula": "=IFS(0, 1, 3, 4)",
+    "expected": { "number": 4 }
+  },
+  {
+    "id": "fn.ifs-negative-is-true",
+    "description": "IFS(-1, 5) is 5",
+    "tags": ["ifs", "logical"],
+    "formula": "=IFS(-1, 5)",
+    "expected": { "number": 5 }
+  },
+  {
+    "id": "fn.ifs-empty-cond-is-false",
+    "description": "A blank cell as the test is FALSE, so the TRUE default wins",
+    "tags": ["ifs", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=IFS(A1, 1, TRUE, 2)",
+    "expected": { "number": 2 },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.ifs-empty-value",
+    "description": "IFS(TRUE, A1) of a blank is empty",
+    "tags": ["ifs", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=IFS(TRUE, A1)",
+    "expected": { "empty": null },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.ifs-empty-string-value",
+    "description": "IFS(TRUE, \"\") is the empty string",
+    "tags": ["ifs"],
+    "formula": "=IFS(TRUE, \"\")",
+    "expected": { "text": "" }
+  },
+  {
+    "id": "fn.ifs-bool-result",
+    "description": "IFS can return a logical",
+    "tags": ["ifs"],
+    "formula": "=IFS(FALSE, TRUE, TRUE, FALSE)",
+    "expected": { "bool": false }
+  },
+  {
+    "id": "fn.ifs-text-result",
+    "description": "IFS can return text",
+    "tags": ["ifs"],
+    "formula": "=IFS(TRUE, \"ok\", FALSE, \"no\")",
+    "expected": { "text": "ok" }
+  },
+  {
+    "id": "fn.ifs-no-args",
+    "description": "IFS() is #VALUE! (too few arguments)",
+    "tags": ["ifs", "errors"],
+    "formula": "=IFS()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.ifs-odd-arity-true",
+    "description": "IFS(TRUE) unpaired test is #VALUE!",
+    "tags": ["ifs", "errors"],
+    "formula": "=IFS(TRUE)",
+    "expected": { "error": "#VALUE!" },
+    "notes": "Microsoft: a logical_test without value_if_true is too few arguments."
+  },
+  {
+    "id": "fn.ifs-odd-arity-three",
+    "description": "IFS(FALSE, 1, TRUE) unpaired last test is #VALUE!",
+    "tags": ["ifs", "errors"],
+    "formula": "=IFS(FALSE, 1, TRUE)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.ifs-nested",
+    "description": "Nested IFS: outer FALSE then inner first-TRUE",
+    "tags": ["ifs"],
+    "formula": "=IFS(FALSE, 1, TRUE, IFS(TRUE, 5, FALSE, 6))",
+    "expected": { "number": 5 }
+  },
+  {
+    "id": "fn.ifs-nested-inner-no-match",
+    "description": "Matched outer pair whose value is an unmatched inner IFS is #N/A",
+    "tags": ["ifs", "errors"],
+    "formula": "=IFS(TRUE, IFS(FALSE, 1, FALSE, 2))",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.ifs-ifna-default",
+    "description": "IFNA swallows unmatched IFS #N/A",
+    "tags": ["ifs", "errors"],
+    "formula": "=IFNA(IFS(FALSE, 1, FALSE, 2), 9)",
+    "expected": { "number": 9 }
+  },
+  {
+    "id": "fn.ifs-iferror-swallows-div0",
+    "description": "IFERROR swallows an unused-pair #DIV/0! from IFS",
+    "tags": ["ifs", "errors"],
+    "quirks": ["if-short-circuit"],
+    "formula": "=IFERROR(IFS(TRUE, 1, FALSE, 1/0), 0)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.ifs-comparison-tests",
+    "description": "IFS with comparison tests picks the first match",
+    "tags": ["ifs"],
+    "formula": "=IFS(1>2, \"a\", 2>1, \"b\", TRUE, \"c\")",
+    "expected": { "text": "b" }
+  },
+  {
+    "id": "fn.ifs-grade-a",
+    "description": "Microsoft-style grade IFS: 95 is A",
+    "tags": ["ifs"],
+    "formula": "=IFS(A2>89, \"A\", A2>79, \"B\", A2>69, \"C\", A2>59, \"D\", TRUE, \"F\")",
+    "expected": { "text": "A" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": { "A2": { "number": 95 } }
+      }]
+    }
+  },
+  {
+    "id": "fn.ifs-grade-c",
+    "description": "Microsoft-style grade IFS: 75 is C",
+    "tags": ["ifs"],
+    "formula": "=IFS(A2>89, \"A\", A2>79, \"B\", A2>69, \"C\", A2>59, \"D\", TRUE, \"F\")",
+    "expected": { "text": "C" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": { "A2": { "number": 75 } }
+      }]
+    }
+  },
+  {
+    "id": "fn.ifs-grade-f-default",
+    "description": "Microsoft-style grade IFS: 58 hits the TRUE default F",
+    "tags": ["ifs"],
+    "formula": "=IFS(A2>89, \"A\", A2>79, \"B\", A2>69, \"C\", A2>59, \"D\", TRUE, \"F\")",
+    "expected": { "text": "F" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": { "A2": { "number": 58 } }
+      }]
+    }
+  },
+  {
+    "id": "fn.ifs-grade-no-default-na",
+    "description": "Same grades without TRUE default: 58 is #N/A",
+    "tags": ["ifs", "errors"],
+    "formula": "=IFS(A2>89, \"A\", A2>79, \"B\", A2>69, \"C\", A2>59, \"D\")",
+    "expected": { "error": "#N/A" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": { "A2": { "number": 58 } }
+      }]
+    }
+  },
+  {
+    "id": "fn.ifs-cell-tests",
+    "description": "IFS over stored logical cells",
+    "tags": ["ifs"],
+    "formula": "=IFS(A1, 10, A2, 20, TRUE, 30)",
+    "expected": { "number": 20 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "bool": false },
+          "A2": { "bool": true }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.ifs-eq-tests",
+    "description": "IFS with = tests",
+    "tags": ["ifs"],
+    "formula": "=IFS(A1=\"red\", 1, A1=\"blue\", 2, TRUE, 0)",
+    "expected": { "number": 2 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": { "A1": { "text": "blue" } }
+      }]
+    }
+  },
+  {
+    "id": "fn.ifs-eq-casefold",
+    "description": "IFS text = is case-insensitive",
+    "tags": ["ifs"],
+    "quirks": ["case-insensitive-text"],
+    "formula": "=IFS(A1=\"RED\", 1, TRUE, 0)",
+    "expected": { "number": 1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": { "A1": { "text": "red" } }
+      }]
+    }
+  },
+  {
+    "id": "fn.ifs-implicit-intersect",
+    "description": "IFS test range uses host-row implicit intersection",
+    "tags": ["ifs"],
+    "quirks": ["implicit-intersection"],
+    "formula": "=IFS(A1:A3, \"yes\", TRUE, \"no\")",
+    "at": "Sheet1!B2",
+    "expected": { "text": "yes" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "bool": false },
+          "A2": { "bool": true },
+          "A3": { "bool": false }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.ifs-isna",
+    "description": "ISNA of unmatched IFS is TRUE",
+    "tags": ["ifs", "information"],
+    "formula": "=ISNA(IFS(FALSE, 1))",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.ifs-iserror-na",
+    "description": "ISERROR of unmatched IFS is TRUE",
+    "tags": ["ifs", "information"],
+    "formula": "=ISERROR(IFS(FALSE, 1))",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.ifs-and-in-test",
+    "description": "AND inside an IFS test (AND itself does not short-circuit)",
+    "tags": ["ifs", "logical"],
+    "formula": "=IFS(AND(TRUE, TRUE), 4, TRUE, 0)",
+    "expected": { "number": 4 }
+  },
+  {
+    "id": "fn.ifs-or-in-test",
+    "description": "OR inside an IFS test",
+    "tags": ["ifs", "logical"],
+    "formula": "=IFS(OR(FALSE, TRUE), 7, TRUE, 0)",
+    "expected": { "number": 7 }
+  },
+  {
+    "id": "fn.ifs-sum-value",
+    "description": "IFS value can be a computed SUM",
+    "tags": ["ifs"],
+    "formula": "=IFS(TRUE, SUM(A1:A3), FALSE, 0)",
+    "expected": { "number": 6 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 2 },
+          "A3": { "number": 3 }
+        }
+      }]
+    }
+  }
+]

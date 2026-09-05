@@ -34,7 +34,7 @@ pub fn to_text(v: &ExcelValue) -> Result<String, ExcelError> {
     }
 }
 
-/// Coerce a value to a logical used by `IF` (and VLOOKUP's range_lookup).
+/// Coerce a value to a logical used by `IF` / `IFS` (and VLOOKUP's range_lookup).
 ///
 /// Numbers: nonzero is TRUE. Empty is FALSE. Text is `#VALUE!` (Excel does
 /// not treat `"TRUE"` as a logical here unless it is the boolean literal).
