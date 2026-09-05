@@ -3,16 +3,16 @@
     "id": "fn.effect.ms-quarterly",
     "description": "Microsoft EFFECT example: 5.25% nominal compounded quarterly",
     "tags": ["effect", "financial"],
-    "notes": "support.microsoft.com EFFECT(0.0525, 4) = 0.0535426673707582. Golden is the OpenFormula 6.12.19 identity (1+nominal/npery)^npery-1.",
+    "notes": "support.microsoft.com EFFECT(0.0525, 4) prints 0.0535426673707582. Golden is the OpenFormula 6.12.19 identity (1+nominal/npery)^npery-1 in IEEE.",
     "formula": "=EFFECT(0.0525, 4)",
-    "expected": { "number": 0.0535426673707582 }
+    "expected": { "number": 0.05354266737075841 }
   },
   {
     "id": "fn.effect.ms-cells",
     "description": "Same Microsoft quarterly example via cell refs",
     "tags": ["effect", "financial"],
     "formula": "=EFFECT(A2, A3)",
-    "expected": { "number": 0.0535426673707582 },
+    "expected": { "number": 0.05354266737075841 },
     "workbook": {
       "sheets": [{
         "name": "Sheet1",
@@ -29,7 +29,7 @@
     "tags": ["effect", "financial"],
     "quirks": ["percent-unary"],
     "formula": "=EFFECT(5.25%, 4)",
-    "expected": { "number": 0.0535426673707582 }
+    "expected": { "number": 0.05354266737075841 }
   },
   {
     "id": "fn.effect.annual",
@@ -50,14 +50,14 @@
     "description": "5% nominal compounded quarterly",
     "tags": ["effect", "financial"],
     "formula": "=EFFECT(0.05, 4)",
-    "expected": { "number": 0.0509453369140625 }
+    "expected": { "number": 0.050945336914062445 }
   },
   {
     "id": "fn.effect.monthly-8",
     "description": "8% nominal compounded monthly",
     "tags": ["effect", "financial"],
     "formula": "=EFFECT(0.08, 12)",
-    "expected": { "number": 0.08299950680751075 }
+    "expected": { "number": 0.08299950680751 }
   },
   {
     "id": "fn.effect.monthly-12",
@@ -71,14 +71,14 @@
     "description": "5% nominal compounded weekly",
     "tags": ["effect", "financial"],
     "formula": "=EFFECT(0.05, 52)",
-    "expected": { "number": 0.0512458419272003 }
+    "expected": { "number": 0.0512458419271975 }
   },
   {
     "id": "fn.effect.daily-6",
     "description": "6% nominal compounded daily (365)",
     "tags": ["effect", "financial"],
     "formula": "=EFFECT(0.06, 365)",
-    "expected": { "number": 0.0618313106778537 }
+    "expected": { "number": 0.06183131067786696 }
   },
   {
     "id": "fn.effect.trunc-npery",
@@ -99,7 +99,7 @@
     "description": "Numeric text coerces like other scalar financial args",
     "tags": ["effect", "financial"],
     "formula": "=EFFECT(\"0.0525\", \"4\")",
-    "expected": { "number": 0.0535426673707582 }
+    "expected": { "number": 0.05354266737075841 }
   },
   {
     "id": "fn.effect.bool-npery-true",

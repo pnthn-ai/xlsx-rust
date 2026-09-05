@@ -1,7 +1,7 @@
 //! Before/after microbench for Excel `EFFECT`.
 //!
 //! Compares the textbook `powf` baseline (`excel_effect_naive`) with the
-//! production kernel (`excel_effect`: n=1 identity, n=2/n=4 closed forms,
+//! production kernel (`excel_effect`: n=1 identity, n=2 closed form,
 //! `powi` / `expm1(n·ln1p(r/n))`).
 //!
 //! ```text

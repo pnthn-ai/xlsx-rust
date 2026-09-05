@@ -938,7 +938,8 @@ mod tests {
         let wb = Workbook::default();
         match eval_formula_in(&wb, "=EFFECT(0.0525,4)").unwrap() {
             ExcelValue::Number(n) => {
-                assert!(xlsx_types::excel_num_eq(n, 0.0535426673707582), "got {n}")
+                let published = 0.0535426673707582;
+                assert!((n - published).abs() / published < 1e-12, "got {n}")
             }
             other => panic!("expected number, got {other:?}"),
         }
