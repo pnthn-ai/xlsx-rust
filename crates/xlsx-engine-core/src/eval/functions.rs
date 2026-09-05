@@ -2,7 +2,8 @@
 //!
 //! `IFS` lives with the other logicals here; pair selection is [`super::ifs`].
 //! `FILTER` lives with the other lookups here; the mask/select kernel is
-//! [`super::filter`].
+//! [`super::filter`]. `CHOOSEROWS` lives here; the pick kernel is
+//! [`super::chooserows`].
 //!
 //! Unknown names return `#NAME?` (an Excel value, not [`EvalError`]).
 //! Financial TVM starts with `PMT` (`xlsx_types::excel_pmt`); `PV`/`FV`/`NPER`
@@ -53,6 +54,7 @@ pub(crate) fn dispatch(
         "HLOOKUP" => fn_hlookup(ev, args, ctx),
         "XLOOKUP" => fn_xlookup(ev, args, ctx),
         "FILTER" => fn_filter(ev, args, ctx),
+        "CHOOSEROWS" => fn_chooserows(ev, args, ctx),
         "INDEX" => fn_index(ev, args, ctx),
         "MATCH" => fn_match(ev, args, ctx),
         "CHOOSE" => fn_choose(ev, args, ctx),
@@ -425,6 +427,25 @@ fn fn_filter(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelVa
         None
     };
     Ok(super::filter::select(&array, &include, if_empty.as_ref()))
+}
+
+/// Excel `CHOOSEROWS(array, row_num1, [row_num2], ...)`.
+///
+/// Arity ≥ 2. Negative indices count from the end. `0` / out-of-range → `#VALUE!`.
+fn fn_chooserows(
+    ev: &Evaluator,
+    args: &[Expr],
+    ctx: &mut Ctx<'_>,
+) -> Result<ExcelValue, EvalError> {
+    if args.len() < 2 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let array = ev.eval_expr(&args[0], ctx)?;
+    let mut row_nums = Vec::with_capacity(args.len() - 1);
+    for arg in &args[1..] {
+        row_nums.push(ev.eval_expr(arg, ctx)?);
+    }
+    Ok(super::chooserows::select(&array, &row_nums))
 }
 
 fn fn_xlookup(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {

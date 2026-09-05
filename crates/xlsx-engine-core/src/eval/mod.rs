@@ -4,6 +4,7 @@
 //! Worksheet functions live in [`functions`].
 
 pub mod averageif;
+pub mod chooserows;
 pub mod coerce;
 pub mod compare;
 pub mod concat;

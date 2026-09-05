@@ -385,6 +385,7 @@ impl Interpreter {
             "HLOOKUP" => self.fn_hlookup(args, ctx),
             "XLOOKUP" => self.fn_xlookup(args, ctx),
             "FILTER" => self.fn_filter(args, ctx),
+            "CHOOSEROWS" => self.fn_chooserows(args, ctx),
             "INDEX" => self.fn_index(args, ctx),
             "MATCH" => self.fn_match(args, ctx),
             "CHOOSE" => self.fn_choose(args, ctx),
@@ -1134,6 +1135,18 @@ impl Interpreter {
             &include,
             if_empty.as_ref(),
         ))
+    }
+
+    fn fn_chooserows(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.len() < 2 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        let array = self.eval_expr(&args[0], ctx)?;
+        let mut row_nums = Vec::with_capacity(args.len() - 1);
+        for arg in &args[1..] {
+            row_nums.push(self.eval_expr(arg, ctx)?);
+        }
+        Ok(xlsx_engine_core::excel_chooserows(&array, &row_nums))
     }
 
     fn fn_xlookup(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
