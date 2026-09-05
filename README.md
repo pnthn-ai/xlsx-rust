@@ -285,7 +285,7 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 | [`eval/coerce.rs`](crates/xlsx-engine-core/src/eval/coerce.rs) | Arithmetic / `&` / `IF` coercion (`"2"+1` = 3, TRUE → 1, empty → 0) |
 | [`eval/compare.rs`](crates/xlsx-engine-core/src/eval/compare.rs) | 15-digit `=`, case-insensitive text, `TRUE=1`, type ranking (`FALSE>100`) |
 | [`eval/empty.rs`](crates/xlsx-engine-core/src/eval/empty.rs) | Blank ≠ 0 ≠ `""`, but `A1=0` and `A1=""` when `A1` is blank |
-| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Dispatch: aggregators (`SUM`/`SUMIF`/`SUMIFS`/`AVERAGEIF`/`COUNTIF`/`SUMPRODUCT`), logicals (`IF`/`IFS`/`SWITCH`), lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`/`FILTER`/`UNIQUE`), dates (`DATE`/`EOMONTH`/`NETWORKDAYS`/`WEEKDAY`/`WORKDAY`), math (`ROUND`/`ROUNDUP`/`ROUNDDOWN`/`FLOOR`/`CEILING`), text (`LEFT`/`SUBSTITUTE`/`REPLACE`/`FIND`/`SEARCH`/`TEXT`/`TEXTJOIN`/`CONCAT`), financial (`NPV`/`PMT`/`IRR`), `TYPE` / `IS*` |
+| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Dispatch: aggregators (`SUM`/`SUMIF`/`SUMIFS`/`AVERAGEIF`/`COUNTIF`/`SUMPRODUCT`), logicals (`IF`/`IFS`/`SWITCH`), lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`/`FILTER`/`UNIQUE`/`SEQUENCE`), dates (`DATE`/`EOMONTH`/`NETWORKDAYS`/`WEEKDAY`/`WORKDAY`), math (`ROUND`/`ROUNDUP`/`ROUNDDOWN`/`FLOOR`/`CEILING`), text (`LEFT`/`SUBSTITUTE`/`REPLACE`/`FIND`/`SEARCH`/`TEXT`/`TEXTJOIN`/`CONCAT`), financial (`NPV`/`PMT`/`IRR`), `TYPE` / `IS*` |
 | [`eval/sumif.rs`](crates/xlsx-engine-core/src/eval/sumif.rs) | Excel `SUMIF` kernel (criteria walk, reshape `sum_range`, no array literals) |
 | [`eval/sumifs.rs`](crates/xlsx-engine-core/src/eval/sumifs.rs) | Excel `SUMIFS`: multi-criteria AND, same-shape ranges |
 | [`eval/averageif.rs`](crates/xlsx-engine-core/src/eval/averageif.rs) | Excel `AVERAGEIF` kernel (reshape `average_range`, `#DIV/0!` when empty) |
@@ -301,6 +301,7 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 | [`eval/ifs.rs`](crates/xlsx-engine-core/src/eval/ifs.rs) | `IFS` pair-selection kernel (eager eval, first TRUE, no-match `#N/A`) |
 | [`eval/unique.rs`](crates/xlsx-engine-core/src/eval/unique.rs) | `UNIQUE(array, [by_col], [exactly_once])` hash distinctness |
 | [`eval/filter.rs`](crates/xlsx-engine-core/src/eval/filter.rs) | `FILTER` mask/select kernel (`#CALC!` / `if_empty`, row vs column) |
+| [`eval/sequence.rs`](crates/xlsx-engine-core/src/eval/sequence.rs) | `SEQUENCE(rows, [columns], [start], [step])` row-major generator |
 | [`eval/npv.rs`](crates/xlsx-engine-core/src/eval/npv.rs) | Excel `NPV` kernel (period-1 discount, range skip of blanks/text/logicals) |
 | [`eval/irr.rs`](crates/xlsx-engine-core/src/eval/irr.rs) | Excel `IRR` Newton / secant kernel (20 tries, `1e-7` rate, `#NUM!` on failure) |
 | [`text_format.rs`](crates/xlsx-engine-core/src/text_format.rs) | Excel `TEXT` for a documented number/date format subset |
@@ -390,9 +391,18 @@ as one or the other. Documented quirk categories:
   no survivors is `#CALC!`. Result is always an array value.
 - **Spill limitation:** `evaluate` returns that array. The engine does **not**
   write spilled values into neighboring cells, so occupied destinations never
-  yield `#SPILL!`. Scalar operators (`UNIQUE(...)+1`) take the top-left
-  element (`scalarize`), not a host-aware intersection of a written spill.
-  Use `INDEX` / `SUM` / `COUNTA` to consume the array without a grid write.
+  yield `#SPILL!`. Scalar operators (`UNIQUE(...)+1`, `SEQUENCE(...)+1`) take
+  the top-left element (`scalarize`), not a host-aware intersection of a
+  written spill. Use `INDEX` / `SUM` / `COUNTA` to consume the array without
+  a grid write.
+- `SEQUENCE(rows, [columns], [start], [step])`: omitted optionals default to
+  `1`; `rows` is required (`SEQUENCE()` is `#VALUE!`). Fill is row-major
+  (`SEQUENCE(2,3)` is `{1,2,3;4,5,6}`). `rows` / `columns` truncate toward
+  zero; `0` after truncation is `#CALC!`; a negative size is `#VALUE!`.
+  `start` / `step` may be any finite number (including `0` and negatives).
+  Result is always an array value, including `1×1`. The parser does not
+  accept empty argument slots (`SEQUENCE(,5)` / `SEQUENCE(4,,10)`), so
+  write the default `1` explicitly.
 - `AVERAGEIF` criteria strings (`">5"`, `"*a*"`, `"="` / `"<>"` blanks), text `"5"` dual-matching numbers, range vs `average_range` reshape from the top-left, no matches / no numeric average cells → `#DIV/0!`, empty criteria cell treated as `0`
 - `PMT(rate, nper, pv, [fv], [type])`: Excel cash-flow sign (pay out is
   negative); `rate=0` is `-(pv+fv)/nper` (`#DIV/0!` if `nper=0`);
@@ -416,6 +426,18 @@ as one or the other. Documented quirk categories:
   is not a boolean-array include — pass a logical/numeric vector (literal or
   range). `*` / `+` criteria broadcasting is not modeled.
 - Excel's ~1,048,576-row array cap is not enforced; size is memory-bounded.
+
+**`SEQUENCE` spill / size limits** (honest, not hidden behind a broken case):
+
+- SEQUENCE returns an array **value**. Occupied cells in what would be the
+  Excel spill zone never yield `#SPILL!` — see `fn.sequence.no-grid-write`.
+- Excel would `#SPILL!` if the sequence could not fit from the host cell to
+  the sheet edge (`1,048,576` rows × `16,384` columns). That sheet-edge cap
+  is **not** enforced; there is no spill grid.
+- A safety cap of **16,777,216** cells (`2^24`, `SEQUENCE_MAX_CELLS`) rejects
+  `SEQUENCE(16777217)` / `SEQUENCE(5000,5000)` / `SEQUENCE(1E20)` as
+  `#VALUE!` without allocating. This is a model limit, not Excel's
+  sheet-edge `#SPILL!`.
 
 See [`crates/xlsx-types/src/quirk.rs`](crates/xlsx-types/src/quirk.rs). The
 catalog also names `error-precedence`, `percent-unary`, and `range-operators`.

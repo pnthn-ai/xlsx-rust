@@ -450,6 +450,7 @@ impl Interpreter {
             "CONCAT" => self.fn_concat(args, ctx),
             "NPV" => self.fn_npv(args, ctx),
             "UNIQUE" => self.fn_unique(args, ctx),
+            "SEQUENCE" => self.fn_sequence(args, ctx),
             "IRR" => self.fn_irr(args, ctx),
             "TRUE" => Ok(ExcelValue::Bool(true)),
             "FALSE" => Ok(ExcelValue::Bool(false)),
@@ -900,6 +901,41 @@ impl Interpreter {
         } else {
             Ok(v)
         }
+    }
+
+    fn fn_sequence(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.is_empty() || args.len() > 4 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        let rows = match self.as_number(&self.eval_scalar(&args[0], ctx)?) {
+            Ok(n) => n,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        let columns = if args.len() >= 2 {
+            match self.as_number(&self.eval_scalar(&args[1], ctx)?) {
+                Ok(n) => n,
+                Err(e) => return Ok(ExcelValue::Error(e)),
+            }
+        } else {
+            1.0
+        };
+        let start = if args.len() >= 3 {
+            match self.as_number(&self.eval_scalar(&args[2], ctx)?) {
+                Ok(n) => n,
+                Err(e) => return Ok(ExcelValue::Error(e)),
+            }
+        } else {
+            1.0
+        };
+        let step = if args.len() >= 4 {
+            match self.as_number(&self.eval_scalar(&args[3], ctx)?) {
+                Ok(n) => n,
+                Err(e) => return Ok(ExcelValue::Error(e)),
+            }
+        } else {
+            1.0
+        };
+        Ok(xlsx_engine_core::excel_sequence(rows, columns, start, step))
     }
 
     fn fn_unique(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {

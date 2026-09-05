@@ -101,5 +101,9 @@ name = "filter"
 harness = false
 
 [[bench]]
+name = "sequence"
+harness = false
+
+[[bench]]
 name = "irr"
 harness = false

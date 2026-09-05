@@ -36,7 +36,8 @@ pub enum QuirkCategory {
     /// Implicit intersection of a range in a scalar context.
     ImplicitIntersection,
     /// Dynamic array / CSE / scalar evaluation mode.
-    /// `FILTER` returns an array value; worksheet spill / `#SPILL!` is not modeled.
+    /// `FILTER` / `UNIQUE` / `SEQUENCE` return an array value; worksheet
+    /// spill / `#SPILL!` is not modeled.
     ArrayEvalMode,
     /// Volatile functions (`NOW`, `RAND`, `INDIRECT`, …).
     Volatile,
