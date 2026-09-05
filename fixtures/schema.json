@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/pnthn-ai/xlsx-rust/fixtures/schema.json",
+  "title": "xlsx-rust correctness fixture file",
+  "oneOf": [
+    { "$ref": "#/$defs/case" },
+    { "type": "array", "items": { "$ref": "#/$defs/case" } },
+    {
+      "type": "object",
+      "required": ["cases"],
+      "properties": { "cases": { "type": "array", "items": { "$ref": "#/$defs/case" } } }
+    }
+  ],
+  "$defs": {
+    "excelValue": {
+      "oneOf": [
+        { "type": "null" },
+        { "type": "number" },
+        { "type": "boolean" },
+        { "type": "string" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "number": { "type": "number" },
+            "text": { "type": "string" },
+            "bool": { "type": "boolean" },
+            "error": { "type": "string" },
+            "empty": {},
+            "array": {
+              "type": "array",
+              "items": { "type": "array", "items": { "$ref": "#/$defs/excelValue" } }
+            }
+          }
+        }
+      ]
+    },
+    "case": {
+      "type": "object",
+      "required": ["id"],
+      "properties": {
+        "id": { "type": "string" },
+        "description": { "type": "string" },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "quirks": { "type": "array", "items": { "type": "string" } },
+        "formula": { "type": "string" },
+        "at": { "type": "string" },
+        "cell": { "type": "string" },
+        "named": { "type": "string" },
+        "expected": { "$ref": "#/$defs/excelValue" },
+        "workbook": { "type": "object" },
+        "options": { "type": "object" },
+        "ignore": { "type": "string" },
+        "notes": { "type": "string" }
+      }
+    }
+  }
+}

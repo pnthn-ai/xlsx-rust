@@ -1,0 +1,12 @@
+[package]
+name = "xlsx-oracle"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Trusted Excel-compatible oracle interface (fixture, mock, future live backends)"
+
+[dependencies]
+xlsx-types = { workspace = true }
+thiserror = { workspace = true }
+serde = { workspace = true }

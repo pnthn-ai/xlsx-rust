@@ -1,0 +1,116 @@
+//! Catalog of Excel compatibility quirk categories.
+//!
+//! Not every category is exercised by the seed corpus. The list exists so
+//! fixtures, candidates, and future subagents share a vocabulary.
+
+use serde::{Deserialize, Serialize};
+use std::fmt;
+
+/// A named Excel compatibility quirk a fixture may exercise.
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum QuirkCategory {
+    /// IEEE vs Excel 15-digit comparison / display crossover.
+    IeeeVsExcelPrecision,
+    /// Blank cells behaving as `0` *and* `""` depending on operator.
+    EmptyCellDuality,
+    /// Text vs number vs logical ranking for `<` / `>` (logical > text > number).
+    TypeComparisonRanking,
+    /// `"2"=2` is FALSE but `"2"+1` is `3`.
+    EqualityVsArithmeticCoercion,
+    /// Case-insensitive text equality (`"A"="a"`).
+    CaseInsensitiveText,
+    /// `TRUE=1` / `FALSE=0`.
+    BoolNumberEquality,
+    /// `SUM` ignores logicals/text in ranges but coerces scalar arguments.
+    SumArgVsRange,
+    /// `VLOOKUP` approximate match assumes an ascending sort.
+    VlookupApproximateUnsorted,
+    /// `IF` short-circuits; unused branch errors do not fire.
+    IfShortCircuit,
+    /// Date serials and the 1900 leap-year bug (documented, not implemented).
+    Date1900LeapYear,
+    /// 1900 vs 1904 date system.
+    DateSystem,
+    /// Implicit intersection of a range in a scalar context.
+    ImplicitIntersection,
+    /// Dynamic array / CSE / scalar evaluation mode.
+    ArrayEvalMode,
+    /// Volatile functions (`NOW`, `RAND`, `INDIRECT`, …).
+    Volatile,
+    /// Locale argument separators and decimal commas.
+    Locale,
+    /// Circular references.
+    CircularReference,
+    /// Precision as displayed.
+    PrecisionAsDisplayed,
+    /// Hidden-row / `SUBTOTAL` semantics.
+    HiddenRows,
+    /// Wildcard matching in `VLOOKUP` / `COUNTIF` / `MATCH`.
+    Wildcards,
+    /// Other / not yet classified.
+    Other,
+}
+
+impl QuirkCategory {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::IeeeVsExcelPrecision => "ieee-vs-excel-precision",
+            Self::EmptyCellDuality => "empty-cell-duality",
+            Self::TypeComparisonRanking => "type-comparison-ranking",
+            Self::EqualityVsArithmeticCoercion => "equality-vs-arithmetic-coercion",
+            Self::CaseInsensitiveText => "case-insensitive-text",
+            Self::BoolNumberEquality => "bool-number-equality",
+            Self::SumArgVsRange => "sum-arg-vs-range",
+            Self::VlookupApproximateUnsorted => "vlookup-approximate-unsorted",
+            Self::IfShortCircuit => "if-short-circuit",
+            Self::Date1900LeapYear => "date-1900-leap-year",
+            Self::DateSystem => "date-system",
+            Self::ImplicitIntersection => "implicit-intersection",
+            Self::ArrayEvalMode => "array-eval-mode",
+            Self::Volatile => "volatile",
+            Self::Locale => "locale",
+            Self::CircularReference => "circular-reference",
+            Self::PrecisionAsDisplayed => "precision-as-displayed",
+            Self::HiddenRows => "hidden-rows",
+            Self::Wildcards => "wildcards",
+            Self::Other => "other",
+        }
+    }
+
+    pub fn parse(s: &str) -> Option<Self> {
+        Some(
+            match s.trim().to_ascii_lowercase().replace('_', "-").as_str() {
+                "ieee-vs-excel-precision" | "ieee" => Self::IeeeVsExcelPrecision,
+                "empty-cell-duality" | "empty" => Self::EmptyCellDuality,
+                "type-comparison-ranking" | "type-rank" => Self::TypeComparisonRanking,
+                "equality-vs-arithmetic-coercion" | "coercion" => {
+                    Self::EqualityVsArithmeticCoercion
+                }
+                "case-insensitive-text" | "casefold" => Self::CaseInsensitiveText,
+                "bool-number-equality" | "bool-eq" => Self::BoolNumberEquality,
+                "sum-arg-vs-range" => Self::SumArgVsRange,
+                "vlookup-approximate-unsorted" => Self::VlookupApproximateUnsorted,
+                "if-short-circuit" => Self::IfShortCircuit,
+                "date-1900-leap-year" => Self::Date1900LeapYear,
+                "date-system" => Self::DateSystem,
+                "implicit-intersection" => Self::ImplicitIntersection,
+                "array-eval-mode" | "array" => Self::ArrayEvalMode,
+                "volatile" => Self::Volatile,
+                "locale" => Self::Locale,
+                "circular-reference" | "circular" => Self::CircularReference,
+                "precision-as-displayed" => Self::PrecisionAsDisplayed,
+                "hidden-rows" => Self::HiddenRows,
+                "wildcards" => Self::Wildcards,
+                "other" => Self::Other,
+                _ => return None,
+            },
+        )
+    }
+}
+
+impl fmt::Display for QuirkCategory {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
+    }
+}

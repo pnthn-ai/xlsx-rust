@@ -1,0 +1,20 @@
+[package]
+name = "xlsx-verify"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Correctness verification layer: corpus, compare, report, and CLI gate"
+
+[dependencies]
+xlsx-types = { workspace = true }
+xlsx-oracle = { workspace = true }
+xlsx-engine = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+clap = { workspace = true }
+
+[[bin]]
+name = "xlsx-verify"
+path = "src/bin/xlsx-verify.rs"

@@ -1,0 +1,49 @@
+[
+  {
+    "id": "empty.eq-zero",
+    "description": "A blank cell equals 0",
+    "tags": ["empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=A1=0",
+    "expected": { "bool": true },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "empty.eq-blank-text",
+    "description": "A blank cell also equals \"\"",
+    "tags": ["empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=A1=\"\"",
+    "expected": { "bool": true },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "empty.zero-eq-blank-literal",
+    "description": "0=\"\" is FALSE — the duality is only for blank cells, not literals",
+    "tags": ["empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=0=\"\"",
+    "expected": { "bool": false }
+  },
+  {
+    "id": "empty.sum-blanks",
+    "description": "SUM of a blank range is 0",
+    "tags": ["empty", "sum"],
+    "formula": "=SUM(A1:A3)",
+    "expected": { "number": 0 },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "empty.isblank",
+    "description": "ISBLANK is true for a missing cell",
+    "tags": ["empty", "functions"],
+    "formula": "=ISBLANK(A1)",
+    "expected": { "bool": true }
+  }
+]

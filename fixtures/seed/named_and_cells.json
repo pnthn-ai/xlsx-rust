@@ -1,0 +1,36 @@
+[
+  {
+    "id": "named.simple",
+    "description": "Defined name pointing at a cell",
+    "tags": ["named"],
+    "named": "Total",
+    "expected": { "number": 10 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": { "A1": { "number": 10 } }
+        }
+      ],
+      "names": [{ "name": "Total", "refers_to": "Sheet1!A1" }]
+    }
+  },
+  {
+    "id": "cell.formula",
+    "description": "Compute a sheet cell that stores a formula",
+    "tags": ["cell"],
+    "cell": "Sheet1!A1",
+    "expected": { "number": 5 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "formula": "=A2+1" },
+            "A2": { "number": 4 }
+          }
+        }
+      ]
+    }
+  }
+]

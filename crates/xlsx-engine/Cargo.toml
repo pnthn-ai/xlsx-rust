@@ -1,0 +1,11 @@
+[package]
+name = "xlsx-engine"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Stub / seed-compliant calculation candidates (not a full Excel engine)"
+
+[dependencies]
+xlsx-types = { workspace = true }
+thiserror = { workspace = true }

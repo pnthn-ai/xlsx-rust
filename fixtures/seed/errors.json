@@ -1,0 +1,30 @@
+[
+  {
+    "id": "err.propagate-add",
+    "description": "Arithmetic propagates #DIV/0!",
+    "tags": ["errors"],
+    "formula": "=1+#DIV/0!",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "err.propagate-sum",
+    "description": "SUM propagates #VALUE!",
+    "tags": ["errors", "sum"],
+    "formula": "=SUM(1, #VALUE!)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "err.iferror",
+    "description": "IFERROR swallows a #DIV/0!",
+    "tags": ["errors", "functions"],
+    "formula": "=IFERROR(1/0, 99)",
+    "expected": { "number": 99 }
+  },
+  {
+    "id": "err.unknown-fn",
+    "description": "Unknown function name is #NAME?",
+    "tags": ["errors"],
+    "formula": "=NOTAFUNCTION(1)",
+    "expected": { "error": "#NAME?" }
+  }
+]
