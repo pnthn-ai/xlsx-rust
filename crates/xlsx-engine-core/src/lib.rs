@@ -5,6 +5,7 @@
 //! - [`eval`] — workbook-backed walker
 //! - [`eval::coerce`] / [`eval::compare`] / [`eval::empty`] — quirk modules
 //! - [`eval::functions`] — worksheet functions used by the expanded corpus
+//! - [`dates::weekday`] — O(1) Excel `WEEKDAY` on the date serial
 //!
 //! This crate depends only on [`xlsx_types`]. It never reads fixture expected
 //! values; the verification gate (`xlsx-verify`) is the only judge.
@@ -15,6 +16,7 @@ pub mod eval;
 pub mod parse;
 
 pub use ast::{BinOp, Expr, UnaryOp};
+pub use dates::{weekday as excel_weekday, weekday_naive as excel_weekday_naive};
 pub use eval::{eval_formula_in, Evaluator};
 pub use parse::parse;
 
