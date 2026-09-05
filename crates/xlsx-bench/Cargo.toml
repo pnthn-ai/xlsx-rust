@@ -1,0 +1,24 @@
+[package]
+name = "xlsx-bench"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Shared per-function Criterion harness and large-snippet builders for calc-core hill-climbing"
+default-run = "xlsx-bench-snapshot"
+
+[dependencies]
+clap = { workspace = true }
+criterion = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+xlsx-engine-core = { workspace = true }
+xlsx-types = { workspace = true }
+
+[[bin]]
+name = "xlsx-bench-snapshot"
+path = "src/bin/xlsx-bench-snapshot.rs"
+
+[[bench]]
+name = "fn_sum"
+harness = false
