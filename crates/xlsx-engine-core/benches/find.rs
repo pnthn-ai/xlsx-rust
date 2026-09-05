@@ -1,7 +1,8 @@
 //! Before/after microbench for Excel `FIND`.
 //!
 //! Compares the `Vec<char>` sliding-window baseline (`excel_find_naive`)
-//! with the `str::find` + ASCII-index production kernel (`excel_find`).
+//! with the production kernel (`excel_find`: ASCII last-byte SWAR probe +
+//! `str::find` + ASCII index).
 //!
 //! ```text
 //! cargo bench -p xlsx-engine-core --bench find
@@ -112,14 +113,14 @@ fn main() {
     println!("{}", "-".repeat(78));
     for c in cases() {
         let naive = time_it(c.iters, || {
-            black_box(excel_find_naive(
+            let _ = black_box(excel_find_naive(
                 black_box(&c.needle),
                 black_box(&c.haystack),
                 black_box(c.start_num),
             ));
         });
         let fast = time_it(c.iters, || {
-            black_box(excel_find(
+            let _ = black_box(excel_find(
                 black_box(&c.needle),
                 black_box(&c.haystack),
                 black_box(c.start_num),

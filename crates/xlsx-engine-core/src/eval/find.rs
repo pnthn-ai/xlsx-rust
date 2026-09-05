@@ -7,10 +7,12 @@
 //! - Empty `find_text` matches at `start_num`, including one past `LEN(within_text)`.
 //! - `start_num` is 1-based; omitted means 1. `< 1` is `#VALUE!`.
 //!
-//! Production search uses `str::find` (Two-Way / `memchr`) plus an ASCII fast
-//! path so the returned index does not need a second character walk. The
-//! quadratic `Vec<char>` sliding-window baseline lives beside that path so
-//! benches can report a before/after.
+//! Production search uses `str::find` (Two-Way / `memchr`) for Unicode, plus
+//! an ASCII last-byte SWAR probe for multi-byte needles (the `aaa…aab`
+//! almost-match hill-climb) and an ASCII index path so the returned position
+//! does not need a second character walk. The quadratic `Vec<char>`
+//! sliding-window baseline lives beside that path so benches can report a
+//! before/after.
 
 use xlsx_types::ExcelError;
 
@@ -86,7 +88,7 @@ fn find_twoway(find_text: &str, within_text: &str, start_num: i64) -> Result<f64
     if find_text.is_empty() {
         return Ok(start_num as f64);
     }
-    let Some(byte_off) = suffix.find(find_text) else {
+    let Some(byte_off) = search_bytes(suffix, find_text) else {
         return Err(ExcelError::Value);
     };
     let extra = if suffix.is_ascii() {
@@ -95,6 +97,64 @@ fn find_twoway(find_text: &str, within_text: &str, start_num: i64) -> Result<f64
         suffix[..byte_off].chars().count()
     };
     Ok((start_num as usize + extra) as f64)
+}
+
+/// `str::find` is already Two-Way/`memchr`. For ASCII needles longer than one
+/// byte whose last byte is rare in the haystack (the `aaa…aab` hill-climb),
+/// probing that last byte with `memchr` then verifying beats a prefix-heavy
+/// Two-Way scan.
+fn search_bytes(hay: &str, needle: &str) -> Option<usize> {
+    if hay.is_ascii() && needle.is_ascii() && needle.len() >= 2 {
+        return find_ascii_last_byte(hay.as_bytes(), needle.as_bytes());
+    }
+    hay.find(needle)
+}
+
+fn find_ascii_last_byte(hay: &[u8], needle: &[u8]) -> Option<usize> {
+    debug_assert!(needle.len() >= 2);
+    let nlen = needle.len();
+    if hay.len() < nlen {
+        return None;
+    }
+    let last = needle[nlen - 1];
+    let mut i = nlen - 1;
+    while i < hay.len() {
+        let Some(rel) = memchr_byte(&hay[i..], last) else {
+            return None;
+        };
+        let end = i + rel;
+        let start = end + 1 - nlen;
+        if &hay[start..=end] == needle {
+            return Some(start);
+        }
+        i = end + 1;
+    }
+    None
+}
+
+/// Word-at-a-time `memchr`. Faster than a scalar scan on large haystacks;
+/// enough of a hill-climb that we do not need a `memchr` crate dep.
+fn memchr_byte(hay: &[u8], needle: u8) -> Option<usize> {
+    const W: usize = std::mem::size_of::<usize>();
+    let splat = usize::from(needle).wrapping_mul(usize::from_ne_bytes([0x01; W]));
+    let ones = usize::from_ne_bytes([0x01; W]);
+    let highs = usize::from_ne_bytes([0x80; W]);
+    let mut i = 0;
+    while i + W <= hay.len() {
+        // SAFETY: `i + W <= hay.len()`, and we only read `W` bytes.
+        let word = unsafe { std::ptr::read_unaligned(hay.as_ptr().add(i).cast::<usize>()) };
+        let xor = word ^ splat;
+        let mask = xor.wrapping_sub(ones) & !xor & highs;
+        if mask != 0 {
+            for j in 0..W {
+                if hay[i + j] == needle {
+                    return Some(i + j);
+                }
+            }
+        }
+        i += W;
+    }
+    hay[i..].iter().position(|&b| b == needle).map(|p| i + p)
 }
 
 fn skip_chars(s: &str, n: usize) -> Option<&str> {
@@ -181,5 +241,12 @@ mod tests {
     #[test]
     fn huge_start_rejects_without_scan() {
         assert_eq!(both("a", "abc", i64::MAX), Err(ExcelError::Value));
+    }
+
+    #[test]
+    fn almost_match_suffix() {
+        let hay = format!("{}aab", "aaa".repeat(80));
+        assert_eq!(both("aab", &hay, 1), Ok((hay.len() - 2) as f64));
+        assert_eq!(both("aac", &hay, 1), Err(ExcelError::Value));
     }
 }
