@@ -285,7 +285,7 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 | [`eval/coerce.rs`](crates/xlsx-engine-core/src/eval/coerce.rs) | Arithmetic / `&` / `IF` coercion (`"2"+1` = 3, TRUE → 1, empty → 0) |
 | [`eval/compare.rs`](crates/xlsx-engine-core/src/eval/compare.rs) | 15-digit `=`, case-insensitive text, `TRUE=1`, type ranking (`FALSE>100`) |
 | [`eval/empty.rs`](crates/xlsx-engine-core/src/eval/empty.rs) | Blank ≠ 0 ≠ `""`, but `A1=0` and `A1=""` when `A1` is blank |
-| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Dispatch: aggregators (`SUM`/`SUMIF`/`SUMIFS`/`AVERAGEIF`/`COUNTIF`/`SUMPRODUCT`), logicals (`IF`/`IFS`/`SWITCH`), lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`/`FILTER`/`UNIQUE`), dates (`DATE`/`EOMONTH`/`NETWORKDAYS`/`WEEKDAY`/`WORKDAY`), math (`ROUND`/`ROUNDUP`/`ROUNDDOWN`/`FLOOR`/`CEILING`), text (`LEFT`/`SUBSTITUTE`/`REPLACE`/`FIND`/`SEARCH`/`TEXT`/`TEXTJOIN`/`CONCAT`), financial (`NPV`/`PMT`/`IRR`), `TYPE` / `IS*` |
+| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Dispatch: aggregators (`SUM`/`SUMIF`/`SUMIFS`/`AVERAGEIF`/`COUNTIF`/`SUMPRODUCT`), logicals (`IF`/`IFS`/`SWITCH`), lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`/`FILTER`/`UNIQUE`/`SORT`), dates (`DATE`/`EOMONTH`/`NETWORKDAYS`/`WEEKDAY`/`WORKDAY`), math (`ROUND`/`ROUNDUP`/`ROUNDDOWN`/`FLOOR`/`CEILING`), text (`LEFT`/`SUBSTITUTE`/`REPLACE`/`FIND`/`SEARCH`/`TEXT`/`TEXTJOIN`/`CONCAT`), financial (`NPV`/`PMT`/`IRR`), `TYPE` / `IS*` |
 | [`eval/sumif.rs`](crates/xlsx-engine-core/src/eval/sumif.rs) | Excel `SUMIF` kernel (criteria walk, reshape `sum_range`, no array literals) |
 | [`eval/sumifs.rs`](crates/xlsx-engine-core/src/eval/sumifs.rs) | Excel `SUMIFS`: multi-criteria AND, same-shape ranges |
 | [`eval/averageif.rs`](crates/xlsx-engine-core/src/eval/averageif.rs) | Excel `AVERAGEIF` kernel (reshape `average_range`, `#DIV/0!` when empty) |
@@ -301,6 +301,7 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 | [`eval/ifs.rs`](crates/xlsx-engine-core/src/eval/ifs.rs) | `IFS` pair-selection kernel (eager eval, first TRUE, no-match `#N/A`) |
 | [`eval/unique.rs`](crates/xlsx-engine-core/src/eval/unique.rs) | `UNIQUE(array, [by_col], [exactly_once])` hash distinctness |
 | [`eval/filter.rs`](crates/xlsx-engine-core/src/eval/filter.rs) | `FILTER` mask/select kernel (`#CALC!` / `if_empty`, row vs column) |
+| [`eval/sort.rs`](crates/xlsx-engine-core/src/eval/sort.rs) | `SORT(array, [sort_index], [sort_order], [by_col])` key-extract / index permute |
 | [`eval/npv.rs`](crates/xlsx-engine-core/src/eval/npv.rs) | Excel `NPV` kernel (period-1 discount, range skip of blanks/text/logicals) |
 | [`eval/irr.rs`](crates/xlsx-engine-core/src/eval/irr.rs) | Excel `IRR` Newton / secant kernel (20 tries, `1e-7` rate, `#NUM!` on failure) |
 | [`text_format.rs`](crates/xlsx-engine-core/src/text_format.rs) | Excel `TEXT` for a documented number/date format subset |
@@ -388,11 +389,22 @@ as one or the other. Documented quirk categories:
   (or columns when `by_col` is TRUE); case-insensitive text; type-strict
   (`1` ≠ `"1"` ≠ `TRUE`); blanks collapse to one empty; `exactly_once` with
   no survivors is `#CALC!`. Result is always an array value.
+- `SORT(array, [sort_index], [sort_order], [by_col])`: stable sort of rows
+  (or columns when `by_col` is TRUE) by a 1-based `sort_index` (default 1).
+  `sort_order` is `1` ascending (default) or `-1` descending; anything else
+  is `#VALUE!`. Type groups follow Excel Data Sort — numbers, then text,
+  then FALSE/TRUE, then errors — **not** `<`/`>` ranking (`FALSE>100`).
+  Text is case-insensitive ASCII. `1`, `"1"`, and `TRUE` stay in different
+  groups. **Blanks are last in both directions.** Out-of-range `sort_index`
+  is `#VALUE!`. Result is always an array value.
 - **Spill limitation:** `evaluate` returns that array. The engine does **not**
   write spilled values into neighboring cells, so occupied destinations never
-  yield `#SPILL!`. Scalar operators (`UNIQUE(...)+1`) take the top-left
-  element (`scalarize`), not a host-aware intersection of a written spill.
-  Use `INDEX` / `SUM` / `COUNTA` to consume the array without a grid write.
+  yield `#SPILL!`. Scalar operators (`UNIQUE(...)+1`, `SORT(...)+1`) take the
+  top-left element (`scalarize`), not a host-aware intersection of a written
+  spill. Use `INDEX` / `SUM` / `COUNTA` to consume the array without a grid
+  write. The parser does not accept omitted middle arguments (`SORT(a,,-1)`).
+  Text order is ASCII case-fold, not locale collation. Excel's ~1,048,576-row
+  array cap is not enforced.
 - `AVERAGEIF` criteria strings (`">5"`, `"*a*"`, `"="` / `"<>"` blanks), text `"5"` dual-matching numbers, range vs `average_range` reshape from the top-left, no matches / no numeric average cells → `#DIV/0!`, empty criteria cell treated as `0`
 - `PMT(rate, nper, pv, [fv], [type])`: Excel cash-flow sign (pay out is
   negative); `rate=0` is `-(pv+fv)/nper` (`#DIV/0!` if `nper=0`);
@@ -415,6 +427,15 @@ as one or the other. Documented quirk categories:
 - Comparison / arithmetic operators still scalarize. `FILTER(A1:A3, A1:A3>1)`
   is not a boolean-array include — pass a logical/numeric vector (literal or
   range). `*` / `+` criteria broadcasting is not modeled.
+- Excel's ~1,048,576-row array cap is not enforced; size is memory-bounded.
+
+**`SORT` spill / model limits** (honest, not hidden behind a broken case):
+
+- SORT returns an array **value**. Occupied neighbors never yield `#SPILL!`.
+- Scalar operators take the top-left sorted cell (`SORT({10;20;5})+1` is 6).
+- Text collation is ASCII case-insensitive, not locale-aware.
+- Omitted middle arguments (`SORT(array,,-1)`) do not parse; pass explicit
+  `sort_index` / `sort_order`.
 - Excel's ~1,048,576-row array cap is not enforced; size is memory-bounded.
 
 See [`crates/xlsx-types/src/quirk.rs`](crates/xlsx-types/src/quirk.rs). The

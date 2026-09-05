@@ -385,6 +385,7 @@ impl Interpreter {
             "HLOOKUP" => self.fn_hlookup(args, ctx),
             "XLOOKUP" => self.fn_xlookup(args, ctx),
             "FILTER" => self.fn_filter(args, ctx),
+            "SORT" => self.fn_sort(args, ctx),
             "INDEX" => self.fn_index(args, ctx),
             "MATCH" => self.fn_match(args, ctx),
             "CHOOSE" => self.fn_choose(args, ctx),
@@ -1133,6 +1134,37 @@ impl Interpreter {
             &array,
             &include,
             if_empty.as_ref(),
+        ))
+    }
+
+    fn fn_sort(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.is_empty() || args.len() > 4 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        let array = self.eval_expr(&args[0], ctx)?;
+        if let ExcelValue::Error(e) = array {
+            return Ok(ExcelValue::Error(e));
+        }
+        let sort_index = if args.len() >= 2 {
+            Some(self.eval_scalar(&args[1], ctx)?)
+        } else {
+            None
+        };
+        let sort_order = if args.len() >= 3 {
+            Some(self.eval_scalar(&args[2], ctx)?)
+        } else {
+            None
+        };
+        let by_col = if args.len() >= 4 {
+            Some(self.eval_scalar(&args[3], ctx)?)
+        } else {
+            None
+        };
+        Ok(xlsx_engine_core::excel_sort(
+            &array,
+            sort_index.as_ref(),
+            sort_order.as_ref(),
+            by_col.as_ref(),
         ))
     }
 

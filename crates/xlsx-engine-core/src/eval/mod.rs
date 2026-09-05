@@ -23,6 +23,7 @@ pub mod npv;
 pub mod switch;
 pub mod ifs;
 pub mod unique;
+pub mod sort;
 pub mod irr;
 
 use crate::ast::{BinOp, Expr, UnaryOp};
@@ -880,6 +881,47 @@ mod tests {
             ExcelValue::Error(ExcelError::Value)
         );
     }
+    #[test]
+    fn sort_literal_asc_desc_and_errors() {
+        let wb = Workbook::default();
+        assert_eq!(
+            eval_formula_in(&wb, "=SORT({3;1;2})").unwrap(),
+            ExcelValue::Array(vec![
+                vec![ExcelValue::Number(1.0)],
+                vec![ExcelValue::Number(2.0)],
+                vec![ExcelValue::Number(3.0)],
+            ])
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=SORT({3;1;2}, 1, -1)").unwrap(),
+            ExcelValue::Array(vec![
+                vec![ExcelValue::Number(3.0)],
+                vec![ExcelValue::Number(2.0)],
+                vec![ExcelValue::Number(1.0)],
+            ])
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=SORT({3,1,2}, 1, 1, TRUE)").unwrap(),
+            ExcelValue::Array(vec![vec![
+                ExcelValue::Number(1.0),
+                ExcelValue::Number(2.0),
+                ExcelValue::Number(3.0)
+            ]])
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=SORT({1;2}, 2)").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=SORT({1}, 1, 0)").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=SORT()").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
+        );
+    }
+
     #[test]
     fn unique_literal_and_exactly_once() {
         let wb = Workbook::default();
