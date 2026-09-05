@@ -205,7 +205,7 @@
         "name": "Sheet1",
         "cells": {
           "A1": { "number": 1 }, "B1": { "number": 2 },
-          "B2": { "number": 3 }
+          "A2": { "number": 3 }
         }
       }]
     }
