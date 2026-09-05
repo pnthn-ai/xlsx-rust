@@ -451,6 +451,7 @@ impl Interpreter {
             "NPV" => self.fn_npv(args, ctx),
             "UNIQUE" => self.fn_unique(args, ctx),
             "IRR" => self.fn_irr(args, ctx),
+            "XNPV" => self.fn_xnpv(args, ctx),
             "TRUE" => Ok(ExcelValue::Bool(true)),
             "FALSE" => Ok(ExcelValue::Bool(false)),
             "PMT" => self.fn_pmt(args, ctx),
@@ -2124,6 +2125,46 @@ impl Interpreter {
         match xlsx_engine_core::excel_irr(&flows, guess) {
             Some(r) => Ok(ExcelValue::Number(r)),
             None => Ok(ExcelValue::Error(ExcelError::Num)),
+        }
+    }
+
+    fn fn_xnpv(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.len() != 3 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        let rate = match self.as_number(&self.eval_scalar(&args[0], ctx)?) {
+            Ok(n) => n,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        if !rate.is_finite() {
+            return Ok(ExcelValue::Error(ExcelError::Num));
+        }
+        let from_values = matches!(args[1], Expr::Range(_) | Expr::Cell(_) | Expr::Name(_));
+        let values_v = self.eval_expr(&args[1], ctx)?;
+        let values = match xlsx_engine_core::collect_xnpv_series(&values_v, from_values) {
+            Ok(v) => v,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        let from_dates = matches!(args[2], Expr::Range(_) | Expr::Cell(_) | Expr::Name(_));
+        let dates_v = self.eval_expr(&args[2], ctx)?;
+        let dates_raw = match xlsx_engine_core::collect_xnpv_series(&dates_v, from_dates) {
+            Ok(v) => v,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        if values.len() != dates_raw.len() {
+            return Ok(ExcelValue::Error(ExcelError::Num));
+        }
+        let system = ctx.spec.options.date_system;
+        let mut dates = Vec::with_capacity(dates_raw.len());
+        for n in dates_raw {
+            match xlsx_engine_core::xnpv_date_serial_trunc(n, system) {
+                Ok(s) => dates.push(s),
+                Err(e) => return Ok(ExcelValue::Error(e)),
+            }
+        }
+        match xlsx_engine_core::excel_xnpv(rate, &values, &dates) {
+            Ok(n) => Ok(ExcelValue::Number(n)),
+            Err(e) => Ok(ExcelValue::Error(e)),
         }
     }
 
