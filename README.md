@@ -289,12 +289,21 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 | [`eval/sumif.rs`](crates/xlsx-engine-core/src/eval/sumif.rs) | Excel `SUMIF` kernel (criteria walk, reshape `sum_range`, no array literals) |
 | [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators, logicals, lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates, math, text, `TYPE` / `IS*` |
 | [`eval/sumproduct.rs`](crates/xlsx-engine-core/src/eval/sumproduct.rs) | `SUMPRODUCT`: array-context args, boolean 0/1 via `--`/`*`, packed f64 hot path |
+| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators, logicals, lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates, math, text (`LEFT`/`TEXT`/…), `TYPE` / `IS*` |
+| [`text_format.rs`](crates/xlsx-engine-core/src/text_format.rs) | Excel `TEXT` for a documented number/date format subset |
 
 **Implemented:** arithmetic and comparison operators (unary `+/-`, `%`, `^`,
 `&`, space intersection), host-aware implicit intersection, cell refs /
 ranges / defined names, array literals, error propagation, and the function
 families above. Workbook input is the snippet type in `xlsx-types` (no
 `.xlsx` IO).
+
+**`TEXT` subset** (see [`text_format.rs`](crates/xlsx-engine-core/src/text_format.rs)):
+`0` / `#` / `.` / grouping `,` / `%` / `$` and other literals; dates
+`yyyy`/`yy`/`mm`/`m`/`dd`/`d`; `General`. Not implemented (no goldens;
+those codes return `#VALUE!`): scientific, fractions, sections `;`,
+colors/conditions, `*`/`_`/`?`, trailing-comma scaling, time (`h`/`s`),
+month/day names. Non-numeric text is returned unchanged.
 
 **Deferred / in progress:** full function library, locale argument separators,
 live Excel oracle, and performance bakeoff. The fixture corpus is expanded
@@ -345,6 +354,7 @@ Requires Rust 1.83+.
 ```bash
 cargo test --workspace
 cargo run -p xlsx-verify -- --help
+cargo run -p xlsx-engine-core --release --example text_bench
 ```
 
 Headless: libraries + CLI only. No GUI, no COM automation in CI.

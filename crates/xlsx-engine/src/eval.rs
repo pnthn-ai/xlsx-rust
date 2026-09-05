@@ -422,6 +422,7 @@ impl Interpreter {
             "EXACT" => self.fn_exact(args, ctx),
             "VALUE" => self.fn_value(args, ctx),
             "SUBSTITUTE" => self.fn_substitute(args, ctx),
+            "TEXT" => self.fn_text(args, ctx),
             "TRUE" => Ok(ExcelValue::Bool(true)),
             "FALSE" => Ok(ExcelValue::Bool(false)),
             _ => Ok(ExcelValue::Error(ExcelError::Name)),
@@ -1388,6 +1389,26 @@ impl Interpreter {
         Ok(ExcelValue::Text(excel_substitute(
             &text, &old_text, &new_text, instance,
         )))
+    fn fn_text(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.len() != 2 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        let value = self.eval_scalar(&args[0], ctx)?;
+        if let ExcelValue::Error(e) = value {
+            return Ok(ExcelValue::Error(e));
+        }
+        let fmt_v = self.eval_scalar(&args[1], ctx)?;
+        if let ExcelValue::Error(e) = fmt_v {
+            return Ok(ExcelValue::Error(e));
+        }
+        let fmt = match self.as_text(&fmt_v) {
+            Ok(s) => s,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        match xlsx_engine_core::text_format::apply(&value, &fmt, ctx.spec.options.date_system) {
+            Ok(s) => Ok(ExcelValue::Text(s)),
+            Err(e) => Ok(ExcelValue::Error(e)),
+        }
     }
 
     fn fn_value(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {

@@ -707,6 +707,7 @@ name = "xlsx-engine"
 version = "0.1.0"
 dependencies = [
  "thiserror",
+ "xlsx-engine-core",
  "xlsx-types",
 ]
 

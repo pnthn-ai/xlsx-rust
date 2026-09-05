@@ -1,0 +1,451 @@
+[
+  {
+    "id": "fn.text-fixed2",
+    "description": "TEXT(1234.567,\"0.00\") rounds to two decimals",
+    "tags": ["text", "text-fn"],
+    "formula": "=TEXT(1234.567,\"0.00\")",
+    "expected": { "text": "1234.57" }
+  },
+  {
+    "id": "fn.text-fixed2-pad",
+    "description": "TEXT(1234.5,\"0.00\") keeps trailing zeros",
+    "tags": ["text", "text-fn"],
+    "formula": "=TEXT(1234.5,\"0.00\")",
+    "expected": { "text": "1234.50" }
+  },
+  {
+    "id": "fn.text-fixed2-zero",
+    "description": "TEXT(0,\"0.00\") is 0.00",
+    "tags": ["text", "text-fn"],
+    "formula": "=TEXT(0,\"0.00\")",
+    "expected": { "text": "0.00" }
+  },
+  {
+    "id": "fn.text-fixed2-neg",
+    "description": "TEXT of a negative with 0.00 prefixes '-'",
+    "tags": ["text", "text-fn"],
+    "formula": "=TEXT(-1234.5,\"0.00\")",
+    "expected": { "text": "-1234.50" }
+  },
+  {
+    "id": "fn.text-int-round",
+    "description": "TEXT(1234.5,\"0\") rounds half away from zero",
+    "tags": ["text", "text-fn"],
+    "formula": "=TEXT(1234.5,\"0\")",
+    "expected": { "text": "1235" }
+  },
+  {
+    "id": "fn.text-int-half-away-pos",
+    "description": "TEXT(2.5,\"0\") is 3",
+    "tags": ["text", "text-fn"],
+    "formula": "=TEXT(2.5,\"0\")",
+    "expected": { "text": "3" }
+  },
+  {
+    "id": "fn.text-int-half-away-neg",
+    "description": "TEXT(-1.5,\"0\") is -2",
+    "tags": ["text", "text-fn"],
+    "formula": "=TEXT(-1.5,\"0\")",
+    "expected": { "text": "-2" }
+  },
+  {
+    "id": "fn.text-third",
+    "description": "TEXT(1/3,\"0.00\") is 0.33",
+    "tags": ["text", "text-fn"],
+    "formula": "=TEXT(1/3,\"0.00\")",
+    "expected": { "text": "0.33" }
+  },
+  {
+    "id": "fn.text-thousands",
+    "description": "TEXT(1234,\"#,##0\") inserts a grouping comma",
+    "tags": ["text", "text-fn"],
+    "formula": "=TEXT(1234,\"#,##0\")",
+    "expected": { "text": "1,234" }
+  },
+  {
+    "id": "fn.text-thousands-round",
+    "description": "TEXT(1234.5,\"#,##0\") rounds then groups",
+    "tags": ["text", "text-fn"],
+    "formula": "=TEXT(1234.5,\"#,##0\")",
+    "expected": { "text": "1,235" }
+  },
+  {
+    "id": "fn.text-thousands-zero",
+    "description": "TEXT(0,\"#,##0\") keeps the required 0",
+    "tags": ["text", "text-fn"],
+    "formula": "=TEXT(0,\"#,##0\")",
+    "expected": { "text": "0" }
+  },
+  {
+    "id": "fn.text-thousands-small",
+    "description": "TEXT(12,\"#,##0\") has no comma under 1000",
+    "tags": ["text", "text-fn"],
+    "formula": "=TEXT(12,\"#,##0\")",
+    "expected": { "text": "12" }
+  },
+  {
+    "id": "fn.text-thousands-million",
+    "description": "TEXT(1000000,\"#,##0\") groups every three digits",
+    "tags": ["text", "text-fn"],
+    "formula": "=TEXT(1000000,\"#,##0\")",
+    "expected": { "text": "1,000,000" }
+  },
+  {
+    "id": "fn.text-thousands-neg",
+    "description": "Negative grouped integer",
+    "tags": ["text", "text-fn"],
+    "formula": "=TEXT(-1234,\"#,##0\")",
+    "expected": { "text": "-1,234" }
+  },
+  {
+    "id": "fn.text-thousands-decimals",
+    "description": "TEXT(1234.567,\"#,##0.00\")",
+    "tags": ["text", "text-fn"],
+    "formula": "=TEXT(1234.567,\"#,##0.00\")",
+    "expected": { "text": "1,234.57" }
+  },
+  {
+    "id": "fn.text-currency",
+    "description": "Microsoft example: TEXT(1234.567,\"$#,##0.00\")",
+    "tags": ["text", "text-fn"],
+    "formula": "=TEXT(1234.567,\"$#,##0.00\")",
+    "expected": { "text": "$1,234.57" }
+  },
+  {
+    "id": "fn.text-leading-zeros",
+    "description": "Microsoft example: TEXT(1234,\"0000000\")",
+    "tags": ["text", "text-fn"],
+    "formula": "=TEXT(1234,\"0000000\")",
+    "expected": { "text": "0001234" }
+  },
+  {
+    "id": "fn.text-leading-zeros-short",
+    "description": "TEXT(5,\"000\") pads to three digits",
+    "tags": ["text", "text-fn"],
+    "formula": "=TEXT(5,\"000\")",
+    "expected": { "text": "005" }
+  },
+  {
+    "id": "fn.text-pct-half",
+    "description": "TEXT(0.5,\"0%\") multiplies by 100",
+    "tags": ["text", "text-fn"],
+    "formula": "=TEXT(0.5,\"0%\")",
+    "expected": { "text": "50%" }
+  },
+  {
+    "id": "fn.text-pct-round",
+    "description": "TEXT(0.125,\"0%\") is 13%",
+    "tags": ["text", "text-fn"],
+    "formula": "=TEXT(0.125,\"0%\")",
+    "expected": { "text": "13%" }
+  },
+  {
+    "id": "fn.text-pct-one-decimal",
+    "description": "Microsoft example: TEXT(0.285,\"0.0%\")",
+    "tags": ["text", "text-fn"],
+    "formula": "=TEXT(0.285,\"0.0%\")",
+    "expected": { "text": "28.5%" }
+  },
+  {
+    "id": "fn.text-pct-two-decimals",
+    "description": "TEXT(0.285,\"0.00%\")",
+    "tags": ["text", "text-fn"],
+    "formula": "=TEXT(0.285,\"0.00%\")",
+    "expected": { "text": "28.50%" }
+  },
+  {
+    "id": "fn.text-pct-one",
+    "description": "TEXT(1,\"0%\") is 100%",
+    "tags": ["text", "text-fn"],
+    "formula": "=TEXT(1,\"0%\")",
+    "expected": { "text": "100%" }
+  },
+  {
+    "id": "fn.text-pct-zero",
+    "description": "TEXT(0,\"0%\") is 0%",
+    "tags": ["text", "text-fn"],
+    "formula": "=TEXT(0,\"0%\")",
+    "expected": { "text": "0%" }
+  },
+  {
+    "id": "fn.text-pct-neg",
+    "description": "TEXT(-0.5,\"0%\") is -50%",
+    "tags": ["text", "text-fn"],
+    "formula": "=TEXT(-0.5,\"0%\")",
+    "expected": { "text": "-50%" }
+  },
+  {
+    "id": "fn.text-date-iso",
+    "description": "TEXT(DATE(2024,3,15),\"yyyy-mm-dd\")",
+    "tags": ["text", "text-fn", "dates"],
+    "formula": "=TEXT(DATE(2024,3,15),\"yyyy-mm-dd\")",
+    "expected": { "text": "2024-03-15" }
+  },
+  {
+    "id": "fn.text-date-iso-unpadded-tokens",
+    "description": "TEXT(DATE(2024,3,5),\"yyyy-m-d\") drops leading zeros",
+    "tags": ["text", "text-fn", "dates"],
+    "formula": "=TEXT(DATE(2024,3,5),\"yyyy-m-d\")",
+    "expected": { "text": "2024-3-5" }
+  },
+  {
+    "id": "fn.text-date-iso-unpadded-double-digit-day",
+    "description": "Unpadded d/m still emit two digits when the part is >= 10",
+    "tags": ["text", "text-fn", "dates"],
+    "formula": "=TEXT(DATE(2024,3,15),\"yyyy-m-d\")",
+    "expected": { "text": "2024-3-15" }
+  },
+  {
+    "id": "fn.text-date-slash",
+    "description": "TEXT(DATE(2024,3,15),\"yyyy/mm/dd\")",
+    "tags": ["text", "text-fn", "dates"],
+    "formula": "=TEXT(DATE(2024,3,15),\"yyyy/mm/dd\")",
+    "expected": { "text": "2024/03/15" }
+  },
+  {
+    "id": "fn.text-date-mdy",
+    "description": "TEXT(DATE(2024,3,15),\"mm/dd/yyyy\")",
+    "tags": ["text", "text-fn", "dates"],
+    "formula": "=TEXT(DATE(2024,3,15),\"mm/dd/yyyy\")",
+    "expected": { "text": "03/15/2024" }
+  },
+  {
+    "id": "fn.text-date-dmy",
+    "description": "TEXT(DATE(2024,3,15),\"dd-mm-yyyy\")",
+    "tags": ["text", "text-fn", "dates"],
+    "formula": "=TEXT(DATE(2024,3,15),\"dd-mm-yyyy\")",
+    "expected": { "text": "15-03-2024" }
+  },
+  {
+    "id": "fn.text-date-yy",
+    "description": "TEXT two-digit year",
+    "tags": ["text", "text-fn", "dates"],
+    "formula": "=TEXT(DATE(2024,3,15),\"yy-mm-dd\")",
+    "expected": { "text": "24-03-15" }
+  },
+  {
+    "id": "fn.text-date-casefold",
+    "description": "Date tokens are case-insensitive",
+    "tags": ["text", "text-fn", "dates"],
+    "formula": "=TEXT(DATE(2024,3,15),\"YYYY-MM-DD\")",
+    "expected": { "text": "2024-03-15" }
+  },
+  {
+    "id": "fn.text-date-serial-y2k",
+    "description": "TEXT(36526,\"yyyy-mm-dd\") is 2000-01-01",
+    "tags": ["text", "text-fn", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=TEXT(36526,\"yyyy-mm-dd\")",
+    "expected": { "text": "2000-01-01" }
+  },
+  {
+    "id": "fn.text-date-leap-bug",
+    "description": "TEXT(60,\"yyyy-mm-dd\") keeps the fictitious 1900-02-29",
+    "tags": ["text", "text-fn", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=TEXT(60,\"yyyy-mm-dd\")",
+    "expected": { "text": "1900-02-29" }
+  },
+  {
+    "id": "fn.text-date-serial-zero",
+    "description": "TEXT(0,\"yyyy-mm-dd\") is the fictitious 1900-01-00",
+    "tags": ["text", "text-fn", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=TEXT(0,\"yyyy-mm-dd\")",
+    "expected": { "text": "1900-01-00" }
+  },
+  {
+    "id": "fn.text-date-serial-one",
+    "description": "TEXT(1,\"yyyy-mm-dd\") is 1900-01-01",
+    "tags": ["text", "text-fn", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=TEXT(1,\"yyyy-mm-dd\")",
+    "expected": { "text": "1900-01-01" }
+  },
+  {
+    "id": "fn.text-date-1904-zero",
+    "description": "TEXT(0,\"yyyy-mm-dd\") under 1904 is 1904-01-01",
+    "tags": ["text", "text-fn", "dates"],
+    "quirks": ["date-system"],
+    "formula": "=TEXT(0,\"yyyy-mm-dd\")",
+    "expected": { "text": "1904-01-01" },
+    "options": { "date_system": "excel1904" }
+  },
+  {
+    "id": "fn.text-date-1904-date-fn",
+    "description": "DATE+TEXT is system-independent for a civil date",
+    "tags": ["text", "text-fn", "dates"],
+    "quirks": ["date-system"],
+    "formula": "=TEXT(DATE(2024,3,15),\"yyyy-mm-dd\")",
+    "expected": { "text": "2024-03-15" },
+    "options": { "date_system": "excel1904" }
+  },
+  {
+    "id": "fn.text-general-frac",
+    "description": "TEXT(1234.5,\"General\") drops a trailing zero",
+    "tags": ["text", "text-fn"],
+    "formula": "=TEXT(1234.5,\"General\")",
+    "expected": { "text": "1234.5" }
+  },
+  {
+    "id": "fn.text-general-int",
+    "description": "TEXT(1234,\"General\") is 1234",
+    "tags": ["text", "text-fn"],
+    "formula": "=TEXT(1234,\"General\")",
+    "expected": { "text": "1234" }
+  },
+  {
+    "id": "fn.text-empty-format",
+    "description": "TEXT(123,\"\") is empty text",
+    "tags": ["text", "text-fn"],
+    "formula": "=TEXT(123,\"\")",
+    "expected": { "text": "" }
+  },
+  {
+    "id": "fn.text-true-as-one",
+    "description": "TEXT(TRUE,\"0\") coerces TRUE to 1",
+    "tags": ["text", "text-fn", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=TEXT(TRUE,\"0\")",
+    "expected": { "text": "1" }
+  },
+  {
+    "id": "fn.text-false-fixed",
+    "description": "TEXT(FALSE,\"0.00\") is 0.00",
+    "tags": ["text", "text-fn", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=TEXT(FALSE,\"0.00\")",
+    "expected": { "text": "0.00" }
+  },
+  {
+    "id": "fn.text-true-general",
+    "description": "TEXT(TRUE,\"General\") stays TRUE",
+    "tags": ["text", "text-fn", "coercion"],
+    "formula": "=TEXT(TRUE,\"General\")",
+    "expected": { "text": "TRUE" }
+  },
+  {
+    "id": "fn.text-numeric-text",
+    "description": "TEXT(\"123.4\",\"0.00\") parses numeric text",
+    "tags": ["text", "text-fn", "coercion"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=TEXT(\"123.4\",\"0.00\")",
+    "expected": { "text": "123.40" }
+  },
+  {
+    "id": "fn.text-numeric-text-spaces",
+    "description": "TEXT trims spaces around numeric text",
+    "tags": ["text", "text-fn", "coercion"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=TEXT(\"  12  \",\"0\")",
+    "expected": { "text": "12" }
+  },
+  {
+    "id": "fn.text-non-numeric",
+    "description": "TEXT(\"abc\",\"0.00\") returns the original text (not #VALUE!)",
+    "tags": ["text", "text-fn", "coercion"],
+    "formula": "=TEXT(\"abc\",\"0.00\")",
+    "expected": { "text": "abc" }
+  },
+  {
+    "id": "fn.text-mixed-text",
+    "description": "TEXT(\"12a\",\"0\") is not numeric and is returned as-is",
+    "tags": ["text", "text-fn", "coercion"],
+    "formula": "=TEXT(\"12a\",\"0\")",
+    "expected": { "text": "12a" }
+  },
+  {
+    "id": "fn.text-blank-is-zero",
+    "description": "TEXT of a blank cell with 0 is \"0\"",
+    "tags": ["text", "text-fn", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=TEXT(A1,\"0\")",
+    "expected": { "text": "0" },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.text-stored-empty-string",
+    "description": "TEXT of stored \"\" is \"\" (text, not blank)",
+    "tags": ["text", "text-fn", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=TEXT(A1,\"0.00\")",
+    "expected": { "text": "" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": { "A1": { "text": "" } }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.text-format-number-coerced",
+    "description": "Unquoted format 0 stringifies to \"0\"",
+    "tags": ["text", "text-fn", "coercion"],
+    "formula": "=TEXT(1234.5,0)",
+    "expected": { "text": "1235" }
+  },
+  {
+    "id": "fn.text-concat",
+    "description": "TEXT result concatenates as text",
+    "tags": ["text", "text-fn"],
+    "formula": "=\"x\"&TEXT(1.5,\"0.00\")",
+    "expected": { "text": "x1.50" }
+  },
+  {
+    "id": "fn.text-arity-zero",
+    "description": "TEXT() is #VALUE!",
+    "tags": ["text", "text-fn", "errors"],
+    "formula": "=TEXT()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.text-arity-one",
+    "description": "TEXT(1) is #VALUE!",
+    "tags": ["text", "text-fn", "errors"],
+    "formula": "=TEXT(1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.text-arity-three",
+    "description": "TEXT extra argument is #VALUE!",
+    "tags": ["text", "text-fn", "errors"],
+    "formula": "=TEXT(1,\"0\",2)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.text-value-error",
+    "description": "TEXT propagates a value-side error",
+    "tags": ["text", "text-fn", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=TEXT(#DIV/0!,\"0\")",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.text-format-error",
+    "description": "TEXT propagates a format-side error",
+    "tags": ["text", "text-fn", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=TEXT(1,#N/A)",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.text-error-left-wins",
+    "description": "First argument error wins over the format error",
+    "tags": ["text", "text-fn", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=TEXT(#N/A,#DIV/0!)",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.text-error-left-div0",
+    "description": "TEXT(#DIV/0!,#N/A) keeps #DIV/0!",
+    "tags": ["text", "text-fn", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=TEXT(#DIV/0!,#N/A)",
+    "expected": { "error": "#DIV/0!" }
+  }
+]
