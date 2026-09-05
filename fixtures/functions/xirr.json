@@ -1,0 +1,697 @@
+[
+  {
+    "id": "fn.xirr-ms-example",
+    "description": "Microsoft example: XIRR(A2:A6, B2:B6) on the 2008–2009 schedule is ~37.34%",
+    "tags": ["xirr", "financial"],
+    "formula": "=XIRR(A2:A6,B2:B6)",
+    "expected": { "number": 0.3733625335188315 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A2": { "number": -10000 },
+          "A3": { "number": 2750 },
+          "A4": { "number": 4250 },
+          "A5": { "number": 3250 },
+          "A6": { "number": 2750 },
+          "B2": { "formula": "=DATE(2008,1,1)" },
+          "B3": { "formula": "=DATE(2008,3,1)" },
+          "B4": { "formula": "=DATE(2008,10,30)" },
+          "B5": { "formula": "=DATE(2009,2,15)" },
+          "B6": { "formula": "=DATE(2009,4,1)" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xirr-ms-example-date-literals",
+    "description": "Same Microsoft schedule via DATE() array literals",
+    "tags": ["xirr", "financial"],
+    "formula": "=XIRR({-10000,2750,4250,3250,2750},{DATE(2008,1,1),DATE(2008,3,1),DATE(2008,10,30),DATE(2009,2,15),DATE(2009,4,1)})",
+    "expected": { "number": 0.3733625335188315 }
+  },
+  {
+    "id": "fn.xirr-ms-example-serials",
+    "description": "Microsoft dates as stored 1900 serials (1-Jan-2008 = 39448)",
+    "tags": ["xirr", "financial"],
+    "formula": "=XIRR(A2:A6,B2:B6)",
+    "expected": { "number": 0.3733625335188315 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A2": { "number": -10000 },
+          "A3": { "number": 2750 },
+          "A4": { "number": 4250 },
+          "A5": { "number": 3250 },
+          "A6": { "number": 2750 },
+          "B2": { "number": 39448 },
+          "B3": { "number": 39508 },
+          "B4": { "number": 39751 },
+          "B5": { "number": 39859 },
+          "B6": { "number": 39904 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xirr-later-dates-unsorted",
+    "description": "Later dates may be in any order as long as none precede the first",
+    "tags": ["xirr", "financial"],
+    "formula": "=XIRR({-10000,4250,2750,2750,3250},{DATE(2008,1,1),DATE(2008,10,30),DATE(2008,3,1),DATE(2009,4,1),DATE(2009,2,15)})",
+    "expected": { "number": 0.3733625335188315 }
+  },
+  {
+    "id": "fn.xirr-one-year-ten-percent",
+    "description": "XIRR({-100, 110}, {d, d+365}) is 10%",
+    "tags": ["xirr", "financial"],
+    "formula": "=XIRR({-100,110},{DATE(2008,1,1),DATE(2008,1,1)+365})",
+    "expected": { "number": 0.1 }
+  },
+  {
+    "id": "fn.xirr-simple-range",
+    "description": "XIRR of a two-cell column range over 365 serial days",
+    "tags": ["xirr", "financial"],
+    "formula": "=XIRR(A1:A2,B1:B2)",
+    "expected": { "number": 0.1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": -100 },
+          "A2": { "number": 110 },
+          "B1": { "number": 39448 },
+          "B2": { "number": 39813 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xirr-leap-year-366-days",
+    "description": "2008-01-01 to 2009-01-01 is 366 serial days; year basis is still 365 (not 10%)",
+    "tags": ["xirr", "financial"],
+    "formula": "=XIRR({-100,110},{DATE(2008,1,1),DATE(2009,1,1)})=0.1",
+    "expected": { "bool": false }
+  },
+  {
+    "id": "fn.xirr-leap-year-366-days-rounded",
+    "description": "366 serial days on a 365-day year: ROUND(XIRR, 8) is 0.09971359",
+    "tags": ["xirr", "financial"],
+    "formula": "=ROUND(XIRR({-100,110},{DATE(2008,1,1),DATE(2009,1,1)}),8)",
+    "expected": { "number": 0.09971359 }
+  },
+  {
+    "id": "fn.xirr-rate-zero",
+    "description": "XIRR({-100, 100}, {d, d+365}) is 0",
+    "tags": ["xirr", "financial"],
+    "formula": "=XIRR({-100,100},{39448,39813})",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.xirr-high",
+    "description": "XIRR({-100, 200}, {d, d+365}) is 100%",
+    "tags": ["xirr", "financial"],
+    "formula": "=XIRR({-100,200},{39448,39813})",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.xirr-negative",
+    "description": "A losing project can have a negative XIRR",
+    "tags": ["xirr", "financial"],
+    "formula": "=XIRR({-100,50,40},{0,365,730})",
+    "expected": { "number": -0.06992647456322794 }
+  },
+  {
+    "id": "fn.xirr-ms-five-year-annual",
+    "description": "Annual spacing: XIRR matches IRR of the Microsoft five-year series",
+    "tags": ["xirr", "financial"],
+    "formula": "=XIRR({-70000,12000,15000,18000,21000,26000},{0,365,730,1095,1460,1825})",
+    "expected": { "number": 0.0866309480365316 }
+  },
+  {
+    "id": "fn.xirr-ms-two-year-guess",
+    "description": "Two-year annual series needs guess -10% → ~-44.35% (same as IRR)",
+    "tags": ["xirr", "financial"],
+    "formula": "=XIRR({-70000,12000,15000},{0,365,730},-10%)",
+    "expected": { "number": -0.443506941334741 }
+  },
+  {
+    "id": "fn.xirr-ms-two-year-bisection",
+    "description": "Newton from the default 10% guess steps below -100%; bisection recovers the root",
+    "tags": ["xirr", "financial"],
+    "formula": "=XIRR({-70000,12000,15000},{0,365,730})",
+    "expected": { "number": -0.443506941334741 }
+  },
+  {
+    "id": "fn.xirr-same-day-cancel",
+    "description": "Same-day inflows and outflows that sum to 0: every rate is a root → 0",
+    "tags": ["xirr", "financial"],
+    "formula": "=XIRR({-100,40,60},{DATE(2008,1,1),DATE(2008,1,1),DATE(2008,1,1)})",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.xirr-same-day-nonzero-num",
+    "description": "Same-day flows that do not cancel have a constant nonzero XNPV → #NUM!",
+    "tags": ["xirr", "financial", "errors"],
+    "formula": "=XIRR({-100,40},{DATE(2008,1,1),DATE(2008,1,1)})",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.xirr-stored-zero-is-a-flow",
+    "description": "A stored 0 occupies a date slot (not skipped like IRR)",
+    "tags": ["xirr", "financial"],
+    "formula": "=XIRR(A1:A3,B1:B3)",
+    "expected": { "number": 0.1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": -100 },
+          "A2": { "number": 0 },
+          "A3": { "number": 121 },
+          "B1": { "number": 39448 },
+          "B2": { "number": 39813 },
+          "B3": { "number": 40178 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xirr-blank-value-is-zero",
+    "description": "A blank value cell is a 0 cash flow, not a skip",
+    "tags": ["xirr", "financial", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=XIRR(A1:A3,B1:B3)",
+    "expected": { "number": 0.1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": -100 },
+          "A3": { "number": 110 },
+          "B1": { "number": 39448 },
+          "B2": { "number": 39448 },
+          "B3": { "number": 39813 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xirr-blank-date-precedes",
+    "description": "A blank date is serial 0 and precedes a 2008 origin → #NUM!",
+    "tags": ["xirr", "financial", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=XIRR(A2:A3,B2:B3)",
+    "expected": { "error": "#NUM!" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A2": { "number": -10000 },
+          "A3": { "number": 2750 },
+          "B2": { "number": 39448 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xirr-blank-first-date-is-serial-zero",
+    "description": "A blank first date is serial 0; a later serial 365 does not precede",
+    "tags": ["xirr", "financial", "empty"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=XIRR(A1:A2,B1:B2)",
+    "expected": { "number": 0.1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": -100 },
+          "A2": { "number": 110 },
+          "B2": { "number": 365 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xirr-range-text-value",
+    "description": "Text in a values range is nonnumeric → #VALUE!",
+    "tags": ["xirr", "financial"],
+    "formula": "=XIRR(A1:A2,B1:B2)",
+    "expected": { "error": "#VALUE!" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": -100 },
+          "A2": { "text": "x" },
+          "B1": { "number": 39448 },
+          "B2": { "number": 39813 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xirr-range-bool-value",
+    "description": "A logical in a values range is nonnumeric → #VALUE!",
+    "tags": ["xirr", "financial"],
+    "quirks": ["sum-arg-vs-range"],
+    "formula": "=XIRR(A1:A2,B1:B2)",
+    "expected": { "error": "#VALUE!" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": -100 },
+          "A2": { "bool": true },
+          "B1": { "number": 39448 },
+          "B2": { "number": 39813 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xirr-range-text-date",
+    "description": "Text in a dates range is not a valid date → #VALUE!",
+    "tags": ["xirr", "financial"],
+    "formula": "=XIRR(A1:A2,B1:B2)",
+    "expected": { "error": "#VALUE!" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": -100 },
+          "A2": { "number": 110 },
+          "B1": { "number": 39448 },
+          "B2": { "text": "1/1/2009" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xirr-numeric-text-in-range-value",
+    "description": "Numeric text in a values range is still text → #VALUE!",
+    "tags": ["xirr", "financial"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=XIRR(A1:A2,B1:B2)",
+    "expected": { "error": "#VALUE!" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": -100 },
+          "A2": { "text": "110" },
+          "B1": { "number": 39448 },
+          "B2": { "number": 39813 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xirr-array-text-value",
+    "description": "Text in a values array is nonnumeric → #VALUE!",
+    "tags": ["xirr", "financial"],
+    "formula": "=XIRR({-100,\"x\"},{39448,39813})",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.xirr-scalar-true-num",
+    "description": "Scalar TRUE coerces to 1 (one value paired with one date) → #NUM!",
+    "tags": ["xirr", "financial", "errors"],
+    "quirks": ["sum-arg-vs-range"],
+    "formula": "=XIRR(TRUE,DATE(2008,1,1))",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.xirr-scalar-text-num",
+    "description": "Scalar numeric text in values coerces; one flow → #NUM!",
+    "tags": ["xirr", "financial"],
+    "formula": "=XIRR(\"100\",DATE(2008,1,1))",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.xirr-scalar-text-bad",
+    "description": "Non-numeric scalar text is #VALUE!",
+    "tags": ["xirr", "financial", "errors"],
+    "formula": "=XIRR(\"x\",DATE(2008,1,1))",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.xirr-default-guess",
+    "description": "Omitted guess is 0.1; same result as an explicit 0.1",
+    "tags": ["xirr", "financial"],
+    "formula": "=XIRR({-100,110},{39448,39813},0.1)",
+    "expected": { "number": 0.1 }
+  },
+  {
+    "id": "fn.xirr-guess-percent",
+    "description": "Guess may be a percent literal (10%)",
+    "tags": ["xirr", "financial"],
+    "quirks": ["percent-unary"],
+    "formula": "=XIRR({-100,110},{39448,39813},10%)",
+    "expected": { "number": 0.1 }
+  },
+  {
+    "id": "fn.xirr-guess-true",
+    "description": "TRUE guess coerces to 1 (still finds the ~17.87% root)",
+    "tags": ["xirr", "financial", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=XIRR({-100,50,80},{0,365,730},TRUE)",
+    "expected": { "number": 0.17870878105033536 }
+  },
+  {
+    "id": "fn.xirr-guess-false",
+    "description": "FALSE guess coerces to 0",
+    "tags": ["xirr", "financial", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=XIRR({-100,110},{39448,39813},FALSE)",
+    "expected": { "number": 0.1 }
+  },
+  {
+    "id": "fn.xirr-guess-blank",
+    "description": "Blank guess cell coerces to 0",
+    "tags": ["xirr", "financial", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=XIRR({-100,110},{39448,39813},C1)",
+    "expected": { "number": 0.1 },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.xirr-guess-text-num",
+    "description": "Numeric text guess is coerced",
+    "tags": ["xirr", "financial", "coercion"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=XIRR({-100,110},{39448,39813},\"0.1\")",
+    "expected": { "number": 0.1 }
+  },
+  {
+    "id": "fn.xirr-guess-text-bad",
+    "description": "Non-numeric guess is #VALUE!",
+    "tags": ["xirr", "financial", "errors"],
+    "formula": "=XIRR({-100,110},{39448,39813},\"x\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.xirr-guess-minus-one-num",
+    "description": "Guess -1 makes 1+r = 0; convergence fails → #NUM!",
+    "tags": ["xirr", "financial", "errors"],
+    "formula": "=XIRR({-100,110},{39448,39813},-1)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.xirr-two-roots-low-guess",
+    "description": "Non-conventional flows: guess 5% finds the 10% root",
+    "tags": ["xirr", "financial"],
+    "formula": "=XIRR({-100,230,-132},{0,365,730},0.05)",
+    "expected": { "number": 0.09999999999999956 }
+  },
+  {
+    "id": "fn.xirr-two-roots-high-guess",
+    "description": "Non-conventional flows: guess 25% finds the 20% root",
+    "tags": ["xirr", "financial"],
+    "formula": "=XIRR({-100,230,-132},{0,365,730},0.25)",
+    "expected": { "number": 0.2000000000000015 }
+  },
+  {
+    "id": "fn.xirr-date-fraction-truncated",
+    "description": "Fractional dates truncate toward zero (time of day is ignored)",
+    "tags": ["xirr", "financial"],
+    "formula": "=XIRR(A2:A6,B2:B6)",
+    "expected": { "number": 0.3733625335188315 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A2": { "number": -10000 },
+          "A3": { "number": 2750 },
+          "A4": { "number": 4250 },
+          "A5": { "number": 3250 },
+          "A6": { "number": 2750 },
+          "B2": { "number": 39448.9 },
+          "B3": { "number": 39508.1 },
+          "B4": { "number": 39751.5 },
+          "B5": { "number": 39859.99 },
+          "B6": { "number": 39904.01 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xirr-date-precedes",
+    "description": "A date before the first date is #NUM!",
+    "tags": ["xirr", "financial", "errors"],
+    "formula": "=XIRR({-10000,2750},{DATE(2008,3,1),DATE(2008,1,1)})",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.xirr-length-mismatch",
+    "description": "Different numbers of values and dates is #NUM!",
+    "tags": ["xirr", "financial", "errors"],
+    "formula": "=XIRR(A1:A3,B1:B2)",
+    "expected": { "error": "#NUM!" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": -100 },
+          "A2": { "number": 50 },
+          "A3": { "number": 60 },
+          "B1": { "number": 39448 },
+          "B2": { "number": 39508 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xirr-empty-arrays",
+    "description": "Empty series has no origin date → #NUM!",
+    "tags": ["xirr", "financial", "errors"],
+    "formula": "=XIRR({},{})",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.xirr-invalid-date-negative",
+    "description": "A negative date serial is not a valid date → #VALUE!",
+    "tags": ["xirr", "financial", "errors"],
+    "formula": "=XIRR({-100,110},{-1,39448})",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.xirr-invalid-date-past-max",
+    "description": "A serial past 9999-12-31 is not a valid date → #VALUE!",
+    "tags": ["xirr", "financial", "errors"],
+    "formula": "=XIRR({-1,1},{1,2958466})",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.xirr-serial-60-leap-bug",
+    "description": "Serial 60 (1900-02-29) is a valid origin; 59→61 is 2 Excel days",
+    "tags": ["xirr", "financial"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=XIRR({-100,110},{59,61})",
+    "expected": { "number": 35823253.74204388 }
+  },
+  {
+    "id": "fn.xirr-serial-60-valid-year",
+    "description": "DATE(1900,2,29) is serial 60 and is a valid XIRR origin",
+    "tags": ["xirr", "financial"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=XIRR({-100,110},{DATE(1900,2,29),DATE(1900,2,29)+365})",
+    "expected": { "number": 0.1 }
+  },
+  {
+    "id": "fn.xirr-system-1904",
+    "description": "1904 system: same civil dates yield the same XIRR (day deltas match)",
+    "tags": ["xirr", "financial"],
+    "quirks": ["date-system"],
+    "formula": "=XIRR({-10000,2750,4250,3250,2750},{DATE(2008,1,1),DATE(2008,3,1),DATE(2008,10,30),DATE(2009,2,15),DATE(2009,4,1)})",
+    "expected": { "number": 0.3733625335188315 },
+    "options": { "date_system": "excel1904" }
+  },
+  {
+    "id": "fn.xirr-2d-row-major",
+    "description": "2-D values/dates flatten row-major and pair by position",
+    "tags": ["xirr", "financial"],
+    "formula": "=XIRR(A1:B2,C1:D2)",
+    "expected": { "number": 0.1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": -100 },
+          "B1": { "number": 0 },
+          "A2": { "number": 0 },
+          "B2": { "number": 110 },
+          "C1": { "number": 1000 },
+          "D1": { "number": 1000 },
+          "C2": { "number": 1000 },
+          "D2": { "number": 1365 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xirr-row-range",
+    "description": "A row range is collected left-to-right and paired by position",
+    "tags": ["xirr", "financial"],
+    "formula": "=XIRR(A1:B1,A2:B2)",
+    "expected": { "number": 0.1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": -100 },
+          "B1": { "number": 110 },
+          "A2": { "number": 39448 },
+          "B2": { "number": 39813 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xirr-named-ranges",
+    "description": "XIRR of defined names for values and dates",
+    "tags": ["xirr", "financial", "named"],
+    "formula": "=XIRR(Flows,PayDates)",
+    "expected": { "number": 0.3733625335188315 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A2": { "number": -10000 },
+          "A3": { "number": 2750 },
+          "A4": { "number": 4250 },
+          "A5": { "number": 3250 },
+          "A6": { "number": 2750 },
+          "B2": { "number": 39448 },
+          "B3": { "number": 39508 },
+          "B4": { "number": 39751 },
+          "B5": { "number": 39859 },
+          "B6": { "number": 39904 }
+        }
+      }],
+      "names": [
+        { "name": "Flows", "refers_to": "Sheet1!A2:A6" },
+        { "name": "PayDates", "refers_to": "Sheet1!B2:B6" }
+      ]
+    }
+  },
+  {
+    "id": "fn.xirr-all-positive-num",
+    "description": "No sign change → #NUM!",
+    "tags": ["xirr", "financial", "errors"],
+    "formula": "=XIRR({10,20,30},{1,2,3})",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.xirr-all-negative-num",
+    "description": "All outflows → #NUM!",
+    "tags": ["xirr", "financial", "errors"],
+    "formula": "=XIRR({-10,-20},{1,366})",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.xirr-single-value-num",
+    "description": "A single cash flow cannot change sign → #NUM!",
+    "tags": ["xirr", "financial", "errors"],
+    "formula": "=XIRR({-100},{39448})",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.xirr-zeros-num",
+    "description": "Zeros are neither inflow nor outflow → #NUM!",
+    "tags": ["xirr", "financial", "errors"],
+    "formula": "=XIRR({0,0,0},{1,2,3})",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.xirr-arity-0",
+    "description": "XIRR() is #VALUE!",
+    "tags": ["xirr", "financial", "errors"],
+    "formula": "=XIRR()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.xirr-arity-1",
+    "description": "XIRR(values) without dates is #VALUE!",
+    "tags": ["xirr", "financial", "errors"],
+    "formula": "=XIRR({-100,110})",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.xirr-arity-4",
+    "description": "Four arguments is #VALUE!",
+    "tags": ["xirr", "financial", "errors"],
+    "formula": "=XIRR({-100,110},{1,366},0.1,1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.xirr-err-values",
+    "description": "Error in values wins over dates",
+    "tags": ["xirr", "financial", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=XIRR(#N/A,39448)",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.xirr-err-dates",
+    "description": "Error in dates wins over a later guess",
+    "tags": ["xirr", "financial", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=XIRR({-100,110},#N/A,1/0)",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.xirr-err-guess",
+    "description": "Error in guess propagates",
+    "tags": ["xirr", "financial", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=XIRR({-100,110},{39448,39813},1/0)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.xirr-err-ltr",
+    "description": "Left-to-right: values #DIV/0! beats dates #N/A",
+    "tags": ["xirr", "financial", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=XIRR(#DIV/0!,#N/A)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.xirr-err-in-range",
+    "description": "An error cell in the values range propagates",
+    "tags": ["xirr", "financial", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=XIRR(A1:A3,B1:B3)",
+    "expected": { "error": "#DIV/0!" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": -100 },
+          "A2": { "error": "#DIV/0!" },
+          "A3": { "number": 110 },
+          "B1": { "number": 39448 },
+          "B2": { "number": 39508 },
+          "B3": { "number": 39813 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xirr-err-guess-after-ok-values",
+    "description": "Guess is evaluated even when values have no sign change",
+    "tags": ["xirr", "financial", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=XIRR({1,2},{1,366},1/0)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.xirr-leading-zero",
+    "description": "A leading stored 0 on the origin date does not change a 10% root",
+    "tags": ["xirr", "financial"],
+    "formula": "=XIRR({0,-100,110},{39448,39448,39813})",
+    "expected": { "number": 0.1 }
+  }
+]

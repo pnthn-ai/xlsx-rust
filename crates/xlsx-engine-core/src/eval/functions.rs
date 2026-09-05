@@ -6,7 +6,7 @@
 //!
 //! Unknown names return `#NAME?` (an Excel value, not [`EvalError`]).
 //! Financial TVM starts with `PMT` (`xlsx_types::excel_pmt`); `PV`/`FV`/`NPER`
-//! are later workstreams.
+//! are later workstreams. `XIRR` lives in [`super::xirr`].
 
 use super::{coerce, compare, excel_pow, Ctx, Evaluator};
 use crate::ast::Expr;
@@ -134,6 +134,7 @@ pub(crate) fn dispatch(
         "NPV" => super::npv::eval(ev, args, ctx),
         "UNIQUE" => super::unique::eval(ev, args, ctx),
         "IRR" => fn_irr(ev, args, ctx),
+        "XIRR" => super::xirr::eval(ev, args, ctx),
         "TRUE" => Ok(ExcelValue::Bool(true)),
         "FALSE" => Ok(ExcelValue::Bool(false)),
         // Financial (TVM). PV / FV / NPER are later workstreams.

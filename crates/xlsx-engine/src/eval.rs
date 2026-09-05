@@ -451,6 +451,7 @@ impl Interpreter {
             "NPV" => self.fn_npv(args, ctx),
             "UNIQUE" => self.fn_unique(args, ctx),
             "IRR" => self.fn_irr(args, ctx),
+            "XIRR" => self.fn_xirr(args, ctx),
             "TRUE" => Ok(ExcelValue::Bool(true)),
             "FALSE" => Ok(ExcelValue::Bool(false)),
             "PMT" => self.fn_pmt(args, ctx),
@@ -2122,6 +2123,44 @@ impl Interpreter {
             0.1
         };
         match xlsx_engine_core::excel_irr(&flows, guess) {
+            Some(r) => Ok(ExcelValue::Number(r)),
+            None => Ok(ExcelValue::Error(ExcelError::Num)),
+        }
+    }
+
+    fn fn_xirr(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.len() < 2 || args.len() > 3 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        let values_ref = matches!(args[0], Expr::Range(_) | Expr::Cell(_) | Expr::Name(_));
+        let values_v = self.eval_expr(&args[0], ctx)?;
+        let values = match xlsx_engine_core::collect_xirr_series(&values_v, values_ref) {
+            Ok(v) => v,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        let dates_ref = matches!(args[1], Expr::Range(_) | Expr::Cell(_) | Expr::Name(_));
+        let dates_v = self.eval_expr(&args[1], ctx)?;
+        let dates_raw = match xlsx_engine_core::collect_xirr_series(&dates_v, dates_ref) {
+            Ok(v) => v,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        let system = ctx.spec.options.date_system;
+        let mut dates = Vec::with_capacity(dates_raw.len());
+        for n in dates_raw {
+            match xlsx_engine_core::xirr_date_serial_trunc(n, system) {
+                Ok(s) => dates.push(s),
+                Err(e) => return Ok(ExcelValue::Error(e)),
+            }
+        }
+        let guess = if args.len() == 3 {
+            match self.as_number(&self.eval_scalar(&args[2], ctx)?) {
+                Ok(n) => n,
+                Err(e) => return Ok(ExcelValue::Error(e)),
+            }
+        } else {
+            0.1
+        };
+        match xlsx_engine_core::excel_xirr(&values, &dates, guess) {
             Some(r) => Ok(ExcelValue::Number(r)),
             None => Ok(ExcelValue::Error(ExcelError::Num)),
         }
