@@ -1,0 +1,596 @@
+[
+  {
+    "id": "fn.textafter-fluid-flow",
+    "description": "TEXTAFTER(\"Fluid Flow\",\" \") is Flow",
+    "tags": ["text", "textafter"],
+    "formula": "=TEXTAFTER(\"Fluid Flow\",\" \")",
+    "expected": { "text": "Flow" }
+  },
+  {
+    "id": "fn.textafter-hood",
+    "description": "TEXTAFTER(\"Red riding hood's, red hood\",\"hood\") is \"'s, red hood\" (Microsoft example)",
+    "tags": ["text", "textafter"],
+    "formula": "=TEXTAFTER(\"Red riding hood's, red hood\",\"hood\")",
+    "expected": { "text": "'s, red hood" }
+  },
+  {
+    "id": "fn.textafter-empty-delim-front",
+    "description": "Empty delimiter from the front returns the entire text (Microsoft)",
+    "tags": ["text", "textafter"],
+    "formula": "=TEXTAFTER(\"Red riding hood's, red hood\",\"\")",
+    "expected": { "text": "Red riding hood's, red hood" }
+  },
+  {
+    "id": "fn.textafter-empty-delim-back",
+    "description": "Empty delimiter from the end returns empty text (Microsoft)",
+    "tags": ["text", "textafter"],
+    "formula": "=TEXTAFTER(\"Red riding hood's, red hood\",\"\",-1)",
+    "expected": { "text": "" }
+  },
+  {
+    "id": "fn.textafter-ms-red",
+    "description": "TEXTAFTER(A2,\"Red\") is \" Riding Hood's red hood\" (Microsoft example 1)",
+    "tags": ["text", "textafter"],
+    "formula": "=TEXTAFTER(A2,\"Red\")",
+    "expected": { "text": " Riding Hood's red hood" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A2": { "text": "Little Red Riding Hood's red hood" },
+            "A3": { "text": "Little red Riding Hood's red hood" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.textafter-ms-basket",
+    "description": "Missing delimiter is #N/A (Microsoft \"basket\")",
+    "tags": ["text", "textafter", "errors"],
+    "formula": "=TEXTAFTER(A2,\"basket\")",
+    "expected": { "error": "#N/A" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A2": { "text": "Little Red Riding Hood's red hood" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.textafter-ms-red-2",
+    "description": "TEXTAFTER(A3,\"red\",2) is \" hood\" (Microsoft second instance)",
+    "tags": ["text", "textafter"],
+    "formula": "=TEXTAFTER(A3,\"red\",2)",
+    "expected": { "text": " hood" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A3": { "text": "Little red Riding Hood's red hood" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.textafter-ms-red-neg2",
+    "description": "TEXTAFTER(A3,\"red\",-2) counts from the end (Microsoft)",
+    "tags": ["text", "textafter"],
+    "formula": "=TEXTAFTER(A3,\"red\",-2)",
+    "expected": { "text": " Riding Hood's red hood" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A3": { "text": "Little red Riding Hood's red hood" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.textafter-ms-case-false",
+    "description": "match_mode FALSE is case-sensitive: TEXTAFTER(A3,\"Red\",1,FALSE) is #N/A",
+    "tags": ["text", "textafter", "errors"],
+    "formula": "=TEXTAFTER(A3,\"Red\",1,FALSE)",
+    "expected": { "error": "#N/A" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A3": { "text": "Little red Riding Hood's red hood" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.textafter-ms-red-3",
+    "description": "instance_num past the occurrence count is #N/A (Microsoft)",
+    "tags": ["text", "textafter", "errors"],
+    "formula": "=TEXTAFTER(A2,\"red\",3)",
+    "expected": { "error": "#N/A" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A2": { "text": "Little Red Riding Hood's red hood" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.textafter-ms-marcus",
+    "description": "TEXTAFTER(\"Marcus Aurelius\",\" \",1,0,1) is Aurelius (Microsoft example 2)",
+    "tags": ["text", "textafter"],
+    "formula": "=TEXTAFTER(\"Marcus Aurelius\",\" \",1,0,1)",
+    "expected": { "text": "Aurelius" }
+  },
+  {
+    "id": "fn.textafter-ms-socrates-no-end",
+    "description": "No space and match_end 0 is #N/A (Microsoft Socrates)",
+    "tags": ["text", "textafter", "errors"],
+    "formula": "=TEXTAFTER(\"Socrates\",\" \",1,0,0)",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.textafter-ms-socrates-end",
+    "description": "match_end 1 treats the end as a delimiter → empty (Microsoft Socrates)",
+    "tags": ["text", "textafter"],
+    "formula": "=TEXTAFTER(\"Socrates\",\" \",1,0,1)",
+    "expected": { "text": "" }
+  },
+  {
+    "id": "fn.textafter-ms-socrates-if",
+    "description": "IF(TEXTAFTER(Socrates, space, match_end)=\"\", A3) returns the original name",
+    "tags": ["text", "textafter"],
+    "formula": "=IF(TEXTAFTER(A3,\" \",1,0,1)=\"\",A3)",
+    "expected": { "text": "Socrates" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": { "A3": { "text": "Socrates" } }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.textafter-ms-kant",
+    "description": "TEXTAFTER(\"Immanuel Kant\",\" \",1,0,1) is Kant",
+    "tags": ["text", "textafter"],
+    "formula": "=TEXTAFTER(\"Immanuel Kant\",\" \",1,0,1)",
+    "expected": { "text": "Kant" }
+  },
+  {
+    "id": "fn.textafter-better-space",
+    "description": "TEXTAFTER(\"better solutions\",\" \") is solutions",
+    "tags": ["text", "textafter"],
+    "formula": "=TEXTAFTER(\"better solutions\",\" \")",
+    "expected": { "text": "solutions" }
+  },
+  {
+    "id": "fn.textafter-better-t1",
+    "description": "First \"t\" in \"better solutions\"",
+    "tags": ["text", "textafter"],
+    "formula": "=TEXTAFTER(\"better solutions\",\"t\")",
+    "expected": { "text": "ter solutions" }
+  },
+  {
+    "id": "fn.textafter-better-t2",
+    "description": "Second \"t\" in \"better solutions\"",
+    "tags": ["text", "textafter"],
+    "formula": "=TEXTAFTER(\"better solutions\",\"t\",2)",
+    "expected": { "text": "er solutions" }
+  },
+  {
+    "id": "fn.textafter-better-t3",
+    "description": "Third \"t\" in \"better solutions\"",
+    "tags": ["text", "textafter"],
+    "formula": "=TEXTAFTER(\"better solutions\",\"t\",3)",
+    "expected": { "text": "ions" }
+  },
+  {
+    "id": "fn.textafter-better-t-case",
+    "description": "Case-sensitive \"T\" instance 3 is #N/A",
+    "tags": ["text", "textafter", "errors"],
+    "formula": "=TEXTAFTER(\"better solutions\",\"T\",3)",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.textafter-better-t-ci",
+    "description": "Case-insensitive \"T\" instance 3 is ions",
+    "tags": ["text", "textafter"],
+    "formula": "=TEXTAFTER(\"better solutions\",\"T\",3,1)",
+    "expected": { "text": "ions" }
+  },
+  {
+    "id": "fn.textafter-dash-first",
+    "description": "TEXTAFTER(\"a-b-c-d\",\"-\",1) is b-c-d",
+    "tags": ["text", "textafter"],
+    "formula": "=TEXTAFTER(\"a-b-c-d\",\"-\",1,0,0)",
+    "expected": { "text": "b-c-d" }
+  },
+  {
+    "id": "fn.textafter-dash-last",
+    "description": "TEXTAFTER(\"a-b-c-d\",\"-\",-1) is d",
+    "tags": ["text", "textafter"],
+    "formula": "=TEXTAFTER(\"a-b-c-d\",\"-\",-1,0,0)",
+    "expected": { "text": "d" }
+  },
+  {
+    "id": "fn.textafter-dash-neg4-end",
+    "description": "instance -4 with match_end treats the start as a delimiter → whole text",
+    "tags": ["text", "textafter"],
+    "formula": "=TEXTAFTER(\"a-b-c-d\",\"-\",-4,0,1)",
+    "expected": { "text": "a-b-c-d" }
+  },
+  {
+    "id": "fn.textafter-dash-neg4-no-end",
+    "description": "instance -4 without match_end is #N/A (only 3 dashes)",
+    "tags": ["text", "textafter", "errors"],
+    "formula": "=TEXTAFTER(\"a-b-c-d\",\"-\",-4,0,0)",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.textafter-instance-zero",
+    "description": "instance_num 0 is #VALUE!",
+    "tags": ["text", "textafter", "errors"],
+    "formula": "=TEXTAFTER(\"a-b-c-d\",\" \",0)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.textafter-instance-gt-len",
+    "description": "instance_num greater than LEN(text) is #VALUE!",
+    "tags": ["text", "textafter", "errors"],
+    "formula": "=TEXTAFTER(\"abc\",\"x\",4)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.textafter-instance-neg-gt-len",
+    "description": "|instance_num| greater than LEN(text) is #VALUE!",
+    "tags": ["text", "textafter", "errors"],
+    "formula": "=TEXTAFTER(\"abc\",\"x\",-4)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.textafter-instance-eq-len-miss",
+    "description": "instance_num equal to LEN but delimiter missing is #N/A",
+    "tags": ["text", "textafter", "errors"],
+    "formula": "=TEXTAFTER(\"abc\",\"x\",3)",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.textafter-empty-text",
+    "description": "Empty text with default instance 1 is #VALUE! (1 > LEN 0)",
+    "tags": ["text", "textafter", "errors"],
+    "formula": "=TEXTAFTER(\"\",\"x\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.textafter-blank-text",
+    "description": "Blank cell coerces to empty text → #VALUE!",
+    "tags": ["text", "textafter", "errors", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=TEXTAFTER(A1,\"x\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.textafter-instance-trunc",
+    "description": "instance_num 2.9 truncates toward zero to 2",
+    "tags": ["text", "textafter"],
+    "formula": "=TEXTAFTER(\"a-b-c\",\"-\",2.9)",
+    "expected": { "text": "c" }
+  },
+  {
+    "id": "fn.textafter-instance-trunc-neg",
+    "description": "instance_num -1.9 truncates toward zero to -1",
+    "tags": ["text", "textafter"],
+    "formula": "=TEXTAFTER(\"a-b-c\",\"-\",-1.9)",
+    "expected": { "text": "c" }
+  },
+  {
+    "id": "fn.textafter-instance-true",
+    "description": "TRUE coerces to instance_num 1",
+    "tags": ["text", "textafter", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=TEXTAFTER(\"a-b\",\"-\",TRUE)",
+    "expected": { "text": "b" }
+  },
+  {
+    "id": "fn.textafter-instance-false",
+    "description": "FALSE coerces to instance_num 0 → #VALUE!",
+    "tags": ["text", "textafter", "errors", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=TEXTAFTER(\"a-b\",\"-\",FALSE)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.textafter-match-mode-true",
+    "description": "TRUE match_mode is case-insensitive",
+    "tags": ["text", "textafter", "coercion"],
+    "formula": "=TEXTAFTER(\"Little Red Hood\",\"red\",1,TRUE)",
+    "expected": { "text": " Hood" }
+  },
+  {
+    "id": "fn.textafter-match-end-third-dash",
+    "description": "Third dash with match_end on \"apple-orange-banana\" is empty (Excel 365)",
+    "tags": ["text", "textafter"],
+    "formula": "=TEXTAFTER(\"apple-orange-banana\",\"-\",3,0,1,\"not found\")",
+    "expected": { "text": "" }
+  },
+  {
+    "id": "fn.textafter-match-end-overrides-if-not-found",
+    "description": "match_end wins over if_not_found when the virtual delimiter is used",
+    "tags": ["text", "textafter"],
+    "formula": "=TEXTAFTER(\"Socrates\",\" \",1,0,1,\"none\")",
+    "expected": { "text": "" }
+  },
+  {
+    "id": "fn.textafter-no-end-if-not-found",
+    "description": "if_not_found is used when match_end is off and the delimiter is missing",
+    "tags": ["text", "textafter"],
+    "formula": "=TEXTAFTER(\"apple-orange-banana\",\"-\",3,0,0,\"not found\")",
+    "expected": { "text": "not found" }
+  },
+  {
+    "id": "fn.textafter-if-not-found-number",
+    "description": "if_not_found can be a number (returned as-is)",
+    "tags": ["text", "textafter"],
+    "formula": "=TEXTAFTER(\"abc\",\"x\",1,0,0,42)",
+    "expected": { "number": 42 }
+  },
+  {
+    "id": "fn.textafter-if-not-found-unused-div0",
+    "description": "Unused if_not_found 1/0 does not replace a hit (FILTER-style)",
+    "tags": ["text", "textafter", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=TEXTAFTER(\"a-b\",\"-\",1,0,0,1/0)",
+    "expected": { "text": "b" }
+  },
+  {
+    "id": "fn.textafter-if-not-found-used-div0",
+    "description": "Used if_not_found 1/0 is #DIV/0!",
+    "tags": ["text", "textafter", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=TEXTAFTER(\"abc\",\"x\",1,0,0,1/0)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.textafter-empty-delim-instance-2",
+    "description": "Empty delimiter + positive instance still returns the entire text",
+    "tags": ["text", "textafter"],
+    "formula": "=TEXTAFTER(\"abc\",\"\",2)",
+    "expected": { "text": "abc" }
+  },
+  {
+    "id": "fn.textafter-empty-delim-gt-len",
+    "description": "Empty delimiter + instance > LEN is #VALUE!",
+    "tags": ["text", "textafter", "errors"],
+    "formula": "=TEXTAFTER(\"abc\",\"\",4)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.textafter-multi-delim",
+    "description": "Array delimiter {\"-\",\";\"} takes the leftmost match",
+    "tags": ["text", "textafter"],
+    "formula": "=TEXTAFTER(\"a;b-c\",{\";\",\"-\"})",
+    "expected": { "text": "b-c" }
+  },
+  {
+    "id": "fn.textafter-multi-delim-second",
+    "description": "Second instance across mixed delimiters",
+    "tags": ["text", "textafter"],
+    "formula": "=TEXTAFTER(\"a;b-c\",{\";\",\"-\"},2)",
+    "expected": { "text": "c" }
+  },
+  {
+    "id": "fn.textafter-multi-delim-comma-semi",
+    "description": "Ablebits-style multiple delimiters: comma or semicolon",
+    "tags": ["text", "textafter"],
+    "formula": "=TEXTAFTER(\"red,green;blue\",{\",\",\";\"})",
+    "expected": { "text": "green;blue" }
+  },
+  {
+    "id": "fn.textafter-number-text",
+    "description": "Numbers coerce to plain text before search",
+    "tags": ["text", "textafter", "coercion"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=TEXTAFTER(12321,2)",
+    "expected": { "text": "321" }
+  },
+  {
+    "id": "fn.textafter-decimal",
+    "description": "Decimal point is part of the coerced number text",
+    "tags": ["text", "textafter", "coercion"],
+    "formula": "=TEXTAFTER(12.5,\".\")",
+    "expected": { "text": "5" }
+  },
+  {
+    "id": "fn.textafter-bool-text",
+    "description": "TRUE coerces to the text \"TRUE\"",
+    "tags": ["text", "textafter", "coercion"],
+    "formula": "=TEXTAFTER(TRUE,\"R\")",
+    "expected": { "text": "UE" }
+  },
+  {
+    "id": "fn.textafter-bool-delim",
+    "description": "Boolean delimiter coerces to \"TRUE\" / \"FALSE\"",
+    "tags": ["text", "textafter", "coercion"],
+    "formula": "=TEXTAFTER(\"xTRUEy\",TRUE)",
+    "expected": { "text": "y" }
+  },
+  {
+    "id": "fn.textafter-unicode",
+    "description": "UTF-8 scalar split: TEXTAFTER(\"café\",\"é\") is empty",
+    "tags": ["text", "textafter"],
+    "formula": "=TEXTAFTER(\"café\",\"é\")",
+    "expected": { "text": "" }
+  },
+  {
+    "id": "fn.textafter-unicode-ci",
+    "description": "Case-insensitive Unicode: É matches é",
+    "tags": ["text", "textafter"],
+    "formula": "=TEXTAFTER(\"café\",\"É\",1,1)",
+    "expected": { "text": "" }
+  },
+  {
+    "id": "fn.textafter-unicode-jp",
+    "description": "TEXTAFTER(\"日本語\",\"本\") is 語",
+    "tags": ["text", "textafter"],
+    "formula": "=TEXTAFTER(\"日本語\",\"本\")",
+    "expected": { "text": "語" }
+  },
+  {
+    "id": "fn.textafter-unicode-instance-gt-len",
+    "description": "instance_num > character LEN (café is 4) is #VALUE!",
+    "tags": ["text", "textafter", "errors"],
+    "formula": "=TEXTAFTER(\"café\",\"é\",5)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.textafter-non-overlap",
+    "description": "Non-overlapping: TEXTAFTER(\"aaa\",\"aa\",2) is #N/A",
+    "tags": ["text", "textafter", "errors"],
+    "formula": "=TEXTAFTER(\"aaa\",\"aa\",2)",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.textafter-non-overlap-first",
+    "description": "Non-overlapping first \"aa\" in \"aaa\" leaves \"a\"",
+    "tags": ["text", "textafter"],
+    "formula": "=TEXTAFTER(\"aaa\",\"aa\")",
+    "expected": { "text": "a" }
+  },
+  {
+    "id": "fn.textafter-after-last-is-empty",
+    "description": "Delimiter at the end yields empty text, not #N/A",
+    "tags": ["text", "textafter"],
+    "formula": "=TEXTAFTER(\"abc-\",\"-\")",
+    "expected": { "text": "" }
+  },
+  {
+    "id": "fn.textafter-arity-0",
+    "description": "TEXTAFTER() is #VALUE!",
+    "tags": ["text", "textafter", "errors"],
+    "formula": "=TEXTAFTER()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.textafter-arity-1",
+    "description": "One argument is #VALUE! (delimiter required)",
+    "tags": ["text", "textafter", "errors"],
+    "formula": "=TEXTAFTER(\"abc\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.textafter-arity-7",
+    "description": "Seven arguments is #VALUE!",
+    "tags": ["text", "textafter", "errors"],
+    "formula": "=TEXTAFTER(\"a\",\"-\",1,0,0,\"x\",1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.textafter-err-text",
+    "description": "Error in text propagates",
+    "tags": ["text", "textafter", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=TEXTAFTER(1/0,\"-\")",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.textafter-err-delim",
+    "description": "Error in delimiter propagates",
+    "tags": ["text", "textafter", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=TEXTAFTER(\"a\",1/0)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.textafter-err-instance",
+    "description": "Error in instance_num propagates",
+    "tags": ["text", "textafter", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=TEXTAFTER(\"a-b\",\"-\",1/0)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.textafter-err-left-wins",
+    "description": "Left-to-right: text error beats a later #N/A",
+    "tags": ["text", "textafter", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=TEXTAFTER(#DIV/0!,#N/A)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.textafter-err-match-mode",
+    "description": "Error in match_mode propagates",
+    "tags": ["text", "textafter", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=TEXTAFTER(\"a-b\",\"-\",1,1/0)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.textafter-err-match-end",
+    "description": "Error in match_end propagates",
+    "tags": ["text", "textafter", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=TEXTAFTER(\"a-b\",\"-\",1,0,1/0)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.textafter-match-mode-text-value",
+    "description": "Text match_mode is #VALUE! (not a logical)",
+    "tags": ["text", "textafter", "errors"],
+    "formula": "=TEXTAFTER(\"a-b\",\"-\",1,\"x\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.textafter-numeric-text-instance",
+    "description": "Numeric text instance_num coerces",
+    "tags": ["text", "textafter", "coercion"],
+    "formula": "=TEXTAFTER(\"a-b-c\",\"-\",\"2\")",
+    "expected": { "text": "c" }
+  },
+  {
+    "id": "fn.textafter-blank-instance",
+    "description": "Blank instance_num coerces to 0 → #VALUE!",
+    "tags": ["text", "textafter", "errors", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=TEXTAFTER(\"a-b\",\"-\",A1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.textafter-blank-match-mode",
+    "description": "Blank match_mode is FALSE (case-sensitive)",
+    "tags": ["text", "textafter", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=TEXTAFTER(\"Abc\",\"b\",1,A1)",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.textafter-long-delim",
+    "description": "Multi-character delimiter",
+    "tags": ["text", "textafter"],
+    "formula": "=TEXTAFTER(\"foo::bar::baz\",\"::\",2)",
+    "expected": { "text": "baz" }
+  },
+  {
+    "id": "fn.textafter-return-original-via-neg-end",
+    "description": "instance -1 + match_end returns the original text when the delimiter is missing",
+    "tags": ["text", "textafter"],
+    "formula": "=TEXTAFTER(\"Socrates\",\" \",-1,0,1)",
+    "expected": { "text": "Socrates" }
+  }
+]
