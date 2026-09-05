@@ -189,6 +189,13 @@
     "expected": { "text": "2024-3-5" }
   },
   {
+    "id": "fn.text-date-iso-unpadded-double-digit-day",
+    "description": "Unpadded d/m still emit two digits when the part is >= 10",
+    "tags": ["text", "text-fn", "dates"],
+    "formula": "=TEXT(DATE(2024,3,15),\"yyyy-m-d\")",
+    "expected": { "text": "2024-3-15" }
+  },
+  {
     "id": "fn.text-date-slash",
     "description": "TEXT(DATE(2024,3,15),\"yyyy/mm/dd\")",
     "tags": ["text", "text-fn", "dates"],

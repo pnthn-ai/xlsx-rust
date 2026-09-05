@@ -168,6 +168,11 @@ pub fn serial_to_ymd(serial: f64, system: DateSystem) -> Result<(i32, u32, u32),
     if s == 60 && matches!(system, DateSystem::Excel1900) {
         return Ok((1900, 2, 29));
     }
+    // Serials 1..=59 stay in January/February 1900 (before the leap-bug day).
+    // Serial >= 61 matches proleptic Gregorian (Excel 25569 = 1970-01-01).
+    if s >= 61 {
+        return Ok(civil_from_unix_days(s - 25569));
+    }
     let mut rem = s;
     let mut year = 1900;
     loop {
@@ -191,6 +196,21 @@ pub fn serial_to_ymd(serial: f64, system: DateSystem) -> Result<(i32, u32, u32),
         month += 1;
     }
     Err(ExcelError::Num)
+}
+
+/// Civil date from days since 1970-01-01 (Howard Hinnant).
+fn civil_from_unix_days(z: i32) -> (i32, u32, u32) {
+    let z = z + 719_468;
+    let era = if z >= 0 { z } else { z - 146_096 } / 146_097;
+    let doe = (z - era * 146_097) as u32;
+    let yoe = (doe - doe / 1460 + doe / 36_524 - doe / 146_096) / 365;
+    let y = yoe as i32 + era * 400;
+    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+    let mp = (5 * doy + 2) / 153;
+    let d = doy - (153 * mp + 2) / 5 + 1;
+    let m = if mp < 10 { mp + 3 } else { mp - 9 };
+    let y = if m <= 2 { y + 1 } else { y };
+    (y, m, d)
 }
 
 #[cfg(test)]
@@ -232,6 +252,14 @@ mod tests {
         assert_eq!(
             serial_to_ymd(0.0, DateSystem::Excel1900).unwrap(),
             (1900, 1, 0)
+        );
+        assert_eq!(
+            serial_to_ymd(45366.0, DateSystem::Excel1900).unwrap(),
+            (2024, 3, 15)
+        );
+        assert_eq!(
+            serial_to_ymd(EXCEL_MAX_SERIAL_1900 as f64, DateSystem::Excel1900).unwrap(),
+            (9999, 12, 31)
         );
     }
 

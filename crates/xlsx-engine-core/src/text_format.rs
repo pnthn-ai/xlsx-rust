@@ -22,6 +22,7 @@ use crate::dates::serial_to_ymd;
 use crate::eval::coerce;
 use std::cell::RefCell;
 use std::collections::HashMap;
+use std::sync::Arc;
 use xlsx_types::{excel_round_15, DateSystem, ExcelError, ExcelValue};
 
 /// Apply `TEXT(value, format)` for the supported subset.
@@ -121,10 +122,40 @@ fn format_with_plan(
     }
 }
 
+#[derive(Clone, Copy)]
+enum FastKind {
+    Fixed(u32),
+    Grouped(u32),
+    Currency2,
+    Percent(u32),
+    IsoDate,
+    PadInt(u32),
+}
+
+fn classify_fast(format: &str) -> Option<FastKind> {
+    match format {
+        "0.00" => Some(FastKind::Fixed(2)),
+        "0" => Some(FastKind::Fixed(0)),
+        "0.0" => Some(FastKind::Fixed(1)),
+        "#,##0" => Some(FastKind::Grouped(0)),
+        "#,##0.00" => Some(FastKind::Grouped(2)),
+        "$#,##0.00" => Some(FastKind::Currency2),
+        "0%" => Some(FastKind::Percent(0)),
+        "0.0%" => Some(FastKind::Percent(1)),
+        "0.00%" => Some(FastKind::Percent(2)),
+        "000" => Some(FastKind::PadInt(3)),
+        "0000000" => Some(FastKind::PadInt(7)),
+        "yyyy-mm-dd" | "YYYY-MM-DD" => Some(FastKind::IsoDate),
+        _ if format.eq_ignore_ascii_case("yyyy-mm-dd") => Some(FastKind::IsoDate),
+        _ => None,
+    }
+}
+
 fn try_fast(value: &ExcelValue, format: &str, date_system: DateSystem) -> Option<String> {
     if is_general(format) {
         return Some(general_display(value));
     }
+    let kind = classify_fast(format)?;
     let n = match coerce_number(value) {
         Ok(Some(n)) => n,
         Ok(None) => {
@@ -138,31 +169,49 @@ fn try_fast(value: &ExcelValue, format: &str, date_system: DateSystem) -> Option
     if !n.is_finite() {
         return None;
     }
-    match format {
-        "0.00" => fast_fixed(n, 2),
-        "0" => fast_fixed(n, 0),
-        "0.0" => fast_fixed(n, 1),
-        "#,##0" => fast_grouped(n, 0),
-        "#,##0.00" => fast_grouped(n, 2),
-        "$#,##0.00" => fast_grouped(n, 2).map(|s| {
+    match kind {
+        FastKind::Fixed(p) => fast_fixed(n, p),
+        FastKind::Grouped(p) => fast_grouped(n, p),
+        FastKind::Currency2 => fast_grouped(n, 2).map(|s| {
             if let Some(rest) = s.strip_prefix('-') {
                 format!("-${rest}")
             } else {
                 format!("${s}")
             }
         }),
-        "0%" => fast_percent(n, 0),
-        "0.0%" => fast_percent(n, 1),
-        "0.00%" => fast_percent(n, 2),
-        "yyyy-mm-dd" | "YYYY-MM-DD" => fast_iso_date(n, date_system),
-        _ => {
-            if format.eq_ignore_ascii_case("yyyy-mm-dd") {
-                fast_iso_date(n, date_system)
-            } else {
-                None
-            }
+        FastKind::Percent(p) => fast_percent(n, p),
+        FastKind::IsoDate => fast_iso_date(n, date_system),
+        FastKind::PadInt(width) => fast_pad_int(n, width),
+    }
+}
+
+fn fast_pad_int(n: f64, width: u32) -> Option<String> {
+    let (neg, int_part, _) = split_rounded(n, 0, 1)?;
+    let mut s = String::with_capacity(width as usize + 1);
+    if neg {
+        s.push('-');
+    }
+    let mut digits = [0u8; 40];
+    let mut x = int_part;
+    let mut len = 0usize;
+    if x == 0 {
+        digits[0] = b'0';
+        len = 1;
+    } else {
+        while x > 0 {
+            digits[len] = b'0' + (x % 10) as u8;
+            x /= 10;
+            len += 1;
         }
     }
+    while len < width as usize {
+        digits[len] = b'0';
+        len += 1;
+    }
+    for i in (0..len).rev() {
+        s.push(digits[i] as char);
+    }
+    Some(s)
 }
 
 fn fast_fixed(n: f64, places: u32) -> Option<String> {
@@ -295,6 +344,15 @@ fn push_u32_pad(s: &mut String, mut n: u32, width: usize) {
     s.push_str(unsafe { std::str::from_utf8_unchecked(&buf[..width]) });
 }
 
+/// `m` / `d` write every digit (15 stays "15"); `mm` / `dd` / `yy` / `yyyy` pad.
+fn push_date_part(s: &mut String, n: u32, width: usize) {
+    if width <= 1 {
+        push_u128(s, n as u128);
+    } else {
+        push_u32_pad(s, n, width);
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 enum Token {
     Digit0,
@@ -343,16 +401,19 @@ impl FormatPlan {
 }
 
 thread_local! {
-    static PLAN_CACHE: RefCell<HashMap<String, FormatPlan>> = RefCell::new(HashMap::new());
+    static PLAN_CACHE: RefCell<HashMap<String, Arc<FormatPlan>>> =
+        RefCell::new(HashMap::new());
 }
 
-fn parse_cached(format: &str) -> Result<FormatPlan, ExcelError> {
+fn parse_cached(format: &str) -> Result<Arc<FormatPlan>, ExcelError> {
     PLAN_CACHE.with(|cache| {
         if let Some(p) = cache.borrow().get(format) {
-            return Ok(p.clone());
+            return Ok(Arc::clone(p));
         }
-        let plan = FormatPlan::parse(format)?;
-        cache.borrow_mut().insert(format.to_string(), plan.clone());
+        let plan = Arc::new(FormatPlan::parse(format)?);
+        cache
+            .borrow_mut()
+            .insert(format.to_string(), Arc::clone(&plan));
         Ok(plan)
     })
 }
@@ -573,10 +634,10 @@ fn emit_date(tokens: &[Token], n: f64, date_system: DateSystem) -> Result<String
                 } else {
                     y.unsigned_abs() % 100
                 };
-                push_u32_pad(&mut out, v, width as usize);
+                push_date_part(&mut out, v, width as usize);
             }
-            Token::Month { width } => push_u32_pad(&mut out, m, width as usize),
-            Token::Day { width } => push_u32_pad(&mut out, d, width as usize),
+            Token::Month { width } => push_date_part(&mut out, m, width as usize),
+            Token::Day { width } => push_date_part(&mut out, d, width as usize),
             Token::Literal(c) => out.push(c),
             Token::Percent => out.push('%'),
             Token::Digit0 | Token::DigitHash | Token::Decimal | Token::Group => {
@@ -870,6 +931,7 @@ mod tests {
             (1_234_567.0, "#,##0"),
             (0.285, "0.0%"),
             (45366.0, "yyyy-mm-dd"),
+            (1234.0, "0000000"),
         ] {
             let a = apply(&ExcelValue::Number(n), fmt, DateSystem::Excel1900).unwrap();
             clear_plan_cache();
