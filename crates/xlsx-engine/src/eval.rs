@@ -1,6 +1,7 @@
 //! Seed-scoped evaluator with Excel-like and intentionally naive semantics.
 
 use crate::dates::{date_serial, eomonth_serial, serial_to_ymd, time_fraction};
+use crate::dates::{date_serial, networkdays_count, serial_to_ymd, time_fraction};
 use crate::parse::{parse, BinOp, Expr, UnaryOp};
 use std::collections::HashSet;
 use xlsx_types::{
@@ -423,6 +424,7 @@ impl Interpreter {
             "DATE" => self.fn_date(args, ctx),
             "TIME" => self.fn_time(args, ctx),
             "EOMONTH" => self.fn_eomonth(args, ctx),
+            "NETWORKDAYS" => self.fn_networkdays(args, ctx),
             "YEAR" => self.fn_ymd(args, ctx, YmdPart::Year),
             "MONTH" => self.fn_ymd(args, ctx, YmdPart::Month),
             "DAY" => self.fn_ymd(args, ctx, YmdPart::Day),
@@ -1445,11 +1447,60 @@ impl Interpreter {
             Err(e) => return Ok(ExcelValue::Error(e)),
         };
         match eomonth_serial(start, months, ctx.spec.options.date_system) {
+    fn fn_networkdays(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.len() < 2 || args.len() > 3 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        let start_v = self.eval_scalar(&args[0], ctx)?;
+        let end_v = self.eval_scalar(&args[1], ctx)?;
+        let hol_v = if args.len() == 3 {
+            Some(self.eval_expr(&args[2], ctx)?)
+        } else {
+            None
+        };
+        let start = match self.as_number(&start_v) {
+            Ok(n) => n,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        let end = match self.as_number(&end_v) {
+            Ok(n) => n,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        let mut holidays = Vec::new();
+        if let Some(v) = hol_v {
+            if let Some(e) = self.collect_holiday_serials(&v, &mut holidays) {
+                return Ok(ExcelValue::Error(e));
+            }
+        }
+        match networkdays_count(start, end, &holidays, ctx.spec.options.date_system) {
             Ok(n) => Ok(ExcelValue::Number(n)),
             Err(e) => Ok(ExcelValue::Error(e)),
         }
     }
 
+    fn collect_holiday_serials(&self, v: &ExcelValue, out: &mut Vec<f64>) -> Option<ExcelError> {
+        match v {
+            ExcelValue::Array(rows) => {
+                for row in rows {
+                    for c in row {
+                        if let Some(e) = self.collect_holiday_serials(c, out) {
+                            return Some(e);
+                        }
+                    }
+                }
+                None
+            }
+            ExcelValue::Empty => None,
+            ExcelValue::Error(e) => Some(*e),
+            other => match self.as_number(other) {
+                Ok(n) => {
+                    out.push(n);
+                    None
+                }
+                Err(e) => Some(e),
+            },
+        }
+    }
     fn fn_ymd(
         &self,
         args: &[Expr],
