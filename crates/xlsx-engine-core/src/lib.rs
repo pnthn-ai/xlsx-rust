@@ -13,6 +13,7 @@
 //! - [`eval::ifs`] — `IFS` pair-selection kernel (eager; no-match `#N/A`)
 //! - [`eval::unique`] — `UNIQUE` dynamic-array kernel (hash distinctness)
 //! - [`eval::filter`] — `FILTER` mask/select kernel (`#CALC!` / `if_empty`)
+//! - [`eval::choosecols`] — `CHOOSECOLS` column-pick kernel (neg index / `#VALUE!`)
 //! - [`eval::irr`] — Excel `IRR` Newton / secant kernel
 //!
 //! This crate depends only on [`xlsx_types`]. It never reads fixture expected
@@ -28,6 +29,7 @@ pub use dates::workday_serial;
 
 pub use ast::{BinOp, Expr, UnaryOp};
 pub use dates::{weekday as excel_weekday, weekday_naive as excel_weekday_naive};
+pub use eval::choosecols::{select as excel_choosecols, select_naive as excel_choosecols_naive};
 pub use eval::concat::{concat_naive_join, eval_concat_formula, ConcatBuilder, CONCAT_MAX_CHARS};
 pub use eval::filter::{select as excel_filter, select_naive as excel_filter_naive};
 pub use eval::find::{find as excel_find, find_naive as excel_find_naive};
@@ -53,8 +55,8 @@ pub use eval::textjoin::{
 };
 pub use eval::unique::{unique_apply, unique_apply_naive, unique_eq};
 pub use eval::{
-    eval_averageif_materialized, eval_formula_in, eval_sumif_materialized, eval_sumifs_materialized,
-    Evaluator,
+    eval_averageif_materialized, eval_formula_in, eval_sumif_materialized,
+    eval_sumifs_materialized, Evaluator,
 };
 pub use parse::parse;
 

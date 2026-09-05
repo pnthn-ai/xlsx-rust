@@ -3,6 +3,8 @@
 //! `IFS` lives with the other logicals here; pair selection is [`super::ifs`].
 //! `FILTER` lives with the other lookups here; the mask/select kernel is
 //! [`super::filter`].
+//! `CHOOSECOLS` lives with the other lookups here; the column-pick kernel is
+//! [`super::choosecols`].
 //!
 //! Unknown names return `#NAME?` (an Excel value, not [`EvalError`]).
 //! Financial TVM starts with `PMT` (`xlsx_types::excel_pmt`); `PV`/`FV`/`NPER`
@@ -56,6 +58,7 @@ pub(crate) fn dispatch(
         "INDEX" => fn_index(ev, args, ctx),
         "MATCH" => fn_match(ev, args, ctx),
         "CHOOSE" => fn_choose(ev, args, ctx),
+        "CHOOSECOLS" => super::choosecols::eval(ev, args, ctx),
         "ABS" => fn_unary_num(ev, args, ctx, |n| ExcelValue::Number(n.abs())),
         "SIGN" => fn_unary_num(ev, args, ctx, |n| {
             ExcelValue::Number(if n > 0.0 {
