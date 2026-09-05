@@ -1,0 +1,290 @@
+[
+  {
+    "id": "fn.pv.ms-annuity",
+    "description": "Microsoft PV example: present value of a $500 monthly annuity at 8% for 20 years",
+    "tags": ["pv", "financial"],
+    "notes": "support.microsoft.com PV: ($59,777.15). Golden is the OpenFormula 6.12.41 identity.",
+    "formula": "=PV(8%/12, 12*20, 500)",
+    "expected": { "number": -59777.14585118782 }
+  },
+  {
+    "id": "fn.pv.ms-annuity-cells",
+    "description": "Same Microsoft annuity via cell refs (A2=500, A3=8%, A4=20 years)",
+    "tags": ["pv", "financial"],
+    "formula": "=PV(A3/12, 12*A4, A2)",
+    "expected": { "number": -59777.14585118782 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A2": { "number": 500 },
+          "A3": { "number": 0.08 },
+          "A4": { "number": 20 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.pv.ms-annuity-begin",
+    "description": "Same Microsoft annuity, type=1 (beginning of period)",
+    "tags": ["pv", "financial"],
+    "formula": "=PV(8%/12, 12*20, 500, 0, 1)",
+    "expected": { "number": -60175.660156862396 }
+  },
+  {
+    "id": "fn.pv.lump-sum",
+    "description": "Present value of a $10,000 lump sum in 5 years at 10% (pmt=0)",
+    "tags": ["pv", "financial"],
+    "formula": "=PV(0.1, 5, 0, 10000)",
+    "expected": { "number": -6209.213230591549 }
+  },
+  {
+    "id": "fn.pv.sinking-pv",
+    "description": "Present value of $50,000 in 18 years at 6% monthly (pmt=0)",
+    "tags": ["pv", "financial"],
+    "formula": "=PV(6%/12, 18*12, 0, 50000)",
+    "expected": { "number": -17025.530967093564 }
+  },
+  {
+    "id": "fn.pv.pmt-inverse",
+    "description": "PV of the PMT on a 30-year 5% mortgage recovers the principal",
+    "tags": ["pv", "financial"],
+    "formula": "=PV(0.05/12, 360, PMT(0.05/12, 360, 200000))",
+    "expected": { "number": 200000 }
+  },
+  {
+    "id": "fn.pv.pmt-inverse-begin",
+    "description": "Same inverse identity with type=1 on both sides",
+    "tags": ["pv", "financial"],
+    "formula": "=PV(0.05/12, 360, PMT(0.05/12, 360, 200000, 0, 1), 0, 1)",
+    "expected": { "number": 200000 }
+  },
+  {
+    "id": "fn.pv.yearly",
+    "description": "Annual PV(8%, 10, 1000) — units must match",
+    "tags": ["pv", "financial"],
+    "formula": "=PV(0.08, 10, 1000)",
+    "expected": { "number": -6710.081398941446 }
+  },
+  {
+    "id": "fn.pv.zero-rate",
+    "description": "rate=0 is straight-line: -(fv + pmt*nper)",
+    "tags": ["pv", "financial"],
+    "formula": "=PV(0, 10, 100)",
+    "expected": { "number": -1000 }
+  },
+  {
+    "id": "fn.pv.zero-rate-fv",
+    "description": "rate=0 with a balloon fv",
+    "tags": ["pv", "financial"],
+    "formula": "=PV(0, 10, 100, 500)",
+    "expected": { "number": -1500 }
+  },
+  {
+    "id": "fn.pv.balloon",
+    "description": "Annuity plus remaining fv (balloon)",
+    "tags": ["pv", "financial"],
+    "formula": "=PV(0.05, 5, -2000, 1000)",
+    "expected": { "number": 7875.4271747931825 }
+  },
+  {
+    "id": "fn.pv.annuity-outflow",
+    "description": "Negative pmt (cash paid out) yields a positive PV",
+    "tags": ["pv", "financial"],
+    "formula": "=PV(0.05, 10, -1000)",
+    "expected": { "number": 7721.734929184813 }
+  },
+  {
+    "id": "fn.pv.neg-rate",
+    "description": "Negative rate (deflation) is allowed when 1+rate > 0",
+    "tags": ["pv", "financial"],
+    "formula": "=PV(-0.05, 10, 100)",
+    "expected": { "number": -1340.3651402301862 }
+  },
+  {
+    "id": "fn.pv.frac-nper",
+    "description": "nper is not truncated; fractional periods are allowed",
+    "tags": ["pv", "financial"],
+    "formula": "=PV(0.1, 10.5, 100)",
+    "expected": { "number": -632.3988969942559 }
+  },
+  {
+    "id": "fn.pv.neg-nper",
+    "description": "Negative nper is a valid TVM input (solve-backwards)",
+    "tags": ["pv", "financial"],
+    "formula": "=PV(0.1, -10, 100)",
+    "expected": { "number": 1593.7424601000018 }
+  },
+  {
+    "id": "fn.pv.long-horizon",
+    "description": "Large integer nper stays finite (100-year monthly at 5%)",
+    "tags": ["pv", "financial", "perf"],
+    "formula": "=PV(0.05/12, 1200, 500)",
+    "expected": { "number": -119183.0034734618 }
+  },
+  {
+    "id": "fn.pv.small-rate",
+    "description": "Tiny rate uses expm1 so (1+r)^n-1 does not cancel",
+    "tags": ["pv", "financial", "perf"],
+    "quirks": ["ieee-vs-excel-precision"],
+    "formula": "=PV(0.00000001, 360, 100)",
+    "expected": { "number": -35999.93502007841 }
+  },
+  {
+    "id": "fn.pv.percent-unary",
+    "description": "Rate written with postfix % (8%/12)",
+    "tags": ["pv", "financial"],
+    "quirks": ["percent-unary"],
+    "formula": "=PV(8%/12, 12*20, 500)",
+    "expected": { "number": -59777.14585118782 }
+  },
+  {
+    "id": "fn.pv.text-number",
+    "description": "Numeric text coerces like arithmetic",
+    "tags": ["pv", "financial", "coercion"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=PV(\"0.1\", \"10\", \"100\")",
+    "expected": { "number": -614.4567105704684 }
+  },
+  {
+    "id": "fn.pv.true-type",
+    "description": "TRUE coerces to type=1",
+    "tags": ["pv", "financial", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=PV(0.1, 10, 100, 0, TRUE)",
+    "expected": { "number": -675.9023816275154 }
+  },
+  {
+    "id": "fn.pv.false-type",
+    "description": "FALSE coerces to type=0 (end of period)",
+    "tags": ["pv", "financial", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=PV(0.1, 10, 100, 0, FALSE)",
+    "expected": { "number": -614.4567105704684 }
+  },
+  {
+    "id": "fn.pv.empty-optional",
+    "description": "Blank fv/type cells coerce to 0",
+    "tags": ["pv", "financial", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=PV(A1, A2, A3, A4, A5)",
+    "expected": { "number": -614.4567105704684 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 0.1 },
+          "A2": { "number": 10 },
+          "A3": { "number": 100 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.pv.nper-zero",
+    "description": "nper=0 with nonzero rate is -fv (term is 1; unlike PMT this is finite)",
+    "tags": ["pv", "financial"],
+    "formula": "=PV(0.1, 0, 100, 500)",
+    "expected": { "number": -500 }
+  },
+  {
+    "id": "fn.pv.nper-zero-zero-rate",
+    "description": "rate=0 and nper=0 is -fv (straight-line path does not divide)",
+    "tags": ["pv", "financial"],
+    "formula": "=PV(0, 0, 100, 500)",
+    "expected": { "number": -500 }
+  },
+  {
+    "id": "fn.pv.nper-zero-default-fv",
+    "description": "nper=0 and omitted fv is 0",
+    "tags": ["pv", "financial"],
+    "formula": "=PV(0.1, 0, 100)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.pv.rate-minus-one",
+    "description": "rate=-1 makes (1+rate)^nper=0 → divide by zero → #NUM!",
+    "tags": ["pv", "financial"],
+    "formula": "=PV(-1, 1, 100)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.pv.rate-minus-one-fv",
+    "description": "rate=-1 with fv is still #NUM! (denominator is 0)",
+    "tags": ["pv", "financial"],
+    "formula": "=PV(-1, 1, 100, 50)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.pv.rate-minus-one-begin",
+    "description": "rate=-1 and type=1 is #NUM!",
+    "tags": ["pv", "financial"],
+    "formula": "=PV(-1, 1, 100, 0, 1)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.pv.neg-base-frac-nper",
+    "description": "(1+rate)<0 and non-integer nper is #NUM! (same as POWER)",
+    "tags": ["pv", "financial"],
+    "formula": "=PV(-2, 1.5, 100)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.pv.neg-base-int-nper",
+    "description": "Negative (1+rate) with integer nper is allowed",
+    "tags": ["pv", "financial"],
+    "formula": "=PV(-2, 3, 100)",
+    "expected": { "number": 100 }
+  },
+  {
+    "id": "fn.pv.overflow",
+    "description": "(1+rate)^nper overflow is #NUM! (same as POWER)",
+    "tags": ["pv", "financial", "errors"],
+    "formula": "=PV(0.5, 2000, 100)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.pv.too-few-args",
+    "description": "PV requires rate, nper, pmt",
+    "tags": ["pv", "financial", "errors"],
+    "formula": "=PV(0.1, 10)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.pv.no-args",
+    "description": "PV() is #VALUE!",
+    "tags": ["pv", "financial", "errors"],
+    "formula": "=PV()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.pv.too-many-args",
+    "description": "More than five arguments is #VALUE!",
+    "tags": ["pv", "financial", "errors"],
+    "formula": "=PV(0.1, 10, 100, 0, 0, 0)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.pv.text-rate",
+    "description": "Non-numeric text rate is #VALUE!",
+    "tags": ["pv", "financial", "errors"],
+    "formula": "=PV(\"x\", 10, 100)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.pv.error-left",
+    "description": "Left-to-right error precedence: first arg error wins",
+    "tags": ["pv", "financial", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=PV(#DIV/0!, #VALUE!, 1)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.pv.error-second",
+    "description": "Second-arg error surfaces when rate is fine",
+    "tags": ["pv", "financial", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=PV(0.1, #NAME?, #N/A)",
+    "expected": { "error": "#NAME?" }
+  }
+]

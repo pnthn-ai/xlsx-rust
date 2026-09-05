@@ -5,8 +5,8 @@
 //! [`super::filter`].
 //!
 //! Unknown names return `#NAME?` (an Excel value, not [`EvalError`]).
-//! Financial TVM starts with `PMT` (`xlsx_types::excel_pmt`); `PV`/`FV`/`NPER`
-//! are later workstreams.
+//! Financial TVM: `PMT` / `PV` (`xlsx_types::excel_pmt` / `excel_pv`);
+//! `FV`/`NPER` are later workstreams.
 
 use super::{coerce, compare, excel_pow, Ctx, Evaluator};
 use crate::ast::Expr;
@@ -17,7 +17,7 @@ use crate::dates::{
 use crate::text_format;
 use xlsx_types::{
     count_matches, excel_ceiling, excel_ceiling_math, excel_floor, excel_floor_math, excel_pmt,
-    Criterion, EvalError, ExcelError, ExcelValue,
+    excel_pv, Criterion, EvalError, ExcelError, ExcelValue,
 };
 
 pub(crate) fn dispatch(
@@ -136,8 +136,9 @@ pub(crate) fn dispatch(
         "IRR" => fn_irr(ev, args, ctx),
         "TRUE" => Ok(ExcelValue::Bool(true)),
         "FALSE" => Ok(ExcelValue::Bool(false)),
-        // Financial (TVM). PV / FV / NPER are later workstreams.
+        // Financial (TVM). FV / NPER are later workstreams.
         "PMT" => fn_pmt(ev, args, ctx),
+        "PV" => fn_pv(ev, args, ctx),
         _ => Ok(ExcelValue::Error(ExcelError::Name)),
     }
 }
@@ -1348,25 +1349,50 @@ fn trunc_num_chars(n: f64) -> Result<u64, ExcelError> {
 }
 
 fn fn_pmt(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    match tvm5(ev, args, ctx)? {
+        Ok((rate, nper, pv, fv, typ)) => match excel_pmt(rate, nper, pv, fv, typ) {
+            Ok(n) => Ok(ExcelValue::Number(n)),
+            Err(e) => Ok(ExcelValue::Error(e)),
+        },
+        Err(e) => Ok(ExcelValue::Error(e)),
+    }
+}
+
+fn fn_pv(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    match tvm5(ev, args, ctx)? {
+        Ok((rate, nper, pmt, fv, typ)) => match excel_pv(rate, nper, pmt, fv, typ) {
+            Ok(n) => Ok(ExcelValue::Number(n)),
+            Err(e) => Ok(ExcelValue::Error(e)),
+        },
+        Err(e) => Ok(ExcelValue::Error(e)),
+    }
+}
+
+/// Shared `rate, nper, third, [fv], [type]` coerce for `PMT` / `PV`.
+fn tvm5(
+    ev: &Evaluator,
+    args: &[Expr],
+    ctx: &mut Ctx<'_>,
+) -> Result<Result<(f64, f64, f64, f64, f64), ExcelError>, EvalError> {
     if args.len() < 3 || args.len() > 5 {
-        return Ok(ExcelValue::Error(ExcelError::Value));
+        return Ok(Err(ExcelError::Value));
     }
     let rate = match coerce_num(ev, &args[0], ctx)? {
         Ok(n) => n,
-        Err(e) => return Ok(ExcelValue::Error(e)),
+        Err(e) => return Ok(Err(e)),
     };
     let nper = match coerce_num(ev, &args[1], ctx)? {
         Ok(n) => n,
-        Err(e) => return Ok(ExcelValue::Error(e)),
+        Err(e) => return Ok(Err(e)),
     };
-    let pv = match coerce_num(ev, &args[2], ctx)? {
+    let third = match coerce_num(ev, &args[2], ctx)? {
         Ok(n) => n,
-        Err(e) => return Ok(ExcelValue::Error(e)),
+        Err(e) => return Ok(Err(e)),
     };
     let fv = if args.len() >= 4 {
         match coerce_num(ev, &args[3], ctx)? {
             Ok(n) => n,
-            Err(e) => return Ok(ExcelValue::Error(e)),
+            Err(e) => return Ok(Err(e)),
         }
     } else {
         0.0
@@ -1374,15 +1400,12 @@ fn fn_pmt(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue
     let typ = if args.len() >= 5 {
         match coerce_num(ev, &args[4], ctx)? {
             Ok(n) => n,
-            Err(e) => return Ok(ExcelValue::Error(e)),
+            Err(e) => return Ok(Err(e)),
         }
     } else {
         0.0
     };
-    match excel_pmt(rate, nper, pv, fv, typ) {
-        Ok(n) => Ok(ExcelValue::Number(n)),
-        Err(e) => Ok(ExcelValue::Error(e)),
-    }
+    Ok(Ok((rate, nper, third, fv, typ)))
 }
 
 fn coerce_num(
