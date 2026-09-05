@@ -41,9 +41,7 @@ fn ints() -> Vec<f64> {
 }
 
 fn decimals() -> Vec<f64> {
-    (0..N)
-        .map(|i| (i as f64) * 0.013 + 0.17)
-        .collect()
+    (0..N).map(|i| (i as f64) * 0.013 + 0.17).collect()
 }
 
 fn main() {
@@ -62,8 +60,7 @@ fn main() {
         let naive = time_it(ITERS, || {
             let mut acc = 0.0;
             for n in &ns {
-                acc += excel_floor_naive(black_box(*n), black_box(7.0))
-                    .unwrap_or(0.0);
+                acc += excel_floor_naive(black_box(*n), black_box(7.0)).unwrap_or(0.0);
             }
             black_box(acc);
         });
@@ -89,8 +86,7 @@ fn main() {
         let naive = time_it(ITERS, || {
             let mut acc = 0.0;
             for n in &ns {
-                acc += excel_ceiling_naive(black_box(*n), black_box(7.0))
-                    .unwrap_or(0.0);
+                acc += excel_ceiling_naive(black_box(*n), black_box(7.0)).unwrap_or(0.0);
             }
             black_box(acc);
         });
@@ -180,7 +176,7 @@ fn main() {
         let naive = time_it(ITERS * 4, || {
             let mut acc = 0u32;
             for n in ns.iter().step_by(8) {
-                if excel_floor_naive(black_box(*n.abs().max(1.0)), black_box(-2.0)).is_err() {
+                if excel_floor_naive(black_box(n.abs().max(1.0)), black_box(-2.0)).is_err() {
                     acc += 1;
                 }
                 if excel_floor_naive(black_box(*n), black_box(0.0)).is_err() {
@@ -192,7 +188,7 @@ fn main() {
         let fast = time_it(ITERS * 4, || {
             let mut acc = 0u32;
             for n in ns.iter().step_by(8) {
-                if excel_floor(black_box(*n.abs().max(1.0)), black_box(-2.0)).is_err() {
+                if excel_floor(black_box(n.abs().max(1.0)), black_box(-2.0)).is_err() {
                     acc += 1;
                 }
                 if excel_floor(black_box(*n), black_box(0.0)).is_err() {

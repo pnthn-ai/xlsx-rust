@@ -4,7 +4,7 @@
 //! read fixture goldens — callers pass coerced `f64`s.
 
 use crate::error::ExcelError;
-use crate::value::{excel_num_eq, excel_round_15};
+use crate::value::excel_round_15;
 
 /// Largest magnitude still exactly representable as an integer in `f64`.
 const SAFE_INT: f64 = (1i64 << 53) as f64;
@@ -130,7 +130,8 @@ fn check_classic(n: f64, s: f64) -> Result<(), ExcelError> {
 }
 
 fn try_int_path(n: f64, s: f64, dir: Dir) -> Option<f64> {
-    if !is_safe_int(n) || !is_safe_int(s) {
+    // Probe significance first — decimal `0.1` / `0.01` exit before touching `n`.
+    if !is_safe_int(s) || !is_safe_int(n) {
         return None;
     }
     let ni = n as i64;
@@ -176,17 +177,30 @@ fn i64_div_ceil(n: i64, s: i64) -> Option<i64> {
 
 fn round_multiple(n: f64, s: f64, dir: Dir) -> f64 {
     let q = n / s;
-    if excel_num_eq(q, q.round()) {
+    // Cheap 15-digit "already a multiple" test — avoids `excel_num_eq`'s
+    // two `log10` snaps on the hot decimal path (`CEILING(1.2, 0.1)`).
+    if nearly_int(q) {
         return snap(s * q.round());
     }
-    snap(ieee_multiple(n, s, dir))
+    match dir {
+        Dir::Floor => s * q.floor(),
+        Dir::Ceiling => s * q.ceil(),
+    }
+}
+
+fn nearly_int(q: f64) -> bool {
+    let r = q.round();
+    (q - r).abs() <= 5e-15 * r.abs().max(1.0)
 }
 
 fn ieee_multiple(n: f64, s: f64, dir: Dir) -> f64 {
-    match dir {
+    // First-draft path: always snap to Excel's 15-digit model. The integer
+    // fast path skips this (exact `i64` product needs no log10/pow).
+    let v = match dir {
         Dir::Floor => s * (n / s).floor(),
         Dir::Ceiling => s * (n / s).ceil(),
-    }
+    };
+    snap(v)
 }
 
 fn snap(x: f64) -> f64 {
@@ -262,6 +276,23 @@ fn slice_apply(n: &[f64], s: f64, out: &mut [f64], dir: Dir) -> usize {
         }
         return errs;
     }
+    // Decimal significance: s already passed the classic checks. Skip the
+    // integer probe and `Result` wrap on every element.
+    if s.is_finite() && s > 0.0 {
+        for i in 0..len {
+            let ni = n[i];
+            if !ni.is_finite() {
+                errs += 1;
+                continue;
+            }
+            if ni == 0.0 {
+                out[i] = 0.0;
+            } else {
+                out[i] = round_multiple(ni, s, dir);
+            }
+        }
+        return errs;
+    }
     for i in 0..len {
         match floor_ceil(n[i], s, dir) {
             Ok(v) => out[i] = v,
@@ -286,6 +317,7 @@ fn slice_apply_ieee(n: &[f64], s: f64, out: &mut [f64], dir: Dir) -> usize {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::excel_num_eq;
 
     fn n(v: Result<f64, ExcelError>) -> f64 {
         v.expect("number")

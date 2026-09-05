@@ -17,13 +17,13 @@ pub mod workbook;
 
 pub use cell::{AddrError, CellAddr, CellRef, RangeRef};
 pub use error::ExcelError;
+pub use eval::{
+    ArrayMode, Candidate, DateSystem, EvalError, EvalOptions, EvalSpec, EvalTarget, Locale,
+};
 pub use floor_ceiling::{
     excel_ceiling, excel_ceiling_math, excel_ceiling_naive, excel_ceiling_slice,
     excel_ceiling_slice_naive, excel_floor, excel_floor_math, excel_floor_naive, excel_floor_slice,
     excel_floor_slice_naive,
-};
-pub use eval::{
-    ArrayMode, Candidate, DateSystem, EvalError, EvalOptions, EvalSpec, EvalTarget, Locale,
 };
 pub use quirk::QuirkCategory;
 pub use value::{excel_num_eq, excel_round_15, ExcelType, ExcelValue};
