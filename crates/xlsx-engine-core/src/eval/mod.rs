@@ -6,6 +6,7 @@
 pub mod coerce;
 pub mod compare;
 pub mod empty;
+pub mod find;
 pub mod functions;
 
 use crate::ast::{BinOp, Expr, UnaryOp};
