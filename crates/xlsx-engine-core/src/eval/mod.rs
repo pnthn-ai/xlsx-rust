@@ -19,6 +19,7 @@ pub mod textjoin;
 pub mod round;
 pub mod search;
 pub mod npv;
+pub mod switch;
 
 use crate::ast::{BinOp, Expr, UnaryOp};
 use crate::parse::parse;

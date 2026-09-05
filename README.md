@@ -316,6 +316,8 @@ function families above. Workbook input is the snippet type in `xlsx-types` (no
 | [`dates.rs`](crates/xlsx-engine-core/src/dates.rs) | 1900/1904 serials, leap-year bug, O(1) `WEEKDAY` |
 | [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators, logicals, lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates, math, text, `NPV`, `TYPE` / `IS*` |
 | [`eval/npv.rs`](crates/xlsx-engine-core/src/eval/npv.rs) | Excel `NPV` kernel (period-1 discount, range skip of blanks/text/logicals) |
+| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators, logicals (`IF`/`SWITCH`/`AND`/…), lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates, math, text, `TYPE` / `IS*` |
+| [`eval/switch.rs`](crates/xlsx-engine-core/src/eval/switch.rs) | Excel `SWITCH` exact-match kernel (first hit, default / `#N/A`) |
 
 **Implemented:** arithmetic and comparison operators (unary `+/-`, `%`, `^`,
 `&`, space intersection), host-aware implicit intersection, cell refs /
@@ -334,6 +336,7 @@ month/day names. Non-numeric text is returned unchanged.
 families above (including `TEXTJOIN` with cycling delimiters and
 `ignore_empty`). Workbook input is the snippet type in `xlsx-types` (no
 families above (including `ROUNDUP` / `ROUNDDOWN`). Workbook input is the snippet type in `xlsx-types` (no
+families above (including `SWITCH`). Workbook input is the snippet type in `xlsx-types` (no
 `.xlsx` IO).
 | [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators, logicals, lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates, math, text (`CONCAT` / `LEFT` / …), `TYPE` / `IS*` |
 | [`eval/concat.rs`](crates/xlsx-engine-core/src/eval/concat.rs) | Excel `CONCAT`: row-major range/array flatten, blanks/`""` add nothing, 32,767 UTF-16 cap |
@@ -380,6 +383,10 @@ as one or the other. Documented quirk categories:
 - `VLOOKUP` approximate match binary-searches (wrong answers on unsorted data);
   omitted `range_lookup` defaults to approximate. `XLOOKUP` defaults to exact
 - `IF` short-circuits; `AND` / `OR` do not (`AND(FALSE, 1/0)` is `#DIV/0!`)
+- `SWITCH(expression, value1, result1, …, [default])` uses Excel `=` (not `IF`
+  truthiness: `IF(2, …)` is true, `SWITCH(2, TRUE, …)` does not match). First
+  hit wins; unused values/results are not evaluated. No match and no default
+  is `#N/A` (a nested `IF` missing an else is `FALSE`). `*` / `?` are literal.
 - Error precedence is left-to-right (`#DIV/0!+#VALUE!` keeps `#DIV/0!`)
 - 1900 leap-year bug (`DATE(1900,2,29)` is serial 60); 1904 date system;
   `EOMONTH` inherits it (`EOMONTH(59,0)` / `EOMONTH(60,0)` are both 60)

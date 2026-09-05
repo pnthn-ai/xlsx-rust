@@ -79,3 +79,7 @@ harness = false
 [[bench]]
 name = "npv"
 harness = false
+
+[[bench]]
+name = "switch"
+harness = false

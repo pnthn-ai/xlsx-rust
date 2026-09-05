@@ -377,6 +377,7 @@ impl Interpreter {
             "IF" => self.fn_if(args, ctx),
             "IFERROR" => self.fn_iferror(args, ctx),
             "IFNA" => self.fn_ifna(args, ctx),
+            "SWITCH" => self.fn_switch(args, ctx),
             "AND" => self.fn_and_or(args, ctx, AndOr::And),
             "OR" => self.fn_and_or(args, ctx, AndOr::Or),
             "XOR" => self.fn_and_or(args, ctx, AndOr::Xor),
@@ -840,6 +841,38 @@ impl Interpreter {
             self.eval_expr(&args[1], ctx)
         } else {
             Ok(v)
+        }
+    }
+
+    fn fn_switch(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.len() < 3 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        let expr = self.eval_scalar(&args[0], ctx)?;
+        if let ExcelValue::Error(e) = expr {
+            return Ok(ExcelValue::Error(e));
+        }
+        let has_default = args.len() % 2 == 0;
+        let pair_end = if has_default {
+            args.len() - 1
+        } else {
+            args.len()
+        };
+        let mut i = 1;
+        while i < pair_end {
+            let value = self.eval_scalar(&args[i], ctx)?;
+            if let ExcelValue::Error(e) = value {
+                return Ok(ExcelValue::Error(e));
+            }
+            if matches!(excel_eq(&expr, &value), ExcelValue::Bool(true)) {
+                return self.eval_expr(&args[i + 1], ctx);
+            }
+            i += 2;
+        }
+        if has_default {
+            self.eval_expr(&args[args.len() - 1], ctx)
+        } else {
+            Ok(ExcelValue::Error(ExcelError::Na))
         }
     }
 
