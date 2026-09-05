@@ -41,6 +41,10 @@ name = "sumifs"
 harness = false
 
 [[bench]]
+name = "countifs"
+harness = false
+
+[[bench]]
 name = "averageif"
 harness = false
 

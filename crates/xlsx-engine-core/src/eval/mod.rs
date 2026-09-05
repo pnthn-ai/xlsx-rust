@@ -5,6 +5,7 @@
 
 pub mod averageif;
 pub mod coerce;
+pub mod countifs;
 pub mod compare;
 pub mod concat;
 pub mod empty;
@@ -579,6 +580,35 @@ pub fn eval_sumifs_materialized(
     }
 }
 
+/// Evaluate a `COUNTIFS(...)` formula with the materializing implementation.
+/// Used only by the Criterion microbench as the pre-hill-climb baseline.
+pub fn eval_countifs_materialized(
+    workbook: &Workbook,
+    formula: &str,
+) -> Result<ExcelValue, EvalError> {
+    let spec = EvalSpec {
+        case_id: "countifs-bench".into(),
+        workbook: workbook.clone(),
+        target: EvalTarget::formula(formula),
+        options: Default::default(),
+    };
+    let ast = parse(formula)?;
+    let current_sheet = spec.workbook.default_sheet_name().to_string();
+    let mut ctx = Ctx {
+        spec: &spec,
+        current_sheet,
+        depth: 0,
+        visiting: HashSet::new(),
+        host: spec.default_cell().addr,
+    };
+    match ast {
+        Expr::Call { name, args } if name.eq_ignore_ascii_case("COUNTIFS") => {
+            countifs::countifs_materialized(&Evaluator, &args, &mut ctx)
+        }
+        _ => Err(EvalError::Other("expected COUNTIFS call".into())),
+    }
+}
+
 /// Evaluate an `AVERAGEIF(...)` formula with the materializing implementation.
 /// Used only by the Criterion microbench as the pre-hill-climb baseline.
 pub fn eval_averageif_materialized(
@@ -794,6 +824,46 @@ mod tests {
         assert_eq!(
             eval_formula_in(&wb, "=SUMIFS({1,2,3},A1:A3,\">1\")").unwrap(),
             ExcelValue::Error(ExcelError::Value)
+        );
+    }
+    #[test]
+    fn countifs_and_same_shape_and_countif_matcher() {
+        let mut wb = Workbook::default();
+        wb.set_value("Sheet1", "A1", ExcelValue::Number(1.0))
+            .unwrap();
+        wb.set_value("Sheet1", "A2", ExcelValue::Number(6.0))
+            .unwrap();
+        wb.set_value("Sheet1", "A3", ExcelValue::Number(3.0))
+            .unwrap();
+        wb.set_value("Sheet1", "B1", ExcelValue::Text("x".into()))
+            .unwrap();
+        wb.set_value("Sheet1", "B2", ExcelValue::Text("x".into()))
+            .unwrap();
+        wb.set_value("Sheet1", "B3", ExcelValue::Text("y".into()))
+            .unwrap();
+        wb.set_value("Sheet1", "C1", ExcelValue::Number(5.0))
+            .unwrap();
+        wb.set_value("Sheet1", "C2", ExcelValue::Text("5".into()))
+            .unwrap();
+        assert_eq!(
+            eval_formula_in(&wb, "=COUNTIFS(A1:A3,\">2\",B1:B3,\"x\")").unwrap(),
+            ExcelValue::Number(1.0)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=COUNTIFS(A1, \">2\", B1:B3, \"x\")").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=COUNTIFS({1,2,3},\">1\")").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=COUNTIFS(C1:C2,5)").unwrap(),
+            ExcelValue::Number(2.0)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=COUNTIFS(A1:A2,NA())").unwrap(),
+            ExcelValue::Number(0.0)
         );
     }
     #[test]

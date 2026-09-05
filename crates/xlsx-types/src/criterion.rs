@@ -1,10 +1,11 @@
-//! Shared Excel criteria for `SUMIF` / `COUNTIF` / `SUMIFS` / `AVERAGEIF`.
+//! Shared Excel criteria for `SUMIF` / `COUNTIF` / `SUMIFS` / `COUNTIFS` / `AVERAGEIF`.
 //!
 //! Two constructors preserve function-family semantics:
 //! - [`Criterion::compile`] — SUMIF-family: error criteria propagate, number
 //!   literals are type-strict, `"TRUE"` is text.
-//! - [`Criterion::parse`] — COUNTIF-family: number literals match numeric text,
-//!   `"TRUE"` is logical, error criteria match error cells.
+//! - [`Criterion::parse`] — COUNTIF-family (`COUNTIF` / `COUNTIFS`): number
+//!   literals match numeric text, `"TRUE"` is logical, error criteria match
+//!   error cells.
 //!
 //! The matcher never reads fixture expected values.
 
@@ -564,7 +565,7 @@ pub fn excel_wildcard(pat: &str, text: &str) -> bool {
 
 }
 
-/// Compiled Excel criteria used by SUMIF / COUNTIF / SUMIFS / AVERAGEIF.
+/// Compiled Excel criteria used by SUMIF / COUNTIF / SUMIFS / COUNTIFS / AVERAGEIF.
 #[derive(Clone, Debug)]
 pub struct Criterion {
     inner: Inner,
@@ -584,7 +585,7 @@ impl Criterion {
         })
     }
 
-    /// COUNTIF constructor.
+    /// COUNTIF / COUNTIFS constructor.
     pub fn parse(v: &ExcelValue) -> Self {
         Self {
             inner: Inner::CountIf(countif_style::Criterion::parse(v)),

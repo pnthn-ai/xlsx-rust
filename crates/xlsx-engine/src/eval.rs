@@ -370,6 +370,7 @@ impl Interpreter {
             "COUNTBLANK" => self.fn_agg(args, ctx, AggKind::CountBlank),
             "SUMIF" => self.fn_sumif(args, ctx),
             "COUNTIF" => self.fn_countif(args, ctx),
+            "COUNTIFS" => self.fn_countifs(args, ctx),
             "SUMIFS" => self.fn_sumifs(args, ctx),
             "AVERAGEIF" => self.fn_averageif(args, ctx),
             "IF" => self.fn_if(args, ctx),
@@ -668,6 +669,72 @@ impl Interpreter {
             }
         }
         Ok(ExcelValue::Number(acc))
+    }
+
+    fn fn_countifs(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.len() < 2 || args.len() % 2 != 0 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        let first = match resolve_sumifs_range(&args[0], ctx) {
+            Ok(r) => r,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        let mut pairs: Vec<(RangeRef, Criterion)> = Vec::with_capacity(args.len() / 2);
+        let mut i = 0;
+        while i < args.len() {
+            let range = match resolve_sumifs_range(&args[i], ctx) {
+                Ok(r) => r,
+                Err(e) => return Ok(ExcelValue::Error(e)),
+            };
+            if range.row_count() != first.row_count() || range.col_count() != first.col_count() {
+                return Ok(ExcelValue::Error(ExcelError::Value));
+            }
+            let crit_val = self.eval_scalar(&args[i + 1], ctx)?;
+            pairs.push((range, Criterion::parse(&crit_val)));
+            i += 2;
+        }
+
+        let sheets: Vec<String> = pairs
+            .iter()
+            .map(|(r, _)| {
+                r.sheet
+                    .clone()
+                    .unwrap_or_else(|| ctx.current_sheet.clone())
+            })
+            .collect();
+        if sheets
+            .iter()
+            .any(|s| ctx.spec.workbook.sheet(Some(s)).is_err())
+        {
+            return Ok(ExcelValue::Error(ExcelError::Ref));
+        }
+
+        let height = first.row_count();
+        let width = first.col_count();
+        let mut count = 0u64;
+        for dr in 0..height {
+            for dc in 0..width {
+                let mut ok = true;
+                for ((range, criterion), sheet) in pairs.iter().zip(sheets.iter()) {
+                    let addr = CellAddr::new(range.start.col + dc, range.start.row + dr);
+                    let v = self.eval_cell(
+                        &CellRef {
+                            sheet: Some(sheet.clone()),
+                            addr,
+                        },
+                        ctx,
+                    )?;
+                    if !criterion.matches(&v) {
+                        ok = false;
+                        break;
+                    }
+                }
+                if ok {
+                    count += 1;
+                }
+            }
+        }
+        Ok(ExcelValue::Number(count as f64))
     }
 
     fn fn_agg(

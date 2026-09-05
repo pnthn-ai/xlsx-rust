@@ -1,7 +1,7 @@
 //! Shared Excel-compatible types for the xlsx-rust verification stack.
 //!
 //! Crate boundaries:
-//! - **xlsx-types** — values, errors, COUNTIF criteria, workbook snippets, [`Candidate`] trait
+//! - **xlsx-types** — values, errors, COUNTIF / COUNTIFS criteria, workbook snippets, [`Candidate`] trait
 //! - **xlsx-oracle** — trusted expected-result source
 //! - **xlsx-verify** — corpus + compare + report + CLI
 //! - **xlsx-engine-core** — real `calc-core` formula engine
