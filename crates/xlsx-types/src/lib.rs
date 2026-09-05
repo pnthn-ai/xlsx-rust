@@ -1,7 +1,7 @@
 //! Shared Excel-compatible types for the xlsx-rust verification stack.
 //!
 //! Crate boundaries:
-//! - **xlsx-types** — values, errors, workbook snippets, [`Candidate`] trait
+//! - **xlsx-types** — values, errors, COUNTIF criteria, workbook snippets, [`Candidate`] trait
 //! - **xlsx-oracle** — trusted expected-result source
 //! - **xlsx-verify** — corpus + compare + report + CLI
 //! - **xlsx-engine-core** — real `calc-core` formula engine
@@ -17,7 +17,7 @@ pub mod value;
 pub mod workbook;
 
 pub use cell::{AddrError, CellAddr, CellRef, RangeRef};
-pub use criterion::{excel_wildcard, looks_like_wildcard_pat, Criterion};
+pub use criterion::{count_matches, excel_wildcard, looks_like_wildcard_pat, Criterion};
 pub use error::ExcelError;
 pub use eval::{
     ArrayMode, Candidate, DateSystem, EvalError, EvalOptions, EvalSpec, EvalTarget, Locale,

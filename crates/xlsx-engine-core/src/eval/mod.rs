@@ -15,8 +15,8 @@ use crate::ast::{BinOp, Expr, UnaryOp};
 use crate::parse::parse;
 use std::collections::HashSet;
 use xlsx_types::{
-    ArrayMode, CellAddr, CellRef, EvalError, EvalSpec, EvalTarget, ExcelError, ExcelValue,
-    RangeRef, Workbook,
+    count_matches, ArrayMode, CellAddr, CellRef, Criterion, EvalError, EvalSpec, EvalTarget,
+    ExcelError, ExcelValue, RangeRef, Workbook,
 };
 
 pub struct Evaluator;
@@ -35,18 +35,7 @@ impl Evaluator {
     }
 
     pub fn eval_spec(&self, spec: &EvalSpec) -> Result<ExcelValue, EvalError> {
-        let current_sheet = spec
-            .default_cell()
-            .sheet
-            .clone()
-            .unwrap_or_else(|| spec.workbook.default_sheet_name().to_string());
-        let mut ctx = Ctx {
-            spec,
-            current_sheet,
-            depth: 0,
-            visiting: HashSet::new(),
-            host: spec.default_cell().addr,
-        };
+        let mut ctx = self.ctx_from_spec(spec);
         match &spec.target {
             EvalTarget::Formula { formula, at } => {
                 if let Some(at) = at {
@@ -63,6 +52,41 @@ impl Evaluator {
             }
             EvalTarget::Named { name } => self.eval_named(name, &mut ctx),
         }
+    }
+
+    fn ctx_from_spec<'a>(&self, spec: &'a EvalSpec) -> Ctx<'a> {
+        let current_sheet = spec
+            .default_cell()
+            .sheet
+            .clone()
+            .unwrap_or_else(|| spec.workbook.default_sheet_name().to_string());
+        Ctx {
+            spec,
+            current_sheet,
+            depth: 0,
+            visiting: HashSet::new(),
+            host: spec.default_cell().addr,
+        }
+    }
+
+    /// COUNTIF that materializes the range as an array first (bench baseline).
+    pub fn countif_materialized(&self, spec: &EvalSpec) -> Result<ExcelValue, EvalError> {
+        let EvalTarget::Formula { formula, .. } = &spec.target else {
+            return Err(EvalError::Other(
+                "countif_materialized expects a formula target".into(),
+            ));
+        };
+        let ast = parse(formula)?;
+        let crate::ast::Expr::Call { name, args } = ast else {
+            return Err(EvalError::Other("expected COUNTIF(...)".into()));
+        };
+        if !name.eq_ignore_ascii_case("COUNTIF") || args.len() != 2 {
+            return Err(EvalError::Other("expected COUNTIF(range, criteria)".into()));
+        }
+        let mut ctx = self.ctx_from_spec(spec);
+        let crit = Criterion::parse(&self.eval_scalar(&args[1], &mut ctx)?);
+        let v = self.eval_expr(&args[0], &mut ctx)?;
+        Ok(ExcelValue::Number(count_matches(&v, &crit) as f64))
     }
 
     fn eval_formula(&self, formula: &str, ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
@@ -109,6 +133,61 @@ impl Evaluator {
         };
         ctx.depth -= 1;
         out
+    }
+
+    pub(crate) fn countif_range(
+        &self,
+        range: &RangeRef,
+        ctx: &mut Ctx<'_>,
+        crit: &Criterion,
+    ) -> Result<ExcelValue, EvalError> {
+        let sheet_name = range
+            .sheet
+            .clone()
+            .unwrap_or_else(|| ctx.current_sheet.clone());
+        if ctx.spec.workbook.sheet(Some(&sheet_name)).is_err() {
+            return Ok(ExcelValue::Error(ExcelError::Ref));
+        }
+        // Hold the sheet while counting stored values so we do one lookup, no
+        // per-cell clone, and a reused A1 buffer. Formula cells are deferred
+        // so we can drop the sheet borrow before `eval_cell`.
+        let mut formula_addrs = Vec::new();
+        let mut count = 0u64;
+        let mut a1 = String::with_capacity(8);
+        {
+            let sheet = ctx.spec.workbook.sheet(Some(&sheet_name)).unwrap();
+            for addr in range.cells() {
+                a1.clear();
+                addr.write_a1(&mut a1);
+                match sheet.cells.get(&a1) {
+                    None => {
+                        if crit.matches(&ExcelValue::Empty) {
+                            count += 1;
+                        }
+                    }
+                    Some(c) if c.formula.is_some() => formula_addrs.push(addr),
+                    Some(c) => {
+                        let v = c.value.as_ref().unwrap_or(&ExcelValue::Empty);
+                        if crit.matches(v) {
+                            count += 1;
+                        }
+                    }
+                }
+            }
+        }
+        for addr in formula_addrs {
+            let v = self.eval_cell(
+                &CellRef {
+                    sheet: Some(sheet_name.clone()),
+                    addr,
+                },
+                ctx,
+            )?;
+            if crit.matches(&v) {
+                count += 1;
+            }
+        }
+        Ok(ExcelValue::Number(count as f64))
     }
 
     pub(crate) fn eval_cell(

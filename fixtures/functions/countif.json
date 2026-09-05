@@ -1,0 +1,872 @@
+[
+  {
+    "id": "countif.eq-number",
+    "description": "COUNTIF matches a number and numeric text (unlike ordinary =)",
+    "tags": ["countif", "functions"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=COUNTIF(A1:A14, 5)",
+    "expected": { "number": 2 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 5 },
+          "A3": { "number": 10 },
+          "A4": { "text": "5" },
+          "A5": { "text": "apple" },
+          "A6": { "text": "Banana" },
+          "A7": { "bool": true },
+          "A8": { "bool": false },
+          "A10": { "text": "" },
+          "A11": { "text": "apricot" },
+          "A12": { "error": "#N/A" },
+          "A13": { "text": "TRUE" },
+          "A14": { "number": 0 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "countif.eq-numeric-text",
+    "description": "Text criterion \"5\" matches number 5 and text 5",
+    "tags": ["countif"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=COUNTIF(A1:A14, \"5\")",
+    "expected": { "number": 2 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 5 },
+          "A3": { "number": 10 },
+          "A4": { "text": "5" },
+          "A5": { "text": "apple" },
+          "A6": { "text": "Banana" },
+          "A7": { "bool": true },
+          "A8": { "bool": false },
+          "A10": { "text": "" },
+          "A11": { "text": "apricot" },
+          "A12": { "error": "#N/A" },
+          "A13": { "text": "TRUE" },
+          "A14": { "number": 0 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "countif.eq-equals-prefix",
+    "description": "\"=5\" is the same equality as an unprefixed numeric string",
+    "tags": ["countif"],
+    "formula": "=COUNTIF(A1:A14, \"=5\")",
+    "expected": { "number": 2 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 5 },
+          "A3": { "number": 10 },
+          "A4": { "text": "5" },
+          "A5": { "text": "apple" },
+          "A6": { "text": "Banana" },
+          "A7": { "bool": true },
+          "A8": { "bool": false },
+          "A10": { "text": "" },
+          "A11": { "text": "apricot" },
+          "A12": { "error": "#N/A" },
+          "A13": { "text": "TRUE" },
+          "A14": { "number": 0 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "countif.eq-text-casefold",
+    "description": "Text equality is case-insensitive",
+    "tags": ["countif"],
+    "quirks": ["case-insensitive-text"],
+    "formula": "=COUNTIF(A1:A14, \"APPLE\")",
+    "expected": { "number": 1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 5 },
+          "A3": { "number": 10 },
+          "A4": { "text": "5" },
+          "A5": { "text": "apple" },
+          "A6": { "text": "Banana" },
+          "A7": { "bool": true },
+          "A8": { "bool": false },
+          "A10": { "text": "" },
+          "A11": { "text": "apricot" },
+          "A12": { "error": "#N/A" },
+          "A13": { "text": "TRUE" },
+          "A14": { "number": 0 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "countif.gt",
+    "description": "\">5\" compares numbers only — numeric text is skipped",
+    "tags": ["countif"],
+    "formula": "=COUNTIF(A1:A14, \">5\")",
+    "expected": { "number": 1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 5 },
+          "A3": { "number": 10 },
+          "A4": { "text": "5" },
+          "A5": { "text": "apple" },
+          "A6": { "text": "Banana" },
+          "A7": { "bool": true },
+          "A8": { "bool": false },
+          "A10": { "text": "" },
+          "A11": { "text": "apricot" },
+          "A12": { "error": "#N/A" },
+          "A13": { "text": "TRUE" },
+          "A14": { "number": 0 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "countif.ge",
+    "description": "\">=5\" counts 5 and 10",
+    "tags": ["countif"],
+    "formula": "=COUNTIF(A1:A14, \">=5\")",
+    "expected": { "number": 2 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 5 },
+          "A3": { "number": 10 },
+          "A4": { "text": "5" },
+          "A5": { "text": "apple" },
+          "A6": { "text": "Banana" },
+          "A7": { "bool": true },
+          "A8": { "bool": false },
+          "A10": { "text": "" },
+          "A11": { "text": "apricot" },
+          "A12": { "error": "#N/A" },
+          "A13": { "text": "TRUE" },
+          "A14": { "number": 0 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "countif.lt",
+    "description": "\"<5\" counts 1 and 0, not blanks",
+    "tags": ["countif"],
+    "formula": "=COUNTIF(A1:A14, \"<5\")",
+    "expected": { "number": 2 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 5 },
+          "A3": { "number": 10 },
+          "A4": { "text": "5" },
+          "A5": { "text": "apple" },
+          "A6": { "text": "Banana" },
+          "A7": { "bool": true },
+          "A8": { "bool": false },
+          "A10": { "text": "" },
+          "A11": { "text": "apricot" },
+          "A12": { "error": "#N/A" },
+          "A13": { "text": "TRUE" },
+          "A14": { "number": 0 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "countif.le",
+    "description": "\"<=5\" counts 0, 1, and 5",
+    "tags": ["countif"],
+    "formula": "=COUNTIF(A1:A14, \"<=5\")",
+    "expected": { "number": 3 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 5 },
+          "A3": { "number": 10 },
+          "A4": { "text": "5" },
+          "A5": { "text": "apple" },
+          "A6": { "text": "Banana" },
+          "A7": { "bool": true },
+          "A8": { "bool": false },
+          "A10": { "text": "" },
+          "A11": { "text": "apricot" },
+          "A12": { "error": "#N/A" },
+          "A13": { "text": "TRUE" },
+          "A14": { "number": 0 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "countif.ne-number",
+    "description": "\"<>5\" counts blanks and other types; skips the number, numeric text, and errors",
+    "tags": ["countif", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=COUNTIF(A1:A14, \"<>5\")",
+    "expected": { "number": 11 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 5 },
+          "A3": { "number": 10 },
+          "A4": { "text": "5" },
+          "A5": { "text": "apple" },
+          "A6": { "text": "Banana" },
+          "A7": { "bool": true },
+          "A8": { "bool": false },
+          "A10": { "text": "" },
+          "A11": { "text": "apricot" },
+          "A12": { "error": "#N/A" },
+          "A13": { "text": "TRUE" },
+          "A14": { "number": 0 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "countif.eq-blank",
+    "description": "\"\" matches missing cells and stored empty strings",
+    "tags": ["countif", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=COUNTIF(A1:A14, \"\")",
+    "expected": { "number": 2 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 5 },
+          "A3": { "number": 10 },
+          "A4": { "text": "5" },
+          "A5": { "text": "apple" },
+          "A6": { "text": "Banana" },
+          "A7": { "bool": true },
+          "A8": { "bool": false },
+          "A10": { "text": "" },
+          "A11": { "text": "apricot" },
+          "A12": { "error": "#N/A" },
+          "A13": { "text": "TRUE" },
+          "A14": { "number": 0 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "countif.eq-equals-blank",
+    "description": "\"=\" is the same blank match as \"\"",
+    "tags": ["countif", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=COUNTIF(A1:A14, \"=\")",
+    "expected": { "number": 2 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 5 },
+          "A3": { "number": 10 },
+          "A4": { "text": "5" },
+          "A5": { "text": "apple" },
+          "A6": { "text": "Banana" },
+          "A7": { "bool": true },
+          "A8": { "bool": false },
+          "A10": { "text": "" },
+          "A11": { "text": "apricot" },
+          "A12": { "error": "#N/A" },
+          "A13": { "text": "TRUE" },
+          "A14": { "number": 0 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "countif.ne-blank",
+    "description": "\"<>\" counts non-blanks; stored \"\" and errors are not counted",
+    "tags": ["countif", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=COUNTIF(A1:A14, \"<>\")",
+    "expected": { "number": 11 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 5 },
+          "A3": { "number": 10 },
+          "A4": { "text": "5" },
+          "A5": { "text": "apple" },
+          "A6": { "text": "Banana" },
+          "A7": { "bool": true },
+          "A8": { "bool": false },
+          "A10": { "text": "" },
+          "A11": { "text": "apricot" },
+          "A12": { "error": "#N/A" },
+          "A13": { "text": "TRUE" },
+          "A14": { "number": 0 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "countif.eq-true",
+    "description": "TRUE counts the logical, not 1 and not the text TRUE",
+    "tags": ["countif"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=COUNTIF(A1:A14, TRUE)",
+    "expected": { "number": 1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 5 },
+          "A3": { "number": 10 },
+          "A4": { "text": "5" },
+          "A5": { "text": "apple" },
+          "A6": { "text": "Banana" },
+          "A7": { "bool": true },
+          "A8": { "bool": false },
+          "A10": { "text": "" },
+          "A11": { "text": "apricot" },
+          "A12": { "error": "#N/A" },
+          "A13": { "text": "TRUE" },
+          "A14": { "number": 0 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "countif.eq-true-string-is-bool",
+    "description": "\"TRUE\" is coerced to the logical TRUE, so text TRUE is not counted",
+    "tags": ["countif"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=COUNTIF(A1:A14, \"TRUE\")",
+    "expected": { "number": 1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 5 },
+          "A3": { "number": 10 },
+          "A4": { "text": "5" },
+          "A5": { "text": "apple" },
+          "A6": { "text": "Banana" },
+          "A7": { "bool": true },
+          "A8": { "bool": false },
+          "A10": { "text": "" },
+          "A11": { "text": "apricot" },
+          "A12": { "error": "#N/A" },
+          "A13": { "text": "TRUE" },
+          "A14": { "number": 0 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "countif.eq-true-wildcard-is-text",
+    "description": "\"TRUE*\" forces a text match and counts the text TRUE",
+    "tags": ["countif"],
+    "quirks": ["wildcards"],
+    "formula": "=COUNTIF(A1:A14, \"TRUE*\")",
+    "expected": { "number": 1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 5 },
+          "A3": { "number": 10 },
+          "A4": { "text": "5" },
+          "A5": { "text": "apple" },
+          "A6": { "text": "Banana" },
+          "A7": { "bool": true },
+          "A8": { "bool": false },
+          "A10": { "text": "" },
+          "A11": { "text": "apricot" },
+          "A12": { "error": "#N/A" },
+          "A13": { "text": "TRUE" },
+          "A14": { "number": 0 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "countif.eq-one-not-true",
+    "description": "1 does not count TRUE (COUNTIF does not use TRUE=1)",
+    "tags": ["countif"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=COUNTIF(A1:A14, 1)",
+    "expected": { "number": 1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 5 },
+          "A3": { "number": 10 },
+          "A4": { "text": "5" },
+          "A5": { "text": "apple" },
+          "A6": { "text": "Banana" },
+          "A7": { "bool": true },
+          "A8": { "bool": false },
+          "A10": { "text": "" },
+          "A11": { "text": "apricot" },
+          "A12": { "error": "#N/A" },
+          "A13": { "text": "TRUE" },
+          "A14": { "number": 0 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "countif.eq-zero-not-blank",
+    "description": "0 does not count blanks (no empty-cell duality)",
+    "tags": ["countif", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=COUNTIF(A1:A14, 0)",
+    "expected": { "number": 1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 5 },
+          "A3": { "number": 10 },
+          "A4": { "text": "5" },
+          "A5": { "text": "apple" },
+          "A6": { "text": "Banana" },
+          "A7": { "bool": true },
+          "A8": { "bool": false },
+          "A10": { "text": "" },
+          "A11": { "text": "apricot" },
+          "A12": { "error": "#N/A" },
+          "A13": { "text": "TRUE" },
+          "A14": { "number": 0 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "countif.eq-false",
+    "description": "FALSE counts the logical FALSE only",
+    "tags": ["countif"],
+    "formula": "=COUNTIF(A1:A14, FALSE)",
+    "expected": { "number": 1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 5 },
+          "A3": { "number": 10 },
+          "A4": { "text": "5" },
+          "A5": { "text": "apple" },
+          "A6": { "text": "Banana" },
+          "A7": { "bool": true },
+          "A8": { "bool": false },
+          "A10": { "text": "" },
+          "A11": { "text": "apricot" },
+          "A12": { "error": "#N/A" },
+          "A13": { "text": "TRUE" },
+          "A14": { "number": 0 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "countif.wildcard-prefix",
+    "description": "\"a*\" matches apple and apricot, case-insensitive",
+    "tags": ["countif"],
+    "quirks": ["wildcards"],
+    "formula": "=COUNTIF(A1:A14, \"a*\")",
+    "expected": { "number": 2 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 5 },
+          "A3": { "number": 10 },
+          "A4": { "text": "5" },
+          "A5": { "text": "apple" },
+          "A6": { "text": "Banana" },
+          "A7": { "bool": true },
+          "A8": { "bool": false },
+          "A10": { "text": "" },
+          "A11": { "text": "apricot" },
+          "A12": { "error": "#N/A" },
+          "A13": { "text": "TRUE" },
+          "A14": { "number": 0 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "countif.wildcard-any-text",
+    "description": "\"*\" counts every text cell, including stored \"\"",
+    "tags": ["countif"],
+    "quirks": ["wildcards"],
+    "formula": "=COUNTIF(A1:A14, \"*\")",
+    "expected": { "number": 6 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 5 },
+          "A3": { "number": 10 },
+          "A4": { "text": "5" },
+          "A5": { "text": "apple" },
+          "A6": { "text": "Banana" },
+          "A7": { "bool": true },
+          "A8": { "bool": false },
+          "A10": { "text": "" },
+          "A11": { "text": "apricot" },
+          "A12": { "error": "#N/A" },
+          "A13": { "text": "TRUE" },
+          "A14": { "number": 0 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "countif.wildcard-ne-any-text",
+    "description": "\"<>*\" counts non-text (and blanks); skips text and errors",
+    "tags": ["countif"],
+    "quirks": ["wildcards"],
+    "formula": "=COUNTIF(A1:A14, \"<>*\")",
+    "expected": { "number": 7 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 5 },
+          "A3": { "number": 10 },
+          "A4": { "text": "5" },
+          "A5": { "text": "apple" },
+          "A6": { "text": "Banana" },
+          "A7": { "bool": true },
+          "A8": { "bool": false },
+          "A10": { "text": "" },
+          "A11": { "text": "apricot" },
+          "A12": { "error": "#N/A" },
+          "A13": { "text": "TRUE" },
+          "A14": { "number": 0 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "countif.error-text",
+    "description": "\"#N/A\" counts error cells; other errors in-range are ignored for numeric criteria",
+    "tags": ["countif", "errors"],
+    "formula": "=COUNTIF(A1:A14, \"#N/A\")",
+    "expected": { "number": 1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 5 },
+          "A3": { "number": 10 },
+          "A4": { "text": "5" },
+          "A5": { "text": "apple" },
+          "A6": { "text": "Banana" },
+          "A7": { "bool": true },
+          "A8": { "bool": false },
+          "A10": { "text": "" },
+          "A11": { "text": "apricot" },
+          "A12": { "error": "#N/A" },
+          "A13": { "text": "TRUE" },
+          "A14": { "number": 0 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "countif.error-na-fn",
+    "description": "NA() as criteria counts #N/A cells; COUNTIF does not propagate the error",
+    "tags": ["countif", "errors"],
+    "formula": "=COUNTIF(A1:A14, NA())",
+    "expected": { "number": 1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 5 },
+          "A3": { "number": 10 },
+          "A4": { "text": "5" },
+          "A5": { "text": "apple" },
+          "A6": { "text": "Banana" },
+          "A7": { "bool": true },
+          "A8": { "bool": false },
+          "A10": { "text": "" },
+          "A11": { "text": "apricot" },
+          "A12": { "error": "#N/A" },
+          "A13": { "text": "TRUE" },
+          "A14": { "number": 0 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "countif.errors-ignored-for-gt",
+    "description": "Error cells are not counted by \">0\"",
+    "tags": ["countif", "errors"],
+    "formula": "=COUNTIF(A1:A14, \">0\")",
+    "expected": { "number": 3 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 5 },
+          "A3": { "number": 10 },
+          "A4": { "text": "5" },
+          "A5": { "text": "apple" },
+          "A6": { "text": "Banana" },
+          "A7": { "bool": true },
+          "A8": { "bool": false },
+          "A10": { "text": "" },
+          "A11": { "text": "apricot" },
+          "A12": { "error": "#N/A" },
+          "A13": { "text": "TRUE" },
+          "A14": { "number": 0 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "countif.text-gt",
+    "description": "\">b\" compares text only, case-insensitive",
+    "tags": ["countif"],
+    "quirks": ["type-comparison-ranking"],
+    "formula": "=COUNTIF(A1:A14, \">b\")",
+    "expected": { "number": 2 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 5 },
+          "A3": { "number": 10 },
+          "A4": { "text": "5" },
+          "A5": { "text": "apple" },
+          "A6": { "text": "Banana" },
+          "A7": { "bool": true },
+          "A8": { "bool": false },
+          "A10": { "text": "" },
+          "A11": { "text": "apricot" },
+          "A12": { "error": "#N/A" },
+          "A13": { "text": "TRUE" },
+          "A14": { "number": 0 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "countif.ne-text",
+    "description": "\"<>apple\" skips the matching text and errors",
+    "tags": ["countif"],
+    "formula": "=COUNTIF(A1:A14, \"<>apple\")",
+    "expected": { "number": 12 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 5 },
+          "A3": { "number": 10 },
+          "A4": { "text": "5" },
+          "A5": { "text": "apple" },
+          "A6": { "text": "Banana" },
+          "A7": { "bool": true },
+          "A8": { "bool": false },
+          "A10": { "text": "" },
+          "A11": { "text": "apricot" },
+          "A12": { "error": "#N/A" },
+          "A13": { "text": "TRUE" },
+          "A14": { "number": 0 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "countif.concat-op",
+    "description": "Operator can be concatenated onto a number",
+    "tags": ["countif"],
+    "formula": "=COUNTIF(A1:A3, \">\"&3)",
+    "expected": { "number": 2 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 5 },
+          "A3": { "number": 10 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "countif.criteria-from-cell",
+    "description": "Criteria taken from another cell",
+    "tags": ["countif"],
+    "formula": "=COUNTIF(A1:A3, B1)",
+    "expected": { "number": 2 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 5 },
+          "A3": { "number": 10 },
+          "B1": { "text": ">3" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "countif.single-cell",
+    "description": "A one-cell range still counts",
+    "tags": ["countif"],
+    "formula": "=COUNTIF(A5, \"apple\")",
+    "expected": { "number": 1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A5": { "text": "apple" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "countif.array-literal",
+    "description": "COUNTIF over an array literal",
+    "tags": ["countif", "array"],
+    "formula": "=COUNTIF({1,2,2,3}, 2)",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "countif.arity-zero",
+    "description": "COUNTIF() is #VALUE!",
+    "tags": ["countif", "errors"],
+    "formula": "=COUNTIF()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "countif.arity-one",
+    "description": "COUNTIF with one argument is #VALUE!",
+    "tags": ["countif", "errors"],
+    "formula": "=COUNTIF(A1:A3)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "countif.arity-three",
+    "description": "COUNTIF with extra arguments is #VALUE!",
+    "tags": ["countif", "errors"],
+    "formula": "=COUNTIF(A1:A3, 1, 2)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "countif.missing-sheet",
+    "description": "A range on a missing sheet is #REF!",
+    "tags": ["countif", "errors"],
+    "formula": "=COUNTIF(Nope!A1:A3, 1)",
+    "expected": { "error": "#REF!" }
+  },
+  {
+    "id": "countif.wildcard-question",
+    "description": "\"?\" matches exactly one character",
+    "tags": ["countif"],
+    "quirks": ["wildcards"],
+    "formula": "=COUNTIF(A1:A3, \"c?t\")",
+    "expected": { "number": 2 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "cat" },
+          "A2": { "text": "cut" },
+          "A3": { "text": "coat" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "countif.wildcard-escape",
+    "description": "\"~*\" matches a literal asterisk",
+    "tags": ["countif"],
+    "quirks": ["wildcards"],
+    "formula": "=COUNTIF(A1:A2, \"~*\")",
+    "expected": { "number": 1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "*" },
+          "A2": { "text": "star" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "countif.formula-in-range",
+    "description": "Formulas in the range are evaluated before matching",
+    "tags": ["countif"],
+    "formula": "=COUNTIF(A1:A2, 2)",
+    "expected": { "number": 1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "formula": "=A1+1" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "countif.ieee-fuzzy",
+    "description": "Numeric COUNTIF uses 15-digit equality (0.1+0.2 matches 0.3)",
+    "tags": ["countif"],
+    "quirks": ["ieee-vs-excel-precision"],
+    "formula": "=COUNTIF(A1, 0.1+0.2)",
+    "expected": { "number": 1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 0.3 }
+        }
+      }]
+    }
+  }
+]

@@ -130,7 +130,7 @@ Group new cases by what they prove, not by when they were added:
 |---|---|
 | [`fixtures/seed/`](fixtures/seed) | Original gate seed (kept stable; do not duplicate) |
 | [`fixtures/quirks/`](fixtures/quirks) | Excel oddities: type rank, empty duality, coercion, dates, VLOOKUP approx, … |
-| [`fixtures/functions/`](fixtures/functions) | Function families (`SUM`/`AVERAGE`/`COUNT`, logicals, text, lookup, `TYPE`) |
+| [`fixtures/functions/`](fixtures/functions) | Function families (`SUM`/`AVERAGE`/`COUNT`/`COUNTIF`, logicals, text, lookup, `TYPE`) |
 | [`fixtures/operators/`](fixtures/operators) | Unary/`%`, intersection / union-shaped ranges |
 | [`fixtures/ignored/`](fixtures/ignored) | Documented `ignore` (volatile, locale, precision-as-displayed, hidden rows) |
 
@@ -291,11 +291,12 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 | [`eval/sumproduct.rs`](crates/xlsx-engine-core/src/eval/sumproduct.rs) | `SUMPRODUCT`: array-context args, boolean 0/1 via `--`/`*`, packed f64 hot path |
 | [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators, logicals, lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates, math, text (`LEFT`/`TEXT`/…), `TYPE` / `IS*` |
 | [`text_format.rs`](crates/xlsx-engine-core/src/text_format.rs) | Excel `TEXT` for a documented number/date format subset |
+| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators (`SUM`/`COUNT`/`COUNTIF`/…), logicals, lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates, math, text, `TYPE` / `IS*` |
 
 **Implemented:** arithmetic and comparison operators (unary `+/-`, `%`, `^`,
 `&`, space intersection), host-aware implicit intersection, cell refs /
-ranges / defined names, array literals, error propagation, and the function
-families above. Workbook input is the snippet type in `xlsx-types` (no
+ranges / defined names, array literals, error propagation, `COUNTIF`, and the
+function families above. Workbook input is the snippet type in `xlsx-types` (no
 `.xlsx` IO).
 
 **`TEXT` subset** (see [`text_format.rs`](crates/xlsx-engine-core/src/text_format.rs)):
@@ -338,8 +339,12 @@ as one or the other. Documented quirk categories:
 - Unary `+`/`-` and postfix `%` (`50%` is 0.5, `5%%` is 0.0005)
 - Space intersection (`A1:B2 B2`); non-overlap is `#NULL!`
 - Implicit intersection of a range in a scalar host cell (`A1:A3` at `B2` → `A2`)
-- Wildcards in exact `VLOOKUP` / `MATCH` (`*` / `?`)
+- Wildcards in exact `VLOOKUP` / `MATCH` / `COUNTIF` (`*` / `?` / `~`)
 - `SUMIF` criteria strings (`">5"`, `"*a*"`, `"="` / `"<>"` blanks), text `"5"` dual-matching numbers, range vs `sum_range` reshape from the top-left, array literals → `#VALUE!`
+- `COUNTIF` criteria: operators (`= <> > < >= <=`), numeric text matching both
+  number and `"2"`, `"TRUE"` coerced to the logical (use `"TRUE*"` for text),
+  `""` / `"="` vs `"<>"` blank duality, errors ignored unless the criterion is
+  that error
 - Circular refs modeled as `#CIRCULAR!`
 - Volatile / locale / precision-as-displayed / hidden-row `SUBTOTAL` are
   catalogued as `ignore` until they can be evaluated honestly

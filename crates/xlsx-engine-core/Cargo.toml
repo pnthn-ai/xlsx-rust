@@ -23,3 +23,7 @@ harness = false
 [[bench]]
 name = "sumproduct"
 harness = false
+
+[[bench]]
+name = "countif"
+harness = false
