@@ -426,6 +426,7 @@ pub fn workday_serial(
 }
 
 /// Mon–Fri count in `[lo, hi]` inclusive, 1900-system serials. O(1).
+#[allow(dead_code)]
 pub fn weekday_count_sat_sun(lo_1900: i32, hi_1900: i32) -> i32 {
     weekday_count_mask(lo_1900, hi_1900, WEEKEND_SAT_SUN)
 }
