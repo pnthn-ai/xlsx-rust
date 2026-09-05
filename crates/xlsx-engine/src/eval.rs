@@ -356,6 +356,7 @@ impl Interpreter {
         let uname = name.to_ascii_uppercase();
         match uname.as_str() {
             "SUM" => self.fn_agg(args, ctx, AggKind::Sum),
+            "SUMPRODUCT" => self.fn_sumproduct(args, ctx),
             "PRODUCT" => self.fn_agg(args, ctx, AggKind::Product),
             "AVERAGE" => self.fn_agg(args, ctx, AggKind::Average),
             "MIN" => self.fn_agg(args, ctx, AggKind::Min),
@@ -424,6 +425,143 @@ impl Interpreter {
             "TRUE" => Ok(ExcelValue::Bool(true)),
             "FALSE" => Ok(ExcelValue::Bool(false)),
             _ => Ok(ExcelValue::Error(ExcelError::Name)),
+        }
+    }
+
+    fn fn_sumproduct(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.is_empty() {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        let mut grids = Vec::with_capacity(args.len());
+        for arg in args {
+            let v = self.eval_array_ctx(arg, ctx)?;
+            if let ExcelValue::Error(e) = v {
+                return Ok(ExcelValue::Error(e));
+            }
+            grids.push(v);
+        }
+        Ok(sumproduct_product_sum(&grids))
+    }
+
+    fn eval_array_ctx(&self, expr: &Expr, ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        match expr {
+            Expr::Range(r) => self.eval_range(r, ctx),
+            Expr::Unary { op, expr } => {
+                let v = self.eval_array_ctx(expr, ctx)?;
+                Ok(self.map_unary_array(*op, v))
+            }
+            Expr::Binary { op, left, right } => {
+                if *op == BinOp::Intersect {
+                    return self.eval_intersect(left, right, ctx);
+                }
+                let l = self.eval_array_ctx(left, ctx)?;
+                let r = self.eval_array_ctx(right, ctx)?;
+                Ok(self.zip_binary_array(*op, l, r))
+            }
+            Expr::Array(rows) => {
+                let mut out = Vec::with_capacity(rows.len());
+                for row in rows {
+                    let mut r = Vec::with_capacity(row.len());
+                    for c in row {
+                        r.push(self.eval_array_ctx(c, ctx)?);
+                    }
+                    out.push(r);
+                }
+                Ok(ExcelValue::Array(out))
+            }
+            other => self.eval_expr(other, ctx),
+        }
+    }
+
+    fn map_unary_array(&self, op: UnaryOp, v: ExcelValue) -> ExcelValue {
+        match v {
+            ExcelValue::Array(rows) => ExcelValue::Array(
+                rows.into_iter()
+                    .map(|row| {
+                        row.into_iter()
+                            .map(|c| self.apply_unary_array(op, c))
+                            .collect()
+                    })
+                    .collect(),
+            ),
+            other => self.apply_unary_array(op, other),
+        }
+    }
+
+    fn apply_unary_array(&self, op: UnaryOp, v: ExcelValue) -> ExcelValue {
+        if let ExcelValue::Error(e) = v {
+            return ExcelValue::Error(e);
+        }
+        match self.as_number(&v) {
+            Ok(n) => ExcelValue::Number(match op {
+                UnaryOp::Plus => n,
+                UnaryOp::Minus => -n,
+                UnaryOp::Percent => n / 100.0,
+            }),
+            Err(e) => ExcelValue::Error(e),
+        }
+    }
+
+    fn zip_binary_array(&self, op: BinOp, l: ExcelValue, r: ExcelValue) -> ExcelValue {
+        if let ExcelValue::Error(e) = l {
+            return ExcelValue::Error(e);
+        }
+        if let ExcelValue::Error(e) = r {
+            return ExcelValue::Error(e);
+        }
+        let (lr, lc) = sumproduct_shape(&l);
+        let (rr, rc) = sumproduct_shape(&r);
+        let l_scalar = !matches!(l, ExcelValue::Array(_)) || (lr == 1 && lc == 1);
+        let r_scalar = !matches!(r, ExcelValue::Array(_)) || (rr == 1 && rc == 1);
+        if l_scalar && r_scalar {
+            return self.apply_bin_owned(op, l, r);
+        }
+        let (rows, cols) = if l_scalar {
+            (rr, rc)
+        } else if r_scalar {
+            (lr, lc)
+        } else if lr == rr && lc == rc {
+            (lr, lc)
+        } else {
+            return ExcelValue::Error(ExcelError::Value);
+        };
+        let mut out = Vec::with_capacity(rows);
+        for i in 0..rows {
+            let mut row = Vec::with_capacity(cols);
+            for j in 0..cols {
+                let lv = sumproduct_get(&l, i, j, l_scalar).clone();
+                let rv = sumproduct_get(&r, i, j, r_scalar).clone();
+                row.push(self.apply_bin_owned(op, lv, rv));
+            }
+            out.push(row);
+        }
+        ExcelValue::Array(out)
+    }
+
+    fn apply_bin_owned(&self, op: BinOp, l: ExcelValue, r: ExcelValue) -> ExcelValue {
+        if let ExcelValue::Error(e) = l {
+            return ExcelValue::Error(e);
+        }
+        if let ExcelValue::Error(e) = r {
+            return ExcelValue::Error(e);
+        }
+        match op {
+            BinOp::Add => self.arith(l, r, |a, b| a + b),
+            BinOp::Sub => self.arith(l, r, |a, b| a - b),
+            BinOp::Mul => self.arith(l, r, |a, b| a * b),
+            BinOp::Div => self.div(l, r),
+            BinOp::Pow => self.pow(l, r),
+            BinOp::Concat => self.concat(l, r),
+            BinOp::Eq => self.cmp_eq(l, r, true),
+            BinOp::Ne => match self.cmp_eq(l, r, true) {
+                ExcelValue::Bool(b) => ExcelValue::Bool(!b),
+                other => other,
+            },
+            BinOp::Lt => self.cmp_ord(l, r, std::cmp::Ordering::Less, false),
+            BinOp::Gt => self.cmp_ord(l, r, std::cmp::Ordering::Greater, false),
+            BinOp::Le => self.cmp_ord(l, r, std::cmp::Ordering::Greater, true),
+            BinOp::Ge => self.cmp_ord(l, r, std::cmp::Ordering::Less, true),
+            BinOp::Intersect => ExcelValue::Error(ExcelError::Value),
         }
     }
 
@@ -1978,7 +2116,101 @@ fn excel_substitute(
         }
     }
 }
+fn sumproduct_number(v: &ExcelValue) -> Result<f64, ExcelError> {
+    match v {
+        ExcelValue::Number(n) => Ok(*n),
+        ExcelValue::Empty | ExcelValue::Text(_) | ExcelValue::Bool(_) => Ok(0.0),
+        ExcelValue::Error(e) => Err(*e),
+        ExcelValue::Array(_) => Ok(0.0),
+    }
+}
 
+fn sumproduct_shape(v: &ExcelValue) -> (usize, usize) {
+    match v {
+        ExcelValue::Array(rows) if rows.is_empty() => (0, 0),
+        ExcelValue::Array(rows) => (rows.len(), rows[0].len()),
+        _ => (1, 1),
+    }
+}
+
+fn sumproduct_get(v: &ExcelValue, r: usize, c: usize, as_scalar: bool) -> &ExcelValue {
+    match v {
+        ExcelValue::Array(rows) if !as_scalar => rows
+            .get(r)
+            .and_then(|row| row.get(c))
+            .unwrap_or(&ExcelValue::Empty),
+        ExcelValue::Array(rows) => rows
+            .first()
+            .and_then(|row| row.first())
+            .unwrap_or(&ExcelValue::Empty),
+        other => other,
+    }
+}
+
+fn sumproduct_product_sum(arrays: &[ExcelValue]) -> ExcelValue {
+    if arrays.is_empty() {
+        return ExcelValue::Error(ExcelError::Value);
+    }
+    let mut packed: Vec<Vec<f64>> = Vec::with_capacity(arrays.len());
+    let mut dims: Option<(usize, usize)> = None;
+    for a in arrays {
+        let (rows, cols, nums) = match a {
+            ExcelValue::Array(grid) => {
+                if grid.is_empty() {
+                    (0, 0, Vec::new())
+                } else {
+                    let cols = grid[0].len();
+                    let mut out = Vec::with_capacity(grid.len() * cols);
+                    for row in grid {
+                        if row.len() != cols {
+                            return ExcelValue::Error(ExcelError::Value);
+                        }
+                        for c in row {
+                            match sumproduct_number(c) {
+                                Ok(n) => out.push(n),
+                                Err(e) => return ExcelValue::Error(e),
+                            }
+                        }
+                    }
+                    (grid.len(), cols, out)
+                }
+            }
+            other => match sumproduct_number(other) {
+                Ok(n) => (1, 1, vec![n]),
+                Err(e) => return ExcelValue::Error(e),
+            },
+        };
+        if let Some(d) = dims {
+            if d != (rows, cols) {
+                return ExcelValue::Error(ExcelError::Value);
+            }
+        } else {
+            dims = Some((rows, cols));
+        }
+        packed.push(nums);
+    }
+    let acc = match packed.as_slice() {
+        [] => 0.0,
+        [a] => a.iter().copied().sum(),
+        [a, b] => a
+            .iter()
+            .zip(b.iter())
+            .fold(0.0, |acc, (x, y)| x.mul_add(*y, acc)),
+        rest => {
+            let n = rest[0].len();
+            let mut acc = 0.0;
+            for i in 0..n {
+                let mut p = 1.0;
+                for a in rest {
+                    p *= a[i];
+                }
+                acc += p;
+            }
+            acc
+        }
+    };
+    ExcelValue::Number(acc)
+}
 /// Used by tests that want a workbook-backed evaluation without the Candidate trait.
 pub fn eval_formula_in(
     workbook: &Workbook,

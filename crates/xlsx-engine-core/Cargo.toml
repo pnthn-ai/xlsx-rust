@@ -18,4 +18,6 @@ harness = false
 
 [[bench]]
 name = "sumif"
+[[bench]]
+name = "sumproduct"
 harness = false

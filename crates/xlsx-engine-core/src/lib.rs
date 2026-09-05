@@ -19,6 +19,8 @@ pub use eval::substitute::{
     substitute as excel_substitute, substitute_naive as excel_substitute_naive,
 };
 pub use eval::{eval_formula_in, eval_sumif_materialized, Evaluator};
+pub use eval::sumproduct::{product_sum, product_sum_naive, product_sum_packed};
+pub use eval::{eval_formula_in, Evaluator};
 pub use parse::parse;
 
 use xlsx_types::{Candidate, EvalError, EvalSpec, ExcelValue};
