@@ -435,6 +435,7 @@ impl Interpreter {
             "TRIM" => self.fn_trim(args, ctx),
             "EXACT" => self.fn_exact(args, ctx),
             "FIND" => self.fn_find(args, ctx),
+            "SEARCH" => self.fn_search(args, ctx),
             "VALUE" => self.fn_value(args, ctx),
             "SUBSTITUTE" => self.fn_substitute(args, ctx),
             "TEXT" => self.fn_text(args, ctx),
@@ -1626,6 +1627,7 @@ impl Interpreter {
         let instance = if args.len() == 4 {
             match self.as_number(&self.eval_scalar(&args[3], ctx)?) {
     fn fn_find(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    fn fn_search(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
         if args.len() < 2 || args.len() > 3 {
             return Ok(ExcelValue::Error(ExcelError::Value));
         }
@@ -1713,6 +1715,9 @@ impl Interpreter {
             1
         };
         match excel_find(&find_text, &within_text, start_num) {
+            1
+        };
+        match excel_search(&find_text, &within_text, start_num) {
             Ok(pos) => Ok(ExcelValue::Number(pos)),
             Err(e) => Ok(ExcelValue::Error(e)),
         }
@@ -2861,6 +2866,78 @@ fn excel_find(find_text: &str, within_text: &str, start_num: i64) -> Result<f64,
         suffix[..byte_off].chars().count()
     };
     Ok((start_num as usize + extra) as f64)
+}
+/// Excel `SEARCH` kernel (same semantics as `xlsx-engine-core`).
+fn excel_search(find_text: &str, within_text: &str, start_num: i64) -> Result<f64, ExcelError> {
+    if start_num < 1 {
+        return Err(ExcelError::Value);
+    }
+    if start_num as u64 > within_text.len() as u64 {
+        return Err(ExcelError::Value);
+    }
+    let hay: Vec<char> = within_text.chars().collect();
+    let start = (start_num as usize) - 1;
+    if start >= hay.len() {
+        return Err(ExcelError::Value);
+    }
+    if find_text.is_empty() {
+        return Ok(start_num as f64);
+    }
+    let pat: Vec<char> = find_text.chars().collect();
+    for i in start..hay.len() {
+        if search_match_here(&pat, &hay[i..]) {
+            return Ok((i + 1) as f64);
+        }
+    }
+    Err(ExcelError::Value)
+}
+
+fn search_match_here(pat: &[char], hay: &[char]) -> bool {
+    fn rec(p: &[char], t: &[char]) -> bool {
+        if p.is_empty() {
+            return true;
+        }
+        if p[0] == '~' {
+            if p.len() >= 2 {
+                return !t.is_empty() && search_ci_eq(p[1], t[0]) && rec(&p[2..], &t[1..]);
+            }
+            return !t.is_empty() && search_ci_eq('~', t[0]) && rec(&p[1..], &t[1..]);
+        }
+        if p[0] == '*' {
+            let mut rest = p;
+            while rest.first() == Some(&'*') {
+                rest = &rest[1..];
+            }
+            let mut cur = t;
+            loop {
+                if rec(rest, cur) {
+                    return true;
+                }
+                if cur.is_empty() {
+                    return false;
+                }
+                cur = &cur[1..];
+            }
+        }
+        if p[0] == '?' {
+            return !t.is_empty() && rec(&p[1..], &t[1..]);
+        }
+        !t.is_empty() && search_ci_eq(p[0], t[0]) && rec(&p[1..], &t[1..])
+    }
+    rec(pat, hay)
+}
+
+fn search_ci_eq(a: char, b: char) -> bool {
+    if a == b {
+        return true;
+    }
+    if a.is_ascii() && b.is_ascii() {
+        return a.eq_ignore_ascii_case(&b);
+    }
+    if a.is_ascii() || b.is_ascii() {
+        return false;
+    }
+    a.to_lowercase().eq(b.to_lowercase())
 }
 /// Used by tests that want a workbook-backed evaluation without the Candidate trait.
 pub fn eval_formula_in(

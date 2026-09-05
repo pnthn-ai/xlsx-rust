@@ -309,6 +309,8 @@ function families above. Workbook input is the snippet type in `xlsx-types` (no
 | [`eval/round.rs`](crates/xlsx-engine-core/src/eval/round.rs) | Excel `ROUNDUP` / `ROUNDDOWN` kernel (away / toward zero, negative `num_digits`, 15-digit snap) |
 | [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators, logicals, lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates (`DATE`/`TIME`/`YEAR`/`MONTH`/`DAY`/`EOMONTH`), math, text, `TYPE` / `IS*` |
 | [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators, logicals, lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates, math (`INT`/`TRUNC`/`ROUND`/`FLOOR`/`CEILING`/`FLOOR.MATH`/`CEILING.MATH`/`MOD`/…), text, `TYPE` / `IS*` |
+| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators, logicals, lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates, math, text (`LEFT`/`SEARCH`/…), `TYPE` / `IS*` |
+| [`eval/search.rs`](crates/xlsx-engine-core/src/eval/search.rs) | Excel `SEARCH` kernel (case-insensitive, `*`/`?`/`~` wildcards, `start_num`) |
 
 **Implemented:** arithmetic and comparison operators (unary `+/-`, `%`, `^`,
 `&`, space intersection), host-aware implicit intersection, cell refs /
@@ -358,6 +360,7 @@ as one or the other. Documented quirk categories:
 - Case-insensitive text equality (`"A"="a"`) vs case-sensitive `EXACT` / `FIND` (unlike `SEARCH`)
 - Case-insensitive text equality (`"A"="a"`) vs case-sensitive `EXACT`
 - Classic `FLOOR` / `CEILING`: same-sign multiples; positive number + negative significance is `#NUM!`; significance `0` is `#DIV/0!` except `(0, 0)` → `0`. Negative number + positive significance is allowed (Excel 2010+). `FLOOR.MATH` / `CEILING.MATH` ignore significance sign, treat significance `0` as `0`, and take an optional mode.
+- Case-insensitive text equality (`"A"="a"`) vs case-sensitive `EXACT`; `SEARCH` is case-insensitive (unlike `FIND`)
 - `TRUE=1` / `FALSE=0` in `=` and in arithmetic; `ISNUMBER(TRUE)` is still false
 - `SUM` / `AVERAGE` / `COUNT` / `PRODUCT` / `MIN` / `MAX`: skip logicals/text
   in ranges and array literals; coerce scalar arguments (`SUM(TRUE)` is 1,
@@ -382,6 +385,7 @@ as one or the other. Documented quirk categories:
   that error
 - Wildcards in exact `VLOOKUP` / `MATCH` (`*` / `?`)
 - `AVERAGEIF` criteria strings (`">5"`, `"*a*"`, `"="` / `"<>"` blanks), text `"5"` dual-matching numbers, range vs `average_range` reshape from the top-left, no matches / no numeric average cells → `#DIV/0!`, empty criteria cell treated as `0`
+- Wildcards in exact `VLOOKUP` / `MATCH` (`*` / `?`) and in `SEARCH` (`*` / `?` / `~`)
 - Circular refs modeled as `#CIRCULAR!`
 - Volatile / locale / precision-as-displayed / hidden-row `SUBTOTAL` are
   catalogued as `ignore` until they can be evaluated honestly

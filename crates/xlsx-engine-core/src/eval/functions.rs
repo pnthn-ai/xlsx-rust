@@ -112,6 +112,7 @@ pub(crate) fn dispatch(
         "TRIM" => fn_trim(ev, args, ctx),
         "EXACT" => fn_exact(ev, args, ctx),
         "FIND" => fn_find(ev, args, ctx),
+        "SEARCH" => fn_search(ev, args, ctx),
         "VALUE" => fn_value(ev, args, ctx),
         "SUBSTITUTE" => fn_substitute(ev, args, ctx),
         "TEXT" => fn_text(ev, args, ctx),
@@ -970,6 +971,7 @@ fn fn_substitute(
     let instance = if args.len() == 4 {
         match coerce::to_number(&ev.eval_scalar(&args[3], ctx)?) {
 fn fn_find(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+fn fn_search(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
     if args.len() < 2 || args.len() > 3 {
         return Ok(ExcelValue::Error(ExcelError::Value));
     }
@@ -1085,6 +1087,9 @@ fn trunc_num_chars(n: f64) -> Result<u64, ExcelError> {
         1
     };
     match super::find::find(&find_text, &within_text, start_num) {
+        1
+    };
+    match super::search::search(&find_text, &within_text, start_num) {
         Ok(pos) => Ok(ExcelValue::Number(pos)),
         Err(e) => Ok(ExcelValue::Error(e)),
     }

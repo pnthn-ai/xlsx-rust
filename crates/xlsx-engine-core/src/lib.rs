@@ -33,6 +33,7 @@ pub use eval::round::{
     roundup as excel_roundup, roundup_naive as excel_roundup_naive,
 };
 pub use eval::concat::{concat_naive_join, eval_concat_formula, ConcatBuilder, CONCAT_MAX_CHARS};
+pub use eval::search::{search as excel_search, search_naive as excel_search_naive};
 pub use eval::{eval_formula_in, Evaluator};
 pub use eval::{eval_formula_in, eval_sumifs_materialized, Evaluator};
 pub use eval::{eval_averageif_materialized, eval_formula_in, Evaluator};

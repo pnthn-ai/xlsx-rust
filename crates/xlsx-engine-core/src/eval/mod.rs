@@ -17,6 +17,7 @@ pub mod replace;
 pub mod sumifs;
 pub mod textjoin;
 pub mod round;
+pub mod search;
 
 use crate::ast::{BinOp, Expr, UnaryOp};
 use crate::parse::parse;
