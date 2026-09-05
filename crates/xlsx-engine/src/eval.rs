@@ -421,6 +421,7 @@ impl Interpreter {
             "UPPER" => self.fn_case(args, ctx, false),
             "TRIM" => self.fn_trim(args, ctx),
             "EXACT" => self.fn_exact(args, ctx),
+            "FIND" => self.fn_find(args, ctx),
             "VALUE" => self.fn_value(args, ctx),
             "SUBSTITUTE" => self.fn_substitute(args, ctx),
             "TEXT" => self.fn_text(args, ctx),
@@ -1384,6 +1385,20 @@ impl Interpreter {
         };
         let instance = if args.len() == 4 {
             match self.as_number(&self.eval_scalar(&args[3], ctx)?) {
+    fn fn_find(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.len() < 2 || args.len() > 3 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        let find_text = match self.as_text(&self.eval_scalar(&args[0], ctx)?) {
+            Ok(s) => s,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        let within_text = match self.as_text(&self.eval_scalar(&args[1], ctx)?) {
+            Ok(s) => s,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        let start_num = if args.len() == 3 {
+            match self.as_number(&self.eval_scalar(&args[2], ctx)?) {
                 Ok(n) => {
                     if !n.is_finite() {
                         return Ok(ExcelValue::Error(ExcelError::Value));
@@ -1396,6 +1411,7 @@ impl Interpreter {
                         return Ok(ExcelValue::Text(text));
                     }
                     Some(t as u32)
+                    n.trunc() as i64
                 }
                 Err(e) => return Ok(ExcelValue::Error(e)),
             }
@@ -1454,6 +1470,12 @@ impl Interpreter {
         Ok(ExcelValue::Text(excel_replace(
             &old_text, start_num, num_chars, &new_text,
         )))
+            1
+        };
+        match excel_find(&find_text, &within_text, start_num) {
+            Ok(pos) => Ok(ExcelValue::Number(pos)),
+            Err(e) => Ok(ExcelValue::Error(e)),
+        }
     }
 
     fn fn_value(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
@@ -2343,6 +2365,42 @@ fn trunc_num_chars(n: f64) -> Result<u64, ExcelError> {
     } else {
         Ok(t as u64)
     }
+}
+/// Excel `FIND` kernel (same semantics as `xlsx-engine-core`).
+fn excel_find(find_text: &str, within_text: &str, start_num: i64) -> Result<f64, ExcelError> {
+    if start_num < 1 {
+        return Err(ExcelError::Value);
+    }
+    if start_num as u64 > within_text.len() as u64 + 1 {
+        return Err(ExcelError::Value);
+    }
+    let skip = (start_num as usize) - 1;
+    let suffix = if within_text.is_ascii() {
+        if skip > within_text.len() {
+            return Err(ExcelError::Value);
+        }
+        &within_text[skip..]
+    } else {
+        let mut iter = within_text.chars();
+        for _ in 0..skip {
+            if iter.next().is_none() {
+                return Err(ExcelError::Value);
+            }
+        }
+        iter.as_str()
+    };
+    if find_text.is_empty() {
+        return Ok(start_num as f64);
+    }
+    let Some(byte_off) = suffix.find(find_text) else {
+        return Err(ExcelError::Value);
+    };
+    let extra = if suffix.is_ascii() {
+        byte_off
+    } else {
+        suffix[..byte_off].chars().count()
+    };
+    Ok((start_num as usize + extra) as f64)
 }
 /// Used by tests that want a workbook-backed evaluation without the Candidate trait.
 pub fn eval_formula_in(

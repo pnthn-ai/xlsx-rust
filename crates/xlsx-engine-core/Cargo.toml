@@ -18,9 +18,13 @@ harness = false
 
 
 
+
+
 [[bench]]
 name = "sumif"
 harness = false
+
+
 
 
 
@@ -30,11 +34,20 @@ harness = false
 
 
 
+
+
 [[bench]]
 name = "countif"
 harness = false
 
 
+
+
 [[bench]]
 name = "replace"
+harness = false
+
+
+[[bench]]
+name = "find"
 harness = false
