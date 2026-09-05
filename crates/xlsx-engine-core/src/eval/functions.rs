@@ -1,5 +1,8 @@
 //! Worksheet functions implemented with Excel-compatible semantics.
 //!
+//! `FILTER` lives with the other lookups here; the mask/select kernel is
+//! [`super::filter`].
+//!
 //! Unknown names return `#NAME?` (an Excel value, not [`EvalError`]).
 
 use super::{coerce, compare, excel_pow, Ctx, Evaluator};
@@ -32,6 +35,7 @@ pub(crate) fn dispatch(
         "VLOOKUP" => fn_vlookup(ev, args, ctx),
         "HLOOKUP" => fn_hlookup(ev, args, ctx),
         "XLOOKUP" => fn_xlookup(ev, args, ctx),
+        "FILTER" => fn_filter(ev, args, ctx),
         "INDEX" => fn_index(ev, args, ctx),
         "MATCH" => fn_match(ev, args, ctx),
         "CHOOSE" => fn_choose(ev, args, ctx),
@@ -296,6 +300,23 @@ fn fn_hlookup(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelV
         Some(c) => Ok(rows[row_idx - 1][c].clone()),
         None => Ok(ExcelValue::Error(ExcelError::Na)),
     }
+}
+
+/// Excel `FILTER(array, include, [if_empty])`.
+///
+/// Arity 2 or 3. Omitted `if_empty` + no matches → `#CALC!`.
+fn fn_filter(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    if args.len() < 2 || args.len() > 3 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let array = ev.eval_expr(&args[0], ctx)?;
+    let include = ev.eval_expr(&args[1], ctx)?;
+    let if_empty = if args.len() >= 3 {
+        Some(ev.eval_expr(&args[2], ctx)?)
+    } else {
+        None
+    };
+    Ok(super::filter::select(&array, &include, if_empty.as_ref()))
 }
 
 fn fn_xlookup(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
