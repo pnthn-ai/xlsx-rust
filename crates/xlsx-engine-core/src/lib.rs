@@ -9,6 +9,7 @@
 //! - [`eval::functions`] also dispatches `SUMIF` / `COUNTIF` / `SUMPRODUCT` / `SUBSTITUTE`
 //! - [`eval::concat`] — Excel `CONCAT` (range/array flatten + 32767 cap)
 //! - [`dates::weekday`] — O(1) Excel `WEEKDAY` on the date serial
+//! - [`dates::networkdays_count_mask`] — O(1) `NETWORKDAYS` / `NETWORKDAYS.INTL`
 //! - [`eval::switch`] — Excel `SWITCH` (exact `=` match, short-circuit vs `IF`)
 //! - [`eval::ifs`] — `IFS` pair-selection kernel (eager; no-match `#N/A`)
 //! - [`eval::unique`] — `UNIQUE` dynamic-array kernel (hash distinctness)

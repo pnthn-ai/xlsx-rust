@@ -163,7 +163,6 @@ pub fn time_fraction(hour: f64, minute: f64, second: f64) -> Result<f64, ExcelEr
     Ok((total % secs_per_day) / secs_per_day)
 }
 
-
 pub fn serial_to_ymd(serial: f64, system: DateSystem) -> Result<(i32, u32, u32), ExcelError> {
     if !serial.is_finite() {
         return Err(ExcelError::Num);
@@ -323,12 +322,68 @@ pub fn truncate_date_serial(n: f64, system: DateSystem) -> Result<i32, ExcelErro
     Ok(s as i32)
 }
 
+/// Weekend mask bits follow `serial_1900 % 7` (serial 0 = Saturday):
+/// bit 0 Sat, 1 Sun, 2 Mon, 3 Tue, 4 Wed, 5 Thu, 6 Fri.
+pub const WEEKEND_SAT_SUN: u8 = 0b0000_0011;
+
 /// Excel 1900-system weekend: serial 1 is Sunday, so `n % 7` is 0 (Sat) or 1 (Sun).
 ///
 /// Serial 60 (the fictitious 1900-02-29) is a Wednesday — a workday.
+#[inline]
 pub fn is_weekend_sat_sun_1900(serial_1900: i32) -> bool {
+    is_weekend_mask_1900(serial_1900, WEEKEND_SAT_SUN)
+}
+
+/// True when `serial_1900 % 7` is a weekend bit in `weekend_mask`.
+#[inline]
+pub fn is_weekend_mask_1900(serial_1900: i32, weekend_mask: u8) -> bool {
     let w = serial_1900.rem_euclid(7);
-    w == 0 || w == 1
+    weekend_mask & (1 << w) != 0
+}
+
+/// Excel `NETWORKDAYS.INTL` / `WORKDAY.INTL` weekend number (1–7, 11–17).
+///
+/// Invalid codes are `#NUM!` (Microsoft: weekend `0` is `#NUM!`).
+pub fn weekend_mask_from_code(code: i32) -> Result<u8, ExcelError> {
+    match code {
+        1 => Ok(WEEKEND_SAT_SUN),
+        2 => Ok(0b0000_0110),
+        3 => Ok(0b0000_1100),
+        4 => Ok(0b0001_1000),
+        5 => Ok(0b0011_0000),
+        6 => Ok(0b0110_0000),
+        7 => Ok(0b0100_0001),
+        11 => Ok(0b0000_0010),
+        12 => Ok(0b0000_0100),
+        13 => Ok(0b0000_1000),
+        14 => Ok(0b0001_0000),
+        15 => Ok(0b0010_0000),
+        16 => Ok(0b0100_0000),
+        17 => Ok(0b0000_0001),
+        _ => Err(ExcelError::Num),
+    }
+}
+
+/// Weekend string: seven characters Monday→Sunday; `1` = weekend, `0` = workday.
+///
+/// Wrong length or a character other than `0`/`1` is `#VALUE!`. `"1111111"` is
+/// a valid mask (Microsoft: `NETWORKDAYS.INTL` then always returns 0).
+pub fn weekend_mask_from_string(s: &str) -> Result<u8, ExcelError> {
+    let b = s.as_bytes();
+    if b.len() != 7 {
+        return Err(ExcelError::Value);
+    }
+    // Mon, Tue, Wed, Thu, Fri, Sat, Sun → bits 2, 3, 4, 5, 6, 0, 1
+    const BITS: [u32; 7] = [2, 3, 4, 5, 6, 0, 1];
+    let mut mask = 0u8;
+    for (i, &ch) in b.iter().enumerate() {
+        match ch {
+            b'1' => mask |= 1 << BITS[i],
+            b'0' => {}
+            _ => return Err(ExcelError::Value),
+        }
+    }
+    Ok(mask)
 }
 
 /// Number of Mon–Fri serials in `(-∞, n]` (1900 system). Serial 0 is Saturday.
@@ -483,15 +538,37 @@ pub fn workday_serial_walk(
     Ok(from_1900_serial(cur, system)? as f64)
 }
 
-
 pub fn weekday_count_sat_sun(lo_1900: i32, hi_1900: i32) -> i32 {
+    weekday_count_mask(lo_1900, hi_1900, WEEKEND_SAT_SUN)
+}
+
+/// Workdays in `(-∞, n]` for an arbitrary weekend mask. Serial 0 is Saturday.
+pub fn workdays_through_mask(n: i32, weekend_mask: u8) -> i32 {
+    if n < 0 {
+        return 0;
+    }
+    let work_per_week = 7 - weekend_mask.count_ones() as i32;
+    if work_per_week == 0 {
+        return 0;
+    }
+    let complete = (n + 1) / 7;
+    let rem = (n + 1) % 7;
+    let mut extra = 0;
+    for r in 0..rem {
+        if weekend_mask & (1 << r) == 0 {
+            extra += 1;
+        }
+    }
+    complete * work_per_week + extra
+}
+
+/// Workday count in `[lo, hi]` inclusive under `weekend_mask`. O(1).
+pub fn weekday_count_mask(lo_1900: i32, hi_1900: i32, weekend_mask: u8) -> i32 {
     if hi_1900 < lo_1900 {
         return 0;
     }
-    workdays_through(hi_1900) - workdays_through(lo_1900 - 1)
+    workdays_through_mask(hi_1900, weekend_mask) - workdays_through_mask(lo_1900 - 1, weekend_mask)
 }
-
-/// Number of Mon–Fri serials in `(-∞, n]` (1900 system). Serial 0 is Saturday.
 
 /// Excel `NETWORKDAYS(start, end, [holidays])` with weekend Sat/Sun.
 ///
@@ -501,6 +578,20 @@ pub fn weekday_count_sat_sun(lo_1900: i32, hi_1900: i32) -> i32 {
 pub fn networkdays_count(
     start: f64,
     end: f64,
+    holidays: &[f64],
+    system: DateSystem,
+) -> Result<f64, ExcelError> {
+    networkdays_count_mask(start, end, WEEKEND_SAT_SUN, holidays, system)
+}
+
+/// Excel `NETWORKDAYS.INTL` count for a pre-parsed weekend mask.
+///
+/// Same inclusive / reverse-sign / holiday rules as [`networkdays_count`].
+/// `"1111111"` (mask `0x7f`) yields 0 for any span.
+pub fn networkdays_count_mask(
+    start: f64,
+    end: f64,
+    weekend_mask: u8,
     holidays: &[f64],
     system: DateSystem,
 ) -> Result<f64, ExcelError> {
@@ -514,7 +605,7 @@ pub fn networkdays_count(
     } else {
         (end_1900, start_1900)
     };
-    let mut work = weekday_count_sat_sun(lo, hi);
+    let mut work = weekday_count_mask(lo, hi, weekend_mask);
     let mut hols = Vec::with_capacity(holidays.len());
     for &h in holidays {
         hols.push(to_1900_serial(truncate_date_serial(h, system)?, system)?);
@@ -522,13 +613,50 @@ pub fn networkdays_count(
     hols.sort_unstable();
     hols.dedup();
     for h in hols {
-        if h >= lo && h <= hi && !is_weekend_sat_sun_1900(h) {
+        if h >= lo && h <= hi && !is_weekend_mask_1900(h, weekend_mask) {
             work -= 1;
         }
     }
     Ok((sign * work) as f64)
 }
 
+/// Day-walk reference for benches and cross-checks. Not used on the hot path.
+pub fn networkdays_count_mask_walk(
+    start: f64,
+    end: f64,
+    weekend_mask: u8,
+    holidays: &[f64],
+    system: DateSystem,
+) -> Result<f64, ExcelError> {
+    let start_s = truncate_date_serial(start, system)?;
+    let end_s = truncate_date_serial(end, system)?;
+    let start_1900 = to_1900_serial(start_s, system)?;
+    let end_1900 = to_1900_serial(end_s, system)?;
+    let sign = if start_s <= end_s { 1 } else { -1 };
+    let (lo, hi) = if start_1900 <= end_1900 {
+        (start_1900, end_1900)
+    } else {
+        (end_1900, start_1900)
+    };
+    let mut work = 0i32;
+    for s in lo..=hi {
+        if !is_weekend_mask_1900(s, weekend_mask) {
+            work += 1;
+        }
+    }
+    let mut hols = Vec::with_capacity(holidays.len());
+    for &h in holidays {
+        hols.push(to_1900_serial(truncate_date_serial(h, system)?, system)?);
+    }
+    hols.sort_unstable();
+    hols.dedup();
+    for h in hols {
+        if h >= lo && h <= hi && !is_weekend_mask_1900(h, weekend_mask) {
+            work -= 1;
+        }
+    }
+    Ok((sign * work) as f64)
+}
 
 pub fn serial_as_1900_int(serial: f64, system: DateSystem) -> Result<i32, ExcelError> {
     if !serial.is_finite() || serial < 0.0 {
@@ -605,11 +733,9 @@ pub fn weekday_naive(serial: f64, return_type: i32, system: DateSystem) -> Resul
     map_weekday_return_type(type1_from_1900_serial(s1900), return_type)
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
-
 
     #[test]
     fn known_1900_serials() {
@@ -931,12 +1057,7 @@ mod tests {
             weekday(EXCEL_MAX_SERIAL_1900 as f64, 1, DateSystem::Excel1900).unwrap(),
             6.0
         );
-        assert!(weekday(
-            (EXCEL_MAX_SERIAL_1900 + 1) as f64,
-            1,
-            DateSystem::Excel1900
-        )
-        .is_err());
+        assert!(weekday((EXCEL_MAX_SERIAL_1900 + 1) as f64, 1, DateSystem::Excel1900).is_err());
     }
 
     #[test]
@@ -1101,4 +1222,228 @@ mod tests {
         }
     }
 
+    fn ndi(start: f64, end: f64, mask: u8, hols: &[f64]) -> f64 {
+        networkdays_count_mask(start, end, mask, hols, DateSystem::Excel1900).unwrap()
+    }
+
+    #[test]
+    fn weekend_mask_codes_match_documented_days() {
+        // Bits: 0 Sat, 1 Sun, 2 Mon, 3 Tue, 4 Wed, 5 Thu, 6 Fri.
+        assert_eq!(weekend_mask_from_code(1).unwrap(), WEEKEND_SAT_SUN);
+        assert_eq!(weekend_mask_from_code(2).unwrap(), 0b0000_0110);
+        assert_eq!(weekend_mask_from_code(7).unwrap(), 0b0100_0001);
+        assert_eq!(weekend_mask_from_code(11).unwrap(), 0b0000_0010);
+        assert_eq!(weekend_mask_from_code(17).unwrap(), 0b0000_0001);
+        assert_eq!(weekend_mask_from_code(0), Err(ExcelError::Num));
+        assert_eq!(weekend_mask_from_code(8), Err(ExcelError::Num));
+        assert_eq!(weekend_mask_from_code(10), Err(ExcelError::Num));
+        assert_eq!(weekend_mask_from_code(18), Err(ExcelError::Num));
+    }
+
+    #[test]
+    fn weekend_mask_strings_mon_to_sun() {
+        assert_eq!(
+            weekend_mask_from_string("0000011").unwrap(),
+            WEEKEND_SAT_SUN
+        );
+        assert_eq!(
+            weekend_mask_from_string("0000001").unwrap(),
+            weekend_mask_from_code(11).unwrap()
+        );
+        assert_eq!(weekend_mask_from_string("0000000").unwrap(), 0);
+        assert_eq!(weekend_mask_from_string("1111111").unwrap(), 0x7f);
+        assert_eq!(weekend_mask_from_string("1"), Err(ExcelError::Value));
+        assert_eq!(weekend_mask_from_string("000001"), Err(ExcelError::Value));
+        assert_eq!(weekend_mask_from_string("0000012"), Err(ExcelError::Value));
+        assert_eq!(weekend_mask_from_string("00000111"), Err(ExcelError::Value));
+    }
+
+    #[test]
+    fn networkdays_intl_ms_example() {
+        // support.microsoft.com: 1-Jan-06 → 1-Feb-06, weekend 7 (Fri/Sat),
+        // holidays 2-Jan and 16-Jan → 22.
+        let start = d(2006, 1, 1);
+        let end = d(2006, 2, 1);
+        let mask7 = weekend_mask_from_code(7).unwrap();
+        assert_eq!(
+            ndi(start, end, mask7, &[d(2006, 1, 2), d(2006, 1, 16)]),
+            22.0
+        );
+        assert_eq!(ndi(start, end, mask7, &[]), 24.0);
+        assert_eq!(ndi(start, end, WEEKEND_SAT_SUN, &[]), 23.0);
+        assert_eq!(
+            ndi(
+                start,
+                end,
+                weekend_mask_from_string("0000000").unwrap(),
+                &[]
+            ),
+            32.0
+        );
+        assert_eq!(
+            ndi(
+                start,
+                end,
+                weekend_mask_from_string("1111111").unwrap(),
+                &[]
+            ),
+            0.0
+        );
+    }
+
+    #[test]
+    fn networkdays_intl_matches_networkdays_for_sat_sun() {
+        let start = d(2012, 10, 1);
+        let end = d(2013, 3, 1);
+        let hols = [d(2012, 11, 22), d(2012, 12, 4), d(2013, 1, 21)];
+        assert_eq!(
+            networkdays_count(start, end, &hols, DateSystem::Excel1900).unwrap(),
+            ndi(start, end, WEEKEND_SAT_SUN, &hols)
+        );
+        assert_eq!(
+            ndi(
+                start,
+                end,
+                weekend_mask_from_string("0000011").unwrap(),
+                &[]
+            ),
+            110.0
+        );
+    }
+
+    #[test]
+    fn networkdays_intl_week_2024() {
+        let start = d(2024, 1, 1);
+        let end = d(2024, 1, 7);
+        assert_eq!(
+            ndi(start, end, weekend_mask_from_code(1).unwrap(), &[]),
+            5.0
+        );
+        assert_eq!(
+            ndi(start, end, weekend_mask_from_code(11).unwrap(), &[]),
+            6.0
+        );
+        assert_eq!(
+            ndi(start, end, weekend_mask_from_code(17).unwrap(), &[]),
+            6.0
+        );
+        assert_eq!(
+            ndi(
+                start,
+                end,
+                weekend_mask_from_string("0000000").unwrap(),
+                &[]
+            ),
+            7.0
+        );
+        assert_eq!(
+            ndi(
+                start,
+                end,
+                weekend_mask_from_string("0101011").unwrap(),
+                &[]
+            ),
+            3.0
+        );
+        assert_eq!(
+            ndi(
+                d(2024, 1, 6),
+                d(2024, 1, 6),
+                weekend_mask_from_code(11).unwrap(),
+                &[]
+            ),
+            1.0
+        );
+        // Saturday holiday is ignored under Sat/Sun, subtracted under Sunday-only.
+        assert_eq!(ndi(start, end, WEEKEND_SAT_SUN, &[d(2024, 1, 6)]), 5.0);
+        assert_eq!(
+            ndi(
+                start,
+                end,
+                weekend_mask_from_code(11).unwrap(),
+                &[d(2024, 1, 6)]
+            ),
+            5.0
+        );
+        assert_eq!(
+            ndi(d(2024, 1, 5), d(2024, 1, 1), WEEKEND_SAT_SUN, &[]),
+            -5.0
+        );
+    }
+
+    #[test]
+    fn networkdays_intl_serial_60() {
+        let s = DateSystem::Excel1900;
+        let wed = weekend_mask_from_code(14).unwrap();
+        assert_eq!(
+            networkdays_count_mask(60.0, 60.0, WEEKEND_SAT_SUN, &[], s).unwrap(),
+            1.0
+        );
+        assert_eq!(
+            networkdays_count_mask(60.0, 60.0, wed, &[], s).unwrap(),
+            0.0
+        );
+        assert_eq!(
+            networkdays_count_mask(59.0, 61.0, wed, &[], s).unwrap(),
+            2.0
+        );
+    }
+
+    #[test]
+    fn networkdays_intl_system_1904() {
+        let s = DateSystem::Excel1904;
+        assert_eq!(
+            networkdays_count_mask(0.0, 4.0, WEEKEND_SAT_SUN, &[], s).unwrap(),
+            3.0
+        );
+        assert_eq!(
+            networkdays_count_mask(0.0, 4.0, weekend_mask_from_code(11).unwrap(), &[], s).unwrap(),
+            4.0
+        );
+        assert_eq!(networkdays_count_mask(0.0, 4.0, 0, &[], s).unwrap(), 5.0);
+    }
+
+    #[test]
+    fn networkdays_intl_mask_matches_walk() {
+        let s = DateSystem::Excel1900;
+        let codes = [1, 2, 3, 4, 5, 6, 7, 11, 12, 13, 14, 15, 16, 17];
+        let strings = ["0000000", "1111111", "0000011", "0101011", "1000001"];
+        let hols = [60.0, 61.0, 64.0];
+        for lo in 0..28 {
+            for hi in lo..28 {
+                for code in codes {
+                    let mask = weekend_mask_from_code(code).unwrap();
+                    let fast = networkdays_count_mask(lo as f64, hi as f64, mask, &[], s);
+                    let walk = networkdays_count_mask_walk(lo as f64, hi as f64, mask, &[], s);
+                    assert_eq!(fast, walk, "code={code} [{lo}, {hi}]");
+                }
+                for pat in strings {
+                    let mask = weekend_mask_from_string(pat).unwrap();
+                    let fast = networkdays_count_mask(lo as f64, hi as f64, mask, &hols, s);
+                    let walk = networkdays_count_mask_walk(lo as f64, hi as f64, mask, &hols, s);
+                    assert_eq!(fast, walk, "pat={pat} [{lo}, {hi}] hols");
+                }
+            }
+        }
+        let start = d(2006, 1, 1);
+        let end = d(2006, 2, 1);
+        let hols_ms = [d(2006, 1, 2), d(2006, 1, 16)];
+        for code in codes {
+            let mask = weekend_mask_from_code(code).unwrap();
+            let fast = networkdays_count_mask(start, end, mask, &hols_ms, s).unwrap();
+            let walk = networkdays_count_mask_walk(start, end, mask, &hols_ms, s).unwrap();
+            assert_eq!(fast, walk, "MS span code={code}");
+        }
+    }
+
+    #[test]
+    fn sat_sun_mask_matches_legacy_workdays_through() {
+        for n in -2..80 {
+            assert_eq!(
+                workdays_through(n),
+                workdays_through_mask(n, WEEKEND_SAT_SUN),
+                "n={n}"
+            );
+        }
+    }
 }
