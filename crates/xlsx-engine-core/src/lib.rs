@@ -5,6 +5,7 @@
 //! - [`eval`] — workbook-backed walker
 //! - [`eval::coerce`] / [`eval::compare`] / [`eval::empty`] — quirk modules
 //! - [`eval::functions`] — worksheet functions used by the expanded corpus
+//! - [`eval::switch`] — Excel `SWITCH` (exact `=` match, short-circuit vs `IF`)
 //!
 //! This crate depends only on [`xlsx_types`]. It never reads fixture expected
 //! values; the verification gate (`xlsx-verify`) is the only judge.
@@ -15,6 +16,10 @@ pub mod eval;
 pub mod parse;
 
 pub use ast::{BinOp, Expr, UnaryOp};
+pub use eval::switch::{
+    first_match as excel_switch_first_match, first_match_naive as excel_switch_first_match_naive,
+    pick_evaluated as excel_switch_pick_evaluated,
+};
 pub use eval::{eval_formula_in, Evaluator};
 pub use parse::parse;
 

@@ -1,0 +1,382 @@
+[
+  {
+    "id": "fn.switch-basic",
+    "description": "SWITCH(2, 1, \"one\", 2, \"two\", 3, \"three\") is \"two\"",
+    "tags": ["switch", "logical"],
+    "formula": "=SWITCH(2, 1, \"one\", 2, \"two\", 3, \"three\")",
+    "expected": { "text": "two" }
+  },
+  {
+    "id": "fn.switch-first-pair",
+    "description": "First pair matches",
+    "tags": ["switch"],
+    "formula": "=SWITCH(1, 1, \"one\", 2, \"two\")",
+    "expected": { "text": "one" }
+  },
+  {
+    "id": "fn.switch-last-pair",
+    "description": "Last pair matches",
+    "tags": ["switch"],
+    "formula": "=SWITCH(3, 1, \"one\", 2, \"two\", 3, \"three\")",
+    "expected": { "text": "three" }
+  },
+  {
+    "id": "fn.switch-first-match-wins",
+    "description": "Duplicate values: first match wins",
+    "tags": ["switch"],
+    "formula": "=SWITCH(1, 1, \"first\", 1, \"second\")",
+    "expected": { "text": "first" }
+  },
+  {
+    "id": "fn.switch-default",
+    "description": "Unpaired last argument is the default",
+    "tags": ["switch"],
+    "formula": "=SWITCH(9, 1, \"one\", 2, \"two\", \"none\")",
+    "expected": { "text": "none" }
+  },
+  {
+    "id": "fn.switch-weekday-style",
+    "description": "Microsoft-style weekday map with a default (WEEKDAY serial 2 → Monday)",
+    "tags": ["switch"],
+    "formula": "=SWITCH(2, 1, \"Sunday\", 2, \"Monday\", 3, \"Tuesday\", 4, \"Wednesday\", 5, \"Thursday\", 6, \"Friday\", 7, \"Saturday\", \"No match\")",
+    "expected": { "text": "Monday" }
+  },
+  {
+    "id": "fn.switch-weekday-default",
+    "description": "Weekday-style SWITCH falls through to default",
+    "tags": ["switch"],
+    "formula": "=SWITCH(9, 1, \"Sunday\", 2, \"Monday\", 3, \"Tuesday\", \"No match\")",
+    "expected": { "text": "No match" }
+  },
+  {
+    "id": "fn.switch-no-match-na",
+    "description": "No match and no default is #N/A (unlike a nested IF missing an else, which is FALSE)",
+    "tags": ["switch", "errors"],
+    "formula": "=SWITCH(9, 1, \"one\", 2, \"two\")",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.switch-vs-if-missing-else",
+    "description": "IF(9=1, \"one\", IF(9=2, \"two\")) is FALSE; SWITCH of the same pairs is #N/A",
+    "tags": ["switch", "if"],
+    "formula": "=IF(9=1, \"one\", IF(9=2, \"two\"))",
+    "expected": { "bool": false }
+  },
+  {
+    "id": "fn.switch-vs-if-truthy-two",
+    "description": "IF(2, \"yes\", \"no\") is \"yes\" (nonzero is true); SWITCH does not treat 2 as TRUE",
+    "tags": ["switch", "if"],
+    "formula": "=IF(2, \"yes\", \"no\")",
+    "expected": { "text": "yes" }
+  },
+  {
+    "id": "fn.switch-not-if-truthiness",
+    "description": "SWITCH(2, TRUE, \"yes\", \"no\") is \"no\" — exact match, not IF truthiness",
+    "tags": ["switch", "if"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=SWITCH(2, TRUE, \"yes\", \"no\")",
+    "expected": { "text": "no" }
+  },
+  {
+    "id": "fn.switch-true-eq-one",
+    "description": "SWITCH(TRUE, 1, \"num\") matches because TRUE=1",
+    "tags": ["switch"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=SWITCH(TRUE, 1, \"num\", TRUE, \"bool\")",
+    "expected": { "text": "num" }
+  },
+  {
+    "id": "fn.switch-true-literal-second",
+    "description": "SWITCH(TRUE, TRUE, \"bool\", 1, \"num\") hits the TRUE pair first",
+    "tags": ["switch"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=SWITCH(TRUE, TRUE, \"bool\", 1, \"num\")",
+    "expected": { "text": "bool" }
+  },
+  {
+    "id": "fn.switch-one-eq-true",
+    "description": "SWITCH(1, TRUE, \"yes\") matches (1=TRUE)",
+    "tags": ["switch"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=SWITCH(1, TRUE, \"yes\", \"no\")",
+    "expected": { "text": "yes" }
+  },
+  {
+    "id": "fn.switch-false-eq-zero",
+    "description": "SWITCH(FALSE, 0, \"zero\") matches because FALSE=0",
+    "tags": ["switch"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=SWITCH(FALSE, 0, \"zero\")",
+    "expected": { "text": "zero" }
+  },
+  {
+    "id": "fn.switch-no-text-number-coercion",
+    "description": "SWITCH(\"2\", 2, \"yes\", \"no\") is \"no\" — \"2\"=2 is FALSE (unlike \"2\"+1)",
+    "tags": ["switch", "coercion"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=SWITCH(\"2\", 2, \"yes\", \"no\")",
+    "expected": { "text": "no" }
+  },
+  {
+    "id": "fn.switch-text-number-same-type",
+    "description": "SWITCH(\"2\", \"2\", \"yes\") matches same-type text",
+    "tags": ["switch"],
+    "formula": "=SWITCH(\"2\", \"2\", \"yes\", 2, \"coerced\")",
+    "expected": { "text": "yes" }
+  },
+  {
+    "id": "fn.switch-casefold",
+    "description": "Text match is case-insensitive (\"A\"=\"a\"), like = and unlike EXACT",
+    "tags": ["switch"],
+    "quirks": ["case-insensitive-text"],
+    "formula": "=SWITCH(\"A\", \"a\", \"yes\", \"no\")",
+    "expected": { "text": "yes" }
+  },
+  {
+    "id": "fn.switch-casefold-mixed",
+    "description": "SWITCH(\"AbC\", \"abc\", \"yes\") matches",
+    "tags": ["switch"],
+    "quirks": ["case-insensitive-text"],
+    "formula": "=SWITCH(\"AbC\", \"abc\", \"yes\")",
+    "expected": { "text": "yes" }
+  },
+  {
+    "id": "fn.switch-ieee",
+    "description": "SWITCH(0.1+0.2, 0.3, \"yes\") matches under 15-digit equality",
+    "tags": ["switch"],
+    "quirks": ["ieee-vs-excel-precision"],
+    "formula": "=SWITCH(0.1+0.2, 0.3, \"yes\", \"no\")",
+    "expected": { "text": "yes" }
+  },
+  {
+    "id": "fn.switch-empty-eq-zero",
+    "description": "Blank expression equals 0, so the 0 pair wins",
+    "tags": ["switch", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=SWITCH(A1, 0, \"zero\", \"\", \"empty\", \"other\")",
+    "expected": { "text": "zero" },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.switch-empty-eq-empty-text",
+    "description": "Blank expression equals \"\" when that pair is first",
+    "tags": ["switch", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=SWITCH(A1, \"\", \"empty\", 0, \"zero\")",
+    "expected": { "text": "empty" },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.switch-zero-not-empty-text",
+    "description": "0=\"\" is FALSE, so SWITCH(0, \"\", \"empty\", \"other\") is \"other\"",
+    "tags": ["switch", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=SWITCH(0, \"\", \"empty\", \"other\")",
+    "expected": { "text": "other" }
+  },
+  {
+    "id": "fn.switch-stored-empty-text",
+    "description": "Stored \"\" is text, not blank: SWITCH(\"\", 0, \"zero\", \"\", \"empty\") is \"empty\"",
+    "tags": ["switch", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=SWITCH(A1, 0, \"zero\", \"\", \"empty\")",
+    "expected": { "text": "empty" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": { "A1": { "text": "" } }
+      }]
+    }
+  },
+  {
+    "id": "fn.switch-wildcard-literal-star",
+    "description": "SWITCH does not treat * as a MATCH/VLOOKUP wildcard",
+    "tags": ["switch"],
+    "quirks": ["wildcards"],
+    "formula": "=SWITCH(\"abc\", \"a*\", \"wild\", \"no\")",
+    "expected": { "text": "no" }
+  },
+  {
+    "id": "fn.switch-wildcard-literal-question",
+    "description": "? is a literal character, not a single-char wildcard",
+    "tags": ["switch"],
+    "quirks": ["wildcards"],
+    "formula": "=SWITCH(\"abc\", \"a?c\", \"wild\", \"no\")",
+    "expected": { "text": "no" }
+  },
+  {
+    "id": "fn.switch-wildcard-literal-hit",
+    "description": "A literal asterisk in the expression matches a literal asterisk value",
+    "tags": ["switch"],
+    "quirks": ["wildcards"],
+    "formula": "=SWITCH(\"a*\", \"a*\", \"lit\")",
+    "expected": { "text": "lit" }
+  },
+  {
+    "id": "fn.switch-short-unused-result",
+    "description": "Unused result of a later pair is not evaluated (1/0 stays inert)",
+    "tags": ["switch", "errors"],
+    "quirks": ["if-short-circuit"],
+    "formula": "=SWITCH(1, 1, \"ok\", 2, 1/0)",
+    "expected": { "text": "ok" }
+  },
+  {
+    "id": "fn.switch-short-unused-earlier-result",
+    "description": "Unused result of an earlier non-matching pair is not evaluated",
+    "tags": ["switch", "errors"],
+    "quirks": ["if-short-circuit"],
+    "formula": "=SWITCH(1, 2, 1/0, 1, \"ok\")",
+    "expected": { "text": "ok" }
+  },
+  {
+    "id": "fn.switch-short-unused-default",
+    "description": "Default is not evaluated when a pair matches",
+    "tags": ["switch", "errors"],
+    "quirks": ["if-short-circuit"],
+    "formula": "=SWITCH(1, 1, \"ok\", 1/0)",
+    "expected": { "text": "ok" }
+  },
+  {
+    "id": "fn.switch-default-error-when-miss",
+    "description": "Default is evaluated on a miss: 1/0 → #DIV/0!",
+    "tags": ["switch", "errors"],
+    "quirks": ["if-short-circuit"],
+    "formula": "=SWITCH(9, 1, \"ok\", 1/0)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.switch-value-error-propagates",
+    "description": "Error in a compared value propagates (does not skip to the next pair)",
+    "tags": ["switch", "errors"],
+    "quirks": ["error-precedence", "if-short-circuit"],
+    "formula": "=SWITCH(1, 1/0, \"a\", 1, \"b\")",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.switch-later-value-error-after-miss",
+    "description": "A later value error still fires after an earlier non-match",
+    "tags": ["switch", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=SWITCH(1, 2, \"a\", 1/0, \"b\")",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.switch-expr-error-not-default",
+    "description": "Expression error propagates; default is not a catch-all like IFERROR",
+    "tags": ["switch", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=SWITCH(1/0, 1, \"a\", \"default\")",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.switch-expr-na-not-matchable",
+    "description": "SWITCH(#N/A, #N/A, \"yes\", \"default\") is #N/A — the error never reaches matching",
+    "tags": ["switch", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=SWITCH(NA(), NA(), \"yes\", \"default\")",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.switch-matched-result-error",
+    "description": "The chosen result is evaluated: SWITCH(1, 1, 1/0) is #DIV/0!",
+    "tags": ["switch", "errors"],
+    "quirks": ["if-short-circuit"],
+    "formula": "=SWITCH(1, 1, 1/0)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.switch-arity-0",
+    "description": "SWITCH() is #VALUE! (expression, value1, result1 are required)",
+    "tags": ["switch", "errors"],
+    "formula": "=SWITCH()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.switch-arity-1",
+    "description": "One argument is #VALUE!",
+    "tags": ["switch", "errors"],
+    "formula": "=SWITCH(1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.switch-arity-2",
+    "description": "Two arguments (expression + stray) is #VALUE! — default still needs a pair",
+    "tags": ["switch", "errors"],
+    "formula": "=SWITCH(1, \"default\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.switch-cell-expr",
+    "description": "Expression from a cell",
+    "tags": ["switch"],
+    "formula": "=SWITCH(A1, \"red\", 1, \"blue\", 2, 0)",
+    "expected": { "number": 2 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": { "A1": { "text": "BLUE" } }
+      }]
+    }
+  },
+  {
+    "id": "fn.switch-bool-result",
+    "description": "Result type is preserved (logical, not coerced to 1)",
+    "tags": ["switch"],
+    "formula": "=SWITCH(1, 1, TRUE, FALSE)",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.switch-number-result",
+    "description": "Numeric result",
+    "tags": ["switch"],
+    "formula": "=SWITCH(\"b\", \"a\", 10, \"b\", 20, 0)",
+    "expected": { "number": 20 }
+  },
+  {
+    "id": "fn.switch-expr-once-vs-if",
+    "description": "SWITCH evaluates the expression once: A1+A2 is 3, maps to \"three\"",
+    "tags": ["switch", "if"],
+    "formula": "=SWITCH(A1+A2, 1, \"one\", 2, \"two\", 3, \"three\")",
+    "expected": { "text": "three" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 2 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.switch-nested-if-equivalent",
+    "description": "Equivalent nested IF of A1+A2 also returns \"three\" (expr re-evaluated)",
+    "tags": ["switch", "if"],
+    "formula": "=IF(A1+A2=1, \"one\", IF(A1+A2=2, \"two\", IF(A1+A2=3, \"three\")))",
+    "expected": { "text": "three" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 2 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.switch-default-blank-cell",
+    "description": "Blank default cell returns empty (not 0)",
+    "tags": ["switch", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=SWITCH(9, 1, \"one\", B1)",
+    "expected": { "empty": null },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  }
+]

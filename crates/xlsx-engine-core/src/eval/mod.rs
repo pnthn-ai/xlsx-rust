@@ -7,6 +7,7 @@ pub mod coerce;
 pub mod compare;
 pub mod empty;
 pub mod functions;
+pub mod switch;
 
 use crate::ast::{BinOp, Expr, UnaryOp};
 use crate::parse::parse;
