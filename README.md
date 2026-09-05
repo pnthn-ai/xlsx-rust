@@ -283,13 +283,15 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 | [`eval/coerce.rs`](crates/xlsx-engine-core/src/eval/coerce.rs) | Arithmetic / `&` / `IF` coercion (`"2"+1` = 3, TRUE → 1, empty → 0) |
 | [`eval/compare.rs`](crates/xlsx-engine-core/src/eval/compare.rs) | 15-digit `=`, case-insensitive text, `TRUE=1`, type ranking (`FALSE>100`) |
 | [`eval/empty.rs`](crates/xlsx-engine-core/src/eval/empty.rs) | Blank ≠ 0 ≠ `""`, but `A1=0` and `A1=""` when `A1` is blank |
-| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators, logicals, lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates, math, text, `TYPE` / `IS*` |
+| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators, logicals, lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates, math, text (`CONCAT` / `LEFT` / …), `TYPE` / `IS*` |
+| [`eval/concat.rs`](crates/xlsx-engine-core/src/eval/concat.rs) | Excel `CONCAT`: row-major range/array flatten, blanks/`""` add nothing, 32,767 UTF-16 cap |
 
 **Implemented:** arithmetic and comparison operators (unary `+/-`, `%`, `^`,
 `&`, space intersection), host-aware implicit intersection, cell refs /
-ranges / defined names, array literals, error propagation, and the function
-families above. Workbook input is the snippet type in `xlsx-types` (no
-`.xlsx` IO).
+ranges / defined names, array literals, error propagation, `CONCAT` (arrays
+and ranges flattened row-major; result over 32,767 UTF-16 units is
+`#VALUE!`), and the function families above. Workbook input is the snippet
+type in `xlsx-types` (no `.xlsx` IO).
 
 **Deferred / in progress:** full function library, locale argument separators,
 live Excel oracle, and performance bakeoff. The fixture corpus is expanded
