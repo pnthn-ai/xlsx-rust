@@ -6,7 +6,7 @@
 //!
 //! Unknown names return `#NAME?` (an Excel value, not [`EvalError`]).
 //! Financial TVM starts with `PMT` (`xlsx_types::excel_pmt`); `PV`/`FV`/`NPER`
-//! are later workstreams.
+//! are later workstreams. Cash-flow series: `NPV` / `IRR` / `MIRR`.
 
 use super::{coerce, compare, excel_pow, Ctx, Evaluator};
 use crate::ast::Expr;
@@ -134,9 +134,11 @@ pub(crate) fn dispatch(
         "NPV" => super::npv::eval(ev, args, ctx),
         "UNIQUE" => super::unique::eval(ev, args, ctx),
         "IRR" => fn_irr(ev, args, ctx),
+        "MIRR" => fn_mirr(ev, args, ctx),
         "TRUE" => Ok(ExcelValue::Bool(true)),
         "FALSE" => Ok(ExcelValue::Bool(false)),
         // Financial (TVM). PV / FV / NPER are later workstreams.
+        // Cash-flow series: NPV / IRR / MIRR (above).
         "PMT" => fn_pmt(ev, args, ctx),
         _ => Ok(ExcelValue::Error(ExcelError::Name)),
     }
@@ -1413,6 +1415,30 @@ fn fn_irr(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue
     match super::irr::irr(&flows, guess) {
         Some(r) => Ok(ExcelValue::Number(r)),
         None => Ok(ExcelValue::Error(ExcelError::Num)),
+    }
+}
+
+fn fn_mirr(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    if args.len() != 3 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let from_range = args[0].is_reference();
+    let values_v = ev.eval_expr(&args[0], ctx)?;
+    let flows = match collect_cashflows(&values_v, from_range) {
+        Ok(v) => v,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let finance_rate = match coerce::to_number(&ev.eval_scalar(&args[1], ctx)?) {
+        Ok(n) => n,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let reinvest_rate = match coerce::to_number(&ev.eval_scalar(&args[2], ctx)?) {
+        Ok(n) => n,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    match super::mirr::mirr(&flows, finance_rate, reinvest_rate) {
+        Ok(r) => Ok(ExcelValue::Number(r)),
+        Err(e) => Ok(ExcelValue::Error(e)),
     }
 }
 
