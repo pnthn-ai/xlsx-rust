@@ -284,6 +284,7 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 | [`eval/compare.rs`](crates/xlsx-engine-core/src/eval/compare.rs) | 15-digit `=`, case-insensitive text, `TRUE=1`, type ranking (`FALSE>100`) |
 | [`eval/empty.rs`](crates/xlsx-engine-core/src/eval/empty.rs) | Blank ≠ 0 ≠ `""`, but `A1=0` and `A1=""` when `A1` is blank |
 | [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators, logicals, lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates, math, text, `TYPE` / `IS*` |
+| [`eval/unique.rs`](crates/xlsx-engine-core/src/eval/unique.rs) | `UNIQUE(array, [by_col], [exactly_once])` hash distinctness; returns the array that would spill |
 
 **Implemented:** arithmetic and comparison operators (unary `+/-`, `%`, `^`,
 `&`, space intersection), host-aware implicit intersection, cell refs /
@@ -321,6 +322,15 @@ as one or the other. Documented quirk categories:
 - Unary `+`/`-` and postfix `%` (`50%` is 0.5, `5%%` is 0.0005)
 - Space intersection (`A1:B2 B2`); non-overlap is `#NULL!`
 - Implicit intersection of a range in a scalar host cell (`A1:A3` at `B2` → `A2`)
+- `UNIQUE(array, [by_col], [exactly_once])`: first-occurrence distinct rows
+  (or columns when `by_col` is TRUE); case-insensitive text; type-strict
+  (`1` ≠ `"1"` ≠ `TRUE`); blanks collapse to one empty; `exactly_once` with
+  no survivors is `#CALC!`. Result is always an array value.
+- **Spill limitation:** `evaluate` returns that array. The engine does **not**
+  write spilled values into neighboring cells, so occupied destinations never
+  yield `#SPILL!`. Scalar operators (`UNIQUE(...)+1`) take the top-left
+  element (`scalarize`), not a host-aware intersection of a written spill.
+  Use `INDEX` / `SUM` / `COUNTA` to consume the array without a grid write.
 - Wildcards in exact `VLOOKUP` / `MATCH` (`*` / `?`)
 - Circular refs modeled as `#CIRCULAR!`
 - Volatile / locale / precision-as-displayed / hidden-row `SUBTOTAL` are
