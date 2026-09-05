@@ -8,22 +8,23 @@ pub mod coerce;
 pub mod compare;
 pub mod concat;
 pub mod empty;
-pub mod find;
 pub mod filter;
+pub mod find;
 pub mod functions;
-pub mod substitute;
-pub mod sumif;
-pub mod sumproduct;
+pub mod ifs;
+pub mod irr;
+pub mod npv;
 pub mod replace;
-pub mod sumifs;
-pub mod textjoin;
 pub mod round;
 pub mod search;
-pub mod npv;
+pub mod substitute;
+pub mod sumif;
+pub mod sumifs;
+pub mod sumproduct;
 pub mod switch;
-pub mod ifs;
+pub mod textafter;
+pub mod textjoin;
 pub mod unique;
-pub mod irr;
 
 use crate::ast::{BinOp, Expr, UnaryOp};
 use crate::parse::parse;
@@ -273,7 +274,11 @@ impl Evaluator {
         Ok(ExcelValue::Array(rows))
     }
 
-    pub(crate) fn eval_named(&self, name: &str, ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    pub(crate) fn eval_named(
+        &self,
+        name: &str,
+        ctx: &mut Ctx<'_>,
+    ) -> Result<ExcelValue, EvalError> {
         let def = match ctx.spec.workbook.defined_name(name) {
             Ok(d) => d,
             Err(_) => return Ok(ExcelValue::Error(ExcelError::Name)),
@@ -903,6 +908,39 @@ mod tests {
             ExcelValue::Error(ExcelError::Calc)
         );
     }
+    #[test]
+    fn textafter_microsoft_and_match_end() {
+        let wb = Workbook::default();
+        assert_eq!(
+            eval_formula_in(&wb, "=TEXTAFTER(\"Fluid Flow\",\" \")").unwrap(),
+            ExcelValue::Text("Flow".into())
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=TEXTAFTER(\"Red riding hood's, red hood\",\"hood\")").unwrap(),
+            ExcelValue::Text("'s, red hood".into())
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=TEXTAFTER(\"Socrates\",\" \",1,0,1)").unwrap(),
+            ExcelValue::Text("".into())
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=TEXTAFTER(\"Socrates\",\" \")").unwrap(),
+            ExcelValue::Error(ExcelError::Na)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=TEXTAFTER(\"abc\",\"x\",1,0,0,\"none\")").unwrap(),
+            ExcelValue::Text("none".into())
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=TEXTAFTER(\"a-b-c\",{\"-\"},2)").unwrap(),
+            ExcelValue::Text("c".into())
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=TEXTAFTER()").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
+        );
+    }
+
     #[test]
     fn pmt_microsoft_loan_and_errors() {
         let wb = Workbook::default();

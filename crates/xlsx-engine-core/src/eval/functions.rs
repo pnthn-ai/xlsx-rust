@@ -130,6 +130,7 @@ pub(crate) fn dispatch(
         "TEXT" => fn_text(ev, args, ctx),
         "REPLACE" => fn_replace(ev, args, ctx),
         "TEXTJOIN" => super::textjoin::fn_textjoin(ev, args, ctx),
+        "TEXTAFTER" => fn_textafter(ev, args, ctx),
         "CONCAT" => super::concat::fn_concat(ev, args, ctx),
         "NPV" => super::npv::eval(ev, args, ctx),
         "UNIQUE" => super::unique::eval(ev, args, ctx),
@@ -1283,6 +1284,86 @@ fn fn_text(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValu
     match text_format::apply(&value, &fmt, ctx.spec.options.date_system) {
         Ok(s) => Ok(ExcelValue::Text(s)),
         Err(e) => Ok(ExcelValue::Error(e)),
+    }
+}
+
+/// Excel `TEXTAFTER(text, delimiter, [instance_num], [match_mode], [match_end], [if_not_found])`.
+///
+/// Arity 2..=6. `if_not_found` is evaluated when supplied but used only on a
+/// miss (`#N/A` path). `#VALUE!` from `instance_num` is not replaced.
+fn fn_textafter(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    if args.len() < 2 || args.len() > 6 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let text = match coerce::to_text(&ev.eval_scalar(&args[0], ctx)?) {
+        Ok(s) => s,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let delim_v = ev.eval_expr(&args[1], ctx)?;
+    let mut delims = Vec::new();
+    if let Err(e) = collect_delim_texts(&delim_v, &mut delims) {
+        return Ok(ExcelValue::Error(e));
+    }
+    let delim_refs: Vec<&str> = delims.iter().map(String::as_str).collect();
+    let instance_num = if args.len() >= 3 {
+        match coerce::to_number(&ev.eval_scalar(&args[2], ctx)?) {
+            Ok(n) => {
+                if !n.is_finite() {
+                    return Ok(ExcelValue::Error(ExcelError::Value));
+                }
+                n.trunc() as i64
+            }
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        }
+    } else {
+        1
+    };
+    let ignore_case = if args.len() >= 4 {
+        match coerce::to_logical(&ev.eval_scalar(&args[3], ctx)?) {
+            Ok(b) => b,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        }
+    } else {
+        false
+    };
+    let match_end = if args.len() >= 5 {
+        match coerce::to_logical(&ev.eval_scalar(&args[4], ctx)?) {
+            Ok(b) => b,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        }
+    } else {
+        false
+    };
+    let if_not_found = if args.len() >= 6 {
+        Some(ev.eval_expr(&args[5], ctx)?)
+    } else {
+        None
+    };
+    match super::textafter::textafter(&text, &delim_refs, instance_num, ignore_case, match_end) {
+        Ok(s) => Ok(ExcelValue::Text(s)),
+        Err(ExcelError::Na) => match if_not_found {
+            Some(v) => Ok(v),
+            None => Ok(ExcelValue::Error(ExcelError::Na)),
+        },
+        Err(e) => Ok(ExcelValue::Error(e)),
+    }
+}
+
+fn collect_delim_texts(v: &ExcelValue, out: &mut Vec<String>) -> Result<(), ExcelError> {
+    match v {
+        ExcelValue::Error(e) => Err(*e),
+        ExcelValue::Array(rows) => {
+            for row in rows {
+                for cell in row {
+                    collect_delim_texts(cell, out)?;
+                }
+            }
+            Ok(())
+        }
+        other => {
+            out.push(coerce::to_text(other)?);
+            Ok(())
+        }
     }
 }
 

@@ -447,6 +447,7 @@ impl Interpreter {
             "TEXT" => self.fn_text(args, ctx),
             "REPLACE" => self.fn_replace(args, ctx),
             "TEXTJOIN" => self.fn_textjoin(args, ctx),
+            "TEXTAFTER" => self.fn_textafter(args, ctx),
             "CONCAT" => self.fn_concat(args, ctx),
             "NPV" => self.fn_npv(args, ctx),
             "UNIQUE" => self.fn_unique(args, ctx),
@@ -1985,6 +1986,70 @@ impl Interpreter {
         }
     }
 
+    fn fn_textafter(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.len() < 2 || args.len() > 6 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        let text = match self.as_text(&self.eval_scalar(&args[0], ctx)?) {
+            Ok(s) => s,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        let delim_v = self.eval_expr(&args[1], ctx)?;
+        let mut delims = Vec::new();
+        if let Err(e) = collect_textafter_delims(&delim_v, &mut delims) {
+            return Ok(ExcelValue::Error(e));
+        }
+        let delim_refs: Vec<&str> = delims.iter().map(String::as_str).collect();
+        let instance_num = if args.len() >= 3 {
+            match self.as_number(&self.eval_scalar(&args[2], ctx)?) {
+                Ok(n) => {
+                    if !n.is_finite() {
+                        return Ok(ExcelValue::Error(ExcelError::Value));
+                    }
+                    n.trunc() as i64
+                }
+                Err(e) => return Ok(ExcelValue::Error(e)),
+            }
+        } else {
+            1
+        };
+        let ignore_case = if args.len() >= 4 {
+            match self.as_if_cond(&self.eval_scalar(&args[3], ctx)?) {
+                Ok(b) => b,
+                Err(e) => return Ok(ExcelValue::Error(e)),
+            }
+        } else {
+            false
+        };
+        let match_end = if args.len() >= 5 {
+            match self.as_if_cond(&self.eval_scalar(&args[4], ctx)?) {
+                Ok(b) => b,
+                Err(e) => return Ok(ExcelValue::Error(e)),
+            }
+        } else {
+            false
+        };
+        let if_not_found = if args.len() >= 6 {
+            Some(self.eval_expr(&args[5], ctx)?)
+        } else {
+            None
+        };
+        match xlsx_engine_core::excel_textafter(
+            &text,
+            &delim_refs,
+            instance_num,
+            ignore_case,
+            match_end,
+        ) {
+            Ok(s) => Ok(ExcelValue::Text(s)),
+            Err(ExcelError::Na) => match if_not_found {
+                Some(v) => Ok(v),
+                None => Ok(ExcelValue::Error(ExcelError::Na)),
+            },
+            Err(e) => Ok(ExcelValue::Error(e)),
+        }
+    }
+
     fn fn_text(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
         if args.len() != 2 {
             return Ok(ExcelValue::Error(ExcelError::Value));
@@ -3409,6 +3474,40 @@ fn search_ci_eq(a: char, b: char) -> bool {
     }
     a.to_lowercase().eq(b.to_lowercase())
 }
+fn collect_textafter_delims(v: &ExcelValue, out: &mut Vec<String>) -> Result<(), ExcelError> {
+    match v {
+        ExcelValue::Error(e) => Err(*e),
+        ExcelValue::Array(rows) => {
+            for row in rows {
+                for cell in row {
+                    collect_textafter_delims(cell, out)?;
+                }
+            }
+            Ok(())
+        }
+        ExcelValue::Text(s) => {
+            out.push(s.clone());
+            Ok(())
+        }
+        ExcelValue::Empty => {
+            out.push(String::new());
+            Ok(())
+        }
+        ExcelValue::Bool(true) => {
+            out.push("TRUE".into());
+            Ok(())
+        }
+        ExcelValue::Bool(false) => {
+            out.push("FALSE".into());
+            Ok(())
+        }
+        ExcelValue::Number(n) => {
+            out.push(format_plain(*n));
+            Ok(())
+        }
+    }
+}
+
 fn unique_to_grid(v: ExcelValue) -> Result<Vec<Vec<ExcelValue>>, ExcelError> {
     match v {
         ExcelValue::Array(rows) => {

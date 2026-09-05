@@ -13,6 +13,7 @@
 //! - [`eval::ifs`] — `IFS` pair-selection kernel (eager; no-match `#N/A`)
 //! - [`eval::unique`] — `UNIQUE` dynamic-array kernel (hash distinctness)
 //! - [`eval::filter`] — `FILTER` mask/select kernel (`#CALC!` / `if_empty`)
+//! - [`eval::textafter`] — Excel `TEXTAFTER` kernel (nth delimiter, `match_end`)
 //! - [`eval::irr`] — Excel `IRR` Newton / secant kernel
 //!
 //! This crate depends only on [`xlsx_types`]. It never reads fixture expected
@@ -48,13 +49,14 @@ pub use eval::switch::{
     first_match as excel_switch_first_match, first_match_naive as excel_switch_first_match_naive,
     pick_evaluated as excel_switch_pick_evaluated,
 };
+pub use eval::textafter::{textafter as excel_textafter, textafter_naive as excel_textafter_naive};
 pub use eval::textjoin::{
     eval_textjoin_formula, textjoin_naive_join, TextJoinBuilder, TEXTJOIN_MAX_CHARS,
 };
 pub use eval::unique::{unique_apply, unique_apply_naive, unique_eq};
 pub use eval::{
-    eval_averageif_materialized, eval_formula_in, eval_sumif_materialized, eval_sumifs_materialized,
-    Evaluator,
+    eval_averageif_materialized, eval_formula_in, eval_sumif_materialized,
+    eval_sumifs_materialized, Evaluator,
 };
 pub use parse::parse;
 
