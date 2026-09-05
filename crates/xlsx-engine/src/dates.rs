@@ -307,6 +307,61 @@ pub fn networkdays_count(
     }
     Ok((sign * work) as f64)
 }
+/// Integer 1900-system serial for a date value (time fraction discarded).
+pub fn serial_as_1900_int(serial: f64, system: DateSystem) -> Result<i32, ExcelError> {
+    if !serial.is_finite() || serial < 0.0 {
+        return Err(ExcelError::Num);
+    }
+    let local = serial.trunc();
+    if local > i32::MAX as f64 {
+        return Err(ExcelError::Num);
+    }
+    let mut s = local as i32;
+    match system {
+        DateSystem::Excel1900 => {}
+        DateSystem::Excel1904 => {
+            s = s
+                .checked_add(EXCEL1904_EPOCH_IN_1900)
+                .ok_or(ExcelError::Num)?;
+        }
+    }
+    if s < 0 || s > EXCEL_MAX_SERIAL_1900 {
+        return Err(ExcelError::Num);
+    }
+    Ok(s)
+}
+
+#[inline]
+pub fn type1_from_1900_serial(serial_1900: i32) -> i32 {
+    let r = serial_1900 % 7;
+    if r == 0 {
+        7
+    } else {
+        r
+    }
+}
+
+pub fn map_weekday_return_type(type1: i32, return_type: i32) -> Result<f64, ExcelError> {
+    let sun0 = type1 - 1;
+    let n = match return_type {
+        1 | 17 => type1,
+        2 | 11 => (sun0 + 6) % 7 + 1,
+        3 => (sun0 + 6) % 7,
+        12 => (sun0 + 5) % 7 + 1,
+        13 => (sun0 + 4) % 7 + 1,
+        14 => (sun0 + 3) % 7 + 1,
+        15 => (sun0 + 2) % 7 + 1,
+        16 => (sun0 + 1) % 7 + 1,
+        _ => return Err(ExcelError::Num),
+    };
+    Ok(n as f64)
+}
+
+/// Excel `WEEKDAY` from a date serial. O(1) on the integer serial.
+pub fn weekday(serial: f64, return_type: i32, system: DateSystem) -> Result<f64, ExcelError> {
+    let s1900 = serial_as_1900_int(serial, system)?;
+    map_weekday_return_type(type1_from_1900_serial(s1900), return_type)
+}
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -365,5 +420,12 @@ mod tests {
         assert_eq!(time_fraction(12.0, 0.0, 0.0).unwrap(), 0.5);
         assert_eq!(time_fraction(6.0, 0.0, 0.0).unwrap(), 0.25);
         assert_eq!(time_fraction(18.0, 0.0, 0.0).unwrap(), 0.75);
+    }
+
+    #[test]
+    fn weekday_serial_one_is_sunday() {
+        assert_eq!(weekday(1.0, 1, DateSystem::Excel1900).unwrap(), 1.0);
+        assert_eq!(weekday(60.0, 1, DateSystem::Excel1900).unwrap(), 4.0);
+        assert_eq!(weekday(61.0, 1, DateSystem::Excel1900).unwrap(), 5.0);
     }
 }

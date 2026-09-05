@@ -71,3 +71,7 @@ harness = false
 [[bench]]
 name = "networkdays"
 harness = false
+
+[[bench]]
+name = "weekday"
+harness = false

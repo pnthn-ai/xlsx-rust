@@ -312,6 +312,8 @@ function families above. Workbook input is the snippet type in `xlsx-types` (no
 | [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators, logicals, lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates, math, text (`LEFT`/`SEARCH`/…), `TYPE` / `IS*` |
 | [`eval/search.rs`](crates/xlsx-engine-core/src/eval/search.rs) | Excel `SEARCH` kernel (case-insensitive, `*`/`?`/`~` wildcards, `start_num`) |
 | [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators, logicals, lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates (`DATE`/`TIME`/`YEAR`/`MONTH`/`DAY`/`NETWORKDAYS`), math, text, `TYPE` / `IS*` |
+| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators, logicals, lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates (`DATE`/`TIME`/`YEAR`/`MONTH`/`DAY`/`WEEKDAY`), math, text, `TYPE` / `IS*` |
+| [`dates.rs`](crates/xlsx-engine-core/src/dates.rs) | 1900/1904 serials, leap-year bug, O(1) `WEEKDAY` |
 
 **Implemented:** arithmetic and comparison operators (unary `+/-`, `%`, `^`,
 `&`, space intersection), host-aware implicit intersection, cell refs /
@@ -376,6 +378,9 @@ as one or the other. Documented quirk categories:
 - 1900 leap-year bug (`DATE(1900,2,29)` is serial 60); 1904 date system;
   `EOMONTH` inherits it (`EOMONTH(59,0)` / `EOMONTH(60,0)` are both 60)
   `NETWORKDAYS` treats serial 60 as a Wednesday workday and weekends as Sat/Sun
+- 1900 leap-year bug (`DATE(1900,2,29)` is serial 60); 1904 date system.
+  `WEEKDAY` is O(1) on the serial (`serial % 7`); 1900-01-01 is Sunday in
+  Excel (historically Monday). `return_type` 1/2/3/11–17; anything else is `#NUM!`
 - Unary `+`/`-` and postfix `%` (`50%` is 0.5, `5%%` is 0.0005)
 - Space intersection (`A1:B2 B2`); non-overlap is `#NULL!`
 - Implicit intersection of a range in a scalar host cell (`A1:A3` at `B2` → `A2`)
