@@ -7,6 +7,7 @@ pub mod coerce;
 pub mod compare;
 pub mod empty;
 pub mod functions;
+pub mod unique;
 
 use crate::ast::{BinOp, Expr, UnaryOp};
 use crate::parse::parse;
@@ -504,6 +505,30 @@ mod tests {
         assert_eq!(
             eval_formula_in(&wb, "=0^0").unwrap(),
             ExcelValue::Error(ExcelError::Num)
+        );
+    }
+
+    #[test]
+    fn unique_literal_and_exactly_once() {
+        let wb = Workbook::default();
+        assert_eq!(
+            eval_formula_in(&wb, "=UNIQUE({1;2;2;3})").unwrap(),
+            ExcelValue::Array(vec![
+                vec![ExcelValue::Number(1.0)],
+                vec![ExcelValue::Number(2.0)],
+                vec![ExcelValue::Number(3.0)],
+            ])
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=UNIQUE({1;2;2;3}, FALSE, TRUE)").unwrap(),
+            ExcelValue::Array(vec![
+                vec![ExcelValue::Number(1.0)],
+                vec![ExcelValue::Number(3.0)],
+            ])
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=UNIQUE({1;1}, FALSE, TRUE)").unwrap(),
+            ExcelValue::Error(ExcelError::Calc)
         );
     }
 }

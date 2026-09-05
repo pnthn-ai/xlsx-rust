@@ -2,10 +2,10 @@
 
 use crate::dates::{date_serial, serial_to_ymd, time_fraction};
 use crate::parse::{parse, BinOp, Expr, UnaryOp};
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use xlsx_types::{
-    excel_num_eq, ArrayMode, CellAddr, CellRef, EvalError, EvalSpec, EvalTarget, ExcelError,
-    ExcelValue, RangeRef, Workbook,
+    excel_num_eq, excel_round_15, ArrayMode, CellAddr, CellRef, EvalError, EvalSpec, EvalTarget,
+    ExcelError, ExcelValue, RangeRef, Workbook,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -419,6 +419,7 @@ impl Interpreter {
             "TRIM" => self.fn_trim(args, ctx),
             "EXACT" => self.fn_exact(args, ctx),
             "VALUE" => self.fn_value(args, ctx),
+            "UNIQUE" => self.fn_unique(args, ctx),
             "TRUE" => Ok(ExcelValue::Bool(true)),
             "FALSE" => Ok(ExcelValue::Bool(false)),
             _ => Ok(ExcelValue::Error(ExcelError::Name)),
@@ -475,6 +476,37 @@ impl Interpreter {
         } else {
             Ok(v)
         }
+    }
+
+    fn fn_unique(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.is_empty() || args.len() > 3 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        let array = self.eval_expr(&args[0], ctx)?;
+        if let ExcelValue::Error(e) = array {
+            return Ok(ExcelValue::Error(e));
+        }
+        let by_col = if args.len() >= 2 {
+            match self.as_if_cond(&self.eval_scalar(&args[1], ctx)?) {
+                Ok(b) => b,
+                Err(e) => return Ok(ExcelValue::Error(e)),
+            }
+        } else {
+            false
+        };
+        let exactly_once = if args.len() >= 3 {
+            match self.as_if_cond(&self.eval_scalar(&args[2], ctx)?) {
+                Ok(b) => b,
+                Err(e) => return Ok(ExcelValue::Error(e)),
+            }
+        } else {
+            false
+        };
+        let grid = match unique_to_grid(array) {
+            Ok(g) => g,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        Ok(unique_apply_seed(&grid, by_col, exactly_once))
     }
 
     fn fn_ifna(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
@@ -1790,6 +1822,102 @@ fn naive_ord(
         }
         _ => ExcelValue::Error(ExcelError::Value),
     }
+}
+
+fn unique_to_grid(v: ExcelValue) -> Result<Vec<Vec<ExcelValue>>, ExcelError> {
+    match v {
+        ExcelValue::Array(rows) => {
+            if rows.is_empty() {
+                return Ok(rows);
+            }
+            let cols = rows[0].len();
+            if rows.iter().any(|r| r.len() != cols) {
+                return Err(ExcelError::Value);
+            }
+            Ok(rows)
+        }
+        other => Ok(vec![vec![other]]),
+    }
+}
+
+fn unique_number_key(n: f64) -> u64 {
+    if n == 0.0 {
+        0.0f64.to_bits()
+    } else {
+        excel_round_15(n).to_bits()
+    }
+}
+
+fn unique_cell_key(v: &ExcelValue) -> String {
+    match v {
+        ExcelValue::Empty => "e".into(),
+        ExcelValue::Number(n) => format!("n{}", unique_number_key(*n)),
+        ExcelValue::Text(s) => format!("t{}", s.to_ascii_lowercase()),
+        ExcelValue::Bool(b) => format!("b{b}"),
+        ExcelValue::Error(e) => format!("r{}", e.short_id()),
+        ExcelValue::Array(_) => "a".into(),
+    }
+}
+
+fn unique_item_key(cells: &[ExcelValue]) -> String {
+    cells
+        .iter()
+        .map(unique_cell_key)
+        .collect::<Vec<_>>()
+        .join("\u{1f}")
+}
+
+fn unique_apply_seed(grid: &[Vec<ExcelValue>], by_col: bool, exactly_once: bool) -> ExcelValue {
+    if grid.is_empty() || grid[0].is_empty() {
+        return ExcelValue::Error(ExcelError::Calc);
+    }
+    let cols = grid[0].len();
+    if grid.iter().any(|r| r.len() != cols) {
+        return ExcelValue::Error(ExcelError::Value);
+    }
+    let items: Vec<Vec<ExcelValue>> = if by_col {
+        (0..cols)
+            .map(|c| grid.iter().map(|row| row[c].clone()).collect())
+            .collect()
+    } else {
+        grid.to_vec()
+    };
+    let mut first: HashMap<String, usize> = HashMap::new();
+    let mut counts: Vec<usize> = Vec::new();
+    let mut order: Vec<Vec<ExcelValue>> = Vec::new();
+    for item in items {
+        let key = unique_item_key(&item);
+        if let Some(&idx) = first.get(&key) {
+            counts[idx] += 1;
+        } else {
+            first.insert(key, order.len());
+            counts.push(1);
+            order.push(item);
+        }
+    }
+    if exactly_once {
+        order = order
+            .into_iter()
+            .enumerate()
+            .filter_map(|(i, row)| if counts[i] == 1 { Some(row) } else { None })
+            .collect();
+    }
+    if order.is_empty() {
+        return ExcelValue::Error(ExcelError::Calc);
+    }
+    let out = if by_col {
+        if order.is_empty() {
+            Vec::new()
+        } else {
+            let height = order[0].len();
+            (0..height)
+                .map(|r| order.iter().map(|col| col[r].clone()).collect())
+                .collect()
+        }
+    } else {
+        order
+    };
+    ExcelValue::Array(out)
 }
 
 /// Used by tests that want a workbook-backed evaluation without the Candidate trait.

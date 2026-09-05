@@ -1,0 +1,516 @@
+[
+  {
+    "id": "fn.unique.col-distinct",
+    "description": "UNIQUE of a column keeps first-occurrence distinct values",
+    "tags": ["unique", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=UNIQUE({1;2;2;3;1})",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "number": 2 }],
+        [{ "number": 3 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.unique.row-by-col",
+    "description": "UNIQUE(..., TRUE) compares columns of a row",
+    "tags": ["unique", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=UNIQUE({1,2,1,3}, TRUE)",
+    "expected": {
+      "array": [[{ "number": 1 }, { "number": 2 }, { "number": 3 }]]
+    }
+  },
+  {
+    "id": "fn.unique.row-default-is-one-row",
+    "description": "A single row compared by rows is already unique (by_col omitted)",
+    "tags": ["unique", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=UNIQUE({1,2,1})",
+    "expected": {
+      "array": [[{ "number": 1 }, { "number": 2 }, { "number": 1 }]]
+    }
+  },
+  {
+    "id": "fn.unique.col-by-col-keeps-column",
+    "description": "by_col=TRUE on a single column keeps the whole column",
+    "tags": ["unique", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=UNIQUE({1;2;1}, TRUE)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "number": 2 }],
+        [{ "number": 1 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.unique.exactly-once",
+    "description": "exactly_once=TRUE keeps values that appear only once",
+    "tags": ["unique", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=UNIQUE({1;2;2;3}, FALSE, TRUE)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "number": 3 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.unique.exactly-once-calc",
+    "description": "exactly_once with no singleton is #CALC!",
+    "tags": ["unique", "errors", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=UNIQUE({1;1;2;2}, FALSE, TRUE)",
+    "expected": { "error": "#CALC!" }
+  },
+  {
+    "id": "fn.unique.2d-rows",
+    "description": "2-D UNIQUE compares whole rows",
+    "tags": ["unique", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=UNIQUE({1,2;1,2;3,4})",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 2 }],
+        [{ "number": 3 }, { "number": 4 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.unique.2d-rows-exactly-once",
+    "description": "2-D exactly_once drops a repeated row",
+    "tags": ["unique", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=UNIQUE({1,2;1,2;3,4}, FALSE, TRUE)",
+    "expected": {
+      "array": [
+        [{ "number": 3 }, { "number": 4 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.unique.2d-by-col",
+    "description": "2-D UNIQUE(..., TRUE) compares whole columns",
+    "tags": ["unique", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=UNIQUE({1,2,1;3,4,3}, TRUE)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 2 }],
+        [{ "number": 3 }, { "number": 4 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.unique.casefold-first-spelling",
+    "description": "UNIQUE is case-insensitive and keeps the first spelling",
+    "tags": ["unique", "functions", "array"],
+    "quirks": ["array-eval-mode", "case-insensitive-text"],
+    "formula": "=UNIQUE({\"Apple\";\"apple\";\"APPLE\"})",
+    "expected": {
+      "array": [[{ "text": "Apple" }]]
+    }
+  },
+  {
+    "id": "fn.unique.number-vs-text",
+    "description": "Number 1 and text \"1\" are different UNIQUE keys",
+    "tags": ["unique", "functions", "array"],
+    "quirks": ["array-eval-mode", "equality-vs-arithmetic-coercion"],
+    "formula": "=UNIQUE({1;\"1\";1})",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "text": "1" }]
+      ]
+    }
+  },
+  {
+    "id": "fn.unique.bool-vs-number",
+    "description": "TRUE and 1 stay distinct (UNIQUE is type-strict, unlike =)",
+    "tags": ["unique", "functions", "array"],
+    "quirks": ["array-eval-mode", "bool-number-equality"],
+    "formula": "=UNIQUE({1;TRUE;1;FALSE;0})",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "bool": true }],
+        [{ "bool": false }],
+        [{ "number": 0 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.unique.blanks-collapse",
+    "description": "Several blanks collapse to one empty in first-blank position",
+    "tags": ["unique", "empty"],
+    "quirks": ["array-eval-mode", "empty-cell-duality"],
+    "formula": "=UNIQUE(A1:A5)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "empty": null }],
+        [{ "number": 2 }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A3": { "number": 1 },
+          "A4": { "number": 2 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.unique.all-blanks",
+    "description": "UNIQUE of a blank range is one empty",
+    "tags": ["unique", "empty"],
+    "quirks": ["array-eval-mode", "empty-cell-duality"],
+    "formula": "=UNIQUE(A1:A3)",
+    "expected": {
+      "array": [[{ "empty": null }]]
+    },
+    "workbook": { "sheets": [{ "name": "Sheet1", "cells": {} }] }
+  },
+  {
+    "id": "fn.unique.all-blanks-exactly-once",
+    "description": "exactly_once on repeated blanks is #CALC!",
+    "tags": ["unique", "empty", "errors"],
+    "quirks": ["array-eval-mode", "empty-cell-duality"],
+    "formula": "=UNIQUE(A1:A3, FALSE, TRUE)",
+    "expected": { "error": "#CALC!" },
+    "workbook": { "sheets": [{ "name": "Sheet1", "cells": {} }] }
+  },
+  {
+    "id": "fn.unique.empty-string-vs-blank",
+    "description": "Stored \"\" and a blank cell are different UNIQUE keys",
+    "tags": ["unique", "empty"],
+    "quirks": ["array-eval-mode", "empty-cell-duality"],
+    "formula": "=UNIQUE(A1:A3)",
+    "expected": {
+      "array": [
+        [{ "text": "" }],
+        [{ "empty": null }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "" },
+          "A3": { "text": "" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.unique.scalar",
+    "description": "UNIQUE of a scalar is a 1×1 array",
+    "tags": ["unique", "functions"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=UNIQUE(5)",
+    "expected": {
+      "array": [[{ "number": 5 }]]
+    }
+  },
+  {
+    "id": "fn.unique.one-by-one-literal",
+    "description": "UNIQUE of a 1×1 literal is a 1×1 array",
+    "tags": ["unique", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=UNIQUE({7})",
+    "expected": {
+      "array": [[{ "number": 7 }]]
+    }
+  },
+  {
+    "id": "fn.unique.range",
+    "description": "UNIQUE of a worksheet column",
+    "tags": ["unique", "functions"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=UNIQUE(A1:A6)",
+    "expected": {
+      "array": [
+        [{ "text": "red" }],
+        [{ "text": "blue" }],
+        [{ "text": "green" }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "red" },
+          "A2": { "text": "blue" },
+          "A3": { "text": "red" },
+          "A4": { "text": "green" },
+          "A5": { "text": "blue" },
+          "A6": { "text": "RED" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.unique.range-exactly-once",
+    "description": "UNIQUE(range, FALSE, TRUE) on a sheet column",
+    "tags": ["unique", "functions"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=UNIQUE(A1:A5, FALSE, TRUE)",
+    "expected": {
+      "array": [[{ "text": "green" }]]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "red" },
+          "A2": { "text": "blue" },
+          "A3": { "text": "red" },
+          "A4": { "text": "green" },
+          "A5": { "text": "blue" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.unique.errors-in-array",
+    "description": "Error values participate in distinctness",
+    "tags": ["unique", "errors", "array"],
+    "quirks": ["array-eval-mode", "error-precedence"],
+    "formula": "=UNIQUE({1;#N/A;1;#DIV/0!;#N/A})",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "error": "#N/A" }],
+        [{ "error": "#DIV/0!" }]
+      ]
+    }
+  },
+  {
+    "id": "fn.unique.error-arg",
+    "description": "A scalar error array argument surfaces",
+    "tags": ["unique", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=UNIQUE(#DIV/0!)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.unique.error-ltr-array-first",
+    "description": "Array is evaluated before by_col: #N/A beats a later #DIV/0!",
+    "tags": ["unique", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=UNIQUE(#N/A, #DIV/0!)",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.unique.by-col-error",
+    "description": "Error in by_col surfaces after a valid array",
+    "tags": ["unique", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=UNIQUE({1;2}, #DIV/0!)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.unique.by-col-text-value",
+    "description": "Text by_col is #VALUE!",
+    "tags": ["unique", "errors"],
+    "formula": "=UNIQUE({1;2}, \"x\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.unique.by-col-numeric",
+    "description": "Nonzero numeric by_col is TRUE",
+    "tags": ["unique", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=UNIQUE({1,1,2}, 1)",
+    "expected": {
+      "array": [[{ "number": 1 }, { "number": 2 }]]
+    }
+  },
+  {
+    "id": "fn.unique.arity-zero",
+    "description": "UNIQUE() is #VALUE!",
+    "tags": ["unique", "errors"],
+    "formula": "=UNIQUE()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.unique.arity-four",
+    "description": "Four arguments are #VALUE!",
+    "tags": ["unique", "errors"],
+    "formula": "=UNIQUE({1}, FALSE, FALSE, TRUE)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.unique.ieee-15-digit",
+    "description": "0.1+0.2 and 0.3 are the same UNIQUE number",
+    "tags": ["unique", "functions"],
+    "quirks": ["ieee-vs-excel-precision"],
+    "formula": "=UNIQUE(A1:A2)",
+    "expected": {
+      "array": [[{ "number": 0.3 }]]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "formula": "=0.1+0.2" },
+          "A2": { "number": 0.3 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.unique.index-nth",
+    "description": "INDEX picks a UNIQUE row without writing a spill range",
+    "tags": ["unique", "index"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=INDEX(UNIQUE({1;2;2;3}), 2)",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.unique.sum",
+    "description": "SUM consumes the UNIQUE array (1+2+3)",
+    "tags": ["unique", "sum"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SUM(UNIQUE({1;2;2;3}))",
+    "expected": { "number": 6 }
+  },
+  {
+    "id": "fn.unique.counta",
+    "description": "COUNTA of UNIQUE counts distinct non-blanks",
+    "tags": ["unique", "counta"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=COUNTA(UNIQUE(A1:A4))",
+    "expected": { "number": 2 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "a" },
+          "A2": { "text": "b" },
+          "A3": { "text": "a" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.unique.nested",
+    "description": "UNIQUE of UNIQUE is idempotent on already-distinct data",
+    "tags": ["unique", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=UNIQUE(UNIQUE({1;1;2;2;3}))",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "number": 2 }],
+        [{ "number": 3 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.unique.dynamic-array-mode",
+    "description": "array_mode=dynamic-array still returns the UNIQUE array (no grid write)",
+    "tags": ["unique", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=UNIQUE(A1:A4)",
+    "options": { "array_mode": "dynamic-array" },
+    "expected": {
+      "array": [
+        [{ "number": 10 }],
+        [{ "number": 20 }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 10 },
+          "A2": { "number": 20 },
+          "A3": { "number": 10 },
+          "A4": { "number": 20 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.unique.no-grid-write",
+    "description": "Occupied cells in the Excel spill zone do not produce #SPILL! — UNIQUE returns the array",
+    "notes": "Excel would #SPILL! if UNIQUE at B1 needed B2. This model never writes a spill range; neighbors are irrelevant. Pick individual results with INDEX/SUM.",
+    "tags": ["unique", "spill"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=UNIQUE(A1:A3)",
+    "at": "Sheet1!B1",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "number": 2 }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 2 },
+          "A3": { "number": 1 },
+          "B2": { "text": "blocker" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.unique.scalar-plus-top-left",
+    "description": "UNIQUE+n in a scalar operator takes the top-left unique (not host-aware spill intersection)",
+    "notes": "The engine scalarizes arrays to the first element. It does not intersect a written spill with the host cell.",
+    "tags": ["unique", "arithmetic"],
+    "quirks": ["array-eval-mode", "implicit-intersection"],
+    "formula": "=UNIQUE({10;20;10})+1",
+    "expected": { "number": 11 }
+  },
+  {
+    "id": "fn.unique.false-defaults",
+    "description": "Explicit FALSE,FALSE matches omitted optional args",
+    "tags": ["unique", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=UNIQUE({1;1;2}, FALSE, FALSE)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "number": 2 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.unique.2d-range",
+    "description": "UNIQUE of a 2-column sheet range compares rows",
+    "tags": ["unique", "functions"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=UNIQUE(A1:B4)",
+    "expected": {
+      "array": [
+        [{ "text": "a" }, { "number": 1 }],
+        [{ "text": "b" }, { "number": 2 }],
+        [{ "text": "a" }, { "number": 2 }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "a" }, "B1": { "number": 1 },
+          "A2": { "text": "b" }, "B2": { "number": 2 },
+          "A3": { "text": "a" }, "B3": { "number": 1 },
+          "A4": { "text": "a" }, "B4": { "number": 2 }
+        }
+      }]
+    }
+  }
+]
