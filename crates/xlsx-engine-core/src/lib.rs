@@ -35,7 +35,6 @@ pub use eval::find::{find as excel_find, find_naive as excel_find_naive};
 pub use eval::ifs::{select as excel_ifs, select_naive as excel_ifs_naive};
 pub use eval::irr::{irr as excel_irr, irr_naive as excel_irr_naive, MAX_ITERS as IRR_MAX_ITERS};
 pub use eval::npv::{npv as excel_npv, npv_naive as excel_npv_naive};
-pub use xlsx_types::{excel_nper, excel_nper_naive};
 pub use eval::replace::{replace as excel_replace, replace_naive as excel_replace_naive};
 pub use eval::round::{
     rounddown as excel_rounddown, rounddown_naive as excel_rounddown_naive,
@@ -55,10 +54,11 @@ pub use eval::textjoin::{
 };
 pub use eval::unique::{unique_apply, unique_apply_naive, unique_eq};
 pub use eval::{
-    eval_averageif_materialized, eval_formula_in, eval_sumif_materialized, eval_sumifs_materialized,
-    Evaluator,
+    eval_averageif_materialized, eval_formula_in, eval_sumif_materialized,
+    eval_sumifs_materialized, Evaluator,
 };
 pub use parse::parse;
+pub use xlsx_types::{excel_nper, excel_nper_naive};
 
 use xlsx_types::{Candidate, EvalError, EvalSpec, ExcelValue};
 

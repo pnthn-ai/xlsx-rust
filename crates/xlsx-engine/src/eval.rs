@@ -7,8 +7,8 @@ use crate::dates::{
 use crate::parse::{parse, BinOp, Expr, UnaryOp};
 use std::collections::{HashMap, HashSet};
 use xlsx_types::{
-    count_matches, excel_ceiling, excel_ceiling_math, excel_floor, excel_floor_math, excel_num_eq,
-    excel_nper, excel_pmt, excel_round_15, ArrayMode, CellAddr, CellRef, Criterion, EvalError,
+    count_matches, excel_ceiling, excel_ceiling_math, excel_floor, excel_floor_math, excel_nper,
+    excel_num_eq, excel_pmt, excel_round_15, ArrayMode, CellAddr, CellRef, Criterion, EvalError,
     EvalSpec, EvalTarget, ExcelError, ExcelValue, RangeRef, Workbook,
 };
 
@@ -1701,7 +1701,7 @@ impl Interpreter {
         }
     }
 
-        fn collect_holiday_serials(&self, v: &ExcelValue, out: &mut Vec<f64>) -> Option<ExcelError> {
+    fn collect_holiday_serials(&self, v: &ExcelValue, out: &mut Vec<f64>) -> Option<ExcelError> {
         match v {
             ExcelValue::Array(rows) => {
                 for row in rows {

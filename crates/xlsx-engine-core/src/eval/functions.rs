@@ -17,8 +17,7 @@ use crate::dates::{
 use crate::text_format;
 use xlsx_types::{
     count_matches, excel_ceiling, excel_ceiling_math, excel_floor, excel_floor_math, excel_nper,
-    excel_pmt,
-    Criterion, EvalError, ExcelError, ExcelValue,
+    excel_pmt, Criterion, EvalError, ExcelError, ExcelValue,
 };
 
 pub(crate) fn dispatch(

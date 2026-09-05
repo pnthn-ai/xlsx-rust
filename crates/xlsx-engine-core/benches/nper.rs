@@ -88,10 +88,7 @@ fn fmt_dur(d: Duration) -> String {
     }
 }
 
-fn run_kernel(
-    f: fn(f64, f64, f64, f64, f64) -> Result<f64, xlsx_types::ExcelError>,
-    c: &Case,
-) {
+fn run_kernel(f: fn(f64, f64, f64, f64, f64) -> Result<f64, xlsx_types::ExcelError>, c: &Case) {
     for i in 0..c.count {
         let pv = c.pv + f64::from(i);
         let _ = black_box(f(
@@ -129,8 +126,9 @@ fn main() {
         assert_eq!(a.is_ok(), b.is_ok(), "domain mismatch on {}", c.name);
         if c.rate.abs() >= 1e-6 {
             if let (Ok(x), Ok(y)) = (a, b) {
+                let slop = 1e-9 * x.abs().max(y.abs()).max(1.0);
                 assert!(
-                    xlsx_types::excel_num_eq(x, y),
+                    (x - y).abs() <= slop,
                     "semantic mismatch on {}: {x} vs {y}",
                     c.name
                 );

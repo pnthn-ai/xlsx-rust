@@ -48,12 +48,14 @@ fn bench_nper(c: &mut Criterion) {
         // 10k rates in A; formula is still scalar (A1) — setup-scale only.
         let rates = numeric_column(10_000, |i| 0.01 + (i as f64) * 1e-6);
         let mut wb = rates.workbook;
-        wb.sheets[0]
-            .cells
-            .insert("B1".into(), xlsx_types::Cell::value(ExcelValue::Number(-200.0)));
-        wb.sheets[0]
-            .cells
-            .insert("C1".into(), xlsx_types::Cell::value(ExcelValue::Number(10_000.0)));
+        wb.sheets[0].cells.insert(
+            "B1".into(),
+            xlsx_types::Cell::value(ExcelValue::Number(-200.0)),
+        );
+        wb.sheets[0].cells.insert(
+            "C1".into(),
+            xlsx_types::Cell::value(ExcelValue::Number(10_000.0)),
+        );
         let spec_cells = formula_spec("nper.cells", "=NPER(A1,B1,C1)", wb);
         g.throughput(Throughput::Elements(1));
         g.bench_function("cell_refs", |b| {
