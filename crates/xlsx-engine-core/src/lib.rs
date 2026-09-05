@@ -13,6 +13,7 @@
 //! - [`eval::ifs`] — `IFS` pair-selection kernel (eager; no-match `#N/A`)
 //! - [`eval::unique`] — `UNIQUE` dynamic-array kernel (hash distinctness)
 //! - [`eval::filter`] — `FILTER` mask/select kernel (`#CALC!` / `if_empty`)
+//! - [`eval::hstack`] — `HSTACK` horizontal stack kernel (`#N/A` height pad)
 //! - [`eval::irr`] — Excel `IRR` Newton / secant kernel
 //!
 //! This crate depends only on [`xlsx_types`]. It never reads fixture expected
@@ -30,6 +31,7 @@ pub use ast::{BinOp, Expr, UnaryOp};
 pub use dates::{weekday as excel_weekday, weekday_naive as excel_weekday_naive};
 pub use eval::concat::{concat_naive_join, eval_concat_formula, ConcatBuilder, CONCAT_MAX_CHARS};
 pub use eval::filter::{select as excel_filter, select_naive as excel_filter_naive};
+pub use eval::hstack::{hstack as excel_hstack, hstack_naive as excel_hstack_naive};
 pub use eval::find::{find as excel_find, find_naive as excel_find_naive};
 pub use eval::ifs::{select as excel_ifs, select_naive as excel_ifs_naive};
 pub use eval::irr::{irr as excel_irr, irr_naive as excel_irr_naive, MAX_ITERS as IRR_MAX_ITERS};

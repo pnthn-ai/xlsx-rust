@@ -385,6 +385,7 @@ impl Interpreter {
             "HLOOKUP" => self.fn_hlookup(args, ctx),
             "XLOOKUP" => self.fn_xlookup(args, ctx),
             "FILTER" => self.fn_filter(args, ctx),
+            "HSTACK" => self.fn_hstack(args, ctx),
             "INDEX" => self.fn_index(args, ctx),
             "MATCH" => self.fn_match(args, ctx),
             "CHOOSE" => self.fn_choose(args, ctx),
@@ -1116,6 +1117,17 @@ impl Interpreter {
             Some(c) => Ok(rows[row_idx - 1][c].clone()),
             None => Ok(ExcelValue::Error(ExcelError::Na)),
         }
+    }
+
+    fn fn_hstack(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.is_empty() {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        let mut values = Vec::with_capacity(args.len());
+        for arg in args {
+            values.push(self.eval_expr(arg, ctx)?);
+        }
+        Ok(xlsx_engine_core::excel_hstack(&values))
     }
 
     fn fn_filter(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
