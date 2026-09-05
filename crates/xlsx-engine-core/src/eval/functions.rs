@@ -12,7 +12,7 @@ use super::{coerce, compare, excel_pow, Ctx, Evaluator};
 use crate::ast::Expr;
 use crate::dates::{
     date_serial, eomonth_serial, networkdays_count, serial_to_ymd, time_fraction, weekday,
-    workday_serial,
+    workday_serial, yearfrac,
 };
 use crate::text_format;
 use xlsx_types::{
@@ -115,6 +115,7 @@ pub(crate) fn dispatch(
         "MONTH" => fn_ymd(ev, args, ctx, YmdPart::Month),
         "DAY" => fn_ymd(ev, args, ctx, YmdPart::Day),
         "WEEKDAY" => fn_weekday(ev, args, ctx),
+        "YEARFRAC" => fn_yearfrac(ev, args, ctx),
         "LEFT" => fn_left_right(ev, args, ctx, true),
         "RIGHT" => fn_left_right(ev, args, ctx, false),
         "MID" => fn_mid(ev, args, ctx),
@@ -970,6 +971,41 @@ fn fn_weekday(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelV
         1
     };
     match weekday(serial, return_type, ctx.spec.options.date_system) {
+        Ok(n) => Ok(ExcelValue::Number(n)),
+        Err(e) => Ok(ExcelValue::Error(e)),
+    }
+}
+
+fn fn_yearfrac(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    if args.len() < 2 || args.len() > 3 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let start = match coerce::to_number(&ev.eval_scalar(&args[0], ctx)?) {
+        Ok(n) => n,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let end = match coerce::to_number(&ev.eval_scalar(&args[1], ctx)?) {
+        Ok(n) => n,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let basis = if args.len() >= 3 {
+        match coerce::to_number(&ev.eval_scalar(&args[2], ctx)?) {
+            Ok(n) => {
+                if !n.is_finite() {
+                    return Ok(ExcelValue::Error(ExcelError::Num));
+                }
+                let t = n.trunc();
+                if t < i32::MIN as f64 || t > i32::MAX as f64 {
+                    return Ok(ExcelValue::Error(ExcelError::Num));
+                }
+                t as i32
+            }
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        }
+    } else {
+        0
+    };
+    match yearfrac(start, end, basis, ctx.spec.options.date_system) {
         Ok(n) => Ok(ExcelValue::Number(n)),
         Err(e) => Ok(ExcelValue::Error(e)),
     }

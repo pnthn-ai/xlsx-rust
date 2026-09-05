@@ -163,7 +163,6 @@ pub fn time_fraction(hour: f64, minute: f64, second: f64) -> Result<f64, ExcelEr
     Ok((total % secs_per_day) / secs_per_day)
 }
 
-
 pub fn serial_to_ymd(serial: f64, system: DateSystem) -> Result<(i32, u32, u32), ExcelError> {
     if !serial.is_finite() {
         return Err(ExcelError::Num);
@@ -483,7 +482,6 @@ pub fn workday_serial_walk(
     Ok(from_1900_serial(cur, system)? as f64)
 }
 
-
 pub fn weekday_count_sat_sun(lo_1900: i32, hi_1900: i32) -> i32 {
     if hi_1900 < lo_1900 {
         return 0;
@@ -528,7 +526,6 @@ pub fn networkdays_count(
     }
     Ok((sign * work) as f64)
 }
-
 
 pub fn serial_as_1900_int(serial: f64, system: DateSystem) -> Result<i32, ExcelError> {
     if !serial.is_finite() || serial < 0.0 {
@@ -605,11 +602,255 @@ pub fn weekday_naive(serial: f64, return_type: i32, system: DateSystem) -> Resul
     map_weekday_return_type(type1_from_1900_serial(s1900), return_type)
 }
 
+/// Excel `YEARFRAC(start, end, [basis])` day-count bases 0–4.
+///
+/// Matches the Excel 2007 algorithm documented by David Wheeler and confirmed
+/// against Excel by Doug Mahugh (OASIS office-formula, 2008):
+///
+/// - Dates are truncated; `start`/`end` are swapped so the result is ≥ 0.
+/// - Basis 0: US (NASD) 30/360, including the last-day-of-February adjust
+///   (the documented Excel quirk when `start` is Feb 28/29).
+/// - Basis 1: actual/actual — 365 or 366 when the pair “appears ≤ 1 year”
+///   apart, otherwise actual days over the average length of the inclusive
+///   calendar years.
+/// - Basis 2 / 3: actual/360 and actual/365.
+/// - Basis 4: European 30/360 (31 → 30; February is never rewritten).
+///
+/// Reuses [`truncate_date_serial`], [`serial_to_ymd`], [`ymd_to_serial_1900`],
+/// [`is_excel_leap`], [`days_in_month`], and [`serial_of_year_start`] so the
+/// 1900 leap-year bug (serial 60) is inherited, not re-implemented. Invalid
+/// `basis` or an out-of-range serial is `#NUM!`.
+pub fn yearfrac(start: f64, end: f64, basis: i32, system: DateSystem) -> Result<f64, ExcelError> {
+    if !(0..=4).contains(&basis) {
+        return Err(ExcelError::Num);
+    }
+    let start_s = truncate_date_serial(start, system)?;
+    let end_s = truncate_date_serial(end, system)?;
+    if start_s == end_s {
+        return Ok(0.0);
+    }
+    let start_1900 = to_1900_serial(start_s, system)?;
+    let end_1900 = to_1900_serial(end_s, system)?;
+    let (lo, hi) = if start_1900 <= end_1900 {
+        (start_1900, end_1900)
+    } else {
+        (end_1900, start_1900)
+    };
+    let (y1, m1, d1) = serial_to_ymd(lo as f64, DateSystem::Excel1900)?;
+    let (y2, m2, d2) = serial_to_ymd(hi as f64, DateSystem::Excel1900)?;
+    let a = (y1, m1 as i32, d1 as i32);
+    let b = (y2, m2 as i32, d2 as i32);
+    let actual = (hi - lo) as f64;
+    match basis {
+        0 => Ok(basis0_us_nasd(a, b)),
+        1 => basis1_actual_actual(a, b, actual),
+        2 => Ok(actual / 360.0),
+        3 => Ok(actual / 365.0),
+        4 => Ok(basis4_eu_30_360(a, b)),
+        _ => Err(ExcelError::Num),
+    }
+}
+
+/// Year-walk `YEARFRAC` used as the bench baseline. Same day-count rules;
+/// serial unpack and inclusive-year length walk from 1900 instead of the
+/// closed-form helpers.
+pub fn yearfrac_naive(
+    start: f64,
+    end: f64,
+    basis: i32,
+    system: DateSystem,
+) -> Result<f64, ExcelError> {
+    if !(0..=4).contains(&basis) {
+        return Err(ExcelError::Num);
+    }
+    let start_s = truncate_date_serial(start, system)?;
+    let end_s = truncate_date_serial(end, system)?;
+    if start_s == end_s {
+        return Ok(0.0);
+    }
+    let start_1900 = to_1900_serial(start_s, system)?;
+    let end_1900 = to_1900_serial(end_s, system)?;
+    let (lo, hi) = if start_1900 <= end_1900 {
+        (start_1900, end_1900)
+    } else {
+        (end_1900, start_1900)
+    };
+    let (y1, m1, d1) = serial_to_ymd_walk(lo)?;
+    let (y2, m2, d2) = serial_to_ymd_walk(hi)?;
+    let a = (y1, m1, d1);
+    let b = (y2, m2, d2);
+    let actual = (hi - lo) as f64;
+    match basis {
+        0 => Ok(basis0_us_nasd(a, b)),
+        1 => basis1_actual_actual_walk(a, b, actual),
+        2 => Ok(actual / 360.0),
+        3 => Ok(actual / 365.0),
+        4 => Ok(basis4_eu_30_360(a, b)),
+        _ => Err(ExcelError::Num),
+    }
+}
+
+fn last_day_of_month(year: i32, month: i32, day: i32) -> bool {
+    month >= 1 && month <= 12 && day == days_in_month(year, month)
+}
+
+fn ymd_lt(y1: i32, m1: i32, d1: i32, y2: i32, m2: i32, d2: i32) -> bool {
+    (y1, m1, d1) < (y2, m2, d2)
+}
+
+/// US (NASD) 30/360. February last-day rules sit in the `else` chain after
+/// the 31st-day rules — matching Excel, including the documented “incorrect
+/// result when start is the last day of February”.
+fn basis0_us_nasd(a: (i32, i32, i32), b: (i32, i32, i32)) -> f64 {
+    let (y1, m1, mut d1) = a;
+    let (y2, m2, mut d2) = b;
+    if d1 == 31 && d2 == 31 {
+        d1 = 30;
+        d2 = 30;
+    } else if d1 == 31 {
+        d1 = 30;
+    } else if d1 == 30 && d2 == 31 {
+        d2 = 30;
+    } else if m1 == 2 && m2 == 2 && last_day_of_month(y1, m1, d1) && last_day_of_month(y2, m2, d2) {
+        d1 = 30;
+        d2 = 30;
+    } else if m1 == 2 && last_day_of_month(y1, m1, d1) {
+        d1 = 30;
+    }
+    let daydiff = (d2 + m2 * 30 + y2 * 360) - (d1 + m1 * 30 + y1 * 360);
+    daydiff as f64 / 360.0
+}
+
+fn basis4_eu_30_360(a: (i32, i32, i32), b: (i32, i32, i32)) -> f64 {
+    let (y1, m1, mut d1) = a;
+    let (y2, m2, mut d2) = b;
+    if d1 == 31 {
+        d1 = 30;
+    }
+    if d2 == 31 {
+        d2 = 30;
+    }
+    let daydiff = (d2 + m2 * 30 + y2 * 360) - (d1 + m1 * 30 + y1 * 360);
+    daydiff as f64 / 360.0
+}
+
+fn appears_le_year(a: (i32, i32, i32), b: (i32, i32, i32)) -> bool {
+    let (y1, m1, d1) = a;
+    let (y2, m2, d2) = b;
+    if y1 == y2 {
+        return true;
+    }
+    y1 + 1 == y2 && (m1 > m2 || (m1 == m2 && d1 >= d2))
+}
+
+fn feb29_strictly_between(a: (i32, i32, i32), b: (i32, i32, i32)) -> bool {
+    let (y1, m1, d1) = a;
+    let (y2, m2, d2) = b;
+    for y in y1..=y2 {
+        if is_excel_leap(y) && ymd_lt(y1, m1, d1, y, 2, 29) && ymd_lt(y, 2, 29, y2, m2, d2) {
+            return true;
+        }
+    }
+    false
+}
+
+fn basis1_year_length(a: (i32, i32, i32), b: (i32, i32, i32)) -> f64 {
+    let (y1, _m1, _d1) = a;
+    let (y2, m2, d2) = b;
+    if y1 == y2 && is_excel_leap(y1) {
+        366.0
+    } else if feb29_strictly_between(a, b) || (m2 == 2 && d2 == 29) {
+        366.0
+    } else {
+        365.0
+    }
+}
+
+fn basis1_actual_actual(
+    a: (i32, i32, i32),
+    b: (i32, i32, i32),
+    actual: f64,
+) -> Result<f64, ExcelError> {
+    if appears_le_year(a, b) {
+        return Ok(actual / basis1_year_length(a, b));
+    }
+    let (y1, _, _) = a;
+    let (y2, _, _) = b;
+    let num_years = (y2 - y1) + 1;
+    let days_in_years = serial_of_year_start(y2 + 1)? - serial_of_year_start(y1)?;
+    Ok(actual * (num_years as f64) / (days_in_years as f64))
+}
+
+fn serial_of_year_start_walk(year: i32) -> i32 {
+    if year < 1900 {
+        let mut serial = 1;
+        let mut y = 1900;
+        while y > year {
+            y -= 1;
+            serial -= if is_excel_leap(y) { 366 } else { 365 };
+        }
+        return serial;
+    }
+    let mut serial = 1;
+    for y in 1900..year {
+        serial += if is_excel_leap(y) { 366 } else { 365 };
+    }
+    serial
+}
+
+fn serial_to_ymd_walk(s: i32) -> Result<(i32, i32, i32), ExcelError> {
+    if s < 0 || s > EXCEL_MAX_SERIAL_1900 {
+        return Err(ExcelError::Num);
+    }
+    if s == 0 {
+        return Ok((1900, 1, 0));
+    }
+    if s == 60 {
+        return Ok((1900, 2, 29));
+    }
+    let mut rem = s;
+    let mut year = 1900;
+    loop {
+        let len = if is_excel_leap(year) { 366 } else { 365 };
+        if rem <= len {
+            break;
+        }
+        rem -= len;
+        year += 1;
+        if year > 9999 {
+            return Err(ExcelError::Num);
+        }
+    }
+    let mut month = 1;
+    while month <= 12 {
+        let dim = days_in_month(year, month);
+        if rem <= dim {
+            return Ok((year, month, rem));
+        }
+        rem -= dim;
+        month += 1;
+    }
+    Err(ExcelError::Num)
+}
+
+fn basis1_actual_actual_walk(
+    a: (i32, i32, i32),
+    b: (i32, i32, i32),
+    actual: f64,
+) -> Result<f64, ExcelError> {
+    if appears_le_year(a, b) {
+        return Ok(actual / basis1_year_length(a, b));
+    }
+    let (y1, _, _) = a;
+    let (y2, _, _) = b;
+    let num_years = (y2 - y1) + 1;
+    let days_in_years = serial_of_year_start_walk(y2 + 1) - serial_of_year_start_walk(y1);
+    Ok(actual * (num_years as f64) / (days_in_years as f64))
+}
 
 #[cfg(test)]
 mod tests {
     use super::*;
-
 
     #[test]
     fn known_1900_serials() {
@@ -931,12 +1172,7 @@ mod tests {
             weekday(EXCEL_MAX_SERIAL_1900 as f64, 1, DateSystem::Excel1900).unwrap(),
             6.0
         );
-        assert!(weekday(
-            (EXCEL_MAX_SERIAL_1900 + 1) as f64,
-            1,
-            DateSystem::Excel1900
-        )
-        .is_err());
+        assert!(weekday((EXCEL_MAX_SERIAL_1900 + 1) as f64, 1, DateSystem::Excel1900).is_err());
     }
 
     #[test]
@@ -1101,4 +1337,127 @@ mod tests {
         }
     }
 
+    fn yf(start: f64, end: f64, basis: i32) -> f64 {
+        yearfrac(start, end, basis, DateSystem::Excel1900).unwrap()
+    }
+
+    #[test]
+    fn yearfrac_ms_examples() {
+        // support.microsoft.com: 1-Jan-2012 → 30-Jul-2012.
+        let start = d(2012, 1, 1);
+        let end = d(2012, 7, 30);
+        assert_eq!(start, 40909.0);
+        assert_eq!(end, 41120.0);
+        assert_eq!(end - start, 211.0);
+        assert_eq!(yf(start, end, 0), 209.0 / 360.0);
+        assert_eq!(yf(start, end, 1), 211.0 / 366.0);
+        assert_eq!(yf(start, end, 2), 211.0 / 360.0);
+        assert_eq!(yf(start, end, 3), 211.0 / 365.0);
+        assert_eq!(yf(start, end, 4), 209.0 / 360.0);
+        assert_eq!(yf(end, start, 0), 209.0 / 360.0);
+        assert_eq!(yf(start, start, 0), 0.0);
+    }
+
+    #[test]
+    fn yearfrac_basis0_31st_and_february() {
+        // Both 31sts → 30/30: Jan 31 → Mar 31 is 60/360.
+        assert_eq!(yf(d(2012, 1, 31), d(2012, 3, 31), 0), 60.0 / 360.0);
+        // date1 day 30 and date2 day 31 → date2 becomes 30.
+        assert_eq!(yf(d(2012, 1, 30), d(2012, 3, 31), 0), 60.0 / 360.0);
+        // date1 day < 30: date2 stays 31 (62/360).
+        assert_eq!(yf(d(2012, 1, 29), d(2012, 3, 31), 0), 62.0 / 360.0);
+        // Last day of February start: Excel keeps date2=31 (documented quirk).
+        assert_eq!(yf(d(2012, 2, 29), d(2012, 3, 31), 0), 31.0 / 360.0);
+        assert_eq!(yf(d(2011, 2, 28), d(2011, 3, 31), 0), 31.0 / 360.0);
+        // Both last day of February → 30/30.
+        assert_eq!(yf(d(2012, 2, 29), d(2016, 2, 29), 0), 4.0);
+        assert_eq!(yf(d(2011, 2, 28), d(2012, 2, 29), 0), 1.0);
+        // End is Feb 28 of a leap year — not last-of-month — only start adjusts.
+        assert_eq!(yf(d(2011, 2, 28), d(2012, 2, 28), 0), 358.0 / 360.0);
+        // European 30/360 never rewrites February (29 stays 29; 31 → 30).
+        assert_eq!(yf(d(2012, 1, 31), d(2012, 3, 31), 4), 60.0 / 360.0);
+        assert_eq!(yf(d(2012, 2, 29), d(2012, 3, 31), 4), 31.0 / 360.0);
+    }
+
+    #[test]
+    fn yearfrac_basis1_year_length() {
+        // Same civil anniversary across a non-leap → leap boundary: 365/365.
+        assert_eq!(yf(d(2015, 1, 1), d(2016, 1, 1), 1), 1.0);
+        // One extra day: average of 2015+2016 = 365.5.
+        assert_eq!(yf(d(2015, 1, 1), d(2016, 1, 2), 1), 366.0 / 365.5);
+        assert_eq!(yf(d(2016, 2, 27), d(2016, 2, 29), 1), 2.0 / 366.0);
+        // Leap day strictly between Jan 1 and the next Jan 1.
+        assert_eq!(yf(d(2012, 1, 1), d(2013, 1, 1), 1), 1.0);
+        assert_eq!(yf(d(2011, 1, 1), d(2012, 1, 1), 1), 1.0);
+        // Two full calendar years: average (365+366+365)/3.
+        let multi = 731.0 * 3.0 / 1096.0;
+        assert_eq!(yf(d(2011, 1, 1), d(2013, 1, 1), 1), multi);
+    }
+
+    #[test]
+    fn yearfrac_serial_60_leap_bug() {
+        let s = DateSystem::Excel1900;
+        // 1900 is a leap year; Feb 28 is *not* last-of-month (serial 60 is).
+        assert_eq!(yearfrac(59.0, 60.0, 1, s).unwrap(), 1.0 / 366.0);
+        assert_eq!(yearfrac(60.0, 61.0, 1, s).unwrap(), 1.0 / 366.0);
+        assert_eq!(yearfrac(1.0, 61.0, 1, s).unwrap(), 60.0 / 366.0);
+        assert_eq!(yearfrac(60.0, 61.0, 0, s).unwrap(), 1.0 / 360.0);
+        assert_eq!(yearfrac(59.0, 61.0, 0, s).unwrap(), 3.0 / 360.0);
+        assert_eq!(yearfrac(60.0, 91.0, 0, s).unwrap(), 31.0 / 360.0);
+        assert_eq!(yearfrac(0.0, 31.0, 0, s).unwrap(), 31.0 / 360.0);
+    }
+
+    #[test]
+    fn yearfrac_truncates_and_rejects() {
+        let s = DateSystem::Excel1900;
+        let start = d(2012, 1, 1);
+        let end = d(2012, 7, 30);
+        assert_eq!(
+            yearfrac(start + 0.9, end + 0.1, 0, s).unwrap(),
+            209.0 / 360.0
+        );
+        assert_eq!(yearfrac(start, end, 4, s).unwrap(), 209.0 / 360.0);
+        assert_eq!(yearfrac(-1.0, 10.0, 0, s), Err(ExcelError::Num));
+        assert_eq!(yearfrac(1.0, 10.0, 5, s), Err(ExcelError::Num));
+        assert_eq!(yearfrac(1.0, 10.0, -1, s), Err(ExcelError::Num));
+        assert_eq!(
+            yearfrac(1.0, (EXCEL_MAX_SERIAL_1900 as f64) + 1.0, 0, s),
+            Err(ExcelError::Num)
+        );
+    }
+
+    #[test]
+    fn yearfrac_system_1904() {
+        let s = DateSystem::Excel1904;
+        // 0 = 1904-01-01, 31 = 1904-02-01 → US 30/360 is 30/360.
+        assert_eq!(yearfrac(0.0, 31.0, 0, s).unwrap(), 30.0 / 360.0);
+        assert_eq!(yearfrac(0.0, 366.0, 1, s).unwrap(), 1.0);
+        assert_eq!(yearfrac(0.0, 0.0, 0, s).unwrap(), 0.0);
+    }
+
+    #[test]
+    fn yearfrac_matches_naive_on_prefix() {
+        let s = DateSystem::Excel1900;
+        for start in 0..80 {
+            for end in start..80 {
+                for basis in 0..=4 {
+                    let fast = yearfrac(start as f64, end as f64, basis, s);
+                    let walk = yearfrac_naive(start as f64, end as f64, basis, s);
+                    assert_eq!(fast, walk, "YEARFRAC({start},{end},{basis})");
+                }
+            }
+        }
+        for &(start, end) in &[
+            (d(2011, 1, 1), d(2013, 1, 1)),
+            (d(2015, 1, 1), d(2016, 1, 2)),
+            (d(1900, 1, 1), d(2000, 1, 1)),
+            (d(2012, 2, 29), d(2012, 3, 31)),
+        ] {
+            for basis in 0..=4 {
+                let fast = yearfrac(start, end, basis, s).unwrap();
+                let walk = yearfrac_naive(start, end, basis, s).unwrap();
+                assert_eq!(fast, walk, "YEARFRAC({start},{end},{basis})");
+            }
+        }
+    }
 }

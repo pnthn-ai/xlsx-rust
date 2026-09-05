@@ -9,6 +9,7 @@
 //! - [`eval::functions`] also dispatches `SUMIF` / `COUNTIF` / `SUMPRODUCT` / `SUBSTITUTE`
 //! - [`eval::concat`] — Excel `CONCAT` (range/array flatten + 32767 cap)
 //! - [`dates::weekday`] — O(1) Excel `WEEKDAY` on the date serial
+//! - [`dates::yearfrac`] — Excel `YEARFRAC` day-count bases 0–4
 //! - [`eval::switch`] — Excel `SWITCH` (exact `=` match, short-circuit vs `IF`)
 //! - [`eval::ifs`] — `IFS` pair-selection kernel (eager; no-match `#N/A`)
 //! - [`eval::unique`] — `UNIQUE` dynamic-array kernel (hash distinctness)
@@ -27,7 +28,10 @@ pub mod text_format;
 pub use dates::workday_serial;
 
 pub use ast::{BinOp, Expr, UnaryOp};
-pub use dates::{weekday as excel_weekday, weekday_naive as excel_weekday_naive};
+pub use dates::{
+    weekday as excel_weekday, weekday_naive as excel_weekday_naive, yearfrac as excel_yearfrac,
+    yearfrac_naive as excel_yearfrac_naive,
+};
 pub use eval::concat::{concat_naive_join, eval_concat_formula, ConcatBuilder, CONCAT_MAX_CHARS};
 pub use eval::filter::{select as excel_filter, select_naive as excel_filter_naive};
 pub use eval::find::{find as excel_find, find_naive as excel_find_naive};
