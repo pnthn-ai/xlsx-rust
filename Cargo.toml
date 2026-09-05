@@ -5,6 +5,7 @@ members = [
     "crates/xlsx-oracle",
     "crates/xlsx-verify",
     "crates/xlsx-engine",
+    "crates/xlsx-engine-core",
 ]
 
 [workspace.package]
@@ -13,13 +14,14 @@ edition = "2021"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/pnthn-ai/xlsx-rust"
 rust-version = "1.83"
-description = "Headless XLSX calculation engine — verification foundation"
+description = "Headless XLSX calculation engine — calc-core + verification gate"
 
 [workspace.dependencies]
 xlsx-types = { path = "crates/xlsx-types" }
 xlsx-oracle = { path = "crates/xlsx-oracle" }
 xlsx-verify = { path = "crates/xlsx-verify" }
 xlsx-engine = { path = "crates/xlsx-engine" }
+xlsx-engine-core = { path = "crates/xlsx-engine-core" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 thiserror = "2"

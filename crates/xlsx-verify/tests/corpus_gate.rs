@@ -1,7 +1,8 @@
-//! End-to-end gate: seed-compliant must pass the corpus; naive must fail quirks.
+//! End-to-end gate: calc-core / seed-compliant must pass; naive must fail quirks.
 
 use std::path::PathBuf;
 use xlsx_engine::{NaiveEngine, SeedCompliantEngine};
+use xlsx_engine_core::CalcCoreEngine;
 use xlsx_oracle::FixtureOracle;
 use xlsx_verify::{Corpus, Status, Verifier};
 
@@ -11,6 +12,21 @@ fn fixtures_root() -> PathBuf {
 
 fn load_corpus() -> Corpus {
     Corpus::load(fixtures_root()).expect("fixtures/ must load")
+}
+
+#[test]
+fn calc_core_passes_entire_corpus() {
+    let corpus = load_corpus();
+    assert!(
+        !corpus.cases.is_empty(),
+        "seed corpus should contain fixtures"
+    );
+    let report = Verifier::default().run(&CalcCoreEngine::new(), &FixtureOracle, &corpus);
+    assert!(
+        report.ok(),
+        "calc-core must pass the corpus:\n{}",
+        report.to_text()
+    );
 }
 
 #[test]

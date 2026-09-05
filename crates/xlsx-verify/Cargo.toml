@@ -10,6 +10,7 @@ description = "Correctness verification layer: corpus, compare, report, and CLI 
 xlsx-types = { workspace = true }
 xlsx-oracle = { workspace = true }
 xlsx-engine = { workspace = true }
+xlsx-engine-core = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }

@@ -21,7 +21,7 @@ enum Format {
     version
 )]
 struct Args {
-    /// Candidate id (`seed-compliant`, `naive`, or a registered custom id).
+    /// Candidate id (`calc-core`, `seed-compliant`, `naive`, or a registered custom id).
     #[arg(short, long)]
     candidate: Option<String>,
 
