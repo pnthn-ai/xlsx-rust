@@ -16,9 +16,7 @@ use xlsx_engine_core::{
     excel_switch_first_match, excel_switch_first_match_naive, excel_switch_pick_evaluated,
     CalcCoreEngine,
 };
-use xlsx_types::{
-    Cell, CellAddr, EvalSpec, EvalTarget, ExcelValue, Sheet, Workbook,
-};
+use xlsx_types::{Candidate, Cell, CellAddr, EvalSpec, EvalTarget, ExcelValue, Sheet, Workbook};
 
 const ITERS_KERNEL: u32 = 80;
 const ITERS_FORMULA: u32 = 40;
@@ -73,25 +71,26 @@ fn spec(wb: Workbook, formula: &str) -> EvalSpec {
     }
 }
 
-fn switch_pairs(n: usize, hit: usize, result_formula: &str) -> String {
-    let mut args = String::from("B1");
+fn switch_pairs(expr: &str, n: usize, hit: usize, miss_result: &str) -> String {
+    let mut args = expr.to_string();
     for i in 1..=n {
         args.push_str(&format!(", {i}, "));
         if i == hit {
             args.push_str(&format!("{i}"));
         } else {
-            args.push_str(result_formula);
+            args.push_str(miss_result);
         }
     }
     format!("=SWITCH({args})")
 }
 
-fn nested_if_pairs(n: usize, hit: usize) -> String {
-    // IF(B1=1, 1, IF(B1=2, 2, …)) — re-evaluates B1 (and thus SUM) each level.
-    let mut s = format!("{hit}");
+fn nested_if_pairs(expr: &str, n: usize, hit: usize) -> String {
+    // IF(expr=1, …, IF(expr=2, …)) re-evaluates `expr` (and thus SUM) each level.
+    // Fallback is NA() so a miss matches SWITCH's #N/A (not IF's FALSE).
+    let mut s = String::from("NA()");
     for i in (1..=n).rev() {
         let result = if i == hit { format!("{i}") } else { "0".into() };
-        s = format!("IF(B1={i}, {result}, {s})");
+        s = format!("IF({expr}={i}, {result}, {s})");
     }
     format!("={s}")
 }
@@ -116,7 +115,11 @@ fn main() {
     let kernel_cases: [(&str, ExcelValue, Vec<ExcelValue>); 3] = [
         ("126 numeric pairs, last hits", expr_late, pairs_late),
         ("126 numeric pairs, miss", expr_miss, pairs_miss),
-        ("126 text pairs, last hits (casefold)", expr_text, pairs_text),
+        (
+            "126 text pairs, last hits (casefold)",
+            expr_text,
+            pairs_text,
+        ),
     ];
     for (name, expr, values) in kernel_cases {
         let naive = time_it(ITERS_KERNEL, || {
@@ -147,14 +150,17 @@ fn main() {
     }
 
     let engine = CalcCoreEngine::new();
-    let wb = sum_range_wb(4000);
-    let closed_form: f64 = (4000 * 4001 / 2) as f64;
+    let rows = 4000u32;
+    let wb = sum_range_wb(rows);
+    let closed_form: f64 = (rows * (rows + 1) / 2) as f64;
 
-    // SWITCH vs nested IF: both read B1 (=SUM(A1:A4000)). SWITCH evals it once;
-    // 16-deep IF evals it once per level (parser depth stays under the 64 cap).
+    // SWITCH vs nested IF: expression is SUM/divisor (= hit). SWITCH evals it
+    // once; 16-deep IF evals it once per level (stack stays under the 64 cap).
     let n_if = 16usize;
-    let switch_late = switch_pairs(n_if, n_if, "0");
-    let if_late = nested_if_pairs(n_if, n_if);
+    let divisor = closed_form / n_if as f64;
+    let expensive = format!("B1/{divisor}");
+    let switch_late = switch_pairs(&expensive, n_if, n_if, "0");
+    let if_late = nested_if_pairs(&expensive, n_if, n_if);
     let switch_spec = spec(wb.clone(), &switch_late);
     let if_spec = spec(wb.clone(), &if_late);
 
@@ -180,7 +186,7 @@ fn main() {
     // Eager vs short-circuit: unused results are SUM(A1:A4000). SWITCH(1, 1, 1,
     // 2, SUM(...), …) must not evaluate those SUMs.
     let n_eager = 32usize;
-    let short_f = switch_pairs(n_eager, 1, "SUM(A1:A4000)");
+    let short_f = switch_pairs("1", n_eager, 1, "SUM(A1:A4000)");
     let short_spec = spec(wb.clone(), &short_f);
     let short_t = time_it(ITERS_FORMULA, || {
         let _ = black_box(engine.evaluate(black_box(&short_spec)).unwrap());
@@ -222,8 +228,5 @@ fn main() {
             ExcelValue::Number(closed_form)
         });
     }
-    assert_eq!(
-        excel_switch_pick_evaluated(&check),
-        ExcelValue::Number(1.0)
-    );
+    assert_eq!(excel_switch_pick_evaluated(&check), ExcelValue::Number(1.0));
 }

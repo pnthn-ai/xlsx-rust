@@ -214,7 +214,13 @@ mod tests {
             ExcelValue::Error(ExcelError::Div0)
         );
         assert_eq!(
-            pick_evaluated(&[n(1.0), ExcelValue::Error(ExcelError::Na), t("a"), n(1.0), t("b")]),
+            pick_evaluated(&[
+                n(1.0),
+                ExcelValue::Error(ExcelError::Na),
+                t("a"),
+                n(1.0),
+                t("b")
+            ]),
             ExcelValue::Error(ExcelError::Na)
         );
     }
