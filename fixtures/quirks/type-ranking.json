@@ -1,0 +1,165 @@
+[
+  {
+    "id": "rank.false-gt-zero",
+    "description": "FALSE>0 is TRUE by type rank, even though FALSE=0 is TRUE",
+    "tags": ["comparisons", "ranking"],
+    "quirks": ["type-comparison-ranking", "bool-number-equality"],
+    "formula": "=FALSE>0",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "rank.false-lt-zero",
+    "description": "FALSE<0 is FALSE — logicals rank above numbers",
+    "tags": ["comparisons", "ranking"],
+    "quirks": ["type-comparison-ranking"],
+    "formula": "=FALSE<0",
+    "expected": { "bool": false }
+  },
+  {
+    "id": "rank.false-le-zero",
+    "description": "FALSE<=0 is FALSE because ordering does not use bool-number equality",
+    "tags": ["comparisons", "ranking"],
+    "quirks": ["type-comparison-ranking", "bool-number-equality"],
+    "formula": "=FALSE<=0",
+    "expected": { "bool": false }
+  },
+  {
+    "id": "rank.false-ge-zero",
+    "description": "FALSE>=0 is TRUE (logical > number)",
+    "tags": ["comparisons", "ranking"],
+    "quirks": ["type-comparison-ranking"],
+    "formula": "=FALSE>=0",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "rank.true-gt-one",
+    "description": "TRUE>1 is TRUE by type rank, even though TRUE=1",
+    "tags": ["comparisons", "ranking"],
+    "quirks": ["type-comparison-ranking", "bool-number-equality"],
+    "formula": "=TRUE>1",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "rank.true-le-one",
+    "description": "TRUE<=1 is FALSE under ranking",
+    "tags": ["comparisons", "ranking"],
+    "quirks": ["type-comparison-ranking"],
+    "formula": "=TRUE<=1",
+    "expected": { "bool": false }
+  },
+  {
+    "id": "rank.true-gt-text",
+    "description": "Logicals rank above text, so TRUE>\"zzz\"",
+    "tags": ["comparisons", "ranking"],
+    "quirks": ["type-comparison-ranking"],
+    "formula": "=TRUE>\"zzz\"",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "rank.text-gt-true",
+    "description": "\"TRUE\">TRUE is FALSE (logical > text)",
+    "tags": ["comparisons", "ranking"],
+    "quirks": ["type-comparison-ranking"],
+    "formula": "=\"TRUE\">TRUE",
+    "expected": { "bool": false }
+  },
+  {
+    "id": "rank.text-gt-large-number",
+    "description": "Any text is greater than any number, including a huge one",
+    "tags": ["comparisons", "ranking"],
+    "quirks": ["type-comparison-ranking"],
+    "formula": "=\" \">999999",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "rank.empty-string-gt-number",
+    "description": "\"\">0 is TRUE — empty string is text, not a blank cell",
+    "tags": ["comparisons", "ranking"],
+    "quirks": ["type-comparison-ranking", "empty-cell-duality"],
+    "formula": "=\"\">0",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "rank.numeric-text-gt-number",
+    "description": "\"2\">1 is TRUE by type rank, not by numeric value",
+    "tags": ["comparisons", "ranking", "coercion"],
+    "quirks": ["type-comparison-ranking", "equality-vs-arithmetic-coercion"],
+    "formula": "=\"2\">1",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "rank.text-lexicographic",
+    "description": "\"10\"<\"2\" is TRUE — text compares lexicographically",
+    "tags": ["comparisons", "ranking"],
+    "quirks": ["type-comparison-ranking"],
+    "formula": "=\"10\"<\"2\"",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "rank.false-lt-true",
+    "description": "FALSE<TRUE",
+    "tags": ["comparisons", "ranking"],
+    "quirks": ["type-comparison-ranking"],
+    "formula": "=FALSE<TRUE",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "rank.true-gt-false",
+    "description": "TRUE>FALSE",
+    "tags": ["comparisons", "ranking"],
+    "quirks": ["type-comparison-ranking"],
+    "formula": "=TRUE>FALSE",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "rank.text-casefold-lt",
+    "description": "\"A\"<\"a\" is FALSE because text order is case-insensitive",
+    "tags": ["comparisons"],
+    "quirks": ["case-insensitive-text"],
+    "formula": "=\"A\"<\"a\"",
+    "expected": { "bool": false }
+  },
+  {
+    "id": "rank.text-casefold-le",
+    "description": "\"A\"<=\"a\" is TRUE (they compare equal)",
+    "tags": ["comparisons"],
+    "quirks": ["case-insensitive-text"],
+    "formula": "=\"A\"<=\"a\"",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "rank.text-order-abc",
+    "description": "\"ABC\"<\"ABD\"",
+    "tags": ["comparisons"],
+    "quirks": ["case-insensitive-text"],
+    "formula": "=\"ABC\"<\"ABD\"",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "rank.blank-lt-one",
+    "description": "A blank cell ranks as the number 0, so A1<1",
+    "tags": ["comparisons", "empty"],
+    "quirks": ["empty-cell-duality", "type-comparison-ranking"],
+    "formula": "=A1<1",
+    "expected": { "bool": true },
+    "workbook": { "sheets": [{ "name": "Sheet1", "cells": {} }] }
+  },
+  {
+    "id": "rank.blank-gt-zero",
+    "description": "Blank > 0 is FALSE (blank orders as 0)",
+    "tags": ["comparisons", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=A1>0",
+    "expected": { "bool": false },
+    "workbook": { "sheets": [{ "name": "Sheet1", "cells": {} }] }
+  },
+  {
+    "id": "rank.blank-lt-empty-string",
+    "description": "Blank < \"\" is TRUE by rank (number-like < text) even though blank=\"\" is TRUE",
+    "tags": ["comparisons", "empty"],
+    "quirks": ["empty-cell-duality", "type-comparison-ranking"],
+    "formula": "=A1<\"\"",
+    "expected": { "bool": true },
+    "workbook": { "sheets": [{ "name": "Sheet1", "cells": {} }] }
+  }
+]

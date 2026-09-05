@@ -1,0 +1,146 @@
+[
+  {
+    "id": "coerce.text-times",
+    "description": "\"2\"*2 is 4 — arithmetic coerces numeric text",
+    "tags": ["coercion", "arithmetic"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=\"2\"*2",
+    "expected": { "number": 4 }
+  },
+  {
+    "id": "coerce.text-minus",
+    "description": "\"2\"-1 is 1",
+    "tags": ["coercion", "arithmetic"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=\"2\"-1",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "coerce.text-div",
+    "description": "\"2\"/2 is 1",
+    "tags": ["coercion", "arithmetic"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=\"2\"/2",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "coerce.text-pow",
+    "description": "\"2\"^3 is 8",
+    "tags": ["coercion", "arithmetic"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=\"2\"^3",
+    "expected": { "number": 8 }
+  },
+  {
+    "id": "coerce.text-eq-still-false",
+    "description": "\"2.0\"=2 is still FALSE",
+    "tags": ["coercion", "comparisons"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=\"2.0\"=2",
+    "expected": { "bool": false }
+  },
+  {
+    "id": "coerce.text-ne-number",
+    "description": "\"2\"<>2 is TRUE",
+    "tags": ["coercion", "comparisons"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=\"2\"<>2",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "coerce.double-unary-text",
+    "description": "--\"2\" coerces text to the number 2",
+    "tags": ["coercion", "unary"],
+    "quirks": ["equality-vs-arithmetic-coercion", "percent-unary"],
+    "formula": "=--\"2\"",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "coerce.double-unary-eq",
+    "description": "--\"2\"=2 is TRUE after unary coercion",
+    "tags": ["coercion", "comparisons"],
+    "quirks": ["equality-vs-arithmetic-coercion", "percent-unary"],
+    "formula": "=--\"2\"=2",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "coerce.unary-plus-text",
+    "description": "+\"2\" is 2",
+    "tags": ["coercion", "unary"],
+    "quirks": ["equality-vs-arithmetic-coercion", "percent-unary"],
+    "formula": "=+\"2\"",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "coerce.value-fn-eq",
+    "description": "VALUE(\"2\")=2 is TRUE",
+    "tags": ["coercion", "functions"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=VALUE(\"2\")=2",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "coerce.n-of-numeric-text",
+    "description": "N(\"2\") is 0 — N does not parse numeric text",
+    "tags": ["coercion", "functions"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=N(\"2\")",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "coerce.non-numeric-text-plus",
+    "description": "\"abc\"+1 is #VALUE!",
+    "tags": ["coercion", "errors"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=\"abc\"+1",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "coerce.trimmed-numeric-text",
+    "description": "Leading/trailing spaces are trimmed when coercing numeric text",
+    "tags": ["coercion", "arithmetic"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=\" 2 \"+1",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "coerce.scientific-text",
+    "description": "\"2e2\"+0 parses scientific notation",
+    "tags": ["coercion", "arithmetic"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=\"2e2\"+0",
+    "expected": { "number": 200 }
+  },
+  {
+    "id": "coerce.concat-does-not-parse",
+    "description": "\"2\"&1 is the text \"21\", not addition",
+    "tags": ["coercion", "arithmetic"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=\"2\"&1",
+    "expected": { "text": "21" }
+  },
+  {
+    "id": "coerce.true-times-five",
+    "description": "TRUE*5 is 5",
+    "tags": ["coercion", "arithmetic"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=TRUE*5",
+    "expected": { "number": 5 }
+  },
+  {
+    "id": "coerce.false-times-five",
+    "description": "FALSE*5 is 0",
+    "tags": ["coercion", "arithmetic"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=FALSE*5",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "coerce.true-plus-true",
+    "description": "TRUE+TRUE is 2",
+    "tags": ["coercion", "arithmetic"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=TRUE+TRUE",
+    "expected": { "number": 2 }
+  }
+]

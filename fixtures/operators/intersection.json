@@ -1,0 +1,70 @@
+[
+  {
+    "id": "range.intersect-single-cell",
+    "description": "Space intersection of overlapping ranges is the shared cell",
+    "tags": ["operators", "range"],
+    "quirks": ["range-operators"],
+    "formula": "=A1:B2 B2",
+    "expected": { "number": 4 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "number": 2 },
+          "A2": { "number": 3 }, "B2": { "number": 4 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "range.intersect-block",
+    "description": "Intersection of A1:B2 and B1:B2 is the B column slice",
+    "tags": ["operators", "range"],
+    "quirks": ["range-operators"],
+    "formula": "=SUM(A1:B2 B1:B2)",
+    "expected": { "number": 6 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "number": 2 },
+          "A2": { "number": 3 }, "B2": { "number": 4 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "range.intersect-empty-null",
+    "description": "Non-overlapping intersection is #NULL!",
+    "tags": ["operators", "range", "errors"],
+    "quirks": ["range-operators"],
+    "formula": "=A1:A2 C1:C2",
+    "expected": { "error": "#NULL!" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "A2": { "number": 2 },
+          "C1": { "number": 3 }, "C2": { "number": 4 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "range.union-via-sum-args",
+    "description": "SUM of two ranges is the expressible form of union in this model",
+    "tags": ["operators", "range", "sum"],
+    "quirks": ["range-operators"],
+    "formula": "=SUM(A1:A2, C1:C2)",
+    "expected": { "number": 10 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "A2": { "number": 2 },
+          "C1": { "number": 3 }, "C2": { "number": 4 }
+        }
+      }]
+    }
+  }
+]

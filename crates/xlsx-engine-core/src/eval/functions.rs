@@ -1,10 +1,10 @@
-//! Built-in worksheet functions implemented for the seed corpus and as a
-//! foundation for later library work.
+//! Worksheet functions implemented with Excel-compatible semantics.
 //!
 //! Unknown names return `#NAME?` (an Excel value, not [`EvalError`]).
 
-use super::{coerce, compare, Ctx, Evaluator};
+use super::{coerce, compare, excel_pow, Ctx, Evaluator};
 use crate::ast::Expr;
+use crate::dates::{date_serial, serial_to_ymd, time_fraction};
 use xlsx_types::{EvalError, ExcelError, ExcelValue};
 
 pub(crate) fn dispatch(
@@ -14,76 +14,113 @@ pub(crate) fn dispatch(
     ctx: &mut Ctx<'_>,
 ) -> Result<ExcelValue, EvalError> {
     match name.to_ascii_uppercase().as_str() {
-        "SUM" => fn_sum(ev, args, ctx),
+        "SUM" => fn_agg(ev, args, ctx, AggKind::Sum),
+        "PRODUCT" => fn_agg(ev, args, ctx, AggKind::Product),
+        "AVERAGE" => fn_agg(ev, args, ctx, AggKind::Average),
+        "MIN" => fn_agg(ev, args, ctx, AggKind::Min),
+        "MAX" => fn_agg(ev, args, ctx, AggKind::Max),
+        "COUNT" => fn_agg(ev, args, ctx, AggKind::Count),
+        "COUNTA" => fn_agg(ev, args, ctx, AggKind::CountA),
+        "COUNTBLANK" => fn_agg(ev, args, ctx, AggKind::CountBlank),
         "IF" => fn_if(ev, args, ctx),
         "IFERROR" => fn_iferror(ev, args, ctx),
+        "IFNA" => fn_ifna(ev, args, ctx),
+        "AND" => fn_and_or(ev, args, ctx, AndOr::And),
+        "OR" => fn_and_or(ev, args, ctx, AndOr::Or),
+        "XOR" => fn_and_or(ev, args, ctx, AndOr::Xor),
+        "NOT" => fn_not(ev, args, ctx),
         "VLOOKUP" => fn_vlookup(ev, args, ctx),
-        "ABS" => fn_abs(ev, args, ctx),
+        "HLOOKUP" => fn_hlookup(ev, args, ctx),
+        "XLOOKUP" => fn_xlookup(ev, args, ctx),
+        "INDEX" => fn_index(ev, args, ctx),
+        "MATCH" => fn_match(ev, args, ctx),
+        "CHOOSE" => fn_choose(ev, args, ctx),
+        "ABS" => fn_unary_num(ev, args, ctx, |n| ExcelValue::Number(n.abs())),
+        "SIGN" => fn_unary_num(ev, args, ctx, |n| {
+            ExcelValue::Number(if n > 0.0 {
+                1.0
+            } else if n < 0.0 {
+                -1.0
+            } else {
+                0.0
+            })
+        }),
+        "INT" => fn_unary_num(ev, args, ctx, |n| ExcelValue::Number(n.floor())),
+        "TRUNC" => fn_trunc(ev, args, ctx),
+        "ROUND" => fn_round(ev, args, ctx),
+        "MOD" => fn_mod(ev, args, ctx),
+        "SQRT" => fn_unary_num(ev, args, ctx, |n| {
+            if n < 0.0 {
+                ExcelValue::Error(ExcelError::Num)
+            } else {
+                ExcelValue::Number(n.sqrt())
+            }
+        }),
+        "POWER" => fn_power(ev, args, ctx),
+        "PI" => Ok(ExcelValue::Number(std::f64::consts::PI)),
         "N" => fn_n(ev, args, ctx),
+        "NA" => Ok(ExcelValue::Error(ExcelError::Na)),
+        "TYPE" => fn_type(ev, args, ctx),
+        "ERROR.TYPE" => fn_error_type(ev, args, ctx),
         "ISBLANK" => fn_is(ev, args, ctx, |v| matches!(v, ExcelValue::Empty)),
         "ISNUMBER" => fn_is(ev, args, ctx, |v| matches!(v, ExcelValue::Number(_))),
         "ISTEXT" => fn_is(ev, args, ctx, |v| matches!(v, ExcelValue::Text(_))),
+        "ISLOGICAL" => fn_is(ev, args, ctx, |v| matches!(v, ExcelValue::Bool(_))),
+        "ISNONTEXT" => fn_is(ev, args, ctx, |v| !matches!(v, ExcelValue::Text(_))),
         "ISERROR" => fn_is(ev, args, ctx, |v| matches!(v, ExcelValue::Error(_))),
+        "ISERR" => fn_is(
+            ev,
+            args,
+            ctx,
+            |v| matches!(v, ExcelValue::Error(e) if *e != ExcelError::Na),
+        ),
+        "ISNA" => fn_is(ev, args, ctx, |v| {
+            matches!(v, ExcelValue::Error(ExcelError::Na))
+        }),
+        "ISEVEN" => fn_even_odd(ev, args, ctx, true),
+        "ISODD" => fn_even_odd(ev, args, ctx, false),
+        "DATE" => fn_date(ev, args, ctx),
+        "TIME" => fn_time(ev, args, ctx),
+        "YEAR" => fn_ymd(ev, args, ctx, YmdPart::Year),
+        "MONTH" => fn_ymd(ev, args, ctx, YmdPart::Month),
+        "DAY" => fn_ymd(ev, args, ctx, YmdPart::Day),
+        "LEFT" => fn_left_right(ev, args, ctx, true),
+        "RIGHT" => fn_left_right(ev, args, ctx, false),
+        "MID" => fn_mid(ev, args, ctx),
+        "LEN" => fn_len(ev, args, ctx),
+        "LOWER" => fn_case(ev, args, ctx, true),
+        "UPPER" => fn_case(ev, args, ctx, false),
+        "TRIM" => fn_trim(ev, args, ctx),
+        "EXACT" => fn_exact(ev, args, ctx),
+        "VALUE" => fn_value(ev, args, ctx),
         "TRUE" => Ok(ExcelValue::Bool(true)),
         "FALSE" => Ok(ExcelValue::Bool(false)),
         _ => Ok(ExcelValue::Error(ExcelError::Name)),
     }
 }
 
-/// `SUM` skips blanks. Text and logicals are skipped in references / arrays
-/// but coerced when passed as scalar literals (`SUM(TRUE)` = 1).
-fn fn_sum(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
-    let mut acc = 0.0;
+fn fn_agg(
+    ev: &Evaluator,
+    args: &[Expr],
+    ctx: &mut Ctx<'_>,
+    kind: AggKind,
+) -> Result<ExcelValue, EvalError> {
+    let mut acc = AggAcc::new(kind);
     for arg in args {
         let from_range = arg.is_reference();
         let v = ev.eval_expr(arg, ctx)?;
-        if let Some(err) = add_sum(&mut acc, &v, from_range) {
+        if let Some(err) = acc.fold(&v, from_range) {
             return Ok(ExcelValue::Error(err));
         }
     }
-    Ok(ExcelValue::Number(acc))
+    Ok(acc.finish())
 }
 
-fn add_sum(acc: &mut f64, v: &ExcelValue, from_range: bool) -> Option<ExcelError> {
-    match (v, from_range) {
-        (ExcelValue::Error(e), _) => Some(*e),
-        (ExcelValue::Number(n), _) => {
-            *acc += *n;
-            None
-        }
-        (ExcelValue::Empty, _) => None,
-        (ExcelValue::Bool(b), false) => {
-            *acc += if *b { 1.0 } else { 0.0 };
-            None
-        }
-        (ExcelValue::Bool(_), true) => None,
-        (ExcelValue::Text(s), false) => match coerce::parse_numeric_text(s) {
-            Ok(n) => {
-                *acc += n;
-                None
-            }
-            Err(e) => Some(e),
-        },
-        (ExcelValue::Text(_), true) => None,
-        (ExcelValue::Array(rows), _) => {
-            for row in rows {
-                for c in row {
-                    if let Some(e) = add_sum(acc, c, true) {
-                        return Some(e);
-                    }
-                }
-            }
-            None
-        }
-    }
-}
-
-/// `IF` short-circuits: the unused branch is not evaluated.
 fn fn_if(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
     if args.is_empty() {
         return Ok(ExcelValue::Error(ExcelError::Value));
     }
-    let cond = coerce::scalarize(ev.eval_expr(&args[0], ctx)?);
+    let cond = ev.eval_scalar(&args[0], ctx)?;
     let truth = match coerce::to_logical(&cond) {
         Ok(b) => b,
         Err(e) => return Ok(ExcelValue::Error(e)),
@@ -112,18 +149,65 @@ fn fn_iferror(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelV
     }
 }
 
+fn fn_ifna(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    if args.len() < 2 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let v = ev.eval_expr(&args[0], ctx)?;
+    if matches!(v, ExcelValue::Error(ExcelError::Na)) {
+        ev.eval_expr(&args[1], ctx)
+    } else {
+        Ok(v)
+    }
+}
+
+fn fn_and_or(
+    ev: &Evaluator,
+    args: &[Expr],
+    ctx: &mut Ctx<'_>,
+    kind: AndOr,
+) -> Result<ExcelValue, EvalError> {
+    if args.is_empty() {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let mut seen = 0usize;
+    let mut true_count = 0usize;
+    for arg in args {
+        let v = ev.eval_expr(arg, ctx)?;
+        if let Some(err) = fold_logicals(&v, &mut seen, &mut true_count) {
+            return Ok(ExcelValue::Error(err));
+        }
+    }
+    Ok(ExcelValue::Bool(match kind {
+        AndOr::And => true_count == seen,
+        AndOr::Or => true_count > 0,
+        AndOr::Xor => true_count % 2 == 1,
+    }))
+}
+
+fn fn_not(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    if args.len() != 1 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let v = ev.eval_scalar(&args[0], ctx)?;
+    match coerce::to_logical(&v) {
+        Ok(b) => Ok(ExcelValue::Bool(!b)),
+        Err(e) => Ok(ExcelValue::Error(e)),
+    }
+}
+
 fn fn_vlookup(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
     if args.len() < 3 {
         return Ok(ExcelValue::Error(ExcelError::Value));
     }
-    let lookup = coerce::scalarize(ev.eval_expr(&args[0], ctx)?);
+    let lookup = ev.eval_scalar(&args[0], ctx)?;
     if let ExcelValue::Error(e) = lookup {
         return Ok(ExcelValue::Error(e));
     }
     let table = ev.eval_expr(&args[1], ctx)?;
-    let col = coerce::scalarize(ev.eval_expr(&args[2], ctx)?);
+    let col = ev.eval_scalar(&args[2], ctx)?;
     let approx = if args.len() >= 4 {
-        match coerce::to_logical(&coerce::scalarize(ev.eval_expr(&args[3], ctx)?)) {
+        match coerce::to_logical(&ev.eval_scalar(&args[3], ctx)?) {
             Ok(b) => b,
             Err(e) => return Ok(ExcelValue::Error(e)),
         }
@@ -151,44 +235,273 @@ fn fn_vlookup(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelV
     }
     if !approx {
         for row in &rows {
-            if compare::equal(&lookup, &row[0]) {
+            if lookup_key_match(&lookup, &row[0]) {
                 return Ok(row[col_idx - 1].clone());
             }
         }
         return Ok(ExcelValue::Error(ExcelError::Na));
     }
-    // Approximate match: last row whose first column is <= lookup (numeric).
-    // Unsorted tables produce Excel's well-known wrong answers.
-    let mut found: Option<&Vec<ExcelValue>> = None;
-    for row in &rows {
-        if let (Ok(lv), Ok(kv)) = (coerce::to_number(&lookup), coerce::to_number(&row[0])) {
-            if kv <= lv {
-                found = Some(row);
-            }
-        }
-    }
-    match found {
-        Some(row) => Ok(row[col_idx - 1].clone()),
+    match approx_upper_bound(&rows, &lookup) {
+        Some(i) => Ok(rows[i][col_idx - 1].clone()),
         None => Ok(ExcelValue::Error(ExcelError::Na)),
     }
 }
 
-fn fn_abs(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+fn fn_hlookup(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    if args.len() < 3 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let lookup = ev.eval_scalar(&args[0], ctx)?;
+    if let ExcelValue::Error(e) = lookup {
+        return Ok(ExcelValue::Error(e));
+    }
+    let table = ev.eval_expr(&args[1], ctx)?;
+    let row = ev.eval_scalar(&args[2], ctx)?;
+    let approx = if args.len() >= 4 {
+        match coerce::to_logical(&ev.eval_scalar(&args[3], ctx)?) {
+            Ok(b) => b,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        }
+    } else {
+        true
+    };
+    let row_n = match coerce::to_number(&row) {
+        Ok(n) => n,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    if row_n < 1.0 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let row_idx = row_n as usize;
+    let rows = match table {
+        ExcelValue::Array(rows) => rows,
+        other => vec![vec![other]],
+    };
+    if rows.is_empty() || row_idx > rows.len() {
+        return Ok(ExcelValue::Error(if rows.is_empty() {
+            ExcelError::Na
+        } else {
+            ExcelError::Ref
+        }));
+    }
+    let width = rows[0].len();
+    let header: Vec<ExcelValue> = (0..width).map(|c| rows[0][c].clone()).collect();
+    let keys: Vec<Vec<ExcelValue>> = header.into_iter().map(|k| vec![k]).collect();
+    let col = if !approx {
+        keys.iter().position(|k| lookup_key_match(&lookup, &k[0]))
+    } else {
+        approx_upper_bound(&keys, &lookup)
+    };
+    match col {
+        Some(c) => Ok(rows[row_idx - 1][c].clone()),
+        None => Ok(ExcelValue::Error(ExcelError::Na)),
+    }
+}
+
+fn fn_xlookup(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    if args.len() < 3 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let lookup = ev.eval_scalar(&args[0], ctx)?;
+    if let ExcelValue::Error(e) = lookup {
+        return Ok(ExcelValue::Error(e));
+    }
+    let lookup_vec = flatten_vector(ev.eval_expr(&args[1], ctx)?);
+    let return_vec = flatten_vector(ev.eval_expr(&args[2], ctx)?);
+    if lookup_vec.len() != return_vec.len() {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    for (k, v) in lookup_vec.iter().zip(return_vec.iter()) {
+        if lookup_key_match(&lookup, k) {
+            return Ok(v.clone());
+        }
+    }
+    if args.len() >= 4 {
+        return ev.eval_expr(&args[3], ctx);
+    }
+    Ok(ExcelValue::Error(ExcelError::Na))
+}
+
+fn fn_index(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    if args.is_empty() {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let array = match ev.eval_expr(&args[0], ctx)? {
+        ExcelValue::Array(rows) => rows,
+        other => vec![vec![other]],
+    };
+    if array.is_empty() || array[0].is_empty() {
+        return Ok(ExcelValue::Error(ExcelError::Ref));
+    }
+    let nrows = array.len();
+    let ncols = array[0].len();
+    let row_n = if args.len() >= 2 {
+        match coerce::to_number(&ev.eval_scalar(&args[1], ctx)?) {
+            Ok(n) => n,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        }
+    } else {
+        1.0
+    };
+    let col_n = if args.len() >= 3 {
+        match coerce::to_number(&ev.eval_scalar(&args[2], ctx)?) {
+            Ok(n) => n,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        }
+    } else if nrows == 1 {
+        row_n
+    } else {
+        1.0
+    };
+    let (row_idx, col_idx) = if nrows == 1 && args.len() == 2 {
+        (1usize, row_n as usize)
+    } else if ncols == 1 && args.len() == 2 {
+        (row_n as usize, 1usize)
+    } else {
+        (row_n as usize, col_n as usize)
+    };
+    if row_idx < 1 || col_idx < 1 || row_idx > nrows || col_idx > ncols {
+        return Ok(ExcelValue::Error(ExcelError::Ref));
+    }
+    Ok(array[row_idx - 1][col_idx - 1].clone())
+}
+
+fn fn_match(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    if args.len() < 2 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let lookup = ev.eval_scalar(&args[0], ctx)?;
+    if let ExcelValue::Error(e) = lookup {
+        return Ok(ExcelValue::Error(e));
+    }
+    let vec = flatten_vector(ev.eval_expr(&args[1], ctx)?);
+    let match_type = if args.len() >= 3 {
+        match coerce::to_number(&ev.eval_scalar(&args[2], ctx)?) {
+            Ok(n) => n,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        }
+    } else {
+        1.0
+    };
+    let keys: Vec<Vec<ExcelValue>> = vec.into_iter().map(|k| vec![k]).collect();
+    if match_type == 0.0 {
+        for (i, row) in keys.iter().enumerate() {
+            if lookup_key_match(&lookup, &row[0]) {
+                return Ok(ExcelValue::Number((i + 1) as f64));
+            }
+        }
+        return Ok(ExcelValue::Error(ExcelError::Na));
+    }
+    if match_type > 0.0 {
+        return Ok(match approx_upper_bound(&keys, &lookup) {
+            Some(i) => ExcelValue::Number((i + 1) as f64),
+            None => ExcelValue::Error(ExcelError::Na),
+        });
+    }
+    for (i, row) in keys.iter().enumerate() {
+        if excel_geq(&row[0], &lookup) {
+            return Ok(ExcelValue::Number((i + 1) as f64));
+        }
+    }
+    Ok(ExcelValue::Error(ExcelError::Na))
+}
+
+fn fn_choose(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    if args.len() < 2 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let idx = match coerce::to_number(&ev.eval_scalar(&args[0], ctx)?) {
+        Ok(n) => n,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let i = idx.trunc() as i64;
+    if i < 1 || i as usize >= args.len() {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    ev.eval_expr(&args[i as usize], ctx)
+}
+
+fn fn_unary_num(
+    ev: &Evaluator,
+    args: &[Expr],
+    ctx: &mut Ctx<'_>,
+    f: impl Fn(f64) -> ExcelValue,
+) -> Result<ExcelValue, EvalError> {
     if args.len() != 1 {
         return Ok(ExcelValue::Error(ExcelError::Value));
     }
-    let v = coerce::scalarize(ev.eval_expr(&args[0], ctx)?);
-    match coerce::to_number(&v) {
-        Ok(n) => Ok(ExcelValue::Number(n.abs())),
+    match coerce::to_number(&ev.eval_scalar(&args[0], ctx)?) {
+        Ok(n) => Ok(f(n)),
         Err(e) => Ok(ExcelValue::Error(e)),
     }
+}
+
+fn fn_trunc(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    if args.is_empty() {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let n = match coerce::to_number(&ev.eval_scalar(&args[0], ctx)?) {
+        Ok(n) => n,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let digits = if args.len() >= 2 {
+        match coerce::to_number(&ev.eval_scalar(&args[1], ctx)?) {
+            Ok(d) => d.trunc() as i32,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        }
+    } else {
+        0
+    };
+    Ok(ExcelValue::Number(excel_trunc(n, digits)))
+}
+
+fn fn_round(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    if args.len() < 2 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let n = match coerce::to_number(&ev.eval_scalar(&args[0], ctx)?) {
+        Ok(n) => n,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let digits = match coerce::to_number(&ev.eval_scalar(&args[1], ctx)?) {
+        Ok(d) => d.trunc() as i32,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    Ok(ExcelValue::Number(excel_round_half_away(n, digits)))
+}
+
+fn fn_mod(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    if args.len() != 2 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let n = match coerce::to_number(&ev.eval_scalar(&args[0], ctx)?) {
+        Ok(n) => n,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let d = match coerce::to_number(&ev.eval_scalar(&args[1], ctx)?) {
+        Ok(n) => n,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    if d == 0.0 {
+        return Ok(ExcelValue::Error(ExcelError::Div0));
+    }
+    Ok(ExcelValue::Number(n - d * (n / d).floor()))
+}
+
+fn fn_power(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    if args.len() != 2 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let l = ev.eval_scalar(&args[0], ctx)?;
+    let r = ev.eval_scalar(&args[1], ctx)?;
+    Ok(excel_pow(&l, &r))
 }
 
 fn fn_n(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
     if args.len() != 1 {
         return Ok(ExcelValue::Error(ExcelError::Value));
     }
-    let v = coerce::scalarize(ev.eval_expr(&args[0], ctx)?);
+    let v = ev.eval_scalar(&args[0], ctx)?;
     Ok(match v {
         ExcelValue::Number(n) => ExcelValue::Number(n),
         ExcelValue::Bool(true) => ExcelValue::Number(1.0),
@@ -197,6 +510,47 @@ fn fn_n(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, 
         }
         ExcelValue::Error(e) => ExcelValue::Error(e),
         ExcelValue::Array(_) => ExcelValue::Number(0.0),
+    })
+}
+
+fn fn_type(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    if args.len() != 1 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    // TYPE of an array is 64 even in scalar context — do not implicit-intersect.
+    let v = ev.eval_expr(&args[0], ctx)?;
+    Ok(ExcelValue::Number(match v {
+        ExcelValue::Number(_) => 1.0,
+        ExcelValue::Text(_) => 2.0,
+        ExcelValue::Bool(_) => 4.0,
+        ExcelValue::Error(_) => 16.0,
+        ExcelValue::Array(_) => 64.0,
+        ExcelValue::Empty => 1.0,
+    }))
+}
+
+fn fn_error_type(
+    ev: &Evaluator,
+    args: &[Expr],
+    ctx: &mut Ctx<'_>,
+) -> Result<ExcelValue, EvalError> {
+    if args.len() != 1 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let v = ev.eval_scalar(&args[0], ctx)?;
+    Ok(match v {
+        ExcelValue::Error(e) => match e {
+            ExcelError::Null => ExcelValue::Number(1.0),
+            ExcelError::Div0 => ExcelValue::Number(2.0),
+            ExcelError::Value => ExcelValue::Number(3.0),
+            ExcelError::Ref => ExcelValue::Number(4.0),
+            ExcelError::Name => ExcelValue::Number(5.0),
+            ExcelError::Num => ExcelValue::Number(6.0),
+            ExcelError::Na => ExcelValue::Number(7.0),
+            ExcelError::GettingData => ExcelValue::Number(8.0),
+            _ => ExcelValue::Error(ExcelError::Na),
+        },
+        _ => ExcelValue::Error(ExcelError::Na),
     })
 }
 
@@ -209,6 +563,543 @@ fn fn_is(
     if args.len() != 1 {
         return Ok(ExcelValue::Error(ExcelError::Value));
     }
-    let v = coerce::scalarize(ev.eval_expr(&args[0], ctx)?);
+    let v = ev.eval_scalar(&args[0], ctx)?;
     Ok(ExcelValue::Bool(pred(&v)))
+}
+
+fn fn_even_odd(
+    ev: &Evaluator,
+    args: &[Expr],
+    ctx: &mut Ctx<'_>,
+    even: bool,
+) -> Result<ExcelValue, EvalError> {
+    if args.len() != 1 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    match coerce::to_number(&ev.eval_scalar(&args[0], ctx)?) {
+        Ok(n) => {
+            let t = n.trunc() as i64;
+            Ok(ExcelValue::Bool(if even { t % 2 == 0 } else { t % 2 != 0 }))
+        }
+        Err(e) => Ok(ExcelValue::Error(e)),
+    }
+}
+
+fn fn_date(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    if args.len() != 3 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let y = match coerce::to_number(&ev.eval_scalar(&args[0], ctx)?) {
+        Ok(n) => n.trunc() as i32,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let m = match coerce::to_number(&ev.eval_scalar(&args[1], ctx)?) {
+        Ok(n) => n.trunc() as i32,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let d = match coerce::to_number(&ev.eval_scalar(&args[2], ctx)?) {
+        Ok(n) => n.trunc() as i32,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    match date_serial(y, m, d, ctx.spec.options.date_system) {
+        Ok(n) => Ok(ExcelValue::Number(n)),
+        Err(e) => Ok(ExcelValue::Error(e)),
+    }
+}
+
+fn fn_time(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    if args.len() != 3 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let h = match coerce::to_number(&ev.eval_scalar(&args[0], ctx)?) {
+        Ok(n) => n,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let m = match coerce::to_number(&ev.eval_scalar(&args[1], ctx)?) {
+        Ok(n) => n,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let s = match coerce::to_number(&ev.eval_scalar(&args[2], ctx)?) {
+        Ok(n) => n,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    match time_fraction(h, m, s) {
+        Ok(n) => Ok(ExcelValue::Number(n)),
+        Err(e) => Ok(ExcelValue::Error(e)),
+    }
+}
+
+fn fn_ymd(
+    ev: &Evaluator,
+    args: &[Expr],
+    ctx: &mut Ctx<'_>,
+    part: YmdPart,
+) -> Result<ExcelValue, EvalError> {
+    if args.len() != 1 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let n = match coerce::to_number(&ev.eval_scalar(&args[0], ctx)?) {
+        Ok(n) => n,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    match serial_to_ymd(n, ctx.spec.options.date_system) {
+        Ok((y, m, d)) => Ok(ExcelValue::Number(match part {
+            YmdPart::Year => y as f64,
+            YmdPart::Month => m as f64,
+            YmdPart::Day => d as f64,
+        })),
+        Err(e) => Ok(ExcelValue::Error(e)),
+    }
+}
+
+fn fn_left_right(
+    ev: &Evaluator,
+    args: &[Expr],
+    ctx: &mut Ctx<'_>,
+    left: bool,
+) -> Result<ExcelValue, EvalError> {
+    if args.is_empty() {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let s = match coerce::to_text(&ev.eval_scalar(&args[0], ctx)?) {
+        Ok(s) => s,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let n = if args.len() >= 2 {
+        match coerce::to_number(&ev.eval_scalar(&args[1], ctx)?) {
+            Ok(n) => n.trunc() as i64,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        }
+    } else {
+        1
+    };
+    if n < 0 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let chars: Vec<char> = s.chars().collect();
+    let take = (n as usize).min(chars.len());
+    let out: String = if left {
+        chars.iter().take(take).collect()
+    } else {
+        chars
+            .iter()
+            .skip(chars.len().saturating_sub(take))
+            .collect()
+    };
+    Ok(ExcelValue::Text(out))
+}
+
+fn fn_mid(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    if args.len() != 3 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let s = match coerce::to_text(&ev.eval_scalar(&args[0], ctx)?) {
+        Ok(s) => s,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let start = match coerce::to_number(&ev.eval_scalar(&args[1], ctx)?) {
+        Ok(n) => n.trunc() as i64,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let len = match coerce::to_number(&ev.eval_scalar(&args[2], ctx)?) {
+        Ok(n) => n.trunc() as i64,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    if start < 1 || len < 0 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let chars: Vec<char> = s.chars().collect();
+    let i = (start as usize) - 1;
+    if i >= chars.len() {
+        return Ok(ExcelValue::Text(String::new()));
+    }
+    Ok(ExcelValue::Text(
+        chars.iter().skip(i).take(len as usize).collect(),
+    ))
+}
+
+fn fn_len(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    if args.len() != 1 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    match coerce::to_text(&ev.eval_scalar(&args[0], ctx)?) {
+        Ok(s) => Ok(ExcelValue::Number(s.chars().count() as f64)),
+        Err(e) => Ok(ExcelValue::Error(e)),
+    }
+}
+
+fn fn_case(
+    ev: &Evaluator,
+    args: &[Expr],
+    ctx: &mut Ctx<'_>,
+    lower: bool,
+) -> Result<ExcelValue, EvalError> {
+    if args.len() != 1 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    match coerce::to_text(&ev.eval_scalar(&args[0], ctx)?) {
+        Ok(s) => Ok(ExcelValue::Text(if lower {
+            s.to_ascii_lowercase()
+        } else {
+            s.to_ascii_uppercase()
+        })),
+        Err(e) => Ok(ExcelValue::Error(e)),
+    }
+}
+
+fn fn_trim(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    if args.len() != 1 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    match coerce::to_text(&ev.eval_scalar(&args[0], ctx)?) {
+        Ok(s) => {
+            let mut out = String::new();
+            let mut prev_space = false;
+            for c in s.trim_matches(' ').chars() {
+                if c == ' ' {
+                    if !prev_space {
+                        out.push(' ');
+                    }
+                    prev_space = true;
+                } else {
+                    out.push(c);
+                    prev_space = false;
+                }
+            }
+            Ok(ExcelValue::Text(out))
+        }
+        Err(e) => Ok(ExcelValue::Error(e)),
+    }
+}
+
+fn fn_exact(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    if args.len() != 2 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let a = match coerce::to_text(&ev.eval_scalar(&args[0], ctx)?) {
+        Ok(s) => s,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let b = match coerce::to_text(&ev.eval_scalar(&args[1], ctx)?) {
+        Ok(s) => s,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    Ok(ExcelValue::Bool(a == b))
+}
+
+fn fn_value(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    if args.len() != 1 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let v = ev.eval_scalar(&args[0], ctx)?;
+    match v {
+        ExcelValue::Number(n) => Ok(ExcelValue::Number(n)),
+        ExcelValue::Bool(true) => Ok(ExcelValue::Number(1.0)),
+        ExcelValue::Bool(false) => Ok(ExcelValue::Number(0.0)),
+        ExcelValue::Empty => Ok(ExcelValue::Number(0.0)),
+        ExcelValue::Text(s) => match coerce::parse_numeric_text(&s) {
+            Ok(n) => Ok(ExcelValue::Number(n)),
+            Err(e) => Ok(ExcelValue::Error(e)),
+        },
+        ExcelValue::Error(e) => Ok(ExcelValue::Error(e)),
+        ExcelValue::Array(_) => Ok(ExcelValue::Error(ExcelError::Value)),
+    }
+}
+
+#[derive(Clone, Copy)]
+enum AggKind {
+    Sum,
+    Product,
+    Average,
+    Min,
+    Max,
+    Count,
+    CountA,
+    CountBlank,
+}
+
+#[derive(Clone, Copy)]
+enum AndOr {
+    And,
+    Or,
+    Xor,
+}
+
+#[derive(Clone, Copy)]
+enum YmdPart {
+    Year,
+    Month,
+    Day,
+}
+
+struct AggAcc {
+    kind: AggKind,
+    sum: f64,
+    product: f64,
+    min: Option<f64>,
+    max: Option<f64>,
+    count: usize,
+    counta: usize,
+    countblank: usize,
+}
+
+impl AggAcc {
+    fn new(kind: AggKind) -> Self {
+        Self {
+            kind,
+            sum: 0.0,
+            product: 1.0,
+            min: None,
+            max: None,
+            count: 0,
+            counta: 0,
+            countblank: 0,
+        }
+    }
+
+    fn fold(&mut self, v: &ExcelValue, from_range: bool) -> Option<ExcelError> {
+        match (v, from_range) {
+            (ExcelValue::Array(rows), _) => {
+                for row in rows {
+                    for c in row {
+                        if let Some(e) = self.fold(c, true) {
+                            return Some(e);
+                        }
+                    }
+                }
+                None
+            }
+            (ExcelValue::Error(e), _) => match self.kind {
+                AggKind::CountA => {
+                    self.counta += 1;
+                    None
+                }
+                AggKind::Count | AggKind::CountBlank => None,
+                _ => Some(*e),
+            },
+            (ExcelValue::Number(n), _) => {
+                self.add_number(*n);
+                self.counta += 1;
+                None
+            }
+            (ExcelValue::Empty, _) => {
+                self.countblank += 1;
+                None
+            }
+            (ExcelValue::Bool(b), false) => {
+                match self.kind {
+                    AggKind::CountBlank => {}
+                    AggKind::CountA => self.counta += 1,
+                    AggKind::Count => {
+                        self.count += 1;
+                    }
+                    _ => self.add_number(if *b { 1.0 } else { 0.0 }),
+                }
+                None
+            }
+            (ExcelValue::Bool(_), true) => {
+                if matches!(self.kind, AggKind::CountA) {
+                    self.counta += 1;
+                }
+                None
+            }
+            (ExcelValue::Text(s), false) => match self.kind {
+                AggKind::CountBlank => {
+                    if s.is_empty() {
+                        self.countblank += 1;
+                    }
+                    None
+                }
+                AggKind::CountA => {
+                    self.counta += 1;
+                    None
+                }
+                AggKind::Count => {
+                    if coerce::parse_numeric_text(s).is_ok() {
+                        self.count += 1;
+                    }
+                    None
+                }
+                _ => match coerce::parse_numeric_text(s) {
+                    Ok(n) => {
+                        self.add_number(n);
+                        None
+                    }
+                    Err(e) => Some(e),
+                },
+            },
+            (ExcelValue::Text(s), true) => {
+                match self.kind {
+                    AggKind::CountA => self.counta += 1,
+                    AggKind::CountBlank if s.is_empty() => self.countblank += 1,
+                    _ => {}
+                }
+                None
+            }
+        }
+    }
+
+    fn add_number(&mut self, n: f64) {
+        self.sum += n;
+        self.product *= n;
+        self.count += 1;
+        self.min = Some(self.min.map_or(n, |m| m.min(n)));
+        self.max = Some(self.max.map_or(n, |m| m.max(n)));
+    }
+
+    fn finish(self) -> ExcelValue {
+        match self.kind {
+            AggKind::Sum => ExcelValue::Number(self.sum),
+            AggKind::Product => {
+                ExcelValue::Number(if self.count == 0 { 0.0 } else { self.product })
+            }
+            AggKind::Average => {
+                if self.count == 0 {
+                    ExcelValue::Error(ExcelError::Div0)
+                } else {
+                    ExcelValue::Number(self.sum / self.count as f64)
+                }
+            }
+            AggKind::Min => ExcelValue::Number(self.min.unwrap_or(0.0)),
+            AggKind::Max => ExcelValue::Number(self.max.unwrap_or(0.0)),
+            AggKind::Count => ExcelValue::Number(self.count as f64),
+            AggKind::CountA => ExcelValue::Number(self.counta as f64),
+            AggKind::CountBlank => ExcelValue::Number(self.countblank as f64),
+        }
+    }
+}
+
+fn fold_logicals(v: &ExcelValue, seen: &mut usize, true_count: &mut usize) -> Option<ExcelError> {
+    match v {
+        ExcelValue::Array(rows) => {
+            for row in rows {
+                for c in row {
+                    if let Some(e) = fold_logicals(c, seen, true_count) {
+                        return Some(e);
+                    }
+                }
+            }
+            None
+        }
+        ExcelValue::Error(e) => Some(*e),
+        ExcelValue::Empty => None,
+        ExcelValue::Bool(b) => {
+            *seen += 1;
+            if *b {
+                *true_count += 1;
+            }
+            None
+        }
+        ExcelValue::Number(n) => {
+            *seen += 1;
+            if *n != 0.0 {
+                *true_count += 1;
+            }
+            None
+        }
+        ExcelValue::Text(_) => Some(ExcelError::Value),
+    }
+}
+
+fn lookup_key_match(lookup: &ExcelValue, key: &ExcelValue) -> bool {
+    if let ExcelValue::Text(pat) = lookup {
+        if looks_like_wildcard(pat) {
+            let key_text = match key {
+                ExcelValue::Text(s) => s.clone(),
+                ExcelValue::Number(n) => coerce::format_plain(*n),
+                ExcelValue::Bool(true) => "TRUE".into(),
+                ExcelValue::Bool(false) => "FALSE".into(),
+                ExcelValue::Empty => String::new(),
+                _ => return false,
+            };
+            return excel_wildcard(pat, &key_text);
+        }
+    }
+    compare::equal(lookup, key)
+}
+
+fn looks_like_wildcard(s: &str) -> bool {
+    s.contains('*') || s.contains('?') || s.contains('~')
+}
+
+fn excel_wildcard(pat: &str, text: &str) -> bool {
+    fn rec(p: &[u8], t: &[u8]) -> bool {
+        if p.is_empty() {
+            return t.is_empty();
+        }
+        if p[0] == b'~' && p.len() >= 2 {
+            return !t.is_empty() && t[0] == p[1] && rec(&p[2..], &t[1..]);
+        }
+        if p[0] == b'*' {
+            return rec(&p[1..], t) || (!t.is_empty() && rec(p, &t[1..]));
+        }
+        if p[0] == b'?' {
+            return !t.is_empty() && rec(&p[1..], &t[1..]);
+        }
+        !t.is_empty() && p[0] == t[0] && rec(&p[1..], &t[1..])
+    }
+    rec(
+        pat.to_ascii_lowercase().as_bytes(),
+        text.to_ascii_lowercase().as_bytes(),
+    )
+}
+
+fn approx_upper_bound(rows: &[Vec<ExcelValue>], lookup: &ExcelValue) -> Option<usize> {
+    if rows.is_empty() {
+        return None;
+    }
+    let mut lo = 0usize;
+    let mut hi = rows.len();
+    while lo < hi {
+        let mid = (lo + hi) / 2;
+        if excel_leq(&rows[mid][0], lookup) {
+            lo = mid + 1;
+        } else {
+            hi = mid;
+        }
+    }
+    if lo == 0 {
+        None
+    } else {
+        Some(lo - 1)
+    }
+}
+
+fn excel_leq(key: &ExcelValue, lookup: &ExcelValue) -> bool {
+    compare::ordered(key, lookup, std::cmp::Ordering::Greater, true)
+}
+
+fn excel_geq(key: &ExcelValue, lookup: &ExcelValue) -> bool {
+    compare::ordered(key, lookup, std::cmp::Ordering::Less, true)
+}
+
+fn flatten_vector(v: ExcelValue) -> Vec<ExcelValue> {
+    match v {
+        ExcelValue::Array(rows) => {
+            if rows.len() == 1 {
+                rows.into_iter().next().unwrap_or_default()
+            } else {
+                rows.into_iter()
+                    .filter_map(|r| r.into_iter().next())
+                    .collect()
+            }
+        }
+        other => vec![other],
+    }
+}
+
+fn excel_round_half_away(n: f64, digits: i32) -> f64 {
+    let factor = 10f64.powi(digits);
+    let x = n * factor;
+    let rounded = if x >= 0.0 {
+        (x + 0.5).floor()
+    } else {
+        (x - 0.5).ceil()
+    };
+    rounded / factor
+}
+
+fn excel_trunc(n: f64, digits: i32) -> f64 {
+    let factor = 10f64.powi(digits);
+    (n * factor).trunc() / factor
 }

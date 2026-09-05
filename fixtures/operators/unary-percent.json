@@ -1,0 +1,117 @@
+[
+  {
+    "id": "op.percent-fifty",
+    "description": "50% is 0.5",
+    "tags": ["operators", "percent"],
+    "quirks": ["percent-unary"],
+    "formula": "=50%",
+    "expected": { "number": 0.5 }
+  },
+  {
+    "id": "op.percent-two-hundred",
+    "description": "200% is 2",
+    "tags": ["operators", "percent"],
+    "quirks": ["percent-unary"],
+    "formula": "=200%",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "op.percent-plus-one",
+    "description": "1+50% is 1.5",
+    "tags": ["operators", "percent"],
+    "quirks": ["percent-unary"],
+    "formula": "=1+50%",
+    "expected": { "number": 1.5 }
+  },
+  {
+    "id": "op.percent-double",
+    "description": "5%% applies percent twice → 0.0005",
+    "tags": ["operators", "percent"],
+    "quirks": ["percent-unary"],
+    "formula": "=5%%",
+    "expected": { "number": 0.0005 }
+  },
+  {
+    "id": "op.unary-minus-true",
+    "description": "-TRUE is -1",
+    "tags": ["operators", "unary"],
+    "quirks": ["percent-unary", "bool-number-equality"],
+    "formula": "=-TRUE",
+    "expected": { "number": -1 }
+  },
+  {
+    "id": "op.unary-plus-false",
+    "description": "+FALSE is 0",
+    "tags": ["operators", "unary"],
+    "quirks": ["percent-unary", "bool-number-equality"],
+    "formula": "=+FALSE",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "op.unary-plus-minus",
+    "description": "+-5 is -5",
+    "tags": ["operators", "unary"],
+    "quirks": ["percent-unary"],
+    "formula": "=+-5",
+    "expected": { "number": -5 }
+  },
+  {
+    "id": "op.unary-minus-plus",
+    "description": "-+5 is -5",
+    "tags": ["operators", "unary"],
+    "quirks": ["percent-unary"],
+    "formula": "=-+5",
+    "expected": { "number": -5 }
+  },
+  {
+    "id": "op.unary-empty-string",
+    "description": "-\"\" is #VALUE!",
+    "tags": ["operators", "unary", "errors"],
+    "quirks": ["percent-unary", "empty-cell-duality"],
+    "formula": "=-\"\"",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "op.precedence-mul-add",
+    "description": "2+3*4 is 14",
+    "tags": ["operators", "arithmetic"],
+    "formula": "=2+3*4",
+    "expected": { "number": 14 }
+  },
+  {
+    "id": "op.precedence-paren",
+    "description": "(2+3)*4 is 20",
+    "tags": ["operators", "arithmetic"],
+    "formula": "=(2+3)*4",
+    "expected": { "number": 20 }
+  },
+  {
+    "id": "op.pow-right-assoc",
+    "description": "2^3^2 is 2^(3^2)=512 (right-associative)",
+    "tags": ["operators", "arithmetic"],
+    "formula": "=2^3^2",
+    "expected": { "number": 512 }
+  },
+  {
+    "id": "op.pow-neg-exp",
+    "description": "2^-2 is 0.25",
+    "tags": ["operators", "arithmetic"],
+    "quirks": ["percent-unary"],
+    "formula": "=2^-2",
+    "expected": { "number": 0.25 }
+  },
+  {
+    "id": "op.concat-bool",
+    "description": "TRUE&\"x\" is \"TRUEx\"",
+    "tags": ["operators", "coercion"],
+    "formula": "=TRUE&\"x\"",
+    "expected": { "text": "TRUEx" }
+  },
+  {
+    "id": "op.concat-numbers",
+    "description": "1&2 is the text \"12\"",
+    "tags": ["operators", "coercion"],
+    "formula": "=1&2",
+    "expected": { "text": "12" }
+  }
+]

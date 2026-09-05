@@ -1,0 +1,51 @@
+[
+  {
+    "id": "named.formula-refers-to",
+    "description": "Defined name whose refers_to is a formula",
+    "tags": ["named"],
+    "named": "Total",
+    "expected": { "number": 6 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 2 },
+          "A3": { "number": 3 }
+        }
+      }],
+      "names": [{ "name": "Total", "refers_to": "=SUM(A1:A3)" }]
+    }
+  },
+  {
+    "id": "named.case-insensitive",
+    "description": "Defined names are matched case-insensitively",
+    "tags": ["named"],
+    "named": "total",
+    "expected": { "number": 10 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": { "A1": { "number": 10 } }
+      }],
+      "names": [{ "name": "Total", "refers_to": "Sheet1!A1" }]
+    }
+  },
+  {
+    "id": "cell.formula-chain",
+    "description": "Stored formula that references another stored formula",
+    "tags": ["cell"],
+    "cell": "Sheet1!A1",
+    "expected": { "number": 6 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "formula": "=A2*2" },
+          "A2": { "formula": "=A3+1" },
+          "A3": { "number": 2 }
+        }
+      }]
+    }
+  }
+]

@@ -48,6 +48,12 @@ pub enum QuirkCategory {
     HiddenRows,
     /// Wildcard matching in `VLOOKUP` / `COUNTIF` / `MATCH`.
     Wildcards,
+    /// Left-to-right Excel error propagation (`#DIV/0!+#VALUE!` keeps `#DIV/0!`).
+    ErrorPrecedence,
+    /// Unary `+`/`-` and the postfix `%` operator (including `--"2"` coercion).
+    PercentUnary,
+    /// Space intersection / comma union / `#NULL!` when ranges do not overlap.
+    RangeOperators,
     /// Other / not yet classified.
     Other,
 }
@@ -74,6 +80,9 @@ impl QuirkCategory {
             Self::PrecisionAsDisplayed => "precision-as-displayed",
             Self::HiddenRows => "hidden-rows",
             Self::Wildcards => "wildcards",
+            Self::ErrorPrecedence => "error-precedence",
+            Self::PercentUnary => "percent-unary",
+            Self::RangeOperators => "range-operators",
             Self::Other => "other",
         }
     }
@@ -89,7 +98,7 @@ impl QuirkCategory {
                 }
                 "case-insensitive-text" | "casefold" => Self::CaseInsensitiveText,
                 "bool-number-equality" | "bool-eq" => Self::BoolNumberEquality,
-                "sum-arg-vs-range" => Self::SumArgVsRange,
+                "sum-arg-vs-range" | "agg-arg-vs-range" => Self::SumArgVsRange,
                 "vlookup-approximate-unsorted" => Self::VlookupApproximateUnsorted,
                 "if-short-circuit" => Self::IfShortCircuit,
                 "date-1900-leap-year" => Self::Date1900LeapYear,
@@ -102,6 +111,9 @@ impl QuirkCategory {
                 "precision-as-displayed" => Self::PrecisionAsDisplayed,
                 "hidden-rows" => Self::HiddenRows,
                 "wildcards" => Self::Wildcards,
+                "error-precedence" | "error-propagation" => Self::ErrorPrecedence,
+                "percent-unary" | "unary-percent" => Self::PercentUnary,
+                "range-operators" | "intersection" | "union" => Self::RangeOperators,
                 "other" => Self::Other,
                 _ => return None,
             },

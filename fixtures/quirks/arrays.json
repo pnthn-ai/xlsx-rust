@@ -1,0 +1,49 @@
+[
+  {
+    "id": "array.literal-2d",
+    "description": "2-D array literal {1,2;3,4}",
+    "tags": ["array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "={1,2;3,4}",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 2 }],
+        [{ "number": 3 }, { "number": 4 }]
+      ]
+    }
+  },
+  {
+    "id": "array.sum-2d",
+    "description": "SUM of a 2-D array literal",
+    "tags": ["array", "sum"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SUM({1,2;3,4})",
+    "expected": { "number": 10 }
+  },
+  {
+    "id": "array.mixed-sum-skips",
+    "description": "SUM({1,\"x\",TRUE}) skips text and logicals",
+    "tags": ["array", "sum"],
+    "quirks": ["sum-arg-vs-range", "array-eval-mode"],
+    "formula": "=SUM({1,\"x\",TRUE})",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "array.literal-plus-scalar",
+    "description": "In scalar mode an array literal used with + takes the first element",
+    "tags": ["array"],
+    "quirks": ["array-eval-mode", "implicit-intersection"],
+    "formula": "={1,2,3}+10",
+    "expected": { "number": 11 }
+  },
+  {
+    "id": "array.nested-bool",
+    "description": "Array of mixed types preserves types",
+    "tags": ["array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "={1,TRUE,\"x\"}",
+    "expected": {
+      "array": [[{ "number": 1 }, { "bool": true }, { "text": "x" }]]
+    }
+  }
+]

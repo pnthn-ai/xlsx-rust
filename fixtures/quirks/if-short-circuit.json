@@ -1,0 +1,99 @@
+[
+  {
+    "id": "if.short-false-unused-div0",
+    "description": "IF(FALSE, 1/0, 2) does not evaluate the unused branch",
+    "tags": ["if", "errors"],
+    "quirks": ["if-short-circuit"],
+    "formula": "=IF(FALSE, 1/0, 2)",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "if.nested-short-circuit",
+    "description": "Nested IF skips both unused #DIV/0! branches",
+    "tags": ["if", "errors"],
+    "quirks": ["if-short-circuit"],
+    "formula": "=IF(FALSE, 1/0, IF(TRUE, 5, 1/0))",
+    "expected": { "number": 5 }
+  },
+  {
+    "id": "if.nested-true-inner",
+    "description": "IF(1, IF(0, 1, 2), 3) is 2",
+    "tags": ["if"],
+    "formula": "=IF(1, IF(0, 1, 2), 3)",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "if.missing-false-when-true",
+    "description": "IF(TRUE, 1) with no false branch returns 1",
+    "tags": ["if"],
+    "formula": "=IF(TRUE, 1)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "if.missing-false-when-false",
+    "description": "IF(FALSE, 1) with no false branch returns FALSE",
+    "tags": ["if"],
+    "formula": "=IF(FALSE, 1)",
+    "expected": { "bool": false }
+  },
+  {
+    "id": "if.condition-error-propagates",
+    "description": "IF evaluates the condition, so 1/0 in the test is #DIV/0!",
+    "tags": ["if", "errors"],
+    "quirks": ["if-short-circuit", "error-precedence"],
+    "formula": "=IF(1/0, 1, 2)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "if.true-text-is-value",
+    "description": "IF(\"TRUE\", 1, 2) is #VALUE! — text is not coerced in IF",
+    "tags": ["if"],
+    "formula": "=IF(\"TRUE\", 1, 2)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "if.and-does-not-short-circuit",
+    "description": "AND evaluates every argument: AND(FALSE, 1/0) is #DIV/0!",
+    "tags": ["logical", "errors"],
+    "quirks": ["if-short-circuit", "error-precedence"],
+    "formula": "=AND(FALSE, 1/0)",
+    "expected": { "error": "#DIV/0!" },
+    "notes": "Contrast with IF, which does short-circuit."
+  },
+  {
+    "id": "if.or-does-not-short-circuit",
+    "description": "OR(TRUE, 1/0) is #DIV/0!",
+    "tags": ["logical", "errors"],
+    "quirks": ["if-short-circuit", "error-precedence"],
+    "formula": "=OR(TRUE, 1/0)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "if.iferror-swallows-name",
+    "description": "IFERROR swallows #NAME?",
+    "tags": ["if", "errors"],
+    "formula": "=IFERROR(NOTAFUNCTION(), 0)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "if.ifna-only-na",
+    "description": "IFNA leaves #DIV/0! alone",
+    "tags": ["if", "errors"],
+    "formula": "=IFNA(1/0, 9)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "if.ifna-swallows-na",
+    "description": "IFNA(NA(), 9) is 9",
+    "tags": ["if", "errors"],
+    "formula": "=IFNA(NA(), 9)",
+    "expected": { "number": 9 }
+  },
+  {
+    "id": "if.iferror-passthrough",
+    "description": "IFERROR of a non-error returns the value",
+    "tags": ["if", "errors"],
+    "formula": "=IFERROR(4, 9)",
+    "expected": { "number": 4 }
+  }
+]

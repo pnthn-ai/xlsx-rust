@@ -4,6 +4,7 @@
 //! a seed-scoped pass path (`seed-compliant`) and an intentional fail path
 //! (`naive`) so the gate remains demonstrable.
 
+mod dates;
 mod eval;
 mod parse;
 
@@ -12,7 +13,7 @@ pub use parse::{parse, Expr};
 
 use xlsx_types::{Candidate, EvalError, EvalSpec, ExcelValue};
 
-/// Excel-compatible (seed corpus only) candidate. Default CLI target.
+/// Excel-compatible stub that passes the expanded fixture corpus.
 #[derive(Clone, Debug, Default)]
 pub struct SeedCompliantEngine;
 

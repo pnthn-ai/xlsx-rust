@@ -1,0 +1,211 @@
+[
+  {
+    "id": "lookup.vlookup-approx-sorted",
+    "description": "Approximate VLOOKUP on a sorted table returns the last key <= lookup",
+    "tags": ["vlookup", "functions"],
+    "quirks": ["vlookup-approximate-unsorted"],
+    "formula": "=VLOOKUP(6, A1:B3, 2, TRUE)",
+    "expected": { "text": "b" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "text": "a" },
+          "A2": { "number": 5 }, "B2": { "text": "b" },
+          "A3": { "number": 10 }, "B3": { "text": "c" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "lookup.vlookup-approx-default",
+    "description": "Omitted range_lookup defaults to TRUE (approximate)",
+    "tags": ["vlookup", "functions"],
+    "quirks": ["vlookup-approximate-unsorted"],
+    "formula": "=VLOOKUP(6, A1:B3, 2)",
+    "expected": { "text": "b" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "text": "a" },
+          "A2": { "number": 5 }, "B2": { "text": "b" },
+          "A3": { "number": 10 }, "B3": { "text": "c" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "lookup.vlookup-approx-below-first",
+    "description": "Approximate VLOOKUP below the first key is #N/A",
+    "tags": ["vlookup", "errors"],
+    "quirks": ["vlookup-approximate-unsorted"],
+    "formula": "=VLOOKUP(0, A1:B3, 2, TRUE)",
+    "expected": { "error": "#N/A" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "text": "a" },
+          "A2": { "number": 5 }, "B2": { "text": "b" },
+          "A3": { "number": 10 }, "B3": { "text": "c" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "lookup.vlookup-approx-above-last",
+    "description": "Approximate VLOOKUP above every key returns the last row",
+    "tags": ["vlookup"],
+    "quirks": ["vlookup-approximate-unsorted"],
+    "formula": "=VLOOKUP(100, A1:B3, 2, TRUE)",
+    "expected": { "text": "c" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "text": "a" },
+          "A2": { "number": 5 }, "B2": { "text": "b" },
+          "A3": { "number": 10 }, "B3": { "text": "c" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "lookup.vlookup-approx-unsorted-binary-search",
+    "description": "Unsorted approximate VLOOKUP binary-searches and can return the wrong row",
+    "tags": ["vlookup"],
+    "quirks": ["vlookup-approximate-unsorted"],
+    "notes": "Keys 1,10,5. Lookup 6: mid key 10>6 so the search stays on the first row ('a'), not 5/'c'.",
+    "formula": "=VLOOKUP(6, A1:B3, 2, TRUE)",
+    "expected": { "text": "a" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "text": "a" },
+          "A2": { "number": 10 }, "B2": { "text": "b" },
+          "A3": { "number": 5 }, "B3": { "text": "c" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "lookup.vlookup-col-too-wide",
+    "description": "VLOOKUP column past the table is #REF!",
+    "tags": ["vlookup", "errors"],
+    "formula": "=VLOOKUP(1, A1:B2, 5, FALSE)",
+    "expected": { "error": "#REF!" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "text": "a" },
+          "A2": { "number": 2 }, "B2": { "text": "b" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "lookup.vlookup-casefold",
+    "description": "VLOOKUP exact match is case-insensitive",
+    "tags": ["vlookup"],
+    "quirks": ["case-insensitive-text"],
+    "formula": "=VLOOKUP(\"apple\", A1:B2, 2, FALSE)",
+    "expected": { "number": 1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "Apple" }, "B1": { "number": 1 },
+          "A2": { "text": "Banana" }, "B2": { "number": 2 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "lookup.vlookup-wildcard-star",
+    "description": "Exact VLOOKUP treats * as a wildcard",
+    "tags": ["vlookup"],
+    "quirks": ["wildcards"],
+    "formula": "=VLOOKUP(\"a*\", A1:B2, 2, FALSE)",
+    "expected": { "number": 1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "apple" }, "B1": { "number": 1 },
+          "A2": { "text": "banana" }, "B2": { "number": 2 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "lookup.vlookup-wildcard-question",
+    "description": "Exact VLOOKUP treats ? as a single-character wildcard",
+    "tags": ["vlookup"],
+    "quirks": ["wildcards"],
+    "formula": "=VLOOKUP(\"b?nana\", A1:B2, 2, FALSE)",
+    "expected": { "number": 2 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "apple" }, "B1": { "number": 1 },
+          "A2": { "text": "banana" }, "B2": { "number": 2 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "lookup.xlookup-exact-default",
+    "description": "XLOOKUP defaults to exact match (unlike VLOOKUP)",
+    "tags": ["xlookup", "functions"],
+    "formula": "=XLOOKUP(6, A1:A3, B1:B3)",
+    "expected": { "error": "#N/A" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "text": "a" },
+          "A2": { "number": 5 }, "B2": { "text": "b" },
+          "A3": { "number": 10 }, "B3": { "text": "c" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "lookup.xlookup-hit",
+    "description": "XLOOKUP exact hit",
+    "tags": ["xlookup"],
+    "formula": "=XLOOKUP(5, A1:A3, B1:B3)",
+    "expected": { "text": "b" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "text": "a" },
+          "A2": { "number": 5 }, "B2": { "text": "b" },
+          "A3": { "number": 10 }, "B3": { "text": "c" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "lookup.xlookup-if-not-found",
+    "description": "XLOOKUP 4th argument is the if_not_found value",
+    "tags": ["xlookup"],
+    "formula": "=XLOOKUP(6, A1:A3, B1:B3, \"miss\")",
+    "expected": { "text": "miss" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "text": "a" },
+          "A2": { "number": 5 }, "B2": { "text": "b" },
+          "A3": { "number": 10 }, "B3": { "text": "c" }
+        }
+      }]
+    }
+  }
+]

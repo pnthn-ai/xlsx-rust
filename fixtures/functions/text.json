@@ -1,0 +1,116 @@
+[
+  {
+    "id": "fn.left-default",
+    "description": "LEFT(\"abc\") is \"a\"",
+    "tags": ["text"],
+    "formula": "=LEFT(\"abc\")",
+    "expected": { "text": "a" }
+  },
+  {
+    "id": "fn.left-two",
+    "description": "LEFT(\"abc\", 2) is \"ab\"",
+    "tags": ["text"],
+    "formula": "=LEFT(\"abc\", 2)",
+    "expected": { "text": "ab" }
+  },
+  {
+    "id": "fn.right-two",
+    "description": "RIGHT(\"abc\", 2) is \"bc\"",
+    "tags": ["text"],
+    "formula": "=RIGHT(\"abc\", 2)",
+    "expected": { "text": "bc" }
+  },
+  {
+    "id": "fn.left-neg",
+    "description": "LEFT(\"abc\", -1) is #VALUE!",
+    "tags": ["text", "errors"],
+    "formula": "=LEFT(\"abc\", -1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.mid",
+    "description": "MID(\"abc\", 2, 1) is \"b\"",
+    "tags": ["text"],
+    "formula": "=MID(\"abc\", 2, 1)",
+    "expected": { "text": "b" }
+  },
+  {
+    "id": "fn.mid-past-end",
+    "description": "MID past the end returns the remainder",
+    "tags": ["text"],
+    "formula": "=MID(\"abc\", 2, 10)",
+    "expected": { "text": "bc" }
+  },
+  {
+    "id": "fn.len-text",
+    "description": "LEN(\"abc\") is 3",
+    "tags": ["text"],
+    "formula": "=LEN(\"abc\")",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.len-number",
+    "description": "LEN(123) coerces to text \"123\"",
+    "tags": ["text", "coercion"],
+    "formula": "=LEN(123)",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.len-true",
+    "description": "LEN(TRUE) is 4",
+    "tags": ["text", "coercion"],
+    "formula": "=LEN(TRUE)",
+    "expected": { "number": 4 }
+  },
+  {
+    "id": "fn.lower",
+    "description": "LOWER(\"AbC\")",
+    "tags": ["text"],
+    "formula": "=LOWER(\"AbC\")",
+    "expected": { "text": "abc" }
+  },
+  {
+    "id": "fn.upper",
+    "description": "UPPER(\"AbC\")",
+    "tags": ["text"],
+    "formula": "=UPPER(\"AbC\")",
+    "expected": { "text": "ABC" }
+  },
+  {
+    "id": "fn.trim",
+    "description": "TRIM collapses ASCII spaces",
+    "tags": ["text"],
+    "formula": "=TRIM(\"  a  b  \")",
+    "expected": { "text": "a b" }
+  },
+  {
+    "id": "fn.exact-case-sensitive",
+    "description": "EXACT is case-sensitive (unlike =)",
+    "tags": ["text"],
+    "quirks": ["case-insensitive-text"],
+    "formula": "=EXACT(\"A\", \"a\")",
+    "expected": { "bool": false }
+  },
+  {
+    "id": "fn.exact-equal",
+    "description": "EXACT(\"A\", \"A\") is TRUE",
+    "tags": ["text"],
+    "formula": "=EXACT(\"A\", \"A\")",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.value-spaces",
+    "description": "VALUE trims spaces around a number",
+    "tags": ["text", "coercion"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=VALUE(\"  2  \")",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.value-non-numeric",
+    "description": "VALUE(\"x\") is #VALUE!",
+    "tags": ["text", "errors"],
+    "formula": "=VALUE(\"x\")",
+    "expected": { "error": "#VALUE!" }
+  }
+]

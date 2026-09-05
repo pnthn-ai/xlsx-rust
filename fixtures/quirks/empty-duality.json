@@ -1,0 +1,206 @@
+[
+  {
+    "id": "empty.ne-zero",
+    "description": "Blank <> 0 is FALSE (blank equals 0)",
+    "tags": ["empty", "comparisons"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=A1<>0",
+    "expected": { "bool": false },
+    "workbook": { "sheets": [{ "name": "Sheet1", "cells": {} }] }
+  },
+  {
+    "id": "empty.ne-blank-text",
+    "description": "Blank <> \"\" is FALSE (blank also equals \"\")",
+    "tags": ["empty", "comparisons"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=A1<>\"\"",
+    "expected": { "bool": false },
+    "workbook": { "sheets": [{ "name": "Sheet1", "cells": {} }] }
+  },
+  {
+    "id": "empty.times-five",
+    "description": "Blank * 5 is 0",
+    "tags": ["empty", "arithmetic"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=A1*5",
+    "expected": { "number": 0 },
+    "workbook": { "sheets": [{ "name": "Sheet1", "cells": {} }] }
+  },
+  {
+    "id": "empty.concat-text",
+    "description": "Blank concatenates as \"\"",
+    "tags": ["empty", "arithmetic"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=A1&\"x\"",
+    "expected": { "text": "x" },
+    "workbook": { "sheets": [{ "name": "Sheet1", "cells": {} }] }
+  },
+  {
+    "id": "empty.div-blank-is-div0",
+    "description": "1/blank is #DIV/0! (blank coerces to 0 in arithmetic)",
+    "tags": ["empty", "errors"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=1/A1",
+    "expected": { "error": "#DIV/0!" },
+    "workbook": { "sheets": [{ "name": "Sheet1", "cells": {} }] }
+  },
+  {
+    "id": "empty.if-blank-is-false",
+    "description": "IF treats a blank cell as FALSE",
+    "tags": ["empty", "if"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=IF(A1, 1, 2)",
+    "expected": { "number": 2 },
+    "workbook": { "sheets": [{ "name": "Sheet1", "cells": {} }] }
+  },
+  {
+    "id": "empty.if-blank-eq-zero",
+    "description": "IF(A1=0) is true for a blank cell",
+    "tags": ["empty", "if"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=IF(A1=0, 1, 2)",
+    "expected": { "number": 1 },
+    "workbook": { "sheets": [{ "name": "Sheet1", "cells": {} }] }
+  },
+  {
+    "id": "empty.if-blank-eq-text",
+    "description": "IF(A1=\"\") is true for a blank cell",
+    "tags": ["empty", "if"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=IF(A1=\"\", 1, 2)",
+    "expected": { "number": 1 },
+    "workbook": { "sheets": [{ "name": "Sheet1", "cells": {} }] }
+  },
+  {
+    "id": "empty.string-cell-not-blank",
+    "description": "A stored empty string is not ISBLANK",
+    "tags": ["empty", "functions"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=ISBLANK(A1)",
+    "expected": { "bool": false },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": { "A1": { "text": "" } } }]
+    }
+  },
+  {
+    "id": "empty.string-cell-eq-blank-text",
+    "description": "Stored \"\" equals \"\"",
+    "tags": ["empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=A1=\"\"",
+    "expected": { "bool": true },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": { "A1": { "text": "" } } }]
+    }
+  },
+  {
+    "id": "empty.string-cell-ne-zero",
+    "description": "Stored \"\" does not equal 0 (unlike a true blank)",
+    "tags": ["empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=A1=0",
+    "expected": { "bool": false },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": { "A1": { "text": "" } } }]
+    }
+  },
+  {
+    "id": "empty.string-plus-one-value",
+    "description": "\"\"+1 is #VALUE! — empty text is not a blank cell",
+    "tags": ["empty", "arithmetic", "errors"],
+    "quirks": ["empty-cell-duality", "equality-vs-arithmetic-coercion"],
+    "formula": "=\"\"+1",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "empty.string-div-value",
+    "description": "1/\"\" is #VALUE!, not #DIV/0!",
+    "tags": ["empty", "errors"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=1/\"\"",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "empty.if-empty-string-value",
+    "description": "IF(\"\") is #VALUE! (non-numeric text)",
+    "tags": ["empty", "if"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=IF(\"\", 1, 2)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "empty.and-blank-is-true",
+    "description": "AND of a blank cell is vacuously TRUE (blank is skipped)",
+    "tags": ["empty", "logical"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=AND(A1)",
+    "expected": { "bool": true },
+    "workbook": { "sheets": [{ "name": "Sheet1", "cells": {} }] }
+  },
+  {
+    "id": "empty.or-blank-is-false",
+    "description": "OR of a blank cell is vacuously FALSE (blank is skipped)",
+    "tags": ["empty", "logical"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=OR(A1)",
+    "expected": { "bool": false },
+    "workbook": { "sheets": [{ "name": "Sheet1", "cells": {} }] }
+  },
+  {
+    "id": "empty.not-blank-is-true",
+    "description": "NOT of a blank cell treats it as FALSE",
+    "tags": ["empty", "logical"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=NOT(A1)",
+    "expected": { "bool": true },
+    "workbook": { "sheets": [{ "name": "Sheet1", "cells": {} }] }
+  },
+  {
+    "id": "empty.counta-blank",
+    "description": "COUNTA skips a missing cell",
+    "tags": ["empty", "count"],
+    "quirks": ["empty-cell-duality", "sum-arg-vs-range"],
+    "formula": "=COUNTA(A1)",
+    "expected": { "number": 0 },
+    "workbook": { "sheets": [{ "name": "Sheet1", "cells": {} }] }
+  },
+  {
+    "id": "empty.counta-empty-string",
+    "description": "COUNTA counts a stored empty string",
+    "tags": ["empty", "count"],
+    "quirks": ["empty-cell-duality", "sum-arg-vs-range"],
+    "formula": "=COUNTA(A1)",
+    "expected": { "number": 1 },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": { "A1": { "text": "" } } }]
+    }
+  },
+  {
+    "id": "empty.countblank-empty-string",
+    "description": "COUNTBLANK counts stored empty strings",
+    "tags": ["empty", "count"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=COUNTBLANK(A1)",
+    "expected": { "number": 1 },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": { "A1": { "text": "" } } }]
+    }
+  },
+  {
+    "id": "empty.countblank-range",
+    "description": "COUNTBLANK of three missing cells is 3",
+    "tags": ["empty", "count"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=COUNTBLANK(A1:A3)",
+    "expected": { "number": 3 },
+    "workbook": { "sheets": [{ "name": "Sheet1", "cells": {} }] }
+  },
+  {
+    "id": "empty.zero-concat-empty",
+    "description": "0&\"\" is the text \"0\"",
+    "tags": ["empty", "arithmetic"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=0&\"\"",
+    "expected": { "text": "0" }
+  }
+]

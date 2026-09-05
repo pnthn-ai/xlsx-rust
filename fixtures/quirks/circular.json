@@ -1,0 +1,35 @@
+[
+  {
+    "id": "circ.self-ref",
+    "description": "A cell that refers to itself is modeled as #CIRCULAR!",
+    "tags": ["circular"],
+    "quirks": ["circular-reference"],
+    "cell": "Sheet1!A1",
+    "expected": { "error": "#CIRCULAR!" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "formula": "=A1+1" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "circ.two-cell",
+    "description": "A1=B1, B1=A1 is circular",
+    "tags": ["circular"],
+    "quirks": ["circular-reference"],
+    "cell": "Sheet1!A1",
+    "expected": { "error": "#CIRCULAR!" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "formula": "=B1" },
+          "B1": { "formula": "=A1" }
+        }
+      }]
+    }
+  }
+]

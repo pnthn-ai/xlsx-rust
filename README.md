@@ -39,11 +39,12 @@ backend can be wired later through `xlsx-oracle` without changing candidates.
 | [`crates/xlsx-oracle`](crates/xlsx-oracle) | Trusted expected-result source: fixture, mock, recording wrapper for a future live backend |
 | [`crates/xlsx-verify`](crates/xlsx-verify) | Corpus loader, comparison, verdict report, `xlsx-verify` CLI |
 | [`crates/xlsx-engine-core`](crates/xlsx-engine-core) | Real formula engine (`calc-core`): parser, evaluator, quirk modules |
-| [`crates/xlsx-engine`](crates/xlsx-engine) | Stub candidates: `seed-compliant` (seed-scoped pass path) and `naive` (intentional fail path) |
+| [`crates/xlsx-engine`](crates/xlsx-engine) | Stub candidates: `seed-compliant` (expanded-corpus pass path) and `naive` (intentional fail path) |
 
 `xlsx-engine` stubs remain so the gate still has an explicit pass/fail demo.
 `calc-core` is the serious default; it does **not** read fixture expected
-outputs.
+outputs. `seed-compliant` implements just enough Excel-like semantics to pass
+every non-ignored case on the expanded corpus.
 
 ## Verification gate (for subagent PRs)
 
@@ -101,7 +102,7 @@ impl Candidate for MyEngine {
 4. Register the id in [`crates/xlsx-verify/src/registry.rs`](crates/xlsx-verify/src/registry.rs)
    so the CLI can load it (`--candidate my-engine`).
 5. Add fixtures under `fixtures/` (see below). Keep them next to the behavior
-   you are claiming: `fixtures/functions/sum.json`, etc.
+   you are claiming: `fixtures/functions/lookup.json`, `fixtures/quirks/…`, etc.
 6. Run the gate and paste / attach the JSON report:
 
 ```bash
@@ -121,6 +122,19 @@ Put JSON under [`fixtures/`](fixtures). Files named `schema.json` are ignored.
 A file may be one case, an array of cases, or `{ "cases": [...] }`. (The loader
 is a thin serde mapping — a TOML adapter can be added later without changing
 the case schema.)
+
+Group new cases by what they prove, not by when they were added:
+
+| Directory | What belongs there |
+|---|---|
+| [`fixtures/seed/`](fixtures/seed) | Original gate seed (kept stable; do not duplicate) |
+| [`fixtures/quirks/`](fixtures/quirks) | Excel oddities: type rank, empty duality, coercion, dates, VLOOKUP approx, … |
+| [`fixtures/functions/`](fixtures/functions) | Function families (`SUM`/`AVERAGE`/`COUNT`, logicals, text, lookup, `TYPE`) |
+| [`fixtures/operators/`](fixtures/operators) | Unary/`%`, intersection / union-shaped ranges |
+| [`fixtures/ignored/`](fixtures/ignored) | Documented `ignore` (volatile, locale, precision-as-displayed, hidden rows) |
+
+If a result is not something you can justify from documented Excel behavior,
+set `ignore` with a reason. Do not invent a golden.
 
 ```json
 {
@@ -236,17 +250,20 @@ A live backend is **out of scope** for this run. When one exists, point
 `RecordingOracle::live(backend)` at it locally, dump values into `fixtures/`,
 and keep CI on `FixtureOracle`.
 
-## Seed corpus
+## Corpus
 
-Under [`fixtures/seed/`](fixtures/seed): arithmetic, comparisons, type-coercion
-quirks, `SUM` / `IF` / `VLOOKUP`, error propagation, empty-vs-zero, array
-literals, a defined name, and a stored-formula cell.
+The seed files under [`fixtures/seed/`](fixtures/seed) stay as the original
+gate (arithmetic, comparisons, `SUM` / `IF` / `VLOOKUP`, empty-vs-zero, array
+literals, a defined name, and a stored-formula cell). Additional cases live
+beside them by category (see *How to add fixtures*).
 
 `calc-core` implements a real parser/evaluator for this corpus (and is the
-CLI default). `seed-compliant` is a leftover seed-scoped stub that still
-passes. `naive` uses IEEE / weak coercion so the same corpus produces visible
-`FAIL` rows (division by zero → `+inf`, `"2"+1` → `#VALUE!`, `TRUE=1` →
-`FALSE`, blank `= 0` → `FALSE`, …).
+CLI default). `seed-compliant` is a stub that implements just enough Excel-like
+semantics to pass every non-ignored case. `naive` uses IEEE / weak coercion so
+the same corpus still produces visible `FAIL` rows (division by zero → `+inf`,
+`"2"+1` → `#VALUE!`, `TRUE=1` → `FALSE`, blank `= 0` → `FALSE`, first-cell
+instead of implicit intersection, …). Ignored cases (volatile / locale / …)
+are skipped by all candidates.
 
 ## Calculation core (`calc-core`)
 
@@ -266,39 +283,51 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 | [`eval/coerce.rs`](crates/xlsx-engine-core/src/eval/coerce.rs) | Arithmetic / `&` / `IF` coercion (`"2"+1` = 3, TRUE → 1, empty → 0) |
 | [`eval/compare.rs`](crates/xlsx-engine-core/src/eval/compare.rs) | 15-digit `=`, case-insensitive text, `TRUE=1`, type ranking (`FALSE>100`) |
 | [`eval/empty.rs`](crates/xlsx-engine-core/src/eval/empty.rs) | Blank ≠ 0 ≠ `""`, but `A1=0` and `A1=""` when `A1` is blank |
-| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | `SUM`, `IF` (short-circuit), `VLOOKUP`, `IFERROR`, `ABS`, `N`, `IS*` |
+| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators, logicals, lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates, math, text, `TYPE` / `IS*` |
 
-**Implemented for this PR:** arithmetic and comparison operators (unary `+/-`,
-`%`, `^`, `&`), cell refs / ranges / defined names, array literals, error
-propagation (`#DIV/0!` vs `EvalError`), and the functions above. Workbook
-input is the snippet type in `xlsx-types` (no `.xlsx` IO).
+**Implemented:** arithmetic and comparison operators (unary `+/-`, `%`, `^`,
+`&`, space intersection), host-aware implicit intersection, cell refs /
+ranges / defined names, array literals, error propagation, and the function
+families above. Workbook input is the snippet type in `xlsx-types` (no
+`.xlsx` IO).
 
-**Deferred:** full function library, locale argument separators, implicit
-intersection by host row/column (top-left only today), intersection/union
-operators, live Excel oracle, performance bakeoff, and mass corpus growth
-(another branch may expand `fixtures/` — this crate consumes whatever is
-on `main`).
+**Deferred / in progress:** full function library, locale argument separators,
+live Excel oracle, and performance bakeoff. The fixture corpus is expanded
+beyond the original seed; `calc-core` is expected to pass every non-ignored
+case with real Excel-compatible semantics (not by reading fixture goldens).
 
 ## Excel compatibility notes
 
 Compatibility beats IEEE purity. Empty is a first-class type: a blank cell is
 not the number `0` and not the text `""`, even though many operators treat it
-as one or the other. Documented quirk categories (not all implemented):
+as one or the other. Documented quirk categories:
 
-- 15-digit comparison / `0.1+0.2=0.3`
-- Empty-cell duality (`A1=0` and `A1=""` when `A1` is blank; `0=""` is false)
-- Type ranking for `<`/`>` (logical > text > number; `FALSE>100` is `TRUE`)
-- Equality vs arithmetic coercion (`"2"=2` is false, `"2"+1` is `3`)
-- Case-insensitive text equality
-- `TRUE=1` / `FALSE=0`
-- `SUM` skips logicals/text in ranges but coerces scalar arguments
-- `VLOOKUP` approximate match on unsorted data
-- `IF` short-circuit
-- 1900 leap year, 1900 vs 1904 dates, implicit intersection, volatile
-  functions, locale separators, circular refs, precision-as-displayed,
-  wildcards
+- 15-digit comparison / `0.1+0.2=0.3` / `1/3+1/3+1/3=1`
+- Empty-cell duality (`A1=0` and `A1=""` when `A1` is blank; `0=""` is false;
+  stored `""` is *not* blank: `ISBLANK` false, `COUNTA` 1, `""+1` is `#VALUE!`)
+- Type ranking for `<`/`>` (logical > text > number). Signature split:
+  `FALSE=0` is `TRUE` but `FALSE>0` / `FALSE<=0` use ranking (`TRUE` / `FALSE`)
+- Equality vs arithmetic coercion (`"2"=2` is false, `"2"+1` is `3`, `--"2"=2`)
+- Case-insensitive text equality (`"A"="a"`) vs case-sensitive `EXACT`
+- `TRUE=1` / `FALSE=0` in `=` and in arithmetic; `ISNUMBER(TRUE)` is still false
+- `SUM` / `AVERAGE` / `COUNT` / `PRODUCT` / `MIN` / `MAX`: skip logicals/text
+  in ranges and array literals; coerce scalar arguments (`SUM(TRUE)` is 1,
+  `SUM(A1)` of `TRUE` is 0)
+- `VLOOKUP` approximate match binary-searches (wrong answers on unsorted data);
+  omitted `range_lookup` defaults to approximate. `XLOOKUP` defaults to exact
+- `IF` short-circuits; `AND` / `OR` do not (`AND(FALSE, 1/0)` is `#DIV/0!`)
+- Error precedence is left-to-right (`#DIV/0!+#VALUE!` keeps `#DIV/0!`)
+- 1900 leap-year bug (`DATE(1900,2,29)` is serial 60); 1904 date system
+- Unary `+`/`-` and postfix `%` (`50%` is 0.5, `5%%` is 0.0005)
+- Space intersection (`A1:B2 B2`); non-overlap is `#NULL!`
+- Implicit intersection of a range in a scalar host cell (`A1:A3` at `B2` → `A2`)
+- Wildcards in exact `VLOOKUP` / `MATCH` (`*` / `?`)
+- Circular refs modeled as `#CIRCULAR!`
+- Volatile / locale / precision-as-displayed / hidden-row `SUBTOTAL` are
+  catalogued as `ignore` until they can be evaluated honestly
 
-See [`crates/xlsx-types/src/quirk.rs`](crates/xlsx-types/src/quirk.rs).
+See [`crates/xlsx-types/src/quirk.rs`](crates/xlsx-types/src/quirk.rs). The
+catalog also names `error-precedence`, `percent-unary`, and `range-operators`.
 
 ## Development
 

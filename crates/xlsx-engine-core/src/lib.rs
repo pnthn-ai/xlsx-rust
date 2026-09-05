@@ -4,12 +4,13 @@
 //! - [`parse`] — tokenizer + recursive-descent AST
 //! - [`eval`] — workbook-backed walker
 //! - [`eval::coerce`] / [`eval::compare`] / [`eval::empty`] — quirk modules
-//! - [`eval::functions`] — `SUM`, `IF`, `VLOOKUP`, and a small foundation set
+//! - [`eval::functions`] — worksheet functions used by the expanded corpus
 //!
 //! This crate depends only on [`xlsx_types`]. It never reads fixture expected
 //! values; the verification gate (`xlsx-verify`) is the only judge.
 
 pub mod ast;
+pub mod dates;
 pub mod eval;
 pub mod parse;
 

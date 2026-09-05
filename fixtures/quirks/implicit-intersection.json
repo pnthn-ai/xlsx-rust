@@ -1,0 +1,100 @@
+[
+  {
+    "id": "ii.col-at-b2",
+    "description": "A1:A3 in a formula at B2 implicit-intersects to A2",
+    "tags": ["intersection"],
+    "quirks": ["implicit-intersection"],
+    "formula": "=A1:A3",
+    "at": "Sheet1!B2",
+    "expected": { "number": 20 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 10 },
+          "A2": { "number": 20 },
+          "A3": { "number": 30 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "ii.col-plus-at-b2",
+    "description": "A1:A3+1 at B2 uses A2",
+    "tags": ["intersection", "arithmetic"],
+    "quirks": ["implicit-intersection"],
+    "formula": "=A1:A3+1",
+    "at": "Sheet1!B2",
+    "expected": { "number": 21 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 10 },
+          "A2": { "number": 20 },
+          "A3": { "number": 30 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "ii.row-at-c1",
+    "description": "A1:C1 at C2 implicit-intersects to C1",
+    "tags": ["intersection"],
+    "quirks": ["implicit-intersection"],
+    "formula": "=A1:C1",
+    "at": "Sheet1!C2",
+    "expected": { "number": 3 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "B1": { "number": 2 },
+          "C1": { "number": 3 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "ii.no-overlap-value",
+    "description": "Implicit intersection with no shared row/col is #VALUE!",
+    "tags": ["intersection", "errors"],
+    "quirks": ["implicit-intersection"],
+    "formula": "=A1:A3",
+    "at": "Sheet1!B5",
+    "expected": { "error": "#VALUE!" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 10 },
+          "A2": { "number": 20 },
+          "A3": { "number": 30 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "ii.dynamic-array-keeps-range",
+    "description": "array_mode=dynamic-array returns the full column instead of intersecting",
+    "tags": ["intersection", "array"],
+    "quirks": ["implicit-intersection", "array-eval-mode"],
+    "formula": "=A1:A3",
+    "at": "Sheet1!B2",
+    "expected": {
+      "array": [[{ "number": 10 }], [{ "number": 20 }], [{ "number": 30 }]]
+    },
+    "options": { "array_mode": "dynamic-array" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 10 },
+          "A2": { "number": 20 },
+          "A3": { "number": 30 }
+        }
+      }]
+    }
+  }
+]

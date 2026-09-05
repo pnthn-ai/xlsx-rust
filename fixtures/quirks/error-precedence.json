@@ -1,0 +1,137 @@
+[
+  {
+    "id": "err.left-div0-wins",
+    "description": "Left error wins: #DIV/0!+#VALUE! is #DIV/0!",
+    "tags": ["errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=#DIV/0!+#VALUE!",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "err.left-value-wins",
+    "description": "Left error wins: #VALUE!+#DIV/0! is #VALUE!",
+    "tags": ["errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=#VALUE!+#DIV/0!",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "err.na-plus-div0",
+    "description": "#N/A+#DIV/0! is #N/A",
+    "tags": ["errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=#N/A+#DIV/0!",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "err.ref-literal-add",
+    "description": "1+#REF! is #REF!",
+    "tags": ["errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=1+#REF!",
+    "expected": { "error": "#REF!" }
+  },
+  {
+    "id": "err.null-literal",
+    "description": "#NULL! as a value",
+    "tags": ["errors"],
+    "formula": "=#NULL!",
+    "expected": { "error": "#NULL!" }
+  },
+  {
+    "id": "err.num-literal",
+    "description": "#NUM! as a value",
+    "tags": ["errors"],
+    "formula": "=#NUM!",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "err.name-literal",
+    "description": "#NAME? as a value",
+    "tags": ["errors"],
+    "formula": "=#NAME?",
+    "expected": { "error": "#NAME?" }
+  },
+  {
+    "id": "err.na-fn",
+    "description": "NA() returns #N/A",
+    "tags": ["errors", "functions"],
+    "formula": "=NA()",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "err.getting-data-literal",
+    "description": "#GETTING_DATA as a modeled error value",
+    "tags": ["errors"],
+    "formula": "=#GETTING_DATA",
+    "expected": { "error": "#GETTING_DATA" }
+  },
+  {
+    "id": "err.compare-propagates",
+    "description": "1=#N/A is #N/A",
+    "tags": ["errors", "comparisons"],
+    "quirks": ["error-precedence"],
+    "formula": "=1=#N/A",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "err.concat-propagates",
+    "description": "#DIV/0!&\"a\" is #DIV/0!",
+    "tags": ["errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=#DIV/0!&\"a\"",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "err.if-of-na",
+    "description": "IF(#N/A, 1, 2) is #N/A",
+    "tags": ["errors", "if"],
+    "quirks": ["error-precedence"],
+    "formula": "=IF(#N/A, 1, 2)",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "err.sum-na",
+    "description": "SUM(1, #N/A) is #N/A",
+    "tags": ["errors", "sum"],
+    "quirks": ["error-precedence"],
+    "formula": "=SUM(1, #N/A)",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "err.pow-zero-zero",
+    "description": "0^0 is #NUM!, not 1 or NaN",
+    "tags": ["errors", "arithmetic"],
+    "quirks": ["ieee-vs-excel-precision"],
+    "formula": "=0^0",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "err.pow-neg-frac",
+    "description": "(-4)^0.5 is #NUM!",
+    "tags": ["errors", "arithmetic"],
+    "formula": "=(-4)^0.5",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "err.sqrt-neg",
+    "description": "SQRT(-1) is #NUM!",
+    "tags": ["errors", "functions"],
+    "formula": "=SQRT(-1)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "err.mod-zero",
+    "description": "MOD(1, 0) is #DIV/0!",
+    "tags": ["errors", "functions"],
+    "formula": "=MOD(1, 0)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "err.unknown-name",
+    "description": "A bare unknown name is #NAME?",
+    "tags": ["errors"],
+    "formula": "=NotADefinedName",
+    "expected": { "error": "#NAME?" }
+  }
+]
