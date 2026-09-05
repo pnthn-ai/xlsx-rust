@@ -13,6 +13,7 @@
 //! - [`eval::ifs`] — `IFS` pair-selection kernel (eager; no-match `#N/A`)
 //! - [`eval::unique`] — `UNIQUE` dynamic-array kernel (hash distinctness)
 //! - [`eval::filter`] — `FILTER` mask/select kernel (`#CALC!` / `if_empty`)
+//! - [`eval::irr`] — Excel `IRR` Newton / secant kernel
 //!
 //! This crate depends only on [`xlsx_types`]. It never reads fixture expected
 //! values; the verification gate (`xlsx-verify`) is the only judge.
@@ -50,6 +51,7 @@ pub use eval::switch::{
 pub use eval::ifs::{select as excel_ifs, select_naive as excel_ifs_naive};
 pub use eval::unique::{unique_apply, unique_apply_naive, unique_eq};
 pub use eval::filter::{select as excel_filter, select_naive as excel_filter_naive};
+pub use eval::irr::{irr as excel_irr, irr_naive as excel_irr_naive, MAX_ITERS as IRR_MAX_ITERS};
 pub use eval::{eval_formula_in, Evaluator};
 pub use eval::{eval_formula_in, eval_sumifs_materialized, Evaluator};
 pub use eval::{eval_averageif_materialized, eval_formula_in, Evaluator};

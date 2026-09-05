@@ -99,3 +99,7 @@ harness = false
 [[bench]]
 name = "filter"
 harness = false
+
+[[bench]]
+name = "irr"
+harness = false
