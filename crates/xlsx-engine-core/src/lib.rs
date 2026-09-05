@@ -53,7 +53,9 @@ pub use eval::textjoin::{
     eval_textjoin_formula, textjoin_naive_join, TextJoinBuilder, TEXTJOIN_MAX_CHARS,
 };
 pub use eval::unique::{unique_apply, unique_apply_naive, unique_eq};
-pub use eval::vstack::{stack as excel_vstack, stack_naive as excel_vstack_naive};
+pub use eval::vstack::{
+    stack as excel_vstack, stack_naive as excel_vstack_naive, stack_owned as excel_vstack_owned,
+};
 pub use eval::{
     eval_averageif_materialized, eval_formula_in, eval_sumif_materialized,
     eval_sumifs_materialized, Evaluator,

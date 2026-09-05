@@ -3,7 +3,7 @@
 
 use std::hint::black_box;
 use std::time::Instant;
-use xlsx_engine_core::{excel_vstack, excel_vstack_naive, CalcCoreEngine};
+use xlsx_engine_core::{excel_vstack, excel_vstack_naive, excel_vstack_owned, CalcCoreEngine};
 use xlsx_types::{Candidate, Cell, EvalSpec, EvalTarget, ExcelValue, Sheet, Workbook};
 
 fn time_ms(iters: u32, mut f: impl FnMut()) -> f64 {
@@ -30,17 +30,22 @@ fn matrix(rows: usize, cols: usize, tag: f64) -> ExcelValue {
 fn kernel_case(name: &str, args: Vec<ExcelValue>, iters: u32) {
     let got = excel_vstack(&args);
     let naive = excel_vstack_naive(&args);
+    let owned = excel_vstack_owned(args.clone());
     assert_eq!(got, naive, "kernel mismatch: {name}");
+    assert_eq!(got, owned, "owned mismatch: {name}");
 
     let fast_ms = time_ms(iters, || {
         black_box(excel_vstack(black_box(&args)));
+    });
+    let owned_ms = time_ms(iters, || {
+        black_box(excel_vstack_owned(black_box(args.clone())));
     });
     let naive_ms = time_ms(iters, || {
         black_box(excel_vstack_naive(black_box(&args)));
     });
     let speedup = naive_ms / fast_ms.max(1e-9);
     println!(
-        "kernel {name:<28}  naive={naive_ms:.4}ms  prealloc={fast_ms:.4}ms  speedup={speedup:.2}x"
+        "kernel {name:<28}  naive={naive_ms:.4}ms  prealloc={fast_ms:.4}ms  owned={owned_ms:.4}ms  speedup={speedup:.2}x"
     );
 }
 
@@ -88,7 +93,7 @@ fn evaluate_bench(n: u32, formula: &str, expect_rows: usize, expect_cols: usize,
 }
 
 fn main() {
-    println!("VSTACK bench (calc-core prealloc kernel vs grow-and-repad)\n");
+    println!("VSTACK bench (calc-core prealloc kernel vs immutable-append naive)\n");
 
     kernel_case(
         "2× (8k×4 equal width)",
@@ -127,6 +132,13 @@ fn main() {
             matrix(2_048, 1, 10.0),
         ],
         40,
+    );
+    kernel_case(
+        "64 × 2k×2 equal width",
+        (0..64)
+            .map(|i| matrix(2_048, 2, 1_000.0 * (i + 1) as f64))
+            .collect(),
+        6,
     );
 
     println!();

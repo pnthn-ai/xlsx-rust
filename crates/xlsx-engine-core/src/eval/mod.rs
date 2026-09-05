@@ -925,6 +925,7 @@ mod tests {
         );
     }
 
+    #[test]
     fn unique_literal_and_exactly_once() {
         let wb = Workbook::default();
         assert_eq!(

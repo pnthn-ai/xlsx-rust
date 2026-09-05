@@ -36,9 +36,10 @@
 //!   parser requires an expression after each comma.
 //!
 //! [`stack`] measures once, preallocates the exact grid, and clones each
-//! cell once. [`stack_naive`] materializes every argument, then re-pads
-//! already-written rows whenever a wider array arrives. Same answers; more
-//! allocation. Used as the bench "before".
+//! cell once. [`stack_owned`] is the evaluator path: it **moves** already-
+//! owned rows when width matches. [`stack_naive`] rebuilds the whole result
+//! on every argument (immutable append). Same answers; more allocation.
+//! Used as the bench "before".
 
 use super::{Ctx, Evaluator};
 use crate::ast::Expr;
@@ -59,7 +60,7 @@ pub(crate) fn eval(
     for arg in args {
         values.push(eval_stack_arg(ev, arg, ctx)?);
     }
-    Ok(stack(&values))
+    Ok(stack_owned(values))
 }
 
 /// Cell / range / array-literal / name errors are 1×1 data. A computed
@@ -85,7 +86,71 @@ pub fn stack(args: &[ExcelValue]) -> ExcelValue {
     vstack_apply(args, VstackStrategy::Fast)
 }
 
-/// Grow-and-repad baseline. Same answers as [`stack`]. Bench "before".
+/// Evaluator path: move owned `Array` rows when width already matches.
+pub fn stack_owned(args: Vec<ExcelValue>) -> ExcelValue {
+    if args.is_empty() {
+        return ExcelValue::Error(ExcelError::Value);
+    }
+    let mut first_err = None;
+    let mut total_rows = 0usize;
+    let mut max_cols = 0usize;
+    for arg in &args {
+        match Matrix::from_value(arg) {
+            Ok(m) => {
+                let (r, c) = m.dims();
+                total_rows += r;
+                max_cols = max_cols.max(c);
+            }
+            Err(e) if first_err.is_none() => first_err = Some(e),
+            Err(_) => {}
+        }
+    }
+    if let Some(e) = first_err {
+        return ExcelValue::Error(e);
+    }
+    if total_rows == 0 || max_cols == 0 {
+        return ExcelValue::Error(ExcelError::Calc);
+    }
+
+    let mut out = Vec::with_capacity(total_rows);
+    for arg in args {
+        match arg {
+            ExcelValue::Error(e) => return ExcelValue::Error(e),
+            ExcelValue::Array(mut rows) => {
+                if rows.is_empty() {
+                    continue;
+                }
+                let cols = rows[0].len();
+                if cols == 0 {
+                    continue;
+                }
+                if cols == max_cols {
+                    out.append(&mut rows);
+                } else {
+                    for mut row in rows {
+                        row.reserve(max_cols - row.len());
+                        while row.len() < max_cols {
+                            row.push(NA);
+                        }
+                        out.push(row);
+                    }
+                }
+            }
+            other => {
+                let mut row = Vec::with_capacity(max_cols);
+                row.push(other);
+                while row.len() < max_cols {
+                    row.push(NA);
+                }
+                out.push(row);
+            }
+        }
+    }
+    ExcelValue::Array(out)
+}
+
+/// Immutable-append baseline: rebuild the whole result on every argument.
+/// Same answers as [`stack`]. Bench "before".
 pub fn stack_naive(args: &[ExcelValue]) -> ExcelValue {
     vstack_apply(args, VstackStrategy::Naive)
 }
@@ -188,33 +253,29 @@ fn stack_fast(mats: &[Matrix<'_>]) -> ExcelValue {
     ExcelValue::Array(out)
 }
 
-/// Materialize every block, then re-pad already-written rows when a wider
-/// block arrives. Extra clones + repeated `#N/A` fills.
+/// Rebuild the accumulated result on every argument (clone-all-so-far).
 fn stack_naive_from(mats: &[Matrix<'_>]) -> ExcelValue {
     let mut out: Vec<Vec<ExcelValue>> = Vec::new();
-    let mut width = 0usize;
     for m in mats {
         let (rows, cols) = m.dims();
-        let mut block = Vec::with_capacity(rows);
+        let width = out.first().map(|r| r.len()).unwrap_or(0).max(cols);
+        let mut next = Vec::with_capacity(out.len() + rows);
+        for row in &out {
+            let mut r = row.clone();
+            r.resize(width, NA);
+            next.push(r);
+        }
         for r in 0..rows {
-            let mut row = Vec::with_capacity(cols);
+            let mut row = Vec::with_capacity(width);
             for c in 0..cols {
                 row.push(m.get(r, c).clone());
             }
-            block.push(row);
-        }
-        if cols > width {
-            for row in &mut out {
-                row.resize(cols, NA);
-            }
-            width = cols;
-        }
-        for mut row in block {
             row.resize(width, NA);
-            out.push(row);
+            next.push(row);
         }
+        out = next;
     }
-    if out.is_empty() || width == 0 {
+    if out.is_empty() || out.first().map(|r| r.len()).unwrap_or(0) == 0 {
         return ExcelValue::Error(ExcelError::Calc);
     }
     ExcelValue::Array(out)
@@ -237,7 +298,9 @@ mod tests {
     }
 
     fn both_eq(args: &[ExcelValue]) {
+        let owned = stack_owned(args.to_vec());
         assert_eq!(stack(args), stack_naive(args), "{args:?}");
+        assert_eq!(stack(args), owned, "owned vs borrow {args:?}");
     }
 
     #[test]

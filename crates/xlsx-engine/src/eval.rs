@@ -1135,7 +1135,7 @@ impl Interpreter {
             };
             values.push(v);
         }
-        Ok(xlsx_engine_core::excel_vstack(&values))
+        Ok(xlsx_engine_core::excel_vstack_owned(values))
     }
 
     fn fn_filter(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
