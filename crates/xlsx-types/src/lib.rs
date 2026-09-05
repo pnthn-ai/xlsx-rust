@@ -13,6 +13,7 @@ pub mod criterion;
 pub mod error;
 pub mod eval;
 pub mod floor_ceiling;
+pub mod financial;
 pub mod quirk;
 pub mod value;
 pub mod workbook;
@@ -28,6 +29,7 @@ pub use floor_ceiling::{
     excel_ceiling_slice_naive, excel_floor, excel_floor_math, excel_floor_naive, excel_floor_slice,
     excel_floor_slice_naive,
 };
+pub use financial::pmt as excel_pmt;
 pub use quirk::QuirkCategory;
 pub use value::{excel_num_eq, excel_round_15, ExcelType, ExcelValue};
 pub use workbook::{Cell, DefinedName, Sheet, Workbook, WorkbookError};

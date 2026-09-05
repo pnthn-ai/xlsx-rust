@@ -14,6 +14,7 @@ use xlsx_types::{
     excel_ceiling, excel_ceiling_math, excel_floor, excel_floor_math, excel_num_eq, ArrayMode,
     CellAddr, CellRef, EvalError, EvalSpec, EvalTarget, ExcelError, ExcelValue, RangeRef, Workbook,
     excel_num_eq, excel_round_15, ArrayMode, CellAddr, CellRef, EvalError, EvalSpec, EvalTarget,
+    excel_num_eq, excel_pmt, ArrayMode, CellAddr, CellRef, EvalError, EvalSpec, EvalTarget,
     ExcelError, ExcelValue, RangeRef, Workbook,
 };
 
@@ -456,6 +457,7 @@ impl Interpreter {
             "UNIQUE" => self.fn_unique(args, ctx),
             "TRUE" => Ok(ExcelValue::Bool(true)),
             "FALSE" => Ok(ExcelValue::Bool(false)),
+            "PMT" => self.fn_pmt(args, ctx),
             _ => Ok(ExcelValue::Error(ExcelError::Name)),
         }
     }
@@ -1908,6 +1910,8 @@ impl Interpreter {
         }
     fn fn_npv(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
         if args.len() < 2 {
+    fn fn_pmt(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.len() < 3 || args.len() > 5 {
             return Ok(ExcelValue::Error(ExcelError::Value));
         }
         let rate = match self.as_number(&self.eval_scalar(&args[0], ctx)?) {
@@ -1931,6 +1935,34 @@ impl Interpreter {
             return Ok(ExcelValue::Error(ExcelError::Num));
         }
         Ok(ExcelValue::Number(sum))
+        let nper = match self.as_number(&self.eval_scalar(&args[1], ctx)?) {
+            Ok(n) => n,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        let pv = match self.as_number(&self.eval_scalar(&args[2], ctx)?) {
+            Ok(n) => n,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        let fv = if args.len() >= 4 {
+            match self.as_number(&self.eval_scalar(&args[3], ctx)?) {
+                Ok(n) => n,
+                Err(e) => return Ok(ExcelValue::Error(e)),
+            }
+        } else {
+            0.0
+        };
+        let typ = if args.len() >= 5 {
+            match self.as_number(&self.eval_scalar(&args[4], ctx)?) {
+                Ok(n) => n,
+                Err(e) => return Ok(ExcelValue::Error(e)),
+            }
+        } else {
+            0.0
+        };
+        match excel_pmt(rate, nper, pv, fv, typ) {
+            Ok(n) => Ok(ExcelValue::Number(n)),
+            Err(e) => Ok(ExcelValue::Error(e)),
+        }
     }
 
     fn fn_value(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {

@@ -131,6 +131,7 @@ Group new cases by what they prove, not by when they were added:
 | [`fixtures/seed/`](fixtures/seed) | Original gate seed (kept stable; do not duplicate) |
 | [`fixtures/quirks/`](fixtures/quirks) | Excel oddities: type rank, empty duality, coercion, dates, VLOOKUP approx, … |
 | [`fixtures/functions/`](fixtures/functions) | Function families (`SUM`/`AVERAGE`/`COUNT`/`COUNTIF`, logicals, text, lookup, `TYPE`) |
+| [`fixtures/functions/`](fixtures/functions) | Function families (`SUM`/`AVERAGE`/`COUNT`, logicals, text, lookup, `TYPE`, `PMT`) |
 | [`fixtures/operators/`](fixtures/operators) | Unary/`%`, intersection / union-shaped ranges |
 | [`fixtures/ignored/`](fixtures/ignored) | Documented `ignore` (volatile, locale, precision-as-displayed, hidden rows) |
 
@@ -322,6 +323,7 @@ function families above. Workbook input is the snippet type in `xlsx-types` (no
 | [`eval/ifs.rs`](crates/xlsx-engine-core/src/eval/ifs.rs) | `IFS` pair-selection kernel (eager eval, first TRUE, no-match `#N/A`) |
 | [`eval/unique.rs`](crates/xlsx-engine-core/src/eval/unique.rs) | `UNIQUE(array, [by_col], [exactly_once])` hash distinctness; returns the array that would spill |
 | [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators, logicals, lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates (`DATE`/`TIME`/`YEAR`/`MONTH`/`DAY`/`WORKDAY`), math, text, `TYPE` / `IS*` |
+| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators, logicals, lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates, math, text, `TYPE` / `IS*`, `PMT` |
 
 **Implemented:** arithmetic and comparison operators (unary `+/-`, `%`, `^`,
 `&`, space intersection), host-aware implicit intersection, cell refs /
@@ -355,6 +357,10 @@ families above (including `IFS`). Workbook input is the snippet type in
 `xlsx-types` (no `.xlsx` IO).
 
 `IFS` kernel bench: `cargo bench -p xlsx-engine-core --bench ifs`.
+families above (including financial `PMT`; `PV` / `FV` / `NPER` later).
+Workbook input is the snippet type in `xlsx-types` (no `.xlsx` IO).
+The `PMT` closed form lives in [`xlsx-types/src/financial.rs`](crates/xlsx-types/src/financial.rs)
+and does **not** read fixture goldens.
 
 **Deferred / in progress:** full function library, locale argument separators,
 live Excel oracle, and performance bakeoff. The fixture corpus is expanded
@@ -429,6 +435,10 @@ as one or the other. Documented quirk categories:
 - Wildcards in exact `VLOOKUP` / `MATCH` (`*` / `?`)
 - `AVERAGEIF` criteria strings (`">5"`, `"*a*"`, `"="` / `"<>"` blanks), text `"5"` dual-matching numbers, range vs `average_range` reshape from the top-left, no matches / no numeric average cells → `#DIV/0!`, empty criteria cell treated as `0`
 - Wildcards in exact `VLOOKUP` / `MATCH` (`*` / `?`) and in `SEARCH` (`*` / `?` / `~`)
+- `PMT(rate, nper, pv, [fv], [type])`: Excel cash-flow sign (pay out is
+  negative); `rate=0` is `-(pv+fv)/nper` (`#DIV/0!` if `nper=0`);
+  `rate=-1` / overflow / negative^non-integer `nper` are `#NUM!`; omitted
+  `fv`/`type` default to 0; `type` is the OpenFormula PayType multiplier
 - Circular refs modeled as `#CIRCULAR!`
 - Volatile / locale / precision-as-displayed / hidden-row `SUBTOTAL` are
   catalogued as `ignore` until they can be evaluated honestly
