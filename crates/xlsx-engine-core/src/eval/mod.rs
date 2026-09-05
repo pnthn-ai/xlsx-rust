@@ -929,4 +929,31 @@ mod tests {
             ExcelValue::Error(ExcelError::Value)
         );
     }
+
+    #[test]
+    fn fv_microsoft_savings_and_errors() {
+        let wb = Workbook::default();
+        match eval_formula_in(&wb, "=FV(0.06/12,10,-200,-500,1)").unwrap() {
+            ExcelValue::Number(n) => {
+                assert_eq!((n * 100.0).round() as i64, 258_140, "got {n}")
+            }
+            other => panic!("expected number, got {other:?}"),
+        }
+        assert_eq!(
+            eval_formula_in(&wb, "=FV(0,0,-100,1000)").unwrap(),
+            ExcelValue::Number(-1000.0)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=FV(-1,0,-100)").unwrap(),
+            ExcelValue::Error(ExcelError::Num)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=FV(0.1,10)").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=FV()").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
+        );
+    }
 }
