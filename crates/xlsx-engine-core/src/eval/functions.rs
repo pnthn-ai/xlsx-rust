@@ -3,6 +3,8 @@
 //! `IFS` lives with the other logicals here; pair selection is [`super::ifs`].
 //! `FILTER` lives with the other lookups here; the mask/select kernel is
 //! [`super::filter`].
+//! `TEXTSPLIT` lives with the other text functions; the split kernel is
+//! [`super::textsplit`].
 //!
 //! Unknown names return `#NAME?` (an Excel value, not [`EvalError`]).
 //! Financial TVM starts with `PMT` (`xlsx_types::excel_pmt`); `PV`/`FV`/`NPER`
@@ -130,6 +132,7 @@ pub(crate) fn dispatch(
         "TEXT" => fn_text(ev, args, ctx),
         "REPLACE" => fn_replace(ev, args, ctx),
         "TEXTJOIN" => super::textjoin::fn_textjoin(ev, args, ctx),
+        "TEXTSPLIT" => super::textsplit::fn_textsplit(ev, args, ctx),
         "CONCAT" => super::concat::fn_concat(ev, args, ctx),
         "NPV" => super::npv::eval(ev, args, ctx),
         "UNIQUE" => super::unique::eval(ev, args, ctx),

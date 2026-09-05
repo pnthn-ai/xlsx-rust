@@ -93,6 +93,7 @@ impl Interpreter {
             Expr::Unary { op, expr } => self.eval_unary(*op, expr, ctx),
             Expr::Binary { op, left, right } => self.eval_binary(*op, left, right, ctx),
             Expr::Call { name, args } => self.eval_call(name, args, ctx),
+            Expr::Missing => Ok(ExcelValue::Empty),
             Expr::Array(rows) => {
                 let mut out = Vec::new();
                 for row in rows {
@@ -447,6 +448,7 @@ impl Interpreter {
             "TEXT" => self.fn_text(args, ctx),
             "REPLACE" => self.fn_replace(args, ctx),
             "TEXTJOIN" => self.fn_textjoin(args, ctx),
+            "TEXTSPLIT" => self.fn_textsplit(args, ctx),
             "CONCAT" => self.fn_concat(args, ctx),
             "NPV" => self.fn_npv(args, ctx),
             "UNIQUE" => self.fn_unique(args, ctx),
@@ -1133,6 +1135,46 @@ impl Interpreter {
             &array,
             &include,
             if_empty.as_ref(),
+        ))
+    }
+
+    fn fn_textsplit(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.is_empty() || args.len() > 6 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        let text = self.eval_scalar(&args[0], ctx)?;
+        let col = if args.len() >= 2 && !matches!(args[1], Expr::Missing) {
+            Some(self.eval_expr(&args[1], ctx)?)
+        } else {
+            None
+        };
+        let row = if args.len() >= 3 && !matches!(args[2], Expr::Missing) {
+            Some(self.eval_expr(&args[2], ctx)?)
+        } else {
+            None
+        };
+        let ignore = if args.len() >= 4 && !matches!(args[3], Expr::Missing) {
+            Some(self.eval_scalar(&args[3], ctx)?)
+        } else {
+            None
+        };
+        let mode = if args.len() >= 5 && !matches!(args[4], Expr::Missing) {
+            Some(self.eval_scalar(&args[4], ctx)?)
+        } else {
+            None
+        };
+        let pad = if args.len() >= 6 && !matches!(args[5], Expr::Missing) {
+            Some(self.eval_expr(&args[5], ctx)?)
+        } else {
+            None
+        };
+        Ok(xlsx_engine_core::excel_textsplit_apply(
+            &text,
+            col.as_ref(),
+            row.as_ref(),
+            ignore.as_ref(),
+            mode.as_ref(),
+            pad.as_ref(),
         ))
     }
 
