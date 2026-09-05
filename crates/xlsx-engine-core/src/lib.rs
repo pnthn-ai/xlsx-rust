@@ -25,6 +25,9 @@ pub use eval::sumproduct::{product_sum, product_sum_naive, product_sum_packed};
 pub use eval::{eval_formula_in, eval_sumif_materialized, Evaluator};
 pub use eval::replace::{replace as excel_replace, replace_naive as excel_replace_naive};
 pub use eval::find::{find as excel_find, find_naive as excel_find_naive};
+pub use eval::textjoin::{
+    eval_textjoin_formula, textjoin_naive_join, TextJoinBuilder, TEXTJOIN_MAX_CHARS,
+};
 pub use eval::{eval_formula_in, Evaluator};
 pub use eval::{eval_formula_in, eval_sumifs_materialized, Evaluator};
 pub use eval::{eval_averageif_materialized, eval_formula_in, Evaluator};

@@ -103,6 +103,7 @@ pub(crate) fn dispatch(
         "SUBSTITUTE" => fn_substitute(ev, args, ctx),
         "TEXT" => fn_text(ev, args, ctx),
         "REPLACE" => fn_replace(ev, args, ctx),
+        "TEXTJOIN" => super::textjoin::fn_textjoin(ev, args, ctx),
         "TRUE" => Ok(ExcelValue::Bool(true)),
         "FALSE" => Ok(ExcelValue::Bool(false)),
         _ => Ok(ExcelValue::Error(ExcelError::Name)),

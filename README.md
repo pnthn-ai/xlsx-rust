@@ -304,6 +304,7 @@ function families above. Workbook input is the snippet type in `xlsx-types` (no
 `.xlsx` IO).
 | [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators (`SUM`/`SUMIFS`/…), logicals, lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates, math, text, `TYPE` / `IS*` |
 | [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators (incl. `AVERAGEIF`), logicals, lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates, math, text, `TYPE` / `IS*` |
+| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators, logicals, lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates, math, text (`TEXTJOIN` / `LEFT` / …), `TYPE` / `IS*` |
 
 **Implemented:** arithmetic and comparison operators (unary `+/-`, `%`, `^`,
 `&`, space intersection), host-aware implicit intersection, cell refs /
@@ -319,6 +320,9 @@ ranges, wildcards, blank duality). Workbook input is the snippet type in
 those codes return `#VALUE!`): scientific, fractions, sections `;`,
 colors/conditions, `*`/`_`/`?`, trailing-comma scaling, time (`h`/`s`),
 month/day names. Non-numeric text is returned unchanged.
+families above (including `TEXTJOIN` with cycling delimiters and
+`ignore_empty`). Workbook input is the snippet type in `xlsx-types` (no
+`.xlsx` IO).
 
 **Deferred / in progress:** full function library, locale argument separators,
 live Excel oracle, and performance bakeoff. The fixture corpus is expanded

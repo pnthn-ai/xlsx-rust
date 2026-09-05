@@ -14,6 +14,7 @@ pub mod sumif;
 pub mod sumproduct;
 pub mod replace;
 pub mod sumifs;
+pub mod textjoin;
 
 use crate::ast::{BinOp, Expr, UnaryOp};
 use crate::parse::parse;

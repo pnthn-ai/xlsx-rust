@@ -16,8 +16,8 @@ pub mod quirk;
 pub mod value;
 pub mod workbook;
 
-pub use cell::{AddrError, CellAddr, CellRef, RangeRef};
 pub use criterion::{count_matches, excel_wildcard, looks_like_wildcard_pat, Criterion};
+pub use cell::{AddrError, CellAddr, CellRef, RangeRef};
 pub use error::ExcelError;
 pub use eval::{
     ArrayMode, Candidate, DateSystem, EvalError, EvalOptions, EvalSpec, EvalTarget, Locale,
