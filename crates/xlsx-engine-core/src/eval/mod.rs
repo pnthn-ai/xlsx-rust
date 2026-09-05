@@ -24,6 +24,7 @@ pub mod switch;
 pub mod ifs;
 pub mod unique;
 pub mod irr;
+pub mod wraprows;
 
 use crate::ast::{BinOp, Expr, UnaryOp};
 use crate::parse::parse;
@@ -880,6 +881,38 @@ mod tests {
             ExcelValue::Error(ExcelError::Value)
         );
     }
+    #[test]
+    fn wraprows_row_pad_and_errors() {
+        let wb = Workbook::default();
+        assert_eq!(
+            eval_formula_in(&wb, "=WRAPROWS({1,2,3,4,5}, 2)").unwrap(),
+            ExcelValue::Array(vec![
+                vec![ExcelValue::Number(1.0), ExcelValue::Number(2.0)],
+                vec![ExcelValue::Number(3.0), ExcelValue::Number(4.0)],
+                vec![ExcelValue::Number(5.0), ExcelValue::Error(ExcelError::Na)],
+            ])
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=WRAPROWS({1,2,3}, 2, 0)").unwrap(),
+            ExcelValue::Array(vec![
+                vec![ExcelValue::Number(1.0), ExcelValue::Number(2.0)],
+                vec![ExcelValue::Number(3.0), ExcelValue::Number(0.0)],
+            ])
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=WRAPROWS({1,2;3,4}, 2)").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=WRAPROWS({1,2,3}, 0)").unwrap(),
+            ExcelValue::Error(ExcelError::Num)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=WRAPROWS({1}, 16385)").unwrap(),
+            ExcelValue::Error(ExcelError::Num)
+        );
+    }
+
     #[test]
     fn unique_literal_and_exactly_once() {
         let wb = Workbook::default();

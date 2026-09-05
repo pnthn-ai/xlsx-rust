@@ -13,6 +13,7 @@
 //! - [`eval::ifs`] — `IFS` pair-selection kernel (eager; no-match `#N/A`)
 //! - [`eval::unique`] — `UNIQUE` dynamic-array kernel (hash distinctness)
 //! - [`eval::filter`] — `FILTER` mask/select kernel (`#CALC!` / `if_empty`)
+//! - [`eval::wraprows`] — `WRAPROWS` reshape kernel (row wrap + pad)
 //! - [`eval::irr`] — Excel `IRR` Newton / secant kernel
 //!
 //! This crate depends only on [`xlsx_types`]. It never reads fixture expected
@@ -52,6 +53,10 @@ pub use eval::textjoin::{
     eval_textjoin_formula, textjoin_naive_join, TextJoinBuilder, TEXTJOIN_MAX_CHARS,
 };
 pub use eval::unique::{unique_apply, unique_apply_naive, unique_eq};
+pub use eval::wraprows::{
+    output_shape as wraprows_output_shape, parse_wrap_count, wraprows as excel_wraprows,
+    wraprows_naive as excel_wraprows_naive, WRAPROWS_MAX_COLS, WRAPROWS_MAX_ROWS,
+};
 pub use eval::{
     eval_averageif_materialized, eval_formula_in, eval_sumif_materialized, eval_sumifs_materialized,
     Evaluator,

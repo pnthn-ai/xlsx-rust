@@ -450,6 +450,7 @@ impl Interpreter {
             "CONCAT" => self.fn_concat(args, ctx),
             "NPV" => self.fn_npv(args, ctx),
             "UNIQUE" => self.fn_unique(args, ctx),
+            "WRAPROWS" => self.fn_wraprows(args, ctx),
             "IRR" => self.fn_irr(args, ctx),
             "TRUE" => Ok(ExcelValue::Bool(true)),
             "FALSE" => Ok(ExcelValue::Bool(false)),
@@ -900,6 +901,27 @@ impl Interpreter {
         } else {
             Ok(v)
         }
+    }
+
+    fn fn_wraprows(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.len() < 2 || args.len() > 3 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        let vector = self.eval_expr(&args[0], ctx)?;
+        let wrap_v = self.eval_scalar(&args[1], ctx)?;
+        let pad = if args.len() >= 3 {
+            self.eval_scalar(&args[2], ctx)?
+        } else {
+            ExcelValue::Error(ExcelError::Na)
+        };
+        if let ExcelValue::Error(e) = vector {
+            return Ok(ExcelValue::Error(e));
+        }
+        let wrap_count = match self.as_number(&wrap_v) {
+            Ok(n) => n,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        Ok(xlsx_engine_core::excel_wraprows(&vector, wrap_count, &pad))
     }
 
     fn fn_unique(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
