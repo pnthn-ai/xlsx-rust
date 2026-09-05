@@ -2,7 +2,7 @@
 //!
 //! `IFS` lives with the other logicals here; pair selection is [`super::ifs`].
 //! `FILTER` lives with the other lookups here; the mask/select kernel is
-//! [`super::filter`].
+//! [`super::filter`]. `VSTACK` is the vertical-stack kernel in [`super::vstack`].
 //!
 //! Unknown names return `#NAME?` (an Excel value, not [`EvalError`]).
 //! Financial TVM starts with `PMT` (`xlsx_types::excel_pmt`); `PV`/`FV`/`NPER`
@@ -53,6 +53,7 @@ pub(crate) fn dispatch(
         "HLOOKUP" => fn_hlookup(ev, args, ctx),
         "XLOOKUP" => fn_xlookup(ev, args, ctx),
         "FILTER" => fn_filter(ev, args, ctx),
+        "VSTACK" => super::vstack::eval(ev, args, ctx),
         "INDEX" => fn_index(ev, args, ctx),
         "MATCH" => fn_match(ev, args, ctx),
         "CHOOSE" => fn_choose(ev, args, ctx),

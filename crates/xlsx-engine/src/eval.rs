@@ -385,6 +385,7 @@ impl Interpreter {
             "HLOOKUP" => self.fn_hlookup(args, ctx),
             "XLOOKUP" => self.fn_xlookup(args, ctx),
             "FILTER" => self.fn_filter(args, ctx),
+            "VSTACK" => self.fn_vstack(args, ctx),
             "INDEX" => self.fn_index(args, ctx),
             "MATCH" => self.fn_match(args, ctx),
             "CHOOSE" => self.fn_choose(args, ctx),
@@ -1118,6 +1119,25 @@ impl Interpreter {
         }
     }
 
+    fn fn_vstack(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.is_empty() {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        let mut values = Vec::with_capacity(args.len());
+        for arg in args {
+            let v = self.eval_expr(arg, ctx)?;
+            let v = match arg {
+                Expr::Cell(_) | Expr::Range(_) | Expr::Array(_) | Expr::Name(_) => match v {
+                    ExcelValue::Error(e) => ExcelValue::Array(vec![vec![ExcelValue::Error(e)]]),
+                    other => other,
+                },
+                _ => v,
+            };
+            values.push(v);
+        }
+        Ok(xlsx_engine_core::excel_vstack_owned(values))
+    }
+
     fn fn_filter(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
         if args.len() < 2 || args.len() > 3 {
             return Ok(ExcelValue::Error(ExcelError::Value));
@@ -1700,7 +1720,7 @@ impl Interpreter {
         }
     }
 
-        fn collect_holiday_serials(&self, v: &ExcelValue, out: &mut Vec<f64>) -> Option<ExcelError> {
+    fn collect_holiday_serials(&self, v: &ExcelValue, out: &mut Vec<f64>) -> Option<ExcelError> {
         match v {
             ExcelValue::Array(rows) => {
                 for row in rows {
