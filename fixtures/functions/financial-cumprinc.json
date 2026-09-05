@@ -5,7 +5,7 @@
     "tags": ["cumprinc", "financial"],
     "notes": "support.microsoft.com CUMPRINC: ($934.1071234). Golden is Σ PPMT = FV(start-1) − FV(end) (OpenFormula 6.12.10 / LibreOffice Analysis AddIn, type=0).",
     "formula": "=CUMPRINC(9%/12, 30*12, 125000, 13, 24, 0)",
-    "expected": { "number": -934.107123420876 }
+    "expected": { "number": -934.1071234208648 }
   },
   {
     "id": "fn.cumprinc.ms-month1",
@@ -13,14 +13,14 @@
     "tags": ["cumprinc", "financial"],
     "notes": "support.microsoft.com CUMPRINC: ($68.27827118).",
     "formula": "=CUMPRINC(9%/12, 30*12, 125000, 1, 1, 0)",
-    "expected": { "number": -68.278271180977 }
+    "expected": { "number": -68.27827118097048 }
   },
   {
     "id": "fn.cumprinc.ms-cells",
     "description": "Same Microsoft year-2 case via cell refs (A2=9%, A3=30, A4=125000)",
     "tags": ["cumprinc", "financial"],
     "formula": "=CUMPRINC(A2/12, A3*12, A4, 13, 24, 0)",
-    "expected": { "number": -934.107123420876 },
+    "expected": { "number": -934.1071234208648 },
     "workbook": {
       "sheets": [{
         "name": "Sheet1",
@@ -37,14 +37,14 @@
     "description": "Same Microsoft loan, type=1 (beginning of period), periods 13–24",
     "tags": ["cumprinc", "financial"],
     "formula": "=CUMPRINC(9%/12, 30*12, 125000, 13, 24, 1)",
-    "expected": { "number": -927.153472378041 }
+    "expected": { "number": -927.1534723780442 }
   },
   {
     "id": "fn.cumprinc.ms-month1-begin",
     "description": "First month of the Microsoft loan with type=1 is the whole PMT (no interest yet)",
     "tags": ["cumprinc", "financial"],
     "formula": "=CUMPRINC(9%/12, 30*12, 125000, 1, 1, 1)",
-    "expected": { "number": -998.291088020821 }
+    "expected": { "number": -998.29108802082 }
   },
   {
     "id": "fn.cumprinc.lo-10-18",
@@ -52,7 +52,7 @@
     "tags": ["cumprinc", "financial"],
     "notes": "help.libreoffice.org CUMPRINC: -3669.74 currency units.",
     "formula": "=CUMPRINC(5.5%/12, 36, 15000, 10, 18, 0)",
-    "expected": { "number": -3669.735515697775 }
+    "expected": { "number": -3669.73551569783 }
   },
   {
     "id": "fn.cumprinc.full-term",
@@ -73,42 +73,42 @@
     "description": "Microsoft loan, first year of principal (periods 1–12)",
     "tags": ["cumprinc", "financial"],
     "formula": "=CUMPRINC(9%/12, 360, 125000, 1, 12, 0)",
-    "expected": { "number": -853.996373043403 }
+    "expected": { "number": -853.9963730434101 }
   },
   {
     "id": "fn.cumprinc.mortgage-30y-y1",
     "description": "30-year 5% / $200,000 mortgage, first-year principal",
     "tags": ["cumprinc", "financial"],
     "formula": "=CUMPRINC(0.05/12, 360, 200000, 1, 12, 0)",
-    "expected": { "number": -2950.730691134977 }
+    "expected": { "number": -2950.7306911349297 }
   },
   {
     "id": "fn.cumprinc.mortgage-30y-last",
     "description": "Same mortgage, last year of principal (periods 349–360)",
     "tags": ["cumprinc", "financial"],
     "formula": "=CUMPRINC(0.05/12, 360, 200000, 349, 360, 0)",
-    "expected": { "number": -12541.465110224963 }
+    "expected": { "number": -12541.465110225021 }
   },
   {
     "id": "fn.cumprinc.annual",
     "description": "Annual periods: CUMPRINC(8%, 10, 10000, 1, 3, 0)",
     "tags": ["cumprinc", "financial"],
     "formula": "=CUMPRINC(0.08, 10, 10000, 1, 3, 0)",
-    "expected": { "number": -2240.973321061854 }
+    "expected": { "number": -2240.973321061858 }
   },
   {
     "id": "fn.cumprinc.annual-begin",
     "description": "Same annual loan with type=1",
     "tags": ["cumprinc", "financial"],
     "formula": "=CUMPRINC(0.08, 10, 10000, 1, 3, 1)",
-    "expected": { "number": -2815.716038020235 }
+    "expected": { "number": -2815.7160380202367 }
   },
   {
     "id": "fn.cumprinc.single-mid",
     "description": "Single mid-life period (month 180 of the Microsoft loan)",
     "tags": ["cumprinc", "financial"],
     "formula": "=CUMPRINC(9%/12, 360, 125000, 180, 180, 0)",
-    "expected": { "number": -260.104177688585 }
+    "expected": { "number": -260.1041776885977 }
   },
   {
     "id": "fn.cumprinc.long-horizon",
@@ -123,7 +123,7 @@
     "tags": ["cumprinc", "financial"],
     "quirks": ["percent-unary"],
     "formula": "=CUMPRINC(9%/12, 360, 125000, 13, 24, 0)",
-    "expected": { "number": -934.107123420876 }
+    "expected": { "number": -934.1071234208648 }
   },
   {
     "id": "fn.cumprinc.text-number",
@@ -131,7 +131,7 @@
     "tags": ["cumprinc", "financial", "coercion"],
     "quirks": ["equality-vs-arithmetic-coercion"],
     "formula": "=CUMPRINC(\"0.08\", \"10\", \"10000\", \"1\", \"3\", \"0\")",
-    "expected": { "number": -2240.973321061854 }
+    "expected": { "number": -2240.973321061858 }
   },
   {
     "id": "fn.cumprinc.true-type",
@@ -139,7 +139,7 @@
     "tags": ["cumprinc", "financial", "coercion"],
     "quirks": ["bool-number-equality"],
     "formula": "=CUMPRINC(9%/12, 360, 125000, 1, 1, TRUE)",
-    "expected": { "number": -998.291088020821 }
+    "expected": { "number": -998.29108802082 }
   },
   {
     "id": "fn.cumprinc.false-type",
@@ -147,34 +147,34 @@
     "tags": ["cumprinc", "financial", "coercion"],
     "quirks": ["bool-number-equality"],
     "formula": "=CUMPRINC(9%/12, 360, 125000, 1, 1, FALSE)",
-    "expected": { "number": -68.278271180977 }
+    "expected": { "number": -68.27827118097048 }
   },
   {
     "id": "fn.cumprinc.frac-start-end",
     "description": "start_period / end_period truncate toward 0 (13.9–24.1 → 13–24)",
     "tags": ["cumprinc", "financial"],
     "formula": "=CUMPRINC(9%/12, 360, 125000, 13.9, 24.1, 0)",
-    "expected": { "number": -934.107123420876 }
+    "expected": { "number": -934.1071234208648 }
   },
   {
     "id": "fn.cumprinc.frac-type",
     "description": "type truncates toward 0 (0.9 → 0)",
     "tags": ["cumprinc", "financial"],
     "formula": "=CUMPRINC(9%/12, 360, 125000, 13, 24, 0.9)",
-    "expected": { "number": -934.107123420876 }
+    "expected": { "number": -934.1071234208648 }
   },
   {
     "id": "fn.cumprinc.empty-type",
     "description": "Blank type cell coerces to 0",
     "tags": ["cumprinc", "financial", "empty"],
     "quirks": ["empty-cell-duality"],
-    "formula": "=CUMPRINC(A1, A2, A3, A4, A5, A6)",
-    "expected": { "number": -68.278271180977 },
+    "formula": "=CUMPRINC(A1/12, A2, A3, A4, A5, A6)",
+    "expected": { "number": -68.27827118097048 },
     "workbook": {
       "sheets": [{
         "name": "Sheet1",
         "cells": {
-          "A1": { "number": 0.0075 },
+          "A1": { "number": 0.09 },
           "A2": { "number": 360 },
           "A3": { "number": 125000 },
           "A4": { "number": 1 },

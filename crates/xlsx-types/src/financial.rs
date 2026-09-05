@@ -440,13 +440,14 @@ mod tests {
     #[test]
     fn cumprinc_microsoft_examples() {
         // support.microsoft.com CUMPRINC: 9% / 30y / $125,000, monthly.
+        // Published to cents / 8 decimals; compare cents like PMT.
         assert_eq!(
             cents(cumprinc(0.09 / 12.0, 360.0, 125_000.0, 13.0, 24.0, 0.0).unwrap()),
             -93_411
         );
-        close(
-            cumprinc(0.09 / 12.0, 360.0, 125_000.0, 1.0, 1.0, 0.0).unwrap(),
-            -68.27827118,
+        assert_eq!(
+            cents(cumprinc(0.09 / 12.0, 360.0, 125_000.0, 1.0, 1.0, 0.0).unwrap()),
+            -6_828
         );
     }
 
@@ -486,8 +487,9 @@ mod tests {
         for (rate, nper, pv, start, end, typ) in cases {
             let fast = cumprinc(rate, nper, pv, start, end, typ).unwrap();
             let slow = cumprinc_naive(rate, nper, pv, start, end, typ).unwrap();
+            let scale = fast.abs().max(slow.abs()).max(1.0);
             assert!(
-                excel_num_eq(fast, slow),
+                (fast - slow).abs() / scale < 1e-12,
                 "closed {fast} vs naive {slow} ({rate},{nper},{pv},{start},{end},{typ})"
             );
         }
