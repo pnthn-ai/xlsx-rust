@@ -18,8 +18,9 @@
 //!   leftmost hit; a start-index tie keeps the first delimiter in list order.
 //!
 //! Production search uses `str::find` / `rfind` plus an ASCII last-byte SWAR
-//! probe (case-sensitive and case-insensitive). The `Vec<char>` sliding-window
-//! baseline lives beside that path so benches can print before/after.
+//! probe for multi-byte needles (the `aaa…aab` almost-match hill-climb) in
+//! both case modes. The `Vec<char>` sliding-window baseline lives beside that
+//! path so benches can print before/after.
 
 use xlsx_types::ExcelError;
 
@@ -88,13 +89,17 @@ fn textafter_impl(
     if want > text.len() as u64 {
         return Err(ExcelError::Value);
     }
+    // Unicode: LEN is scalar count (`café` is 4, not 5).
+    if !text.is_ascii() && want > text.chars().count() as u64 {
+        return Err(ExcelError::Value);
+    }
     let real: Vec<&str> = delimiters
         .iter()
         .copied()
         .filter(|d| !d.is_empty())
         .collect();
     if real.is_empty() {
-        return empty_delimiter(text, instance_num, want);
+        return empty_delimiter(text, instance_num);
     }
     match mode {
         TextAfterMode::Naive => apply_positions(
@@ -107,10 +112,7 @@ fn textafter_impl(
     }
 }
 
-fn empty_delimiter(text: &str, instance_num: i64, want: u64) -> Result<String, ExcelError> {
-    if !text.is_ascii() && want > text.chars().count() as u64 {
-        return Err(ExcelError::Value);
-    }
+fn empty_delimiter(text: &str, instance_num: i64) -> Result<String, ExcelError> {
     if instance_num > 0 {
         Ok(text.to_owned())
     } else {
@@ -226,13 +228,6 @@ fn textafter_fast(
     ignore_case: bool,
     match_end: bool,
 ) -> Result<String, ExcelError> {
-    if !text.is_ascii() {
-        let want = instance_num.unsigned_abs();
-        if want > text.chars().count() as u64 {
-            return Err(ExcelError::Value);
-        }
-    }
-
     let want = instance_num.unsigned_abs() as usize;
     // Last instance: one reverse scan. match_end on a miss returns the
     // whole string (virtual start delimiter).
@@ -368,9 +363,34 @@ fn find_rel(hay: &str, needle: &str, ignore_case: bool) -> Option<usize> {
         return Some(0);
     }
     if !ignore_case {
+        if hay.is_ascii() && needle.is_ascii() && needle.len() >= 2 {
+            return find_ascii_last_byte(hay.as_bytes(), needle.as_bytes());
+        }
         return hay.find(needle);
     }
     ci_find(hay, needle)
+}
+
+fn find_ascii_last_byte(hay: &[u8], needle: &[u8]) -> Option<usize> {
+    debug_assert!(needle.len() >= 2);
+    let nlen = needle.len();
+    if hay.len() < nlen {
+        return None;
+    }
+    let last = needle[nlen - 1];
+    let mut i = nlen - 1;
+    while i < hay.len() {
+        let Some(rel) = memchr_byte(&hay[i..], last) else {
+            return None;
+        };
+        let end = i + rel;
+        let start = end + 1 - nlen;
+        if &hay[start..=end] == needle {
+            return Some(start);
+        }
+        i = end + 1;
+    }
+    None
 }
 
 fn rfind_rel(hay: &str, needle: &str, ignore_case: bool) -> Option<usize> {

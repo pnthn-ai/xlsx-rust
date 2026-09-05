@@ -576,7 +576,7 @@
     "description": "Blank match_mode is FALSE (case-sensitive)",
     "tags": ["text", "textafter", "empty"],
     "quirks": ["empty-cell-duality"],
-    "formula": "=TEXTAFTER(\"Abc\",\"b\",1,A1)",
+    "formula": "=TEXTAFTER(\"ABC\",\"b\",1,A1)",
     "expected": { "error": "#N/A" }
   },
   {
