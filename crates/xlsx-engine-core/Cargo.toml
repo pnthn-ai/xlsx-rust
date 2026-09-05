@@ -8,3 +8,7 @@ description = "Excel-compatible formula parser and calculation core (calc-core c
 
 [dependencies]
 xlsx-types = { workspace = true }
+
+[[bench]]
+name = "roundup_rounddown"
+harness = false

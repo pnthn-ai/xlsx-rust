@@ -1,0 +1,372 @@
+[
+  {
+    "id": "fn.roundup-ms-3.2",
+    "description": "Microsoft: ROUNDUP(3.2, 0) is 4",
+    "tags": ["math", "roundup"],
+    "formula": "=ROUNDUP(3.2, 0)",
+    "expected": { "number": 4 }
+  },
+  {
+    "id": "fn.roundup-ms-76.9",
+    "description": "Microsoft: ROUNDUP(76.9, 0) is 77",
+    "tags": ["math", "roundup"],
+    "formula": "=ROUNDUP(76.9, 0)",
+    "expected": { "number": 77 }
+  },
+  {
+    "id": "fn.roundup-ms-pi-3",
+    "description": "Microsoft: ROUNDUP(3.14159, 3) is 3.142",
+    "tags": ["math", "roundup"],
+    "formula": "=ROUNDUP(3.14159, 3)",
+    "expected": { "number": 3.142 }
+  },
+  {
+    "id": "fn.roundup-ms-neg-pi",
+    "description": "Microsoft: ROUNDUP(-3.14159, 1) is -3.2 (away from zero)",
+    "tags": ["math", "roundup"],
+    "formula": "=ROUNDUP(-3.14159, 1)",
+    "expected": { "number": -3.2 }
+  },
+  {
+    "id": "fn.roundup-ms-neg-digits",
+    "description": "Microsoft: ROUNDUP(31415.92654, -2) is 31500",
+    "tags": ["math", "roundup"],
+    "formula": "=ROUNDUP(31415.92654, -2)",
+    "expected": { "number": 31500 }
+  },
+  {
+    "id": "fn.rounddown-ms-3.2",
+    "description": "Microsoft: ROUNDDOWN(3.2, 0) is 3",
+    "tags": ["math", "rounddown"],
+    "formula": "=ROUNDDOWN(3.2, 0)",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.rounddown-ms-76.9",
+    "description": "Microsoft: ROUNDDOWN(76.9, 0) is 76",
+    "tags": ["math", "rounddown"],
+    "formula": "=ROUNDDOWN(76.9, 0)",
+    "expected": { "number": 76 }
+  },
+  {
+    "id": "fn.rounddown-ms-pi-3",
+    "description": "Microsoft: ROUNDDOWN(3.14159, 3) is 3.141",
+    "tags": ["math", "rounddown"],
+    "formula": "=ROUNDDOWN(3.14159, 3)",
+    "expected": { "number": 3.141 }
+  },
+  {
+    "id": "fn.rounddown-ms-neg-pi",
+    "description": "Microsoft: ROUNDDOWN(-3.14159, 1) is -3.1 (toward zero)",
+    "tags": ["math", "rounddown"],
+    "formula": "=ROUNDDOWN(-3.14159, 1)",
+    "expected": { "number": -3.1 }
+  },
+  {
+    "id": "fn.rounddown-ms-neg-digits",
+    "description": "Microsoft: ROUNDDOWN(31415.92654, -2) is 31400",
+    "tags": ["math", "rounddown"],
+    "formula": "=ROUNDDOWN(31415.92654, -2)",
+    "expected": { "number": 31400 }
+  },
+  {
+    "id": "fn.roundup-neg-half",
+    "description": "ROUNDUP(-0.5, 0) is -1 — abs, away from zero, reapply sign",
+    "tags": ["math", "roundup"],
+    "formula": "=ROUNDUP(-0.5, 0)",
+    "expected": { "number": -1 }
+  },
+  {
+    "id": "fn.rounddown-neg-half",
+    "description": "ROUNDDOWN(-0.5, 0) is 0 — abs, toward zero, reapply sign",
+    "tags": ["math", "rounddown"],
+    "formula": "=ROUNDDOWN(-0.5, 0)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.roundup-neg-int",
+    "description": "ROUNDUP(-3.2, 0) is -4",
+    "tags": ["math", "roundup"],
+    "formula": "=ROUNDUP(-3.2, 0)",
+    "expected": { "number": -4 }
+  },
+  {
+    "id": "fn.rounddown-neg-int",
+    "description": "ROUNDDOWN(-3.2, 0) is -3",
+    "tags": ["math", "rounddown"],
+    "formula": "=ROUNDDOWN(-3.2, 0)",
+    "expected": { "number": -3 }
+  },
+  {
+    "id": "fn.roundup-neg-76.9",
+    "description": "ROUNDUP(-76.9, 0) is -77",
+    "tags": ["math", "roundup"],
+    "formula": "=ROUNDUP(-76.9, 0)",
+    "expected": { "number": -77 }
+  },
+  {
+    "id": "fn.rounddown-neg-76.9",
+    "description": "ROUNDDOWN(-76.9, 0) is -76",
+    "tags": ["math", "rounddown"],
+    "formula": "=ROUNDDOWN(-76.9, 0)",
+    "expected": { "number": -76 }
+  },
+  {
+    "id": "fn.roundup-tens",
+    "description": "ROUNDUP(123, -1) is 130",
+    "tags": ["math", "roundup"],
+    "formula": "=ROUNDUP(123, -1)",
+    "expected": { "number": 130 }
+  },
+  {
+    "id": "fn.rounddown-tens",
+    "description": "ROUNDDOWN(123, -1) is 120",
+    "tags": ["math", "rounddown"],
+    "formula": "=ROUNDDOWN(123, -1)",
+    "expected": { "number": 120 }
+  },
+  {
+    "id": "fn.roundup-neg-tens",
+    "description": "ROUNDUP(-123, -1) is -130",
+    "tags": ["math", "roundup"],
+    "formula": "=ROUNDUP(-123, -1)",
+    "expected": { "number": -130 }
+  },
+  {
+    "id": "fn.rounddown-neg-tens",
+    "description": "ROUNDDOWN(-123, -1) is -120",
+    "tags": ["math", "rounddown"],
+    "formula": "=ROUNDDOWN(-123, -1)",
+    "expected": { "number": -120 }
+  },
+  {
+    "id": "fn.rounddown-sig-neg",
+    "description": "Microsoft significant-digit example: ROUNDDOWN(-889, -1) is -880",
+    "tags": ["math", "rounddown"],
+    "formula": "=ROUNDDOWN(-889, -1)",
+    "expected": { "number": -880 }
+  },
+  {
+    "id": "fn.rounddown-sig-pos",
+    "description": "Microsoft: ROUNDDOWN(2345678, -4) is 2340000",
+    "tags": ["math", "rounddown"],
+    "formula": "=ROUNDDOWN(2345678, -4)",
+    "expected": { "number": 2340000 }
+  },
+  {
+    "id": "fn.roundup-sig-pos",
+    "description": "ROUNDUP(2345678, -4) is 2350000",
+    "tags": ["math", "roundup"],
+    "formula": "=ROUNDUP(2345678, -4)",
+    "expected": { "number": 2350000 }
+  },
+  {
+    "id": "fn.roundup-already-exact",
+    "description": "ROUNDUP(3.2, 1) stays 3.2",
+    "tags": ["math", "roundup"],
+    "formula": "=ROUNDUP(3.2, 1)",
+    "expected": { "number": 3.2 }
+  },
+  {
+    "id": "fn.rounddown-already-exact",
+    "description": "ROUNDDOWN(3.2, 1) stays 3.2",
+    "tags": ["math", "rounddown"],
+    "formula": "=ROUNDDOWN(3.2, 1)",
+    "expected": { "number": 3.2 }
+  },
+  {
+    "id": "fn.roundup-ieee-1.1-2",
+    "description": "ROUNDUP(1.1, 2) stays 1.1 — binary leftover 110.00…01 must not bump",
+    "tags": ["math", "roundup"],
+    "quirks": ["ieee-vs-excel-precision"],
+    "formula": "=ROUNDUP(1.1, 2)",
+    "expected": { "number": 1.1 }
+  },
+  {
+    "id": "fn.roundup-ieee-2.2-2",
+    "description": "ROUNDUP(2.2, 2) stays 2.2",
+    "tags": ["math", "roundup"],
+    "quirks": ["ieee-vs-excel-precision"],
+    "formula": "=ROUNDUP(2.2, 2)",
+    "expected": { "number": 2.2 }
+  },
+  {
+    "id": "fn.rounddown-ieee-1.15-2",
+    "description": "ROUNDDOWN(1.15, 2) stays 1.15 — binary 114.999… must not drop",
+    "tags": ["math", "rounddown"],
+    "quirks": ["ieee-vs-excel-precision"],
+    "formula": "=ROUNDDOWN(1.15, 2)",
+    "expected": { "number": 1.15 }
+  },
+  {
+    "id": "fn.roundup-ieee-15digit-int",
+    "description": "ROUNDUP(7+1E-15, 0) stays 7 — Excel 15-digit leftover is not a fraction",
+    "tags": ["math", "roundup"],
+    "quirks": ["ieee-vs-excel-precision"],
+    "formula": "=ROUNDUP(7+1E-15, 0)",
+    "expected": { "number": 7 }
+  },
+  {
+    "id": "fn.roundup-zero",
+    "description": "ROUNDUP(0, 5) is 0",
+    "tags": ["math", "roundup"],
+    "formula": "=ROUNDUP(0, 5)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.rounddown-zero",
+    "description": "ROUNDDOWN(0, -2) is 0",
+    "tags": ["math", "rounddown"],
+    "formula": "=ROUNDDOWN(0, -2)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.roundup-digits-trunc",
+    "description": "num_digits 1.9 truncates toward zero to 1",
+    "tags": ["math", "roundup"],
+    "formula": "=ROUNDUP(3.14159, 1.9)",
+    "expected": { "number": 3.2 }
+  },
+  {
+    "id": "fn.rounddown-digits-trunc",
+    "description": "num_digits 2.9 truncates toward zero to 2",
+    "tags": ["math", "rounddown"],
+    "formula": "=ROUNDDOWN(3.14159, 2.9)",
+    "expected": { "number": 3.14 }
+  },
+  {
+    "id": "fn.roundup-digits-neg-trunc",
+    "description": "num_digits -1.9 truncates toward zero to -1",
+    "tags": ["math", "roundup"],
+    "formula": "=ROUNDUP(123, -1.9)",
+    "expected": { "number": 130 }
+  },
+  {
+    "id": "fn.roundup-text-num",
+    "description": "Numeric text is coerced: ROUNDUP(\"76.9\", 0) is 77",
+    "tags": ["math", "roundup", "coercion"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=ROUNDUP(\"76.9\", 0)",
+    "expected": { "number": 77 }
+  },
+  {
+    "id": "fn.rounddown-text-num",
+    "description": "Numeric text is coerced: ROUNDDOWN(\"76.9\", 0) is 76",
+    "tags": ["math", "rounddown", "coercion"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=ROUNDDOWN(\"76.9\", 0)",
+    "expected": { "number": 76 }
+  },
+  {
+    "id": "fn.roundup-true-neg-digits",
+    "description": "TRUE coerces to 1; ROUNDUP(TRUE, -1) is 10",
+    "tags": ["math", "roundup", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=ROUNDUP(TRUE, -1)",
+    "expected": { "number": 10 }
+  },
+  {
+    "id": "fn.rounddown-true-neg-digits",
+    "description": "TRUE coerces to 1; ROUNDDOWN(TRUE, -1) is 0",
+    "tags": ["math", "rounddown", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=ROUNDDOWN(TRUE, -1)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.roundup-false",
+    "description": "FALSE coerces to 0",
+    "tags": ["math", "roundup", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=ROUNDUP(FALSE, 2)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.roundup-blank",
+    "description": "Blank cell coerces to 0",
+    "tags": ["math", "roundup", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=ROUNDUP(A1, 0)",
+    "expected": { "number": 0 },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.rounddown-blank-digits",
+    "description": "Blank num_digits cell coerces to 0",
+    "tags": ["math", "rounddown", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=ROUNDDOWN(3.2, A1)",
+    "expected": { "number": 3 },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.roundup-text-bad",
+    "description": "Non-numeric text is #VALUE!",
+    "tags": ["math", "roundup", "errors"],
+    "formula": "=ROUNDUP(\"x\", 0)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.roundup-arity-0",
+    "description": "ROUNDUP() is #VALUE!",
+    "tags": ["math", "roundup", "errors"],
+    "formula": "=ROUNDUP()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.roundup-arity-1",
+    "description": "ROUNDUP with one argument is #VALUE! (num_digits is required)",
+    "tags": ["math", "roundup", "errors"],
+    "formula": "=ROUNDUP(3.2)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.rounddown-arity-1",
+    "description": "ROUNDDOWN with one argument is #VALUE!",
+    "tags": ["math", "rounddown", "errors"],
+    "formula": "=ROUNDDOWN(3.2)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.roundup-arity-3",
+    "description": "Three arguments is #VALUE!",
+    "tags": ["math", "roundup", "errors"],
+    "formula": "=ROUNDUP(3.2, 0, 1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.roundup-err-number",
+    "description": "Error in number propagates",
+    "tags": ["math", "roundup", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=ROUNDUP(1/0, 0)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.rounddown-err-digits",
+    "description": "Error in num_digits propagates",
+    "tags": ["math", "rounddown", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=ROUNDDOWN(3.2, 1/0)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.roundup-err-left-wins",
+    "description": "Left-to-right: number error beats a later #N/A",
+    "tags": ["math", "roundup", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=ROUNDUP(#DIV/0!, #N/A)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.rounddown-eq-trunc",
+    "description": "ROUNDDOWN(n, d) matches TRUNC(n, d)",
+    "tags": ["math", "rounddown"],
+    "formula": "=ROUNDDOWN(-3.14159, 2)=TRUNC(-3.14159, 2)",
+    "expected": { "bool": true }
+  }
+]
