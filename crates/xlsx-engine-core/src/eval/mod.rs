@@ -12,6 +12,7 @@ pub mod substitute;
 pub mod sumif;
 pub mod sumproduct;
 pub mod replace;
+pub mod sumifs;
 
 use crate::ast::{BinOp, Expr, UnaryOp};
 use crate::parse::parse;
@@ -191,7 +192,6 @@ impl Evaluator {
         }
         Ok(ExcelValue::Number(count as f64))
     }
-
     pub(crate) fn eval_cell(
         &self,
         cell: &CellRef,
@@ -513,11 +513,15 @@ fn intersect_ranges(a: &RangeRef, b: &RangeRef) -> Option<RangeRef> {
 /// Evaluate a `SUMIF(...)` formula with the materializing implementation.
 /// Used only by the Criterion microbench as the pre-hill-climb baseline.
 pub fn eval_sumif_materialized(
+/// Evaluate a `SUMIFS(...)` formula with the materializing implementation.
+/// Used only by the Criterion microbench as the pre-hill-climb baseline.
+pub fn eval_sumifs_materialized(
     workbook: &Workbook,
     formula: &str,
 ) -> Result<ExcelValue, EvalError> {
     let spec = EvalSpec {
         case_id: "sumif-bench".into(),
+        case_id: "sumifs-bench".into(),
         workbook: workbook.clone(),
         target: EvalTarget::formula(formula),
         options: Default::default(),
@@ -536,6 +540,10 @@ pub fn eval_sumif_materialized(
             sumif::sumif_materialized(&Evaluator, &args, &mut ctx)
         }
         _ => Err(EvalError::Other("expected SUMIF call".into())),
+        Expr::Call { name, args } if name.eq_ignore_ascii_case("SUMIFS") => {
+            sumifs::sumifs_materialized(&Evaluator, &args, &mut ctx)
+        }
+        _ => Err(EvalError::Other("expected SUMIFS call".into())),
     }
 }
 
@@ -630,6 +638,7 @@ mod tests {
 
     #[test]
     fn sumif_gt_and_reshape() {
+    fn sumifs_and_same_shape_and_no_reshape() {
         let mut wb = Workbook::default();
         wb.set_value("Sheet1", "A1", ExcelValue::Number(1.0))
             .unwrap();
@@ -697,6 +706,28 @@ mod tests {
         );
         assert_eq!(
             eval_formula_in(&wb, "=TEXT(1)").unwrap(),
+        wb.set_value("Sheet1", "B1", ExcelValue::Text("x".into()))
+            .unwrap();
+        wb.set_value("Sheet1", "B2", ExcelValue::Text("x".into()))
+            .unwrap();
+        wb.set_value("Sheet1", "B3", ExcelValue::Text("y".into()))
+            .unwrap();
+        wb.set_value("Sheet1", "C1", ExcelValue::Number(10.0))
+            .unwrap();
+        wb.set_value("Sheet1", "C2", ExcelValue::Number(20.0))
+            .unwrap();
+        wb.set_value("Sheet1", "C3", ExcelValue::Number(30.0))
+            .unwrap();
+        assert_eq!(
+            eval_formula_in(&wb, "=SUMIFS(C1:C3,A1:A3,\">2\",B1:B3,\"x\")").unwrap(),
+            ExcelValue::Number(20.0)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=SUMIFS(C1,A1:A3,\">2\")").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=SUMIFS({1,2,3},A1:A3,\">1\")").unwrap(),
             ExcelValue::Error(ExcelError::Value)
         );
     }

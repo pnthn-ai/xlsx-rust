@@ -71,6 +71,7 @@ impl CellAddr {
 
     /// Append this address in A1 notation (`A1`, `AA10`) without an extra alloc
     /// for the return value. Used by tight range walks (`SUMIF` / `COUNTIF`).
+    /// for the return value. Used by tight range walks (`SUMIF` / `SUMIFS`).
     pub fn write_a1(self, out: &mut String) {
         write_col_name(self.col, out);
         let mut row = self.row + 1;

@@ -302,6 +302,15 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 ranges / defined names, array literals, error propagation, `COUNTIF`, and the
 function families above. Workbook input is the snippet type in `xlsx-types` (no
 `.xlsx` IO).
+| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators (`SUM`/`SUMIFS`/…), logicals, lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates, math, text, `TYPE` / `IS*` |
+
+**Implemented:** arithmetic and comparison operators (unary `+/-`, `%`, `^`,
+`&`, space intersection), host-aware implicit intersection, cell refs /
+ranges / defined names, array literals, error propagation, and the function
+families above (including Excel `SUMIFS`: multi-criteria AND, same-shape
+ranges, wildcards, blank duality). Workbook input is the snippet type in
+`xlsx-types` (no `.xlsx` IO). Criterion matching lives in
+[`xlsx_types::Criterion`](crates/xlsx-types/src/criterion.rs).
 
 **`TEXT` subset** (see [`text_format.rs`](crates/xlsx-engine-core/src/text_format.rs)):
 `0` / `#` / `.` / grouping `,` / `%` / `$` and other literals; dates

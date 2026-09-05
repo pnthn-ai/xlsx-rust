@@ -26,6 +26,7 @@ pub(crate) fn dispatch(
         "COUNTBLANK" => fn_agg(ev, args, ctx, AggKind::CountBlank),
         "SUMIF" => super::sumif::fn_sumif(ev, args, ctx),
         "COUNTIF" => fn_countif(ev, args, ctx),
+        "SUMIFS" => super::sumifs::fn_sumifs(ev, args, ctx),
         "IF" => fn_if(ev, args, ctx),
         "IFERROR" => fn_iferror(ev, args, ctx),
         "IFNA" => fn_ifna(ev, args, ctx),
