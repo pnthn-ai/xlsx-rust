@@ -15,6 +15,9 @@ pub mod eval;
 pub mod parse;
 
 pub use ast::{BinOp, Expr, UnaryOp};
+pub use eval::substitute::{
+    substitute as excel_substitute, substitute_naive as excel_substitute_naive,
+};
 pub use eval::{eval_formula_in, Evaluator};
 pub use parse::parse;
 

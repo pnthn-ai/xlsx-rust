@@ -419,6 +419,7 @@ impl Interpreter {
             "TRIM" => self.fn_trim(args, ctx),
             "EXACT" => self.fn_exact(args, ctx),
             "VALUE" => self.fn_value(args, ctx),
+            "SUBSTITUTE" => self.fn_substitute(args, ctx),
             "TRUE" => Ok(ExcelValue::Bool(true)),
             "FALSE" => Ok(ExcelValue::Bool(false)),
             _ => Ok(ExcelValue::Error(ExcelError::Name)),
@@ -1148,6 +1149,47 @@ impl Interpreter {
         Ok(ExcelValue::Bool(a == b))
     }
 
+    fn fn_substitute(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.len() < 3 || args.len() > 4 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        let text = match self.as_text(&self.eval_scalar(&args[0], ctx)?) {
+            Ok(s) => s,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        let old_text = match self.as_text(&self.eval_scalar(&args[1], ctx)?) {
+            Ok(s) => s,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        let new_text = match self.as_text(&self.eval_scalar(&args[2], ctx)?) {
+            Ok(s) => s,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        let instance = if args.len() == 4 {
+            match self.as_number(&self.eval_scalar(&args[3], ctx)?) {
+                Ok(n) => {
+                    if !n.is_finite() {
+                        return Ok(ExcelValue::Error(ExcelError::Value));
+                    }
+                    let t = n.trunc();
+                    if t < 1.0 {
+                        return Ok(ExcelValue::Error(ExcelError::Value));
+                    }
+                    if t > u32::MAX as f64 {
+                        return Ok(ExcelValue::Text(text));
+                    }
+                    Some(t as u32)
+                }
+                Err(e) => return Ok(ExcelValue::Error(e)),
+            }
+        } else {
+            None
+        };
+        Ok(ExcelValue::Text(excel_substitute(
+            &text, &old_text, &new_text, instance,
+        )))
+    }
+
     fn fn_value(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
         if args.len() != 1 {
             return Ok(ExcelValue::Error(ExcelError::Value));
@@ -1789,6 +1831,65 @@ fn naive_ord(
             ExcelValue::Bool(hit)
         }
         _ => ExcelValue::Error(ExcelError::Value),
+    }
+}
+
+/// Excel `SUBSTITUTE` kernel (same semantics as `xlsx-engine-core`).
+fn excel_substitute(
+    text: &str,
+    old_text: &str,
+    new_text: &str,
+    instance_num: Option<u32>,
+) -> String {
+    if old_text.is_empty() {
+        return text.to_owned();
+    }
+    match instance_num {
+        None => {
+            if old_text == new_text {
+                return text.to_owned();
+            }
+            let mut count = 0usize;
+            let mut from = 0usize;
+            while let Some(rel) = text[from..].find(old_text) {
+                count += 1;
+                from += rel + old_text.len();
+            }
+            if count == 0 {
+                return text.to_owned();
+            }
+            let cap = text.len() + count * new_text.len() - count * old_text.len();
+            let mut out = String::with_capacity(cap);
+            from = 0;
+            let mut last = 0usize;
+            while let Some(rel) = text[from..].find(old_text) {
+                let pos = from + rel;
+                out.push_str(&text[last..pos]);
+                out.push_str(new_text);
+                last = pos + old_text.len();
+                from = last;
+            }
+            out.push_str(&text[last..]);
+            out
+        }
+        Some(n) => {
+            let mut from = 0usize;
+            let mut seen = 0u32;
+            while let Some(rel) = text[from..].find(old_text) {
+                let pos = from + rel;
+                seen += 1;
+                if seen == n {
+                    let cap = text.len() + new_text.len() - old_text.len();
+                    let mut out = String::with_capacity(cap);
+                    out.push_str(&text[..pos]);
+                    out.push_str(new_text);
+                    out.push_str(&text[pos + old_text.len()..]);
+                    return out;
+                }
+                from = pos + old_text.len();
+            }
+            text.to_owned()
+        }
     }
 }
 

@@ -1,0 +1,309 @@
+[
+  {
+    "id": "fn.substitute-all",
+    "description": "SUBSTITUTE replaces every match when instance_num is omitted",
+    "tags": ["text", "substitute"],
+    "formula": "=SUBSTITUTE(\"a-b-c\", \"-\", \"/\")",
+    "expected": { "text": "a/b/c" }
+  },
+  {
+    "id": "fn.substitute-sales",
+    "description": "Microsoft example: SUBSTITUTE(\"Sales Data\", \"Sales\", \"Cost\")",
+    "tags": ["text", "substitute"],
+    "formula": "=SUBSTITUTE(\"Sales Data\", \"Sales\", \"Cost\")",
+    "expected": { "text": "Cost Data" }
+  },
+  {
+    "id": "fn.substitute-nth-1",
+    "description": "instance_num 1 replaces only the first match",
+    "tags": ["text", "substitute"],
+    "formula": "=SUBSTITUTE(\"a-b-c\", \"-\", \"/\", 1)",
+    "expected": { "text": "a/b-c" }
+  },
+  {
+    "id": "fn.substitute-nth-2",
+    "description": "instance_num 2 replaces only the second match",
+    "tags": ["text", "substitute"],
+    "formula": "=SUBSTITUTE(\"a-b-c\", \"-\", \"/\", 2)",
+    "expected": { "text": "a-b/c" }
+  },
+  {
+    "id": "fn.substitute-nth-ms-first",
+    "description": "Microsoft example: first '1' in Quarter 1, 2011",
+    "tags": ["text", "substitute"],
+    "formula": "=SUBSTITUTE(\"Quarter 1, 2011\", \"1\", \"2\", 1)",
+    "expected": { "text": "Quarter 2, 2011" }
+  },
+  {
+    "id": "fn.substitute-nth-ms-third",
+    "description": "Microsoft example: third '1' in Quarter 1, 2011",
+    "tags": ["text", "substitute"],
+    "formula": "=SUBSTITUTE(\"Quarter 1, 2011\", \"1\", \"2\", 3)",
+    "expected": { "text": "Quarter 1, 2012" }
+  },
+  {
+    "id": "fn.substitute-nth-past-end",
+    "description": "instance_num past the last match leaves text unchanged",
+    "tags": ["text", "substitute"],
+    "formula": "=SUBSTITUTE(\"abc\", \"a\", \"x\", 2)",
+    "expected": { "text": "abc" }
+  },
+  {
+    "id": "fn.substitute-nth-zero",
+    "description": "instance_num 0 is #VALUE!",
+    "tags": ["text", "substitute", "errors"],
+    "formula": "=SUBSTITUTE(\"abc\", \"a\", \"x\", 0)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.substitute-nth-neg",
+    "description": "instance_num -1 is #VALUE!",
+    "tags": ["text", "substitute", "errors"],
+    "formula": "=SUBSTITUTE(\"abc\", \"a\", \"x\", -1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.substitute-nth-trunc",
+    "description": "instance_num 2.9 truncates toward zero to 2",
+    "tags": ["text", "substitute"],
+    "formula": "=SUBSTITUTE(\"aaa\", \"a\", \"b\", 2.9)",
+    "expected": { "text": "aba" }
+  },
+  {
+    "id": "fn.substitute-nth-trunc-zero",
+    "description": "instance_num 0.9 truncates to 0 → #VALUE!",
+    "tags": ["text", "substitute", "errors"],
+    "formula": "=SUBSTITUTE(\"aaa\", \"a\", \"b\", 0.9)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.substitute-nth-true",
+    "description": "TRUE coerces to instance_num 1",
+    "tags": ["text", "substitute", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=SUBSTITUTE(\"aaa\", \"a\", \"b\", TRUE)",
+    "expected": { "text": "baa" }
+  },
+  {
+    "id": "fn.substitute-nth-false",
+    "description": "FALSE coerces to 0 → #VALUE!",
+    "tags": ["text", "substitute", "errors", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=SUBSTITUTE(\"aaa\", \"a\", \"b\", FALSE)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.substitute-nth-text-num",
+    "description": "Numeric text instance_num is coerced",
+    "tags": ["text", "substitute", "coercion"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=SUBSTITUTE(\"aaa\", \"a\", \"b\", \"2\")",
+    "expected": { "text": "aba" }
+  },
+  {
+    "id": "fn.substitute-nth-text-bad",
+    "description": "Non-numeric instance_num is #VALUE!",
+    "tags": ["text", "substitute", "errors"],
+    "formula": "=SUBSTITUTE(\"aaa\", \"a\", \"b\", \"x\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.substitute-nth-blank-cell",
+    "description": "Blank instance_num cell coerces to 0 → #VALUE!",
+    "tags": ["text", "substitute", "errors", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=SUBSTITUTE(\"aaa\", \"a\", \"b\", A1)",
+    "expected": { "error": "#VALUE!" },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.substitute-case-nomatch",
+    "description": "SUBSTITUTE is case-sensitive: \"a\" does not match \"ABC\"",
+    "tags": ["text", "substitute"],
+    "quirks": ["case-insensitive-text"],
+    "formula": "=SUBSTITUTE(\"ABC\", \"a\", \"x\")",
+    "expected": { "text": "ABC" }
+  },
+  {
+    "id": "fn.substitute-case-match",
+    "description": "Only exact-case letters are replaced",
+    "tags": ["text", "substitute"],
+    "quirks": ["case-insensitive-text"],
+    "formula": "=SUBSTITUTE(\"AaA\", \"A\", \"x\")",
+    "expected": { "text": "xax" }
+  },
+  {
+    "id": "fn.substitute-empty-old",
+    "description": "Empty old_text matches nothing; original text is returned",
+    "tags": ["text", "substitute"],
+    "formula": "=SUBSTITUTE(\"abc\", \"\", \"x\")",
+    "expected": { "text": "abc" }
+  },
+  {
+    "id": "fn.substitute-empty-old-nth",
+    "description": "Empty old_text with instance_num is still a no-op",
+    "tags": ["text", "substitute"],
+    "formula": "=SUBSTITUTE(\"abc\", \"\", \"x\", 1)",
+    "expected": { "text": "abc" }
+  },
+  {
+    "id": "fn.substitute-empty-new",
+    "description": "Empty new_text deletes every match",
+    "tags": ["text", "substitute"],
+    "formula": "=SUBSTITUTE(\"a-b-c\", \"-\", \"\")",
+    "expected": { "text": "abc" }
+  },
+  {
+    "id": "fn.substitute-overlap-all",
+    "description": "Overlapping \"aa\" in \"aaa\" is left-to-right, non-overlapping → \"ba\"",
+    "tags": ["text", "substitute"],
+    "formula": "=SUBSTITUTE(\"aaa\", \"aa\", \"b\")",
+    "expected": { "text": "ba" }
+  },
+  {
+    "id": "fn.substitute-overlap-nth-missing",
+    "description": "Only one non-overlapping \"aa\" in \"aaa\"; instance 2 is a no-op",
+    "tags": ["text", "substitute"],
+    "formula": "=SUBSTITUTE(\"aaa\", \"aa\", \"b\", 2)",
+    "expected": { "text": "aaa" }
+  },
+  {
+    "id": "fn.substitute-overlap-pairs",
+    "description": "\"aaaa\" / \"aa\" yields two non-overlapping pairs → \"bb\"",
+    "tags": ["text", "substitute"],
+    "formula": "=SUBSTITUTE(\"aaaa\", \"aa\", \"b\")",
+    "expected": { "text": "bb" }
+  },
+  {
+    "id": "fn.substitute-no-rescan",
+    "description": "Replacements are not re-scanned: \"a\" → \"aa\" stays \"aa\"",
+    "tags": ["text", "substitute"],
+    "formula": "=SUBSTITUTE(\"a\", \"a\", \"aa\")",
+    "expected": { "text": "aa" }
+  },
+  {
+    "id": "fn.substitute-number",
+    "description": "Numbers coerce to plain text before replacement; result stays text",
+    "tags": ["text", "substitute", "coercion"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=SUBSTITUTE(12321, 2, 9)",
+    "expected": { "text": "19391" }
+  },
+  {
+    "id": "fn.substitute-decimal",
+    "description": "Decimal point is part of the coerced number text",
+    "tags": ["text", "substitute", "coercion"],
+    "formula": "=SUBSTITUTE(12.5, \".\", \",\")",
+    "expected": { "text": "12,5" }
+  },
+  {
+    "id": "fn.substitute-bool",
+    "description": "TRUE coerces to the text \"TRUE\"",
+    "tags": ["text", "substitute", "coercion"],
+    "formula": "=SUBSTITUTE(TRUE, \"R\", \"X\")",
+    "expected": { "text": "TXUE" }
+  },
+  {
+    "id": "fn.substitute-bool-old",
+    "description": "Boolean old_text coerces to \"TRUE\" / \"FALSE\"",
+    "tags": ["text", "substitute", "coercion"],
+    "formula": "=SUBSTITUTE(\"TRUEBLUE\", TRUE, \"OK\")",
+    "expected": { "text": "OKBLUE" }
+  },
+  {
+    "id": "fn.substitute-blank-text",
+    "description": "Blank text cell coerces to \"\"",
+    "tags": ["text", "substitute", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=SUBSTITUTE(A1, \"a\", \"b\")",
+    "expected": { "text": "" },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.substitute-wildcard-literal",
+    "description": "* is a literal character, not a wildcard",
+    "tags": ["text", "substitute"],
+    "quirks": ["wildcards"],
+    "formula": "=SUBSTITUTE(\"a*b*c\", \"*\", \"-\")",
+    "expected": { "text": "a-b-c" }
+  },
+  {
+    "id": "fn.substitute-unicode",
+    "description": "UTF-8 grapheme-equivalent exact match (café)",
+    "tags": ["text", "substitute"],
+    "formula": "=SUBSTITUTE(\"café\", \"é\", \"e\")",
+    "expected": { "text": "cafe" }
+  },
+  {
+    "id": "fn.substitute-not-found",
+    "description": "Missing old_text returns the original text",
+    "tags": ["text", "substitute"],
+    "formula": "=SUBSTITUTE(\"hello\", \"z\", \"x\")",
+    "expected": { "text": "hello" }
+  },
+  {
+    "id": "fn.substitute-arity-0",
+    "description": "SUBSTITUTE() is #VALUE!",
+    "tags": ["text", "substitute", "errors"],
+    "formula": "=SUBSTITUTE()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.substitute-arity-2",
+    "description": "Two arguments is #VALUE!",
+    "tags": ["text", "substitute", "errors"],
+    "formula": "=SUBSTITUTE(\"a\", \"a\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.substitute-arity-5",
+    "description": "Five arguments is #VALUE!",
+    "tags": ["text", "substitute", "errors"],
+    "formula": "=SUBSTITUTE(\"a\", \"a\", \"b\", 1, 1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.substitute-err-text",
+    "description": "Error in text propagates",
+    "tags": ["text", "substitute", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=SUBSTITUTE(1/0, \"a\", \"b\")",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.substitute-err-old",
+    "description": "Error in old_text propagates",
+    "tags": ["text", "substitute", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=SUBSTITUTE(\"a\", 1/0, \"b\")",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.substitute-err-new",
+    "description": "Error in new_text propagates",
+    "tags": ["text", "substitute", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=SUBSTITUTE(\"a\", \"a\", 1/0)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.substitute-err-instance",
+    "description": "Error in instance_num propagates",
+    "tags": ["text", "substitute", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=SUBSTITUTE(\"a\", \"a\", \"b\", 1/0)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.substitute-err-left-wins",
+    "description": "Left-to-right: text error beats a later #N/A",
+    "tags": ["text", "substitute", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=SUBSTITUTE(#DIV/0!, #N/A, \"b\")",
+    "expected": { "error": "#DIV/0!" }
+  }
+]

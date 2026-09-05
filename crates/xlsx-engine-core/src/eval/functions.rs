@@ -93,6 +93,7 @@ pub(crate) fn dispatch(
         "TRIM" => fn_trim(ev, args, ctx),
         "EXACT" => fn_exact(ev, args, ctx),
         "VALUE" => fn_value(ev, args, ctx),
+        "SUBSTITUTE" => fn_substitute(ev, args, ctx),
         "TRUE" => Ok(ExcelValue::Bool(true)),
         "FALSE" => Ok(ExcelValue::Bool(false)),
         _ => Ok(ExcelValue::Error(ExcelError::Name)),
@@ -785,6 +786,51 @@ fn fn_exact(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelVal
         Err(e) => return Ok(ExcelValue::Error(e)),
     };
     Ok(ExcelValue::Bool(a == b))
+}
+
+fn fn_substitute(
+    ev: &Evaluator,
+    args: &[Expr],
+    ctx: &mut Ctx<'_>,
+) -> Result<ExcelValue, EvalError> {
+    if args.len() < 3 || args.len() > 4 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let text = match coerce::to_text(&ev.eval_scalar(&args[0], ctx)?) {
+        Ok(s) => s,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let old_text = match coerce::to_text(&ev.eval_scalar(&args[1], ctx)?) {
+        Ok(s) => s,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let new_text = match coerce::to_text(&ev.eval_scalar(&args[2], ctx)?) {
+        Ok(s) => s,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let instance = if args.len() == 4 {
+        match coerce::to_number(&ev.eval_scalar(&args[3], ctx)?) {
+            Ok(n) => {
+                if !n.is_finite() {
+                    return Ok(ExcelValue::Error(ExcelError::Value));
+                }
+                let t = n.trunc();
+                if t < 1.0 {
+                    return Ok(ExcelValue::Error(ExcelError::Value));
+                }
+                if t > u32::MAX as f64 {
+                    return Ok(ExcelValue::Text(text));
+                }
+                Some(t as u32)
+            }
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        }
+    } else {
+        None
+    };
+    Ok(ExcelValue::Text(super::substitute::substitute(
+        &text, &old_text, &new_text, instance,
+    )))
 }
 
 fn fn_value(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
