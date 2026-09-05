@@ -419,6 +419,7 @@ impl Interpreter {
             "TRIM" => self.fn_trim(args, ctx),
             "EXACT" => self.fn_exact(args, ctx),
             "VALUE" => self.fn_value(args, ctx),
+            "IRR" => self.fn_irr(args, ctx),
             "TRUE" => Ok(ExcelValue::Bool(true)),
             "FALSE" => Ok(ExcelValue::Bool(false)),
             _ => Ok(ExcelValue::Error(ExcelError::Name)),
@@ -1148,6 +1149,30 @@ impl Interpreter {
         Ok(ExcelValue::Bool(a == b))
     }
 
+    fn fn_irr(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.is_empty() || args.len() > 2 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        let from_range = matches!(args[0], Expr::Range(_) | Expr::Cell(_) | Expr::Name(_));
+        let values_v = self.eval_expr(&args[0], ctx)?;
+        let flows = match collect_irr_cashflows(&values_v, from_range, self.semantics) {
+            Ok(v) => v,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        let guess = if args.len() == 2 {
+            match self.as_number(&self.eval_scalar(&args[1], ctx)?) {
+                Ok(n) => n,
+                Err(e) => return Ok(ExcelValue::Error(e)),
+            }
+        } else {
+            0.1
+        };
+        match xlsx_engine_core::excel_irr(&flows, guess) {
+            Some(r) => Ok(ExcelValue::Number(r)),
+            None => Ok(ExcelValue::Error(ExcelError::Num)),
+        }
+    }
+
     fn fn_value(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
         if args.len() != 1 {
             return Ok(ExcelValue::Error(ExcelError::Value));
@@ -1789,6 +1814,57 @@ fn naive_ord(
             ExcelValue::Bool(hit)
         }
         _ => ExcelValue::Error(ExcelError::Value),
+    }
+}
+
+fn collect_irr_cashflows(
+    v: &ExcelValue,
+    from_range: bool,
+    sem: Semantics,
+) -> Result<Vec<f64>, ExcelError> {
+    let mut out = Vec::new();
+    collect_irr_cashflows_into(v, from_range, sem, &mut out)?;
+    Ok(out)
+}
+
+fn collect_irr_cashflows_into(
+    v: &ExcelValue,
+    from_range: bool,
+    sem: Semantics,
+    out: &mut Vec<f64>,
+) -> Result<(), ExcelError> {
+    match (v, from_range) {
+        (ExcelValue::Array(rows), _) => {
+            for row in rows {
+                for c in row {
+                    collect_irr_cashflows_into(c, true, sem, out)?;
+                }
+            }
+            Ok(())
+        }
+        (ExcelValue::Error(e), _) => Err(*e),
+        (ExcelValue::Number(n), _) => {
+            if !n.is_finite() {
+                return Err(ExcelError::Num);
+            }
+            out.push(*n);
+            Ok(())
+        }
+        (ExcelValue::Empty | ExcelValue::Bool(_) | ExcelValue::Text(_), true) => Ok(()),
+        (other, false) => {
+            let n = match (sem, other) {
+                (Semantics::ExcelSeed, ExcelValue::Empty) => 0.0,
+                (Semantics::ExcelSeed, ExcelValue::Bool(true)) => 1.0,
+                (Semantics::ExcelSeed, ExcelValue::Bool(false)) => 0.0,
+                (Semantics::ExcelSeed, ExcelValue::Text(s)) => parse_excel_number(s)?,
+                _ => return Err(ExcelError::Value),
+            };
+            if !n.is_finite() {
+                return Err(ExcelError::Num);
+            }
+            out.push(n);
+            Ok(())
+        }
     }
 }
 

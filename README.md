@@ -283,13 +283,14 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 | [`eval/coerce.rs`](crates/xlsx-engine-core/src/eval/coerce.rs) | Arithmetic / `&` / `IF` coercion (`"2"+1` = 3, TRUE → 1, empty → 0) |
 | [`eval/compare.rs`](crates/xlsx-engine-core/src/eval/compare.rs) | 15-digit `=`, case-insensitive text, `TRUE=1`, type ranking (`FALSE>100`) |
 | [`eval/empty.rs`](crates/xlsx-engine-core/src/eval/empty.rs) | Blank ≠ 0 ≠ `""`, but `A1=0` and `A1=""` when `A1` is blank |
-| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators, logicals, lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates, math, text, `TYPE` / `IS*` |
+| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators, logicals, lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates, math, text, `IRR`, `TYPE` / `IS*` |
+| [`eval/irr.rs`](crates/xlsx-engine-core/src/eval/irr.rs) | Excel `IRR` Newton / secant kernel (20 tries, `1e-7` rate, `#NUM!` on failure) |
 
 **Implemented:** arithmetic and comparison operators (unary `+/-`, `%`, `^`,
 `&`, space intersection), host-aware implicit intersection, cell refs /
 ranges / defined names, array literals, error propagation, and the function
-families above. Workbook input is the snippet type in `xlsx-types` (no
-`.xlsx` IO).
+families above (including `IRR`). Workbook input is the snippet type in
+`xlsx-types` (no `.xlsx` IO).
 
 **Deferred / in progress:** full function library, locale argument separators,
 live Excel oracle, and performance bakeoff. The fixture corpus is expanded
@@ -323,6 +324,12 @@ as one or the other. Documented quirk categories:
 - Implicit intersection of a range in a scalar host cell (`A1:A3` at `B2` → `A2`)
 - Wildcards in exact `VLOOKUP` / `MATCH` (`*` / `?`)
 - Circular refs modeled as `#CIRCULAR!`
+- `IRR(values, [guess])`: Newton-Raphson with secant fallback, default guess
+  `0.1`, 20 iterations, rate tolerance `1e-7` (0.00001 percent). Needs at
+  least one inflow and one outflow. Text / logicals / empty cells in a
+  range or array are skipped (they do **not** occupy a period; store `0`
+  for a quiet period). Convergence failure, no sign change, guess `-1`,
+  or a Newton step to `r <= -1` → `#NUM!`. `NPV` is a separate function.
 - Volatile / locale / precision-as-displayed / hidden-row `SUBTOTAL` are
   catalogued as `ignore` until they can be evaluated honestly
 
