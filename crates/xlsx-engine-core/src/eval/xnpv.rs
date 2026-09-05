@@ -27,29 +27,66 @@ use xlsx_types::{DateSystem, EvalError, ExcelError, ExcelValue};
 
 const DAYS_PER_YEAR: f64 = 365.0;
 
-/// Production `XNPV` kernel (`exp` / `ln1p` discount).
+/// Production `XNPV` kernel (`exp` / hoisted `ln1p` discount).
 pub fn xnpv(rate: f64, values: &[f64], dates: &[i32]) -> Result<f64, ExcelError> {
-    xnpv_loop(rate, values, dates, discount_fast)
+    let d0 = origin(rate, values, dates)?;
+    let one_plus = 1.0 + rate;
+    if one_plus > 0.0 {
+        // One `ln1p` for the whole series; each term is a single `exp`.
+        let k = -rate.ln_1p() / DAYS_PER_YEAR;
+        if !k.is_finite() {
+            return Err(ExcelError::Num);
+        }
+        let mut sum = 0.0;
+        for (i, &v) in values.iter().enumerate() {
+            if !v.is_finite() {
+                return Err(ExcelError::Num);
+            }
+            let days = dates[i] - d0;
+            if days < 0 {
+                return Err(ExcelError::Num);
+            }
+            if days == 0 {
+                sum += v;
+            } else {
+                let log_term = k * (days as f64);
+                if !log_term.is_finite() || log_term.abs() > 700.0 {
+                    return Err(ExcelError::Num);
+                }
+                sum += v * log_term.exp();
+            }
+            if !sum.is_finite() {
+                return Err(ExcelError::Num);
+            }
+        }
+        return Ok(sum);
+    }
+    accumulate(rate, values, dates, d0, discount_powf)
 }
 
-/// Quadratic-ish baseline: `powf` per cash flow. Same Excel rules as [`xnpv`].
+/// Per-term `powf` baseline. Same Excel rules as [`xnpv`].
 pub fn xnpv_naive(rate: f64, values: &[f64], dates: &[i32]) -> Result<f64, ExcelError> {
-    xnpv_loop(rate, values, dates, discount_powf)
+    let d0 = origin(rate, values, dates)?;
+    accumulate(rate, values, dates, d0, discount_powf)
 }
 
-fn xnpv_loop(
-    rate: f64,
-    values: &[f64],
-    dates: &[i32],
-    discount: fn(f64, f64, i32) -> Result<f64, ExcelError>,
-) -> Result<f64, ExcelError> {
+fn origin(rate: f64, values: &[f64], dates: &[i32]) -> Result<i32, ExcelError> {
     if values.len() != dates.len() || values.is_empty() {
         return Err(ExcelError::Num);
     }
     if !rate.is_finite() {
         return Err(ExcelError::Num);
     }
-    let d0 = dates[0];
+    Ok(dates[0])
+}
+
+fn accumulate(
+    rate: f64,
+    values: &[f64],
+    dates: &[i32],
+    d0: i32,
+    discount: fn(f64, f64, i32) -> Result<f64, ExcelError>,
+) -> Result<f64, ExcelError> {
     let mut sum = 0.0;
     for (i, &v) in values.iter().enumerate() {
         if !v.is_finite() {
@@ -69,19 +106,6 @@ fn xnpv_loop(
         }
     }
     Ok(sum)
-}
-
-/// `1 / (1+rate)^(days/365)` via `exp(-ln1p(rate) * days / 365)`.
-fn discount_fast(rate: f64, one_plus: f64, days: i32) -> Result<f64, ExcelError> {
-    if one_plus > 0.0 {
-        let log_term = -rate.ln_1p() * (days as f64) / DAYS_PER_YEAR;
-        if !log_term.is_finite() || log_term.abs() > 700.0 {
-            return Err(ExcelError::Num);
-        }
-        finite(log_term.exp())
-    } else {
-        discount_powf(rate, one_plus, days)
-    }
 }
 
 /// `1 / (1+rate)^(days/365)` via `powf`.
