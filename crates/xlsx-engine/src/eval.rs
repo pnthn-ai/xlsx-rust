@@ -388,6 +388,7 @@ impl Interpreter {
             "INDEX" => self.fn_index(args, ctx),
             "MATCH" => self.fn_match(args, ctx),
             "CHOOSE" => self.fn_choose(args, ctx),
+            "CHOOSECOLS" => self.fn_choosecols(args, ctx),
             "ABS" => self.fn_abs(args, ctx),
             "SIGN" => self.fn_sign(args, ctx),
             "INT" => self.fn_int(args, ctx),
@@ -1245,6 +1246,18 @@ impl Interpreter {
         Ok(ExcelValue::Error(ExcelError::Na))
     }
 
+    fn fn_choosecols(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.len() < 2 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        let array = self.eval_expr(&args[0], ctx)?;
+        let mut col_nums = Vec::with_capacity(args.len() - 1);
+        for arg in &args[1..] {
+            col_nums.push(self.eval_expr(arg, ctx)?);
+        }
+        Ok(xlsx_engine_core::excel_choosecols(&array, &col_nums))
+    }
+
     fn fn_choose(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
         if args.len() < 2 {
             return Ok(ExcelValue::Error(ExcelError::Value));
@@ -1700,7 +1713,7 @@ impl Interpreter {
         }
     }
 
-        fn collect_holiday_serials(&self, v: &ExcelValue, out: &mut Vec<f64>) -> Option<ExcelError> {
+    fn collect_holiday_serials(&self, v: &ExcelValue, out: &mut Vec<f64>) -> Option<ExcelError> {
         match v {
             ExcelValue::Array(rows) => {
                 for row in rows {

@@ -101,5 +101,9 @@ name = "filter"
 harness = false
 
 [[bench]]
+name = "choosecols"
+harness = false
+
+[[bench]]
 name = "irr"
 harness = false
