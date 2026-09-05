@@ -13,6 +13,7 @@
 //! - [`eval::ifs`] — `IFS` pair-selection kernel (eager; no-match `#N/A`)
 //! - [`eval::unique`] — `UNIQUE` dynamic-array kernel (hash distinctness)
 //! - [`eval::filter`] — `FILTER` mask/select kernel (`#CALC!` / `if_empty`)
+//! - [`eval::sort`] — `SORT` key-extract / index-permute kernel
 //! - [`eval::irr`] — Excel `IRR` Newton / secant kernel
 //!
 //! This crate depends only on [`xlsx_types`]. It never reads fixture expected
@@ -40,6 +41,7 @@ pub use eval::round::{
     roundup as excel_roundup, roundup_naive as excel_roundup_naive,
 };
 pub use eval::search::{search as excel_search, search_naive as excel_search_naive};
+pub use eval::sort::{sort_apply as excel_sort, sort_apply_naive as excel_sort_naive};
 pub use eval::substitute::{
     substitute as excel_substitute, substitute_naive as excel_substitute_naive,
 };
@@ -53,8 +55,8 @@ pub use eval::textjoin::{
 };
 pub use eval::unique::{unique_apply, unique_apply_naive, unique_eq};
 pub use eval::{
-    eval_averageif_materialized, eval_formula_in, eval_sumif_materialized, eval_sumifs_materialized,
-    Evaluator,
+    eval_averageif_materialized, eval_formula_in, eval_sumif_materialized,
+    eval_sumifs_materialized, Evaluator,
 };
 pub use parse::parse;
 
