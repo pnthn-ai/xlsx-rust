@@ -285,57 +285,36 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 | [`eval/coerce.rs`](crates/xlsx-engine-core/src/eval/coerce.rs) | Arithmetic / `&` / `IF` coercion (`"2"+1` = 3, TRUE → 1, empty → 0) |
 | [`eval/compare.rs`](crates/xlsx-engine-core/src/eval/compare.rs) | 15-digit `=`, case-insensitive text, `TRUE=1`, type ranking (`FALSE>100`) |
 | [`eval/empty.rs`](crates/xlsx-engine-core/src/eval/empty.rs) | Blank ≠ 0 ≠ `""`, but `A1=0` and `A1=""` when `A1` is blank |
-| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators (incl. `SUMIF`), logicals, lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates, math, text (`LEFT`/`SUBSTITUTE`/…), `TYPE` / `IS*` |
-| [`eval/substitute.rs`](crates/xlsx-engine-core/src/eval/substitute.rs) | Excel `SUBSTITUTE` kernel (case-sensitive, nth instance, empty `old_text` no-op) |
+| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Dispatch: aggregators (`SUM`/`SUMIF`/`SUMIFS`/`AVERAGEIF`/`COUNTIF`/`SUMPRODUCT`), logicals (`IF`/`IFS`/`SWITCH`), lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`/`FILTER`/`UNIQUE`), dates (`DATE`/`EOMONTH`/`NETWORKDAYS`/`WEEKDAY`/`WORKDAY`), math (`ROUND`/`ROUNDUP`/`ROUNDDOWN`/`FLOOR`/`CEILING`), text (`LEFT`/`SUBSTITUTE`/`REPLACE`/`FIND`/`SEARCH`/`TEXT`/`TEXTJOIN`/`CONCAT`), financial (`NPV`/`PMT`/`IRR`), `TYPE` / `IS*` |
 | [`eval/sumif.rs`](crates/xlsx-engine-core/src/eval/sumif.rs) | Excel `SUMIF` kernel (criteria walk, reshape `sum_range`, no array literals) |
-| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators, logicals, lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates, math, text, `TYPE` / `IS*` |
+| [`eval/sumifs.rs`](crates/xlsx-engine-core/src/eval/sumifs.rs) | Excel `SUMIFS`: multi-criteria AND, same-shape ranges |
+| [`eval/averageif.rs`](crates/xlsx-engine-core/src/eval/averageif.rs) | Excel `AVERAGEIF` kernel (reshape `average_range`, `#DIV/0!` when empty) |
 | [`eval/sumproduct.rs`](crates/xlsx-engine-core/src/eval/sumproduct.rs) | `SUMPRODUCT`: array-context args, boolean 0/1 via `--`/`*`, packed f64 hot path |
-| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators, logicals, lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates, math, text (`LEFT`/`TEXT`/…), `TYPE` / `IS*` |
-| [`text_format.rs`](crates/xlsx-engine-core/src/text_format.rs) | Excel `TEXT` for a documented number/date format subset |
-| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators (`SUM`/`COUNT`/`COUNTIF`/…), logicals, lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates, math, text, `TYPE` / `IS*` |
-| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators, logicals, lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates, math, text (`LEFT`/`REPLACE`/…), `TYPE` / `IS*` |
+| [`eval/substitute.rs`](crates/xlsx-engine-core/src/eval/substitute.rs) | Excel `SUBSTITUTE` kernel (case-sensitive, nth instance, empty `old_text` no-op) |
 | [`eval/replace.rs`](crates/xlsx-engine-core/src/eval/replace.rs) | Excel `REPLACE` kernel (1-based span, Unicode scalars / Compat v2) |
-| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators, logicals, lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates, math, text (`LEFT`/`FIND`/…), `TYPE` / `IS*` |
 | [`eval/find.rs`](crates/xlsx-engine-core/src/eval/find.rs) | Excel `FIND` kernel (case-sensitive, `start_num`, empty `find_text`) |
-
-**Implemented:** arithmetic and comparison operators (unary `+/-`, `%`, `^`,
-`&`, space intersection), host-aware implicit intersection, cell refs /
-ranges / defined names, array literals, error propagation, `COUNTIF`, and the
-function families above. Workbook input is the snippet type in `xlsx-types` (no
-`.xlsx` IO).
-| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators (`SUM`/`SUMIFS`/…), logicals, lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates, math, text, `TYPE` / `IS*` |
-| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators (incl. `AVERAGEIF`), logicals, lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates, math, text, `TYPE` / `IS*` |
-| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators, logicals, lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates, math, text (`TEXTJOIN` / `LEFT` / …), `TYPE` / `IS*` |
-| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators, logicals, lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates, math (`ROUND`/`ROUNDUP`/`ROUNDDOWN`/…), text, `TYPE` / `IS*` |
-| [`eval/round.rs`](crates/xlsx-engine-core/src/eval/round.rs) | Excel `ROUNDUP` / `ROUNDDOWN` kernel (away / toward zero, negative `num_digits`, 15-digit snap) |
-| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators, logicals, lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates (`DATE`/`TIME`/`YEAR`/`MONTH`/`DAY`/`EOMONTH`), math, text, `TYPE` / `IS*` |
-| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators, logicals, lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates, math (`INT`/`TRUNC`/`ROUND`/`FLOOR`/`CEILING`/`FLOOR.MATH`/`CEILING.MATH`/`MOD`/…), text, `TYPE` / `IS*` |
-| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators, logicals, lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates, math, text (`LEFT`/`SEARCH`/…), `TYPE` / `IS*` |
 | [`eval/search.rs`](crates/xlsx-engine-core/src/eval/search.rs) | Excel `SEARCH` kernel (case-insensitive, `*`/`?`/`~` wildcards, `start_num`) |
-| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators, logicals, lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates (`DATE`/`TIME`/`YEAR`/`MONTH`/`DAY`/`NETWORKDAYS`), math, text, `TYPE` / `IS*` |
-| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators, logicals, lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates (`DATE`/`TIME`/`YEAR`/`MONTH`/`DAY`/`WEEKDAY`), math, text, `TYPE` / `IS*` |
-| [`dates.rs`](crates/xlsx-engine-core/src/dates.rs) | 1900/1904 serials, leap-year bug, O(1) `WEEKDAY` |
-| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators, logicals, lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates, math, text, `NPV`, `TYPE` / `IS*` |
-| [`eval/npv.rs`](crates/xlsx-engine-core/src/eval/npv.rs) | Excel `NPV` kernel (period-1 discount, range skip of blanks/text/logicals) |
-| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators, logicals (`IF`/`SWITCH`/`AND`/…), lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates, math, text, `TYPE` / `IS*` |
+| [`eval/textjoin.rs`](crates/xlsx-engine-core/src/eval/textjoin.rs) | `TEXTJOIN` with cycling delimiters and `ignore_empty` |
+| [`eval/concat.rs`](crates/xlsx-engine-core/src/eval/concat.rs) | Excel `CONCAT`: row-major flatten, blanks/`""` add nothing, 32,767 UTF-16 cap |
+| [`eval/round.rs`](crates/xlsx-engine-core/src/eval/round.rs) | Excel `ROUNDUP` / `ROUNDDOWN` (away / toward zero, negative `num_digits`) |
 | [`eval/switch.rs`](crates/xlsx-engine-core/src/eval/switch.rs) | Excel `SWITCH` exact-match kernel (first hit, default / `#N/A`) |
-| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators, logicals (`IF`/`IFS`/`AND`/…), lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates, math, text, `TYPE` / `IS*` |
 | [`eval/ifs.rs`](crates/xlsx-engine-core/src/eval/ifs.rs) | `IFS` pair-selection kernel (eager eval, first TRUE, no-match `#N/A`) |
-| [`eval/unique.rs`](crates/xlsx-engine-core/src/eval/unique.rs) | `UNIQUE(array, [by_col], [exactly_once])` hash distinctness; returns the array that would spill |
-| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators, logicals, lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates (`DATE`/`TIME`/`YEAR`/`MONTH`/`DAY`/`WORKDAY`), math, text, `TYPE` / `IS*` |
-| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators, logicals, lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates, math, text, `TYPE` / `IS*`, `PMT` |
-| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators, logicals, lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`FILTER`/`INDEX`/`MATCH`), dates, math, text, `TYPE` / `IS*` |
+| [`eval/unique.rs`](crates/xlsx-engine-core/src/eval/unique.rs) | `UNIQUE(array, [by_col], [exactly_once])` hash distinctness |
 | [`eval/filter.rs`](crates/xlsx-engine-core/src/eval/filter.rs) | `FILTER` mask/select kernel (`#CALC!` / `if_empty`, row vs column) |
-| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators, logicals, lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates, math, text, `IRR`, `TYPE` / `IS*` |
+| [`eval/npv.rs`](crates/xlsx-engine-core/src/eval/npv.rs) | Excel `NPV` kernel (period-1 discount, range skip of blanks/text/logicals) |
 | [`eval/irr.rs`](crates/xlsx-engine-core/src/eval/irr.rs) | Excel `IRR` Newton / secant kernel (20 tries, `1e-7` rate, `#NUM!` on failure) |
+| [`text_format.rs`](crates/xlsx-engine-core/src/text_format.rs) | Excel `TEXT` for a documented number/date format subset |
+| [`dates.rs`](crates/xlsx-engine-core/src/dates.rs) | 1900/1904 serials, leap-year bug, `EOMONTH` / `NETWORKDAYS` / `WEEKDAY` / `WORKDAY` |
 
 **Implemented:** arithmetic and comparison operators (unary `+/-`, `%`, `^`,
 `&`, space intersection), host-aware implicit intersection, cell refs /
 ranges / defined names, array literals, error propagation, and the function
-families above (including Excel `SUMIFS`: multi-criteria AND, same-shape
-ranges, wildcards, blank duality). Workbook input is the snippet type in
-`xlsx-types` (no `.xlsx` IO). Criterion matching lives in
-[`xlsx_types::Criterion`](crates/xlsx-types/src/criterion.rs).
+families above. Criterion matching for `SUMIF` / `SUMIFS` / `AVERAGEIF` /
+`COUNTIF` lives in [`xlsx_types::Criterion`](crates/xlsx-types/src/criterion.rs)
+(`compile` vs `parse`). `PMT` lives in
+[`xlsx-types/src/financial.rs`](crates/xlsx-types/src/financial.rs). Workbook
+input is the snippet type in `xlsx-types` (no `.xlsx` IO). Kernels do **not**
+read fixture goldens.
 
 **`TEXT` subset** (see [`text_format.rs`](crates/xlsx-engine-core/src/text_format.rs)):
 `0` / `#` / `.` / grouping `,` / `%` / `$` and other literals; dates
@@ -343,34 +322,6 @@ ranges, wildcards, blank duality). Workbook input is the snippet type in
 those codes return `#VALUE!`): scientific, fractions, sections `;`,
 colors/conditions, `*`/`_`/`?`, trailing-comma scaling, time (`h`/`s`),
 month/day names. Non-numeric text is returned unchanged.
-families above (including `TEXTJOIN` with cycling delimiters and
-`ignore_empty`). Workbook input is the snippet type in `xlsx-types` (no
-families above (including `ROUNDUP` / `ROUNDDOWN`). Workbook input is the snippet type in `xlsx-types` (no
-families above (including `SWITCH`). Workbook input is the snippet type in `xlsx-types` (no
-`.xlsx` IO).
-| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Aggregators, logicals, lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`), dates, math, text (`CONCAT` / `LEFT` / …), `TYPE` / `IS*` |
-| [`eval/concat.rs`](crates/xlsx-engine-core/src/eval/concat.rs) | Excel `CONCAT`: row-major range/array flatten, blanks/`""` add nothing, 32,767 UTF-16 cap |
-
-**Implemented:** arithmetic and comparison operators (unary `+/-`, `%`, `^`,
-`&`, space intersection), host-aware implicit intersection, cell refs /
-ranges / defined names, array literals, error propagation, `CONCAT` (arrays
-and ranges flattened row-major; result over 32,767 UTF-16 units is
-`#VALUE!`), and the function families above. Workbook input is the snippet
-type in `xlsx-types` (no `.xlsx` IO).
-families above (including `IFS`). Workbook input is the snippet type in
-`xlsx-types` (no `.xlsx` IO).
-
-`IFS` kernel bench: `cargo bench -p xlsx-engine-core --bench ifs`.
-families above (including financial `PMT`; `PV` / `FV` / `NPER` later).
-Workbook input is the snippet type in `xlsx-types` (no `.xlsx` IO).
-The `PMT` closed form lives in [`xlsx-types/src/financial.rs`](crates/xlsx-types/src/financial.rs)
-and does **not** read fixture goldens.
-families above (including `FILTER`). Workbook input is the snippet type in
-`xlsx-types` (no `.xlsx` IO).
-
-`FILTER` kernel bench: `cargo bench -p xlsx-engine-core --bench filter`.
-families above (including `IRR`). Workbook input is the snippet type in
-`xlsx-types` (no `.xlsx` IO).
 
 **Deferred / in progress:** full function library, locale argument separators,
 live Excel oracle, and performance bakeoff. The fixture corpus is expanded
@@ -389,10 +340,8 @@ as one or the other. Documented quirk categories:
 - Type ranking for `<`/`>` (logical > text > number). Signature split:
   `FALSE=0` is `TRUE` but `FALSE>0` / `FALSE<=0` use ranking (`TRUE` / `FALSE`)
 - Equality vs arithmetic coercion (`"2"=2` is false, `"2"+1` is `3`, `--"2"=2`)
-- Case-insensitive text equality (`"A"="a"`) vs case-sensitive `EXACT` / `FIND` (unlike `SEARCH`)
-- Case-insensitive text equality (`"A"="a"`) vs case-sensitive `EXACT`
+- Case-insensitive text equality (`"A"="a"`) vs case-sensitive `EXACT` / `FIND`; `SEARCH` is case-insensitive
 - Classic `FLOOR` / `CEILING`: same-sign multiples; positive number + negative significance is `#NUM!`; significance `0` is `#DIV/0!` except `(0, 0)` → `0`. Negative number + positive significance is allowed (Excel 2010+). `FLOOR.MATH` / `CEILING.MATH` ignore significance sign, treat significance `0` as `0`, and take an optional mode.
-- Case-insensitive text equality (`"A"="a"`) vs case-sensitive `EXACT`; `SEARCH` is case-insensitive (unlike `FIND`)
 - `TRUE=1` / `FALSE=0` in `=` and in arithmetic; `ISNUMBER(TRUE)` is still false
 - `SUM` / `AVERAGE` / `COUNT` / `PRODUCT` / `MIN` / `MAX`: skip logicals/text
   in ranges and array literals; coerce scalar arguments (`SUM(TRUE)` is 1,
@@ -411,7 +360,6 @@ as one or the other. Documented quirk categories:
   must be a vector matching height (row filter) or width (column filter), or
   a scalar broadcast. An error inside `include` wins. The result is an
   `ExcelValue::Array` — see spill / model limits below
-- `IF` short-circuits; `AND` / `OR` do not (`AND(FALSE, 1/0)` is `#DIV/0!`)
 - `SWITCH(expression, value1, result1, …, [default])` uses Excel `=` (not `IF`
   truthiness: `IF(2, …)` is true, `SWITCH(2, TRUE, …)` does not match). First
   hit wins; unused values/results are not evaluated. No match and no default
@@ -420,19 +368,17 @@ as one or the other. Documented quirk categories:
   `IFS(TRUE, 1, FALSE, 1/0)` is `#DIV/0!`). Unmatched `IFS` is `#N/A` (use a
   final `TRUE` pair as the default).
 - Error precedence is left-to-right (`#DIV/0!+#VALUE!` keeps `#DIV/0!`)
-- 1900 leap-year bug (`DATE(1900,2,29)` is serial 60); 1904 date system;
-  `EOMONTH` inherits it (`EOMONTH(59,0)` / `EOMONTH(60,0)` are both 60)
-  `NETWORKDAYS` treats serial 60 as a Wednesday workday and weekends as Sat/Sun
 - 1900 leap-year bug (`DATE(1900,2,29)` is serial 60); 1904 date system.
+  `EOMONTH` inherits it (`EOMONTH(59,0)` / `EOMONTH(60,0)` are both 60).
+  `NETWORKDAYS` treats serial 60 as a Wednesday workday and weekends as Sat/Sun.
   `WEEKDAY` is O(1) on the serial (`serial % 7`); 1900-01-01 is Sunday in
-  Excel (historically Monday). `return_type` 1/2/3/11–17; anything else is `#NUM!`
-- 1900 leap-year bug (`DATE(1900,2,29)` is serial 60); 1904 date system
-- `WORKDAY` skips Sat/Sun (and optional holidays); `days=0` returns the start
-  even on a weekend/holiday; serial 60 is a Wednesday workday
+  Excel (historically Monday). `return_type` 1/2/3/11–17; anything else is `#NUM!`.
+  `WORKDAY` skips Sat/Sun (and optional holidays); `days=0` returns the start
+  even on a weekend/holiday; serial 60 is a Wednesday workday.
 - Unary `+`/`-` and postfix `%` (`50%` is 0.5, `5%%` is 0.0005)
 - Space intersection (`A1:B2 B2`); non-overlap is `#NULL!`
 - Implicit intersection of a range in a scalar host cell (`A1:A3` at `B2` → `A2`)
-- Wildcards in exact `VLOOKUP` / `MATCH` / `COUNTIF` (`*` / `?` / `~`)
+- Wildcards in exact `VLOOKUP` / `MATCH` / `COUNTIF` (`*` / `?` / `~`) and in `SEARCH` (`*` / `?` / `~`)
 - `SUMIF` criteria strings (`">5"`, `"*a*"`, `"="` / `"<>"` blanks), text `"5"` dual-matching numbers, range vs `sum_range` reshape from the top-left, array literals → `#VALUE!`
 - `COUNTIF` criteria: operators (`= <> > < >= <=`), numeric text matching both
   number and `"2"`, `"TRUE"` coerced to the logical (use `"TRUE*"` for text),
@@ -447,9 +393,7 @@ as one or the other. Documented quirk categories:
   yield `#SPILL!`. Scalar operators (`UNIQUE(...)+1`) take the top-left
   element (`scalarize`), not a host-aware intersection of a written spill.
   Use `INDEX` / `SUM` / `COUNTA` to consume the array without a grid write.
-- Wildcards in exact `VLOOKUP` / `MATCH` (`*` / `?`)
 - `AVERAGEIF` criteria strings (`">5"`, `"*a*"`, `"="` / `"<>"` blanks), text `"5"` dual-matching numbers, range vs `average_range` reshape from the top-left, no matches / no numeric average cells → `#DIV/0!`, empty criteria cell treated as `0`
-- Wildcards in exact `VLOOKUP` / `MATCH` (`*` / `?`) and in `SEARCH` (`*` / `?` / `~`)
 - `PMT(rate, nper, pv, [fv], [type])`: Excel cash-flow sign (pay out is
   negative); `rate=0` is `-(pv+fv)/nper` (`#DIV/0!` if `nper=0`);
   `rate=-1` / overflow / negative^non-integer `nper` are `#NUM!`; omitted

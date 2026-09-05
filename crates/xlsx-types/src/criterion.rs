@@ -377,18 +377,6 @@ impl Criterion {
     }
 }
 
-/// Count how many values in `v` (scalar or array) match `criterion`.
-pub fn count_matches(v: &ExcelValue, criterion: &Criterion) -> u64 {
-    match v {
-        ExcelValue::Array(rows) => rows
-            .iter()
-            .flatten()
-            .map(|c| count_matches(c, criterion))
-            .sum(),
-        other => u64::from(criterion.matches(other)),
-    }
-}
-
 fn parse_text_criterion(s: &str) -> Criterion {
     let (op, rest) = split_op(s);
     if rest.is_empty() {

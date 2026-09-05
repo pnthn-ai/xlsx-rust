@@ -781,6 +781,7 @@ mod tests {
         );
     }
 
+    #[test]
     fn networkdays_ms_examples() {
         let start = d(2012, 10, 1);
         let end = d(2013, 3, 1);
@@ -879,6 +880,7 @@ mod tests {
         }
     }
 
+    #[test]
     fn weekday_serial_one_is_sunday() {
         // Excel's 1900 leap-year bug: 1900-01-01 is Sunday (type 1 = 1),
         // not the historical Monday.
@@ -963,6 +965,7 @@ mod tests {
         }
     }
 
+    #[test]
     fn workday_ms_examples() {
         let start = d(2008, 10, 1);
         let end_plain = d(2009, 4, 30);
