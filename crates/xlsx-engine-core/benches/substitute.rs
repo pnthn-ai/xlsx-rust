@@ -105,7 +105,7 @@ fn fmt_dur(d: Duration) -> String {
 }
 
 fn main() {
-    println!("SUBSTITUTE kernel bench (naive replace_range vs single-alloc)");
+    println!("SUBSTITUTE kernel bench (naive replace_range vs specialized)");
     println!(
         "{:<42} {:>12} {:>12} {:>8}",
         "case", "naive", "optimized", "speedup"

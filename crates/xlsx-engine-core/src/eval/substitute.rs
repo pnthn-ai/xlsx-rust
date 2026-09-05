@@ -6,9 +6,9 @@
 //! - Empty `old_text` matches nothing — the original text is returned.
 //! - `instance_num` is 1-based; omitted means replace every match.
 //!
-//! This module is allocation-aware: replace-all pre-counts matches so the
-//! output buffer is reserved once. The quadratic baseline lives beside the
-//! production path so benches can report a before/after.
+//! Production replace-all specializes ASCII byte swaps, equal-width in-place
+//! overwrites, and a single-pass resize. The quadratic `replace_range`
+//! baseline lives beside that path so benches can report a before/after.
 
 /// Production `SUBSTITUTE` kernel.
 ///
@@ -66,27 +66,75 @@ fn replace_all(text: &str, old: &str, new: &str) -> String {
     if old == new {
         return text.to_owned();
     }
-    let mut count = 0usize;
+    // ASCII byte→byte: one linear scan, no `find` per hit.
+    if let (Some(&o), Some(&n)) = (old.as_bytes().first(), new.as_bytes().first()) {
+        if old.len() == 1 && new.len() == 1 && o.is_ascii() && n.is_ascii() {
+            return replace_all_ascii_byte(text, o, n);
+        }
+    }
+    // Equal UTF-8 width: clone once and overwrite matches in place.
+    if old.len() == new.len() {
+        return replace_all_equal_len(text, old, new);
+    }
+    replace_all_resized(text, old, new)
+}
+
+fn replace_all_ascii_byte(text: &str, old: u8, new: u8) -> String {
+    debug_assert!(old.is_ascii() && new.is_ascii());
+    let mut buf = text.to_owned();
+    // SAFETY: `old` and `new` are ASCII. Replacing one ASCII byte with
+    // another cannot create invalid UTF-8.
+    for b in unsafe { buf.as_bytes_mut() } {
+        if *b == old {
+            *b = new;
+        }
+    }
+    buf
+}
+
+fn replace_all_equal_len(text: &str, old: &str, new: &str) -> String {
+    debug_assert_eq!(old.len(), new.len());
+    let mut buf = text.to_owned();
+    let n = old.len();
     let mut from = 0usize;
-    while let Some(rel) = text[from..].find(old) {
-        count += 1;
-        from += rel + old.len();
+    while from < buf.len() {
+        let Some(rel) = buf[from..].find(old) else {
+            break;
+        };
+        let pos = from + rel;
+        // SAFETY: `old` and `new` are valid UTF-8 of equal byte length, so
+        // overwriting a found `old` span with `new` leaves the string valid.
+        unsafe {
+            buf.as_bytes_mut()[pos..pos + n].copy_from_slice(new.as_bytes());
+        }
+        from = pos + n;
     }
-    if count == 0 {
+    buf
+}
+
+fn replace_all_resized(text: &str, old: &str, new: &str) -> String {
+    let Some(first) = text.find(old) else {
         return text.to_owned();
-    }
-    let cap = text.len() + count * new.len() - count * old.len();
+    };
+    // One pass. Shrinking fits in `text.len()`. Growing: reserve every
+    // non-overlapping slot so a dense needle does not realloc.
+    let cap = if new.len() <= old.len() {
+        text.len()
+    } else {
+        let extra = new.len() - old.len();
+        text.len() + (text.len() / old.len()) * extra
+    };
     let mut out = String::with_capacity(cap);
-    from = 0;
-    let mut last = 0usize;
+    out.push_str(&text[..first]);
+    out.push_str(new);
+    let mut from = first + old.len();
     while let Some(rel) = text[from..].find(old) {
         let pos = from + rel;
-        out.push_str(&text[last..pos]);
+        out.push_str(&text[from..pos]);
         out.push_str(new);
-        last = pos + old.len();
-        from = last;
+        from = pos + old.len();
     }
-    out.push_str(&text[last..]);
+    out.push_str(&text[from..]);
     out
 }
 
@@ -176,6 +224,7 @@ mod tests {
     fn delete_and_unicode() {
         assert_eq!(both("a-b-c", "-", "", None), "abc");
         assert_eq!(both("café", "é", "e", None), "cafe");
+        assert_eq!(both("café", "é", "è", None), "cafè");
         assert_eq!(both("日本語", "本", "X", None), "日X語");
     }
 
