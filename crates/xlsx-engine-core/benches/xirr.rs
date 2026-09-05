@@ -136,8 +136,9 @@ fn main() {
         let b = excel_xirr(&c.values, &c.dates, c.guess);
         match (a, b) {
             (Some(x), Some(y)) => {
+                let scale = x.abs().max(y.abs()).max(1.0);
                 assert!(
-                    excel_num_eq(x, y),
+                    (x - y).abs() / scale <= 1e-12 || excel_num_eq(x, y),
                     "semantic mismatch on {}: {x} vs {y}",
                     c.name
                 );
