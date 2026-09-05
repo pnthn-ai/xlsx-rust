@@ -2,7 +2,7 @@
 //!
 //! `IFS` lives with the other logicals here; pair selection is [`super::ifs`].
 //! `FILTER` lives with the other lookups here; the mask/select kernel is
-//! [`super::filter`].
+//! [`super::filter`]. `TOCOL` is [`super::tocol`].
 //!
 //! Unknown names return `#NAME?` (an Excel value, not [`EvalError`]).
 //! Financial TVM starts with `PMT` (`xlsx_types::excel_pmt`); `PV`/`FV`/`NPER`
@@ -133,6 +133,7 @@ pub(crate) fn dispatch(
         "CONCAT" => super::concat::fn_concat(ev, args, ctx),
         "NPV" => super::npv::eval(ev, args, ctx),
         "UNIQUE" => super::unique::eval(ev, args, ctx),
+        "TOCOL" => super::tocol::eval(ev, args, ctx),
         "IRR" => fn_irr(ev, args, ctx),
         "TRUE" => Ok(ExcelValue::Bool(true)),
         "FALSE" => Ok(ExcelValue::Bool(false)),

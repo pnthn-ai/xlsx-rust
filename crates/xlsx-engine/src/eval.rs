@@ -450,6 +450,7 @@ impl Interpreter {
             "CONCAT" => self.fn_concat(args, ctx),
             "NPV" => self.fn_npv(args, ctx),
             "UNIQUE" => self.fn_unique(args, ctx),
+            "TOCOL" => self.fn_tocol(args, ctx),
             "IRR" => self.fn_irr(args, ctx),
             "TRUE" => Ok(ExcelValue::Bool(true)),
             "FALSE" => Ok(ExcelValue::Bool(false)),
@@ -931,6 +932,33 @@ impl Interpreter {
             Err(e) => return Ok(ExcelValue::Error(e)),
         };
         Ok(unique_apply_seed(&grid, by_col, exactly_once))
+    }
+
+    fn fn_tocol(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.is_empty() || args.len() > 3 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        let array = self.eval_expr(&args[0], ctx)?;
+        if let ExcelValue::Error(e) = array {
+            return Ok(ExcelValue::Error(e));
+        }
+        let ignore = if args.len() >= 2 {
+            match xlsx_engine_core::parse_tocol_ignore(&self.eval_scalar(&args[1], ctx)?) {
+                Ok(n) => n,
+                Err(e) => return Ok(ExcelValue::Error(e)),
+            }
+        } else {
+            0
+        };
+        let scan_by_col = if args.len() >= 3 {
+            match self.as_if_cond(&self.eval_scalar(&args[2], ctx)?) {
+                Ok(b) => b,
+                Err(e) => return Ok(ExcelValue::Error(e)),
+            }
+        } else {
+            false
+        };
+        Ok(xlsx_engine_core::tocol_apply(&array, ignore, scan_by_col))
     }
 
     fn fn_ifna(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
