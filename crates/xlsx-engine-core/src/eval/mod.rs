@@ -24,6 +24,7 @@ pub mod switch;
 pub mod ifs;
 pub mod unique;
 pub mod irr;
+pub mod xnpv;
 
 use crate::ast::{BinOp, Expr, UnaryOp};
 use crate::parse::parse;
@@ -927,6 +928,38 @@ mod tests {
         assert_eq!(
             eval_formula_in(&wb, "=PMT()").unwrap(),
             ExcelValue::Error(ExcelError::Value)
+        );
+    }
+
+    #[test]
+    fn xnpv_microsoft_and_errors() {
+        let wb = Workbook::default();
+        match eval_formula_in(
+            &wb,
+            "=XNPV(0.09,{-10000,2750,4250,3250,2750},{DATE(2008,1,1),DATE(2008,3,1),DATE(2008,10,30),DATE(2009,2,15),DATE(2009,4,1)})",
+        )
+        .unwrap()
+        {
+            ExcelValue::Number(n) => {
+                assert!(xlsx_types::excel_num_eq(n, 2086.647602031535), "got {n}")
+            }
+            other => panic!("expected number, got {other:?}"),
+        }
+        assert_eq!(
+            eval_formula_in(
+                &wb,
+                "=XNPV(0.09,{-10000,2750},{DATE(2008,3,1),DATE(2008,1,1)})"
+            )
+            .unwrap(),
+            ExcelValue::Error(ExcelError::Num)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=XNPV(0.1,{-100,110})").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=XNPV(-1,{-100,110},{1,400})").unwrap(),
+            ExcelValue::Error(ExcelError::Div0)
         );
     }
 }

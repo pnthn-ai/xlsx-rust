@@ -14,6 +14,7 @@
 //! - [`eval::unique`] — `UNIQUE` dynamic-array kernel (hash distinctness)
 //! - [`eval::filter`] — `FILTER` mask/select kernel (`#CALC!` / `if_empty`)
 //! - [`eval::irr`] — Excel `IRR` Newton / secant kernel
+//! - [`eval::xnpv`] — Excel `XNPV` irregular-date NPV kernel
 //!
 //! This crate depends only on [`xlsx_types`]. It never reads fixture expected
 //! values; the verification gate (`xlsx-verify`) is the only judge.
@@ -52,6 +53,10 @@ pub use eval::textjoin::{
     eval_textjoin_formula, textjoin_naive_join, TextJoinBuilder, TEXTJOIN_MAX_CHARS,
 };
 pub use eval::unique::{unique_apply, unique_apply_naive, unique_eq};
+pub use eval::xnpv::{
+    collect_series as collect_xnpv_series, date_serial_trunc as xnpv_date_serial_trunc,
+    xnpv as excel_xnpv, xnpv_naive as excel_xnpv_naive,
+};
 pub use eval::{
     eval_averageif_materialized, eval_formula_in, eval_sumif_materialized, eval_sumifs_materialized,
     Evaluator,
