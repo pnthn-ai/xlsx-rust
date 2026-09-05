@@ -705,7 +705,7 @@
     "id": "fn.countifs.ieee-fuzzy",
     "description": "Numeric COUNTIFS uses 15-digit equality (0.1+0.2 matches 0.3)",
     "tags": ["countifs"],
-    "quirks": ["ieee-15-digit"],
+    "quirks": ["ieee-vs-excel-precision"],
     "formula": "=COUNTIFS(A1, 0.1+0.2)",
     "expected": { "number": 1 },
     "workbook": {
