@@ -16,71 +16,29 @@ criterion = { workspace = true }
 name = "substitute"
 harness = false
 
-
-
-
-
-
-
-
-
 [[bench]]
 name = "sumif"
 harness = false
-
-
-
-
-
-
-
-
 
 [[bench]]
 name = "sumproduct"
 harness = false
 
-
-
-
-
-
-
-
-
 [[bench]]
 name = "countif"
 harness = false
-
-
-
-
-
-
-
 
 [[bench]]
 name = "replace"
 harness = false
 
-
-
-
-
-
 [[bench]]
 name = "find"
-criterion = "0.5"
 harness = false
-
-
-
 
 [[bench]]
 name = "sumifs"
-criterion = "0.5"
 harness = false
-
 
 [[bench]]
 name = "averageif"
