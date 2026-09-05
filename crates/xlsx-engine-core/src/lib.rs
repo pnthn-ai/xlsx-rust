@@ -15,6 +15,9 @@ pub mod eval;
 pub mod parse;
 
 pub use ast::{BinOp, Expr, UnaryOp};
+pub use eval::textjoin::{
+    eval_textjoin_formula, textjoin_naive_join, TextJoinBuilder, TEXTJOIN_MAX_CHARS,
+};
 pub use eval::{eval_formula_in, Evaluator};
 pub use parse::parse;
 
