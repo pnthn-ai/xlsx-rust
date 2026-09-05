@@ -364,6 +364,7 @@ impl Interpreter {
             "COUNTA" => self.fn_agg(args, ctx, AggKind::CountA),
             "COUNTBLANK" => self.fn_agg(args, ctx, AggKind::CountBlank),
             "IF" => self.fn_if(args, ctx),
+            "IFS" => self.fn_ifs(args, ctx),
             "IFERROR" => self.fn_iferror(args, ctx),
             "IFNA" => self.fn_ifna(args, ctx),
             "AND" => self.fn_and_or(args, ctx, AndOr::And),
@@ -463,6 +464,37 @@ impl Interpreter {
         } else {
             Ok(ExcelValue::Bool(false))
         }
+    }
+
+    fn fn_ifs(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.is_empty() || args.len() % 2 == 1 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        let mut first_err = None;
+        let mut first_true = None;
+        let mut i = 0;
+        while i + 1 < args.len() {
+            let cond = self.eval_scalar(&args[i], ctx)?;
+            let val = self.eval_expr(&args[i + 1], ctx)?;
+            if first_err.is_none() {
+                if let ExcelValue::Error(e) = cond {
+                    first_err = Some(e);
+                } else if let ExcelValue::Error(e) = val {
+                    first_err = Some(e);
+                } else {
+                    match self.as_if_cond(&cond) {
+                        Ok(true) if first_true.is_none() => first_true = Some(val),
+                        Ok(_) => {}
+                        Err(e) => first_err = Some(e),
+                    }
+                }
+            }
+            i += 2;
+        }
+        if let Some(e) = first_err {
+            return Ok(ExcelValue::Error(e));
+        }
+        Ok(first_true.unwrap_or(ExcelValue::Error(ExcelError::Na)))
     }
 
     fn fn_iferror(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
