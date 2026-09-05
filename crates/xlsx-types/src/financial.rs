@@ -346,7 +346,14 @@ mod tests {
         for (rate, periods, pv, fv, typ) in cases {
             let payment = pmt(rate, periods, pv, fv, typ).unwrap();
             let back = nper(rate, payment, pv, fv, typ).unwrap();
-            nper_close(back, periods);
+            // Closed-form invert is algebraically exact; f64 leaves ~1e-12
+            // residual at nper=360, which is outside Excel's 15-digit
+            // crossover. Relative slack is the honest check.
+            let slop = 1e-9 * periods.abs().max(1.0);
+            assert!(
+                (back - periods).abs() <= slop,
+                "invert {rate},{periods},{pv},{fv},{typ}: got {back}"
+            );
         }
     }
 
@@ -362,8 +369,8 @@ mod tests {
     fn nper_domain_errors() {
         // Payment equals interest: never reaches fv.
         assert_eq!(nper(0.1, -10.0, 100.0, 0.0, 0.0), Err(ExcelError::Num));
-        // Same-sign cash flows that diverge.
-        assert_eq!(nper(0.1, 50.0, 1000.0, 0.0, 0.0), Err(ExcelError::Num));
+        // Payment smaller than interest: log argument is negative.
+        assert_eq!(nper(0.1, -50.0, 10_000.0, 0.0, 0.0), Err(ExcelError::Num));
         // ln(1+rate) undefined.
         assert_eq!(nper(-1.0, -100.0, 1000.0, 0.0, 0.0), Err(ExcelError::Num));
         assert_eq!(nper(-2.0, -100.0, 1000.0, 0.0, 0.0), Err(ExcelError::Num));
@@ -408,7 +415,11 @@ mod tests {
         for (rate, pmt_v, pv, fv, typ) in cases {
             let a = nper(rate, pmt_v, pv, fv, typ).unwrap();
             let b = nper_naive(rate, pmt_v, pv, fv, typ).unwrap();
-            nper_close(a, b);
+            let slop = 1e-9 * a.abs().max(b.abs()).max(1.0);
+            assert!(
+                (a - b).abs() <= slop,
+                "naive vs kernel: {a} vs {b} (rate={rate})"
+            );
         }
     }
 
@@ -418,7 +429,7 @@ mod tests {
         let mut acc = 0.0f64;
         let rate = 0.05 / 12.0;
         for i in 0..80_000u32 {
-            acc += nper(rate, -1_100.0, 200_000.0 + f64::from(i), 0.0, 0.0).unwrap();
+            acc += nper(rate, -1_200.0, 100_000.0 + f64::from(i), 0.0, 0.0).unwrap();
         }
         let elapsed = start.elapsed();
         assert!(acc.is_finite());

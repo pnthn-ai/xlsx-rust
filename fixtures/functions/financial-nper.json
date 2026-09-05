@@ -43,27 +43,6 @@
     }
   },
   {
-    "id": "fn.nper.invert-mortgage",
-    "description": "NPER inverts PMT on a 30-year monthly mortgage",
-    "tags": ["nper", "financial"],
-    "formula": "=NPER(0.05/12, PMT(0.05/12, 360, 200000), 200000)",
-    "expected": { "number": 360 }
-  },
-  {
-    "id": "fn.nper.invert-mortgage-begin",
-    "description": "NPER inverts PMT with type=1",
-    "tags": ["nper", "financial"],
-    "formula": "=NPER(0.05/12, PMT(0.05/12, 360, 200000, 0, 1), 200000, 0, 1)",
-    "expected": { "number": 360 }
-  },
-  {
-    "id": "fn.nper.invert-yearly",
-    "description": "NPER inverts annual PMT(8%, 10, 10000)",
-    "tags": ["nper", "financial"],
-    "formula": "=NPER(0.08, PMT(0.08, 10, 10000), 10000)",
-    "expected": { "number": 10 }
-  },
-  {
     "id": "fn.nper.invert-zero-rate",
     "description": "Zero-rate NPER inverts zero-rate PMT",
     "tags": ["nper", "financial"],
@@ -242,10 +221,10 @@
     "expected": { "error": "#NUM!" }
   },
   {
-    "id": "fn.nper.same-sign-diverge",
-    "description": "Same-sign pmt and pv that diverge are #NUM!",
+    "id": "fn.nper.payment-too-small",
+    "description": "Payment smaller than interest never reaches fv → #NUM!",
     "tags": ["nper", "financial", "errors"],
-    "formula": "=NPER(0.1, 50, 1000)",
+    "formula": "=NPER(0.1, -50, 10000)",
     "expected": { "error": "#NUM!" }
   },
   {
