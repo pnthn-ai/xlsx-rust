@@ -14,6 +14,8 @@ pub mod dates;
 pub mod eval;
 pub mod parse;
 
+pub use dates::workday_serial;
+
 pub use ast::{BinOp, Expr, UnaryOp};
 pub use eval::{eval_formula_in, Evaluator};
 pub use parse::parse;

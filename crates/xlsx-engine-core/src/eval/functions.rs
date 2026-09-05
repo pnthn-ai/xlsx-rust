@@ -4,7 +4,7 @@
 
 use super::{coerce, compare, excel_pow, Ctx, Evaluator};
 use crate::ast::Expr;
-use crate::dates::{date_serial, serial_to_ymd, time_fraction};
+use crate::dates::{date_serial, serial_to_ymd, time_fraction, workday_serial};
 use xlsx_types::{EvalError, ExcelError, ExcelValue};
 
 pub(crate) fn dispatch(
@@ -81,6 +81,7 @@ pub(crate) fn dispatch(
         "ISODD" => fn_even_odd(ev, args, ctx, false),
         "DATE" => fn_date(ev, args, ctx),
         "TIME" => fn_time(ev, args, ctx),
+        "WORKDAY" => fn_workday(ev, args, ctx),
         "YEAR" => fn_ymd(ev, args, ctx, YmdPart::Year),
         "MONTH" => fn_ymd(ev, args, ctx, YmdPart::Month),
         "DAY" => fn_ymd(ev, args, ctx, YmdPart::Day),
@@ -626,6 +627,61 @@ fn fn_time(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValu
     match time_fraction(h, m, s) {
         Ok(n) => Ok(ExcelValue::Number(n)),
         Err(e) => Ok(ExcelValue::Error(e)),
+    }
+}
+
+fn fn_workday(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    if args.len() < 2 || args.len() > 3 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let start_v = ev.eval_scalar(&args[0], ctx)?;
+    let days_v = ev.eval_scalar(&args[1], ctx)?;
+    let hol_v = if args.len() == 3 {
+        Some(ev.eval_expr(&args[2], ctx)?)
+    } else {
+        None
+    };
+    let start = match coerce::to_number(&start_v) {
+        Ok(n) => n,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let days = match coerce::to_number(&days_v) {
+        Ok(n) => n,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let mut holidays = Vec::new();
+    if let Some(v) = hol_v {
+        if let Some(e) = collect_holiday_serials(&v, &mut holidays) {
+            return Ok(ExcelValue::Error(e));
+        }
+    }
+    match workday_serial(start, days, &holidays, ctx.spec.options.date_system) {
+        Ok(n) => Ok(ExcelValue::Number(n)),
+        Err(e) => Ok(ExcelValue::Error(e)),
+    }
+}
+
+fn collect_holiday_serials(v: &ExcelValue, out: &mut Vec<f64>) -> Option<ExcelError> {
+    match v {
+        ExcelValue::Array(rows) => {
+            for row in rows {
+                for c in row {
+                    if let Some(e) = collect_holiday_serials(c, out) {
+                        return Some(e);
+                    }
+                }
+            }
+            None
+        }
+        ExcelValue::Empty => None,
+        ExcelValue::Error(e) => Some(*e),
+        other => match coerce::to_number(other) {
+            Ok(n) => {
+                out.push(n);
+                None
+            }
+            Err(e) => Some(e),
+        },
     }
 }
 

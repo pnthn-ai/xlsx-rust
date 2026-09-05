@@ -193,6 +193,163 @@ pub fn serial_to_ymd(serial: f64, system: DateSystem) -> Result<(i32, u32, u32),
     Err(ExcelError::Num)
 }
 
+/// Convert a workbook-local date serial into the 1900 system.
+pub fn to_1900_serial(serial: i32, system: DateSystem) -> Result<i32, ExcelError> {
+    match system {
+        DateSystem::Excel1900 => Ok(serial),
+        DateSystem::Excel1904 => serial
+            .checked_add(EXCEL1904_EPOCH_IN_1900)
+            .ok_or(ExcelError::Num),
+    }
+}
+
+/// Convert a 1900-system serial back into the workbook-local date system.
+pub fn from_1900_serial(serial_1900: i32, system: DateSystem) -> Result<i32, ExcelError> {
+    match system {
+        DateSystem::Excel1900 => {
+            if serial_1900 < 0 || serial_1900 > EXCEL_MAX_SERIAL_1900 {
+                Err(ExcelError::Num)
+            } else {
+                Ok(serial_1900)
+            }
+        }
+        DateSystem::Excel1904 => {
+            let local = serial_1900
+                .checked_sub(EXCEL1904_EPOCH_IN_1900)
+                .ok_or(ExcelError::Num)?;
+            if local < 0 || local > EXCEL_MAX_SERIAL_1900 - EXCEL1904_EPOCH_IN_1900 {
+                Err(ExcelError::Num)
+            } else {
+                Ok(local)
+            }
+        }
+    }
+}
+
+fn max_local_serial(system: DateSystem) -> i32 {
+    match system {
+        DateSystem::Excel1900 => EXCEL_MAX_SERIAL_1900,
+        DateSystem::Excel1904 => EXCEL_MAX_SERIAL_1900 - EXCEL1904_EPOCH_IN_1900,
+    }
+}
+
+/// Truncate a coerced date argument to a whole serial in `system`.
+pub fn truncate_date_serial(n: f64, system: DateSystem) -> Result<i32, ExcelError> {
+    if !n.is_finite() {
+        return Err(ExcelError::Num);
+    }
+    let s = n.trunc();
+    let max = max_local_serial(system) as f64;
+    if s < 0.0 || s > max {
+        return Err(ExcelError::Num);
+    }
+    Ok(s as i32)
+}
+
+/// Excel 1900-system weekend: serial 1 is Sunday, so `n % 7` is 0 (Sat) or 1 (Sun).
+pub fn is_weekend_sat_sun_1900(serial_1900: i32) -> bool {
+    let w = serial_1900.rem_euclid(7);
+    w == 0 || w == 1
+}
+
+fn workdays_through(n: i32) -> i32 {
+    if n < 0 {
+        return 0;
+    }
+    let complete = (n + 1) / 7;
+    let rem = (n + 1) % 7;
+    let extra = if rem <= 2 { 0 } else { rem - 2 };
+    complete * 5 + extra
+}
+
+fn invert_workdays_through(w: i64) -> Result<i32, ExcelError> {
+    if w <= 0 {
+        return Err(ExcelError::Num);
+    }
+    let weeks = (w - 1) / 5;
+    let rem = (w - 1) % 5;
+    let t = weeks
+        .checked_mul(7)
+        .and_then(|x| x.checked_add(2 + rem))
+        .ok_or(ExcelError::Num)?;
+    if t < 0 || t > i64::from(EXCEL_MAX_SERIAL_1900) {
+        return Err(ExcelError::Num);
+    }
+    Ok(t as i32)
+}
+
+fn workday_1900_no_holidays(start: i32, days: i32) -> Result<i32, ExcelError> {
+    if days == 0 {
+        return Ok(start);
+    }
+    if days > 0 {
+        let target = i64::from(workdays_through(start)) + i64::from(days);
+        invert_workdays_through(target)
+    } else {
+        let target = i64::from(workdays_through(start - 1)) + i64::from(days) + 1;
+        invert_workdays_through(target)
+    }
+}
+
+fn count_holidays_between(start: i32, end: i32, hols: &[i32]) -> i32 {
+    if end > start {
+        hols.iter().filter(|&&h| h > start && h <= end).count() as i32
+    } else if end < start {
+        hols.iter().filter(|&&h| h >= end && h < start).count() as i32
+    } else {
+        0
+    }
+}
+
+fn workday_1900(start: i32, days: i32, hols: &[i32]) -> Result<i32, ExcelError> {
+    if days == 0 {
+        return Ok(start);
+    }
+    let mut extra = 0i32;
+    loop {
+        let signed_extra = if days > 0 { extra } else { -extra };
+        let total = days.checked_add(signed_extra).ok_or(ExcelError::Num)?;
+        let candidate = workday_1900_no_holidays(start, total)?;
+        let counted = count_holidays_between(start, candidate, hols);
+        if counted == extra {
+            return Ok(candidate);
+        }
+        extra = counted;
+    }
+}
+
+/// Excel `WORKDAY(start, days, [holidays])` with weekend Sat/Sun.
+pub fn workday_serial(
+    start: f64,
+    days: f64,
+    holidays: &[f64],
+    system: DateSystem,
+) -> Result<f64, ExcelError> {
+    let start_s = truncate_date_serial(start, system)?;
+    if !days.is_finite() {
+        return Err(ExcelError::Num);
+    }
+    let days_t = days.trunc();
+    if days_t.abs() > f64::from(EXCEL_MAX_SERIAL_1900) {
+        return Err(ExcelError::Num);
+    }
+    let days_i = days_t as i32;
+    let start_1900 = to_1900_serial(start_s, system)?;
+
+    let mut hols = Vec::with_capacity(holidays.len());
+    for &h in holidays {
+        let hs = to_1900_serial(truncate_date_serial(h, system)?, system)?;
+        if !is_weekend_sat_sun_1900(hs) {
+            hols.push(hs);
+        }
+    }
+    hols.sort_unstable();
+    hols.dedup();
+
+    let result_1900 = workday_1900(start_1900, days_i, &hols)?;
+    Ok(from_1900_serial(result_1900, system)? as f64)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
