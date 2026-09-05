@@ -23,6 +23,14 @@ pub fn replace(old_text: &str, start_num: u64, num_chars: u64, new_text: &str) -
     if num_chars == 0 && new_text.is_empty() {
         return old_text.to_owned();
     }
+    // Byte length ≥ scalar length, so a start past `old_text.len()` is
+    // always an append — skip the ASCII / UTF-8 walk.
+    if start_num.saturating_sub(1) >= old_text.len() as u64 {
+        let mut out = String::with_capacity(old_text.len() + new_text.len());
+        out.push_str(old_text);
+        out.push_str(new_text);
+        return out;
+    }
     if old_text.is_ascii() {
         return replace_ascii(old_text, start_num, num_chars, new_text);
     }
