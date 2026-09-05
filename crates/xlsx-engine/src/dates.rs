@@ -223,7 +223,6 @@ pub fn eomonth_serial(start: f64, months: f64, system: DateSystem) -> Result<f64
     }
 }
 
-
 pub fn to_1900_serial(serial: i32, system: DateSystem) -> Result<i32, ExcelError> {
     match system {
         DateSystem::Excel1900 => Ok(serial),
@@ -475,6 +474,123 @@ pub fn weekday(serial: f64, return_type: i32, system: DateSystem) -> Result<f64,
     map_weekday_return_type(type1_from_1900_serial(s1900), return_type)
 }
 
+/// Excel `YEARFRAC(start, end, [basis])`. Same day-count rules as
+/// `xlsx-engine-core::dates::yearfrac` (Wheeler / Excel 2007).
+pub fn yearfrac(start: f64, end: f64, basis: i32, system: DateSystem) -> Result<f64, ExcelError> {
+    if !(0..=4).contains(&basis) {
+        return Err(ExcelError::Num);
+    }
+    let start_s = truncate_date_serial(start, system)?;
+    let end_s = truncate_date_serial(end, system)?;
+    if start_s == end_s {
+        return Ok(0.0);
+    }
+    let start_1900 = to_1900_serial(start_s, system)?;
+    let end_1900 = to_1900_serial(end_s, system)?;
+    let (lo, hi) = if start_1900 <= end_1900 {
+        (start_1900, end_1900)
+    } else {
+        (end_1900, start_1900)
+    };
+    let (y1, m1, d1) = serial_to_ymd(lo as f64, DateSystem::Excel1900)?;
+    let (y2, m2, d2) = serial_to_ymd(hi as f64, DateSystem::Excel1900)?;
+    let a = (y1, m1 as i32, d1 as i32);
+    let b = (y2, m2 as i32, d2 as i32);
+    let actual = (hi - lo) as f64;
+    match basis {
+        0 => Ok(basis0_us_nasd(a, b)),
+        1 => basis1_actual_actual(a, b, actual),
+        2 => Ok(actual / 360.0),
+        3 => Ok(actual / 365.0),
+        4 => Ok(basis4_eu_30_360(a, b)),
+        _ => Err(ExcelError::Num),
+    }
+}
+
+fn last_day_of_month(year: i32, month: i32, day: i32) -> bool {
+    month >= 1 && month <= 12 && day == days_in_month(year, month)
+}
+
+fn ymd_lt(y1: i32, m1: i32, d1: i32, y2: i32, m2: i32, d2: i32) -> bool {
+    (y1, m1, d1) < (y2, m2, d2)
+}
+
+fn basis0_us_nasd(a: (i32, i32, i32), b: (i32, i32, i32)) -> f64 {
+    let (y1, m1, mut d1) = a;
+    let (y2, m2, mut d2) = b;
+    if d1 == 31 && d2 == 31 {
+        d1 = 30;
+        d2 = 30;
+    } else if d1 == 31 {
+        d1 = 30;
+    } else if d1 == 30 && d2 == 31 {
+        d2 = 30;
+    } else if m1 == 2 && m2 == 2 && last_day_of_month(y1, m1, d1) && last_day_of_month(y2, m2, d2) {
+        d1 = 30;
+        d2 = 30;
+    } else if m1 == 2 && last_day_of_month(y1, m1, d1) {
+        d1 = 30;
+    }
+    let daydiff = (d2 + m2 * 30 + y2 * 360) - (d1 + m1 * 30 + y1 * 360);
+    daydiff as f64 / 360.0
+}
+
+fn basis4_eu_30_360(a: (i32, i32, i32), b: (i32, i32, i32)) -> f64 {
+    let (y1, m1, mut d1) = a;
+    let (y2, m2, mut d2) = b;
+    if d1 == 31 {
+        d1 = 30;
+    }
+    if d2 == 31 {
+        d2 = 30;
+    }
+    let daydiff = (d2 + m2 * 30 + y2 * 360) - (d1 + m1 * 30 + y1 * 360);
+    daydiff as f64 / 360.0
+}
+
+fn appears_le_year(a: (i32, i32, i32), b: (i32, i32, i32)) -> bool {
+    let (y1, m1, d1) = a;
+    let (y2, m2, d2) = b;
+    if y1 == y2 {
+        return true;
+    }
+    y1 + 1 == y2 && (m1 > m2 || (m1 == m2 && d1 >= d2))
+}
+
+fn feb29_strictly_between(a: (i32, i32, i32), b: (i32, i32, i32)) -> bool {
+    let (y1, m1, d1) = a;
+    let (y2, m2, d2) = b;
+    for y in y1..=y2 {
+        if is_excel_leap(y) && ymd_lt(y1, m1, d1, y, 2, 29) && ymd_lt(y, 2, 29, y2, m2, d2) {
+            return true;
+        }
+    }
+    false
+}
+
+fn basis1_actual_actual(
+    a: (i32, i32, i32),
+    b: (i32, i32, i32),
+    actual: f64,
+) -> Result<f64, ExcelError> {
+    if appears_le_year(a, b) {
+        let (y1, _, _) = a;
+        let (_, m2, d2) = b;
+        let year_len = if y1 == b.0 && is_excel_leap(y1) {
+            366.0
+        } else if feb29_strictly_between(a, b) || (m2 == 2 && d2 == 29) {
+            366.0
+        } else {
+            365.0
+        };
+        return Ok(actual / year_len);
+    }
+    let (y1, _, _) = a;
+    let (y2, _, _) = b;
+    let num_years = (y2 - y1) + 1;
+    let days_in_years = serial_of_year_start(y2 + 1)? - serial_of_year_start(y1)?;
+    Ok(actual * (num_years as f64) / (days_in_years as f64))
+}
 
 #[cfg(test)]
 mod tests {
