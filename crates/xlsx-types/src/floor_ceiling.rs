@@ -9,16 +9,10 @@ use crate::value::excel_round_15;
 /// Largest magnitude still exactly representable as an integer in `f64`.
 const SAFE_INT: f64 = (1i64 << 53) as f64;
 
-/// Classic Excel `FLOOR(number, significance)`.
-///
-/// - Significance `0` and number `≠ 0` → `#DIV/0!`; `FLOOR(0, 0)` is `0`.
-/// - Positive number + negative significance → `#NUM!`.
-/// - Negative number + positive significance is allowed (Excel 2010+):
-///   rounds away from zero (toward −∞).
-/// - Both negative: rounds toward zero (toward +∞).
-pub fn excel_floor(n: f64, s: f64) -> Result<f64, ExcelError> {
-    floor_ceil(n, s, Dir::Floor)
-}
+/// Classic Excel `FLOOR` — dedicated kernel in [`crate::excel_floor`].
+pub use crate::excel_floor::{
+    excel_floor, excel_floor_naive, excel_floor_slice, excel_floor_slice_naive,
+};
 
 /// Classic Excel `CEILING(number, significance)`.
 ///
@@ -28,12 +22,6 @@ pub fn excel_floor(n: f64, s: f64) -> Result<f64, ExcelError> {
 /// - Both negative: rounds away from zero.
 pub fn excel_ceiling(n: f64, s: f64) -> Result<f64, ExcelError> {
     floor_ceil(n, s, Dir::Ceiling)
-}
-
-/// IEEE-only classic `FLOOR` (same sign / zero rules, no integer path, no
-/// 15-digit multiple snap). Used as the microbench baseline.
-pub fn excel_floor_naive(n: f64, s: f64) -> Result<f64, ExcelError> {
-    floor_ceil_ieee(n, s, Dir::Floor)
 }
 
 /// IEEE-only classic `CEILING` baseline (see [`excel_floor_naive`]).
@@ -58,22 +46,9 @@ pub fn excel_ceiling_math(n: f64, s: f64, mode: f64) -> Result<f64, ExcelError> 
     math_round(n, s, mode, MathKind::Ceiling)
 }
 
-/// Apply classic `FLOOR` to every `n[i]` with a constant significance.
-///
-/// Returns the number of `#DIV/0!` / `#NUM!` inputs (those slots are left
-/// unchanged). Hot path for column-shaped work.
-pub fn excel_floor_slice(n: &[f64], s: f64, out: &mut [f64]) -> usize {
-    slice_apply(n, s, out, Dir::Floor)
-}
-
 /// Apply classic `CEILING` to every `n[i]` with a constant significance.
 pub fn excel_ceiling_slice(n: &[f64], s: f64, out: &mut [f64]) -> usize {
     slice_apply(n, s, out, Dir::Ceiling)
-}
-
-/// IEEE slice baseline matching [`excel_floor_naive`].
-pub fn excel_floor_slice_naive(n: &[f64], s: f64, out: &mut [f64]) -> usize {
-    slice_apply_ieee(n, s, out, Dir::Floor)
 }
 
 /// IEEE slice baseline matching [`excel_ceiling_naive`].

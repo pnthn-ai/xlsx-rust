@@ -1,0 +1,385 @@
+[
+  {
+    "id": "fn.floor-help-3.7",
+    "description": "Microsoft: FLOOR(3.7, 2) is 2",
+    "tags": ["math", "floor"],
+    "formula": "=FLOOR(3.7,2)",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.floor-help-both-neg",
+    "description": "Microsoft: FLOOR(-2.5, -2) is -2 (both negative, toward zero)",
+    "tags": ["math", "floor"],
+    "formula": "=FLOOR(-2.5,-2)",
+    "expected": { "number": -2 }
+  },
+  {
+    "id": "fn.floor-help-pos-neg-sig",
+    "description": "Microsoft: FLOOR(2.5, -2) is #NUM! — positive number, negative significance",
+    "tags": ["math", "floor", "errors"],
+    "formula": "=FLOOR(2.5,-2)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.floor-help-tenth",
+    "description": "Microsoft: FLOOR(1.58, 0.1) is 1.5",
+    "tags": ["math", "floor"],
+    "formula": "=FLOOR(1.58,0.1)",
+    "expected": { "number": 1.5 }
+  },
+  {
+    "id": "fn.floor-help-hundredth",
+    "description": "Microsoft: FLOOR(0.234, 0.01) is 0.23",
+    "tags": ["math", "floor"],
+    "formula": "=FLOOR(0.234,0.01)",
+    "expected": { "number": 0.23 }
+  },
+  {
+    "id": "fn.floor-2010-neg-pos",
+    "description": "Excel 2010+: FLOOR(-2.5, 2) is -4 (negative + positive allowed, toward −∞)",
+    "tags": ["math", "floor"],
+    "formula": "=FLOOR(-2.5,2)",
+    "expected": { "number": -4 }
+  },
+  {
+    "id": "fn.floor-2010-neg-pos-one",
+    "description": "Excel 2010+: FLOOR(-1.5, 1) is -2",
+    "tags": ["math", "floor"],
+    "formula": "=FLOOR(-1.5,1)",
+    "expected": { "number": -2 }
+  },
+  {
+    "id": "fn.floor-both-neg-toward-zero",
+    "description": "FLOOR(-1.99, -1) is -1 (both negative, toward zero)",
+    "tags": ["math", "floor"],
+    "formula": "=FLOOR(-1.99,-1)",
+    "expected": { "number": -1 }
+  },
+  {
+    "id": "fn.floor-pos-neg-frac",
+    "description": "FLOOR(1.58, -0.1) is #NUM!",
+    "tags": ["math", "floor", "errors"],
+    "formula": "=FLOOR(1.58,-0.1)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.floor-zero-pos-sig",
+    "description": "FLOOR(0, 2) is 0",
+    "tags": ["math", "floor"],
+    "formula": "=FLOOR(0,2)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.floor-zero-neg-sig-ok",
+    "description": "FLOOR(0, -2) is 0 — zero is not a positive/negative sign clash",
+    "tags": ["math", "floor"],
+    "formula": "=FLOOR(0,-2)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.floor-div0-pos",
+    "description": "FLOOR(15, 0) is #DIV/0!",
+    "tags": ["math", "floor", "errors"],
+    "formula": "=FLOOR(15,0)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.floor-div0-neg",
+    "description": "FLOOR(-15, 0) is #DIV/0!",
+    "tags": ["math", "floor", "errors"],
+    "formula": "=FLOOR(-15,0)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.floor-zero-zero",
+    "description": "FLOOR(0, 0) is 0 — exception to zero-significance #DIV/0!",
+    "tags": ["math", "floor"],
+    "formula": "=FLOOR(0,0)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.floor-below-sig",
+    "description": "FLOOR(45, 50) is 0",
+    "tags": ["math", "floor"],
+    "formula": "=FLOOR(45,50)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.floor-nickel-price",
+    "description": "FLOOR(8.26, 0.05) is 8.25",
+    "tags": ["math", "floor"],
+    "formula": "=FLOOR(8.26,0.05)",
+    "expected": { "number": 8.25 }
+  },
+  {
+    "id": "fn.floor-already-int-multiple",
+    "description": "FLOOR(6, 3) is 6 — already a multiple",
+    "tags": ["math", "floor"],
+    "formula": "=FLOOR(6,3)",
+    "expected": { "number": 6 }
+  },
+  {
+    "id": "fn.floor-fp-already-multiple",
+    "description": "FLOOR(1.2, 0.1) is 1.2 — 15-digit multiple, not IEEE floor drift",
+    "tags": ["math", "floor"],
+    "quirks": ["ieee-vs-excel-precision"],
+    "formula": "=FLOOR(1.2,0.1)",
+    "expected": { "number": 1.2 }
+  },
+  {
+    "id": "fn.floor-eq-int-pos",
+    "description": "FLOOR(8.9, 1) equals INT(8.9)",
+    "tags": ["math", "floor"],
+    "formula": "=FLOOR(8.9,1)=INT(8.9)",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.floor-eq-int-neg",
+    "description": "FLOOR(-8.9, 1) equals INT(-8.9)",
+    "tags": ["math", "floor"],
+    "formula": "=FLOOR(-8.9,1)=INT(-8.9)",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.floor-tenths-snap",
+    "description": "FLOOR of ten 0.1 addends with significance 1 is 1",
+    "tags": ["math", "floor"],
+    "quirks": ["ieee-vs-excel-precision"],
+    "formula": "=FLOOR(0.1+0.1+0.1+0.1+0.1+0.1+0.1+0.1+0.1+0.1,1)",
+    "expected": { "number": 1 },
+    "notes": "Repeated IEEE +0.1 is 0.999…9; Excel FLOOR(n,1) / INT snap to 1. Documented model; live Excel not in CI."
+  },
+  {
+    "id": "fn.floor-tenths-tenth-sig",
+    "description": "FLOOR of ten 0.1 addends with significance 0.1 is 1",
+    "tags": ["math", "floor"],
+    "quirks": ["ieee-vs-excel-precision"],
+    "formula": "=FLOOR(0.1+0.1+0.1+0.1+0.1+0.1+0.1+0.1+0.1+0.1,0.1)",
+    "expected": { "number": 1 },
+    "notes": "IEEE sum sits just below 1; leftover snap keeps it on the 0.1 grid. Documented model; live Excel not in CI."
+  },
+  {
+    "id": "fn.floor-point-three-leftover",
+    "description": "FLOOR(0.3-0.1-0.2, 1) is 0 — tiny negative leftover snaps, not IEEE −1",
+    "tags": ["math", "floor"],
+    "quirks": ["ieee-vs-excel-precision"],
+    "formula": "=FLOOR(0.3-0.1-0.2,1)",
+    "expected": { "number": 0 },
+    "notes": "IEEE 0.3-0.1-0.2 is ≈ −2.8e-17; IEEE floor toward −∞ would be −1. Excel leftover snap is 0. Documented model; live Excel not in CI."
+  },
+  {
+    "id": "fn.floor-datetime-date",
+    "description": "FLOOR of a date+time serial with significance 1 keeps the civil day",
+    "tags": ["math", "floor", "dates"],
+    "formula": "=FLOOR(DATE(2012,1,1)+0.75,1)",
+    "expected": { "number": 40909 }
+  },
+  {
+    "id": "fn.floor-datetime-eq-int",
+    "description": "FLOOR(DATE+frac, 1) equals INT(DATE+frac)",
+    "tags": ["math", "floor", "dates"],
+    "formula": "=FLOOR(DATE(2012,1,1)+0.75,1)=INT(DATE(2012,1,1)+0.75)",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.floor-false",
+    "description": "FLOOR(FALSE, 1) coerces FALSE → 0",
+    "tags": ["math", "floor", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=FLOOR(FALSE,1)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.floor-true-sig",
+    "description": "FLOOR(3.7, TRUE) coerces significance TRUE → 1 → 3",
+    "tags": ["math", "floor", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=FLOOR(3.7,TRUE)",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.floor-false-sig",
+    "description": "FLOOR(3.7, FALSE) coerces significance FALSE → 0 → #DIV/0!",
+    "tags": ["math", "floor", "coercion", "errors"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=FLOOR(3.7,FALSE)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.floor-numeric-text-ws",
+    "description": "FLOOR trims numeric text: FLOOR(\"  3.7  \", 2) is 2",
+    "tags": ["math", "floor", "coercion"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=FLOOR(\"  3.7  \",2)",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.floor-numeric-text-sig",
+    "description": "FLOOR(3.7, \"2\") coerces numeric-text significance",
+    "tags": ["math", "floor", "coercion"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=FLOOR(3.7,\"2\")",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.floor-numeric-text-neg",
+    "description": "FLOOR(\"-2.5\", 1) is -3",
+    "tags": ["math", "floor", "coercion"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=FLOOR(\"-2.5\",1)",
+    "expected": { "number": -3 }
+  },
+  {
+    "id": "fn.floor-empty-string",
+    "description": "FLOOR(\"\", 1) is #VALUE! — empty text is not numeric",
+    "tags": ["math", "floor", "errors"],
+    "formula": "=FLOOR(\"\",1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.floor-sig-text",
+    "description": "FLOOR(1, \"x\") is #VALUE!",
+    "tags": ["math", "floor", "errors"],
+    "formula": "=FLOOR(1,\"x\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.floor-percent-pos",
+    "description": "FLOOR(370%, 1) is FLOOR(3.7, 1) = 3",
+    "tags": ["math", "floor"],
+    "quirks": ["percent-unary"],
+    "formula": "=FLOOR(370%,1)",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.floor-percent-neg",
+    "description": "FLOOR(-250%, 1) is FLOOR(-2.5, 1) = -3",
+    "tags": ["math", "floor"],
+    "quirks": ["percent-unary"],
+    "formula": "=FLOOR(-250%,1)",
+    "expected": { "number": -3 }
+  },
+  {
+    "id": "fn.floor-arity-three",
+    "description": "FLOOR(1, 1, 1) is #VALUE! — classic FLOOR is exactly two arguments",
+    "tags": ["math", "floor", "errors"],
+    "formula": "=FLOOR(1,1,1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.floor-err-na-first",
+    "description": "FLOOR(NA(), 1/0) keeps #N/A (left-to-right)",
+    "tags": ["math", "floor", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=FLOOR(NA(),1/0)",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.floor-err-second",
+    "description": "FLOOR(1, 1/0) propagates #DIV/0! from significance",
+    "tags": ["math", "floor", "errors"],
+    "formula": "=FLOOR(1,1/0)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.floor-err-value-before-na",
+    "description": "FLOOR(\"x\", NA()) is #VALUE! — first arg fails coerce before second is used",
+    "tags": ["math", "floor", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=FLOOR(\"x\",NA())",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.floor-blank-both",
+    "description": "FLOOR of two blank cells is FLOOR(0, 0) = 0",
+    "tags": ["math", "floor", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=FLOOR(A1,B1)",
+    "expected": { "number": 0 },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.floor-cell-pair",
+    "description": "FLOOR of cells holding 3.7 and 2 is 2",
+    "tags": ["math", "floor"],
+    "formula": "=FLOOR(A1,B1)",
+    "expected": { "number": 2 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "number": 3.7 },
+            "B1": { "number": 2 }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.floor-named",
+    "description": "FLOOR of defined names holding 3.7 and 2 is 2",
+    "tags": ["math", "floor"],
+    "formula": "=FLOOR(Amt,Step)",
+    "expected": { "number": 2 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "number": 3.7 },
+            "B1": { "number": 2 }
+          }
+        }
+      ],
+      "names": [
+        { "name": "Amt", "refers_to": "Sheet1!A1" },
+        { "name": "Step", "refers_to": "Sheet1!B1" }
+      ]
+    }
+  },
+  {
+    "id": "fn.floor-implicit-intersect",
+    "description": "FLOOR(A1:A3, 1) from host B2 uses implicit intersection (A2 = -1.5 → -2)",
+    "tags": ["math", "floor"],
+    "quirks": ["implicit-intersection"],
+    "at": "Sheet1!B2",
+    "formula": "=FLOOR(A1:A3,1)",
+    "expected": { "number": -2 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "number": 1.9 },
+            "A2": { "number": -1.5 },
+            "A3": { "number": 8.9 }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.floor-array-literal",
+    "description": "Scalar FLOOR takes the top-left of an array literal: FLOOR({3.7,1.58},2) is 2",
+    "tags": ["math", "floor"],
+    "formula": "=FLOOR({3.7,1.58},2)",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.floor-large-int",
+    "description": "FLOOR of 2^53 with significance 1 is identity",
+    "tags": ["math", "floor"],
+    "formula": "=FLOOR(9007199254740992,1)",
+    "expected": { "number": 9007199254740992 }
+  },
+  {
+    "id": "fn.floor-neg-large-frac",
+    "description": "FLOOR(-1000000.1, 1) is -1000001",
+    "tags": ["math", "floor"],
+    "formula": "=FLOOR(-1000000.1,1)",
+    "expected": { "number": -1000001 }
+  }
+]

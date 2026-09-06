@@ -322,6 +322,7 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 | [`eval/concat.rs`](crates/xlsx-engine-core/src/eval/concat.rs) | Excel `CONCAT`: row-major flatten, occupied sparse walk, 32,767 UTF-16 cap (not Compat-v2 `LEN`) |
 | [`eval/round.rs`](crates/xlsx-engine-core/src/eval/round.rs) | Excel `ROUNDUP` / `ROUNDDOWN` (away / toward zero, negative `num_digits`) |
 | [`xlsx-types/src/excel_int.rs`](crates/xlsx-types/src/excel_int.rs) | Excel `INT` (floor toward −∞; 15-digit leftover snap) |
+| [`xlsx-types/src/excel_floor.rs`](crates/xlsx-types/src/excel_floor.rs) | Excel classic `FLOOR` (sign/zero-significance; leftover snap; shares `INT` at significance 1) |
 | [`eval/switch.rs`](crates/xlsx-engine-core/src/eval/switch.rs) | Excel `SWITCH` exact-match kernel (first hit, default / `#N/A`) |
 | [`eval/ifs.rs`](crates/xlsx-engine-core/src/eval/ifs.rs) | `IFS` pair-selection kernel (eager eval, first TRUE, no-match `#N/A`) |
 | [`eval/unique.rs`](crates/xlsx-engine-core/src/eval/unique.rs) | `UNIQUE(array, [by_col], [exactly_once])` hash distinctness |
@@ -473,7 +474,7 @@ as one or the other. Documented quirk categories:
   `if_not_found`; `|instance_num| > LEN(text)` or `instance_num = 0` is
   `#VALUE!`. Array delimiters take the leftmost / longest match. `TEXTAFTER`
   / `TEXTSPLIT` share the same delimiter / instance conventions.
-- Classic `FLOOR` / `CEILING`: same-sign multiples; positive number + negative significance is `#NUM!`; significance `0` is `#DIV/0!` except `(0, 0)` → `0`. Negative number + positive significance is allowed (Excel 2010+). `FLOOR.MATH` / `CEILING.MATH` ignore significance sign, treat significance `0` as `0`, and take an optional mode.
+- Classic `FLOOR(number, significance)`: arithmetic coerce; errors left-to-right; wrong arity is `#VALUE!`. Positive number + negative significance is `#NUM!`. Significance `0` is `#DIV/0!` except `FLOOR(0, 0)` → `0` (zero number is not a sign clash: `FLOOR(0, -1)` is `0`). Excel 2010+ allows negative number + positive significance (toward −∞). Both negative: toward zero. `FLOOR(n, 1)` matches `INT(n)` leftover snap (ten `+0.1` → `1`; `0.3-0.1-0.2` → `0`). Kernel: [`excel_floor`](crates/xlsx-types/src/excel_floor.rs). Classic `CEILING` uses the same sign/zero-significance rules (negative + positive toward zero). `FLOOR.MATH` / `CEILING.MATH` ignore significance sign, treat significance `0` as `0`, and take an optional mode.
 - `INT(number)`: floor toward −∞ (`INT(-8.9)` is `-9`). That is not `TRUNC` (toward zero: `TRUNC(-8.9)` is `-8`). `INT(n)` matches classic `FLOOR(n, 1)`. Excel's 15-significant-digit leftover snap treats repeated `+0.1` (IEEE `0.999…9`) as `1` and `0.3-0.1-0.2` (tiny negative) as `0`. Wrong arity / non-numeric text is `#VALUE!`. TVM / `FLOOR` kernels live in `xlsx-types`; `INT` is [`excel_int`](crates/xlsx-types/src/excel_int.rs).
 - `TRUE=1` / `FALSE=0` in `=` and in arithmetic; `ISNUMBER(TRUE)` is still false
 - `SUM` / `AVERAGE` / `COUNT` / `PRODUCT` / `MIN` / `MAX`: skip logicals/text
