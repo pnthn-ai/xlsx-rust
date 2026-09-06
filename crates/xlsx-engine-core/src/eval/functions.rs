@@ -532,30 +532,6 @@ fn fn_chooserows(
     Ok(super::chooserows::select(&array, &row_nums))
 }
 
-fn fn_xlookup(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
-    if args.len() < 3 {
-        return Ok(ExcelValue::Error(ExcelError::Value));
-    }
-    let lookup = ev.eval_scalar(&args[0], ctx)?;
-    if let ExcelValue::Error(e) = lookup {
-        return Ok(ExcelValue::Error(e));
-    }
-    let lookup_vec = flatten_vector(ev.eval_expr(&args[1], ctx)?);
-    let return_vec = flatten_vector(ev.eval_expr(&args[2], ctx)?);
-    if lookup_vec.len() != return_vec.len() {
-        return Ok(ExcelValue::Error(ExcelError::Value));
-    }
-    for (k, v) in lookup_vec.iter().zip(return_vec.iter()) {
-        if lookup_key_match(&lookup, k) {
-            return Ok(v.clone());
-        }
-    }
-    if args.len() >= 4 {
-        return ev.eval_expr(&args[3], ctx);
-    }
-    Ok(ExcelValue::Error(ExcelError::Na))
-}
-
 fn fn_index(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
     if args.is_empty() {
         return Ok(ExcelValue::Error(ExcelError::Value));

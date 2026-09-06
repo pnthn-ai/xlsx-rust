@@ -1800,7 +1800,7 @@ impl WeekendSchedule {
 
     #[inline]
     fn is_weekend(&self, serial_1900: i32) -> bool {
-        is_weekend_mask_1900(serial_1900, self.mask)
+        is_weekend_mask_mon_first(serial_1900, self.mask)
     }
 
     fn workdays_through(&self, n: i32) -> i32 {
