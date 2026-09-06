@@ -16,6 +16,7 @@ pub mod coerce;
 pub mod compare;
 pub mod concat;
 pub mod countifs;
+pub mod dollar;
 pub mod drop;
 pub mod empty;
 pub mod exact;
@@ -1031,6 +1032,31 @@ mod tests {
         assert_eq!(
             eval_formula_in(&wb, "=TEXT(1234,\"\"\"USD \"\"#,##0\")").unwrap(),
             ExcelValue::Text("USD 1,234".into())
+        );
+    }
+
+    #[test]
+    fn dollar_currency_text() {
+        let wb = Workbook::default();
+        assert_eq!(
+            eval_formula_in(&wb, "=DOLLAR(1234.567, 2)").unwrap(),
+            ExcelValue::Text("$1,234.57".into())
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=DOLLAR(1234.567, -2)").unwrap(),
+            ExcelValue::Text("$1,200".into())
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=DOLLAR(-1234.567, -2)").unwrap(),
+            ExcelValue::Text("($1,200)".into())
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=DOLLAR(99.888)").unwrap(),
+            ExcelValue::Text("$99.89".into())
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=DOLLAR()").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
         );
     }
 

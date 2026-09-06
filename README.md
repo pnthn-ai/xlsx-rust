@@ -302,7 +302,7 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 | [`eval/coerce.rs`](crates/xlsx-engine-core/src/eval/coerce.rs) | Arithmetic / `&` / `IF` coercion (`"2"+1` = 3, TRUE → 1, empty → 0) |
 | [`eval/compare.rs`](crates/xlsx-engine-core/src/eval/compare.rs) | 15-digit `=`, case-insensitive text, `TRUE=1`, type ranking (`FALSE>100`) |
 | [`eval/empty.rs`](crates/xlsx-engine-core/src/eval/empty.rs) | Blank ≠ 0 ≠ `""`, but `A1=0` and `A1=""` when `A1` is blank |
-| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Dispatch: aggregators (`SUM`/`SUMIF`/`SUMIFS`/`AVERAGEIF`/`AVERAGEIFS`/`COUNTIF`/`COUNTIFS`/`SUMPRODUCT`), logicals (`IF`/`IFS`/`SWITCH`/`LET`), lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`/`FILTER`/`UNIQUE`/`SORT`/`SORTBY`/`TOCOL`/`TOROW`/`SEQUENCE`/`VSTACK`/`HSTACK`/`WRAPCOLS`/`WRAPROWS`/`TAKE`/`DROP`/`EXPAND`/`CHOOSECOLS`/`CHOOSEROWS`/`MAKEARRAY`/`MAP`/`SCAN`/`BYROW`/`REDUCE`/`BYCOL`), dates (`DATE`/`EDATE`/`EOMONTH`/`NETWORKDAYS`/`NETWORKDAYS.INTL`/`WEEKDAY`/`WEEKNUM`/`ISOWEEKNUM`/`WORKDAY`/`WORKDAY.INTL`/`YEARFRAC`/`DAYS360`), math (`ABS`/`INT`/`ROUND`/`ROUNDUP`/`ROUNDDOWN`/`FLOOR`/`CEILING`/`RANDARRAY`), text (`LEFT`/`RIGHT`/`MID`/`LEN`/`LOWER`/`UPPER`/`PROPER`/`TRIM`/`CLEAN`/`EXACT`/`SUBSTITUTE`/`REPLACE`/`FIND`/`SEARCH`/`TEXT`/`VALUE`/`TEXTJOIN`/`TEXTSPLIT`/`TEXTAFTER`/`TEXTBEFORE`/`CONCAT`/`REPT`/`CODE`/`CHAR`/`UNICODE`/`UNICHAR`), financial (`NPV`/`XNPV`/`PMT`/`FV`/`PV`/`NPER`/`RATE`/`IPMT`/`PPMT`/`CUMPRINC`/`CUMIPMT`/`IRR`/`XIRR`/`MIRR`/`EFFECT`/`NOMINAL`/`PDURATION`/`RRI`), `TYPE` / `IS*` / `ISOMITTED` |
+| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Dispatch: aggregators (`SUM`/`SUMIF`/`SUMIFS`/`AVERAGEIF`/`AVERAGEIFS`/`COUNTIF`/`COUNTIFS`/`SUMPRODUCT`), logicals (`IF`/`IFS`/`SWITCH`/`LET`), lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`/`FILTER`/`UNIQUE`/`SORT`/`SORTBY`/`TOCOL`/`TOROW`/`SEQUENCE`/`VSTACK`/`HSTACK`/`WRAPCOLS`/`WRAPROWS`/`TAKE`/`DROP`/`EXPAND`/`CHOOSECOLS`/`CHOOSEROWS`/`MAKEARRAY`/`MAP`/`SCAN`/`BYROW`/`REDUCE`/`BYCOL`), dates (`DATE`/`EDATE`/`EOMONTH`/`NETWORKDAYS`/`NETWORKDAYS.INTL`/`WEEKDAY`/`WEEKNUM`/`ISOWEEKNUM`/`WORKDAY`/`WORKDAY.INTL`/`YEARFRAC`/`DAYS360`), math (`ABS`/`INT`/`ROUND`/`ROUNDUP`/`ROUNDDOWN`/`FLOOR`/`CEILING`/`RANDARRAY`), text (`LEFT`/`RIGHT`/`MID`/`LEN`/`LOWER`/`UPPER`/`PROPER`/`TRIM`/`CLEAN`/`EXACT`/`SUBSTITUTE`/`REPLACE`/`FIND`/`SEARCH`/`TEXT`/`DOLLAR`/`VALUE`/`TEXTJOIN`/`TEXTSPLIT`/`TEXTAFTER`/`TEXTBEFORE`/`CONCAT`/`REPT`/`CODE`/`CHAR`/`UNICODE`/`UNICHAR`), financial (`NPV`/`XNPV`/`PMT`/`FV`/`PV`/`NPER`/`RATE`/`IPMT`/`PPMT`/`CUMPRINC`/`CUMIPMT`/`IRR`/`XIRR`/`MIRR`/`EFFECT`/`NOMINAL`/`PDURATION`/`RRI`), `TYPE` / `IS*` / `ISOMITTED` |
 | [`eval/sumif.rs`](crates/xlsx-engine-core/src/eval/sumif.rs) | Excel `SUMIF` kernel (criteria walk, reshape `sum_range`, no array literals) |
 | [`eval/sumifs.rs`](crates/xlsx-engine-core/src/eval/sumifs.rs) | Excel `SUMIFS`: multi-criteria AND, same-shape ranges |
 | [`eval/countifs.rs`](crates/xlsx-engine-core/src/eval/countifs.rs) | Excel `COUNTIFS`: multi-criteria AND, same-shape ranges, COUNTIF matcher |
@@ -359,6 +359,7 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 | [`eval/clean.rs`](crates/xlsx-engine-core/src/eval/clean.rs) | Excel `CLEAN` (strip ASCII C0) |
 | [`eval/code.rs`](crates/xlsx-engine-core/src/eval/code.rs) | Excel `CODE` (Windows-1252 first-character code) |
 | [`eval/abs.rs`](crates/xlsx-engine-core/src/eval/abs.rs) | Excel `ABS` (sign-bit-clear; arithmetic coerce) |
+| [`eval/dollar.rs`](crates/xlsx-engine-core/src/eval/dollar.rs) | Excel `DOLLAR` (en-US `$` currency text; accounting parens; omitted decimals = 2) |
 | [`eval/excel_char.rs`](crates/xlsx-engine-core/src/eval/excel_char.rs) | Excel `CHAR` (Windows-1252, 1..=255) |
 | [`eval/left.rs`](crates/xlsx-engine-core/src/eval/left.rs) | Excel `LEFT` (Unicode scalars / Compat v2; omitted `num_chars` = 1) |
 | [`eval/proper.rs`](crates/xlsx-engine-core/src/eval/proper.rs) | Excel `PROPER` (ASCII title-case) |
@@ -466,6 +467,15 @@ as one or the other. Documented quirk categories:
   `"$5"` / `"1,000"` / `"50%"` stay `#VALUE!` (that is `VALUE`, not `ABS`).
   Scalar context: range implicit-intersects; array literal is top-left.
   `SIGN` / `INT` / `SQRT` are separate.
+- `DOLLAR(number, [decimals])`: en-US currency **text** (`$1,234.57`).
+  Microsoft format `$#,##0.00_);($#,##0.00)` — thousands commas, **parens**
+  for negatives (`($1,234.57)`), no `_` alignment pad on the text result.
+  That is not `TEXT(n,"$#,##0.00")` (`-$1,234.57`). Omitted `decimals`
+  (including `DOLLAR(n,)`) defaults to 2; a blank cell is 0. Negative
+  `decimals` rounds left of the decimal. Rounding is `ROUND` (half away
+  from zero); sign comes from the rounded value (`DOLLAR(-0.001)` is
+  `$0.00`). Arithmetic coerce (not `VALUE`). `FIXED` / `TEXT` / `ROUND`
+  stay separate.
 - `CHAR(number)`: Windows-1252 (Western ANSI), not Latin-1 / Unicode. Codes
   truncate toward zero; `1..=255` only (`0` / `256` / blank / `FALSE` →
   `#VALUE!`). `CHAR(128)` is `€`; leftover C1 bytes `129` / `141` / `143` /
