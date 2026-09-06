@@ -4,51 +4,52 @@
 //! Worksheet functions live in [`functions`].
 
 pub mod averageif;
+pub mod averageifs;
 pub mod choosecols;
 pub mod chooserows;
-pub mod averageifs;
 pub mod coerce;
-pub mod countifs;
 pub mod compare;
 pub mod concat;
+pub mod countifs;
 pub mod drop;
 pub mod empty;
 pub mod expand;
 pub mod filter;
 pub mod find;
 pub mod functions;
+pub mod hstack;
 pub mod ifs;
 pub mod irr;
+pub mod isomitted;
+pub mod makearray;
+pub mod mirr;
 pub mod npv;
-pub mod hstack;
-pub mod substitute;
-pub mod sumif;
-pub mod sumproduct;
+pub mod randarray;
 pub mod replace;
-pub mod sumifs;
-pub mod textjoin;
-pub mod textsplit;
 pub mod round;
 pub mod search;
+pub mod sequence;
 pub mod sort;
 pub mod sortby;
-pub mod sequence;
-pub mod randarray;
-pub mod makearray;
+pub mod substitute;
+pub mod sumif;
+pub mod sumifs;
+pub mod sumproduct;
 pub mod switch;
-pub mod unique;
-pub mod tocol;
-pub mod xnpv;
-pub mod xirr;
-pub mod mirr;
-pub mod xlookup;
-pub mod torow;
-pub mod vstack;
-pub mod wrapcols;
-pub mod wraprows;
 pub mod take;
 pub mod textafter;
 pub mod textbefore;
+pub mod textjoin;
+pub mod textsplit;
+pub mod tocol;
+pub mod torow;
+pub mod unique;
+pub mod vstack;
+pub mod wrapcols;
+pub mod wraprows;
+pub mod xirr;
+pub mod xlookup;
+pub mod xnpv;
 
 use crate::ast::{BinOp, Expr, UnaryOp};
 use crate::parse::parse;
@@ -68,7 +69,7 @@ pub(crate) struct Ctx<'a> {
     host: CellAddr,
     pub(crate) rng: randarray::XorShift64,
     /// LAMBDA parameter bindings (MAKEARRAY / nested LAMBDA). Innermost last.
-    pub(crate) locals: Vec<(String, ExcelValue)>,
+    pub(crate) locals: Vec<makearray::Local>,
 }
 
 impl Evaluator {
@@ -163,6 +164,7 @@ impl Evaluator {
             Expr::Unary { op, expr } => self.eval_unary(*op, expr, ctx),
             Expr::Binary { op, left, right } => self.eval_binary(*op, left, right, ctx),
             Expr::Call { name, args } => functions::dispatch(self, name, args, ctx),
+            Expr::Apply { callee, args } => makearray::apply_callee(self, callee, args, ctx),
             Expr::Missing => Ok(ExcelValue::Empty),
             Expr::Array(rows) => {
                 let mut out = Vec::new();
@@ -1950,6 +1952,27 @@ mod tests {
         );
         assert_eq!(
             eval_formula_in(&wb, "=PDURATION()").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
+        );
+    }
+
+    #[test]
+    fn isomitted_iife_and_blank() {
+        let wb = Workbook::default();
+        assert_eq!(
+            eval_formula_in(&wb, "=LAMBDA(x,y,ISOMITTED(y))(1,)").unwrap(),
+            ExcelValue::Bool(true)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=LAMBDA(x,y,ISOMITTED(y))(1,2)").unwrap(),
+            ExcelValue::Bool(false)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=ISOMITTED(A1)").unwrap(),
+            ExcelValue::Bool(false)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=ISOMITTED()").unwrap(),
             ExcelValue::Error(ExcelError::Value)
         );
     }

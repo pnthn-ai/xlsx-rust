@@ -34,6 +34,7 @@
 //! - [`eval::chooserows`] — `CHOOSEROWS` pick kernel (negative index / `#VALUE!`)
 //! - [`eval::randarray`] — `RANDARRAY` dynamic-array kernel (xorshift64*; not Excel's RNG)
 //! - [`eval::makearray`] — `MAKEARRAY(rows, cols, LAMBDA(r, c, body))`
+//! - [`eval::isomitted`] — Excel `ISOMITTED` (omitted LAMBDA parameter)
 //! - [`eval::textsplit`] — `TEXTSPLIT` col/row split kernel (pad / `#CALC!`)
 //! - [`eval::textafter`] — Excel `TEXTAFTER` kernel (nth delimiter, `match_end`)
 //! - [`eval::irr`] — Excel `IRR` Newton / secant kernel
@@ -77,8 +78,9 @@ pub use eval::find::{find as excel_find, find_naive as excel_find_naive};
 pub use eval::ifs::{select as excel_ifs, select_naive as excel_ifs_naive};
 pub use eval::irr::{irr as excel_irr, irr_naive as excel_irr_naive, MAX_ITERS as IRR_MAX_ITERS};
 pub use eval::mirr::{mirr as excel_mirr, mirr_naive as excel_mirr_naive};
+pub use eval::isomitted::{is_omitted as excel_isomitted, is_omitted_naive as excel_isomitted_naive};
 pub use eval::makearray::{
-    fill_fast as excel_makearray, fill_naive as excel_makearray_naive, FastBody, FastOp,
+    fill_fast as excel_makearray, fill_naive as excel_makearray_naive, FastBody, FastOp, Local,
 };
 pub use eval::npv::{npv as excel_npv, npv_naive as excel_npv_naive};
 pub use eval::randarray::{
