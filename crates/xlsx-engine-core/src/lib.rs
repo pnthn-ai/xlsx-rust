@@ -14,6 +14,7 @@
 //! - [`eval::unique`] — `UNIQUE` dynamic-array kernel (hash distinctness)
 //! - [`eval::filter`] — `FILTER` mask/select kernel (`#CALC!` / `if_empty`)
 //! - [`eval::irr`] — Excel `IRR` Newton / secant kernel
+//! - Financial TVM: `PMT` / `RRI` via [`xlsx_types::excel_pmt`] / [`xlsx_types::excel_rri`]
 //!
 //! This crate depends only on [`xlsx_types`]. It never reads fixture expected
 //! values; the verification gate (`xlsx-verify`) is the only judge.
@@ -53,10 +54,11 @@ pub use eval::textjoin::{
 };
 pub use eval::unique::{unique_apply, unique_apply_naive, unique_eq};
 pub use eval::{
-    eval_averageif_materialized, eval_formula_in, eval_sumif_materialized, eval_sumifs_materialized,
-    Evaluator,
+    eval_averageif_materialized, eval_formula_in, eval_sumif_materialized,
+    eval_sumifs_materialized, Evaluator,
 };
 pub use parse::parse;
+pub use xlsx_types::{excel_rri, excel_rri_naive};
 
 use xlsx_types::{Candidate, EvalError, EvalSpec, ExcelValue};
 

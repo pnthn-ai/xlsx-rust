@@ -929,4 +929,30 @@ mod tests {
             ExcelValue::Error(ExcelError::Value)
         );
     }
+    #[test]
+    fn rri_microsoft_and_errors() {
+        let wb = Workbook::default();
+        match eval_formula_in(&wb, "=RRI(96,10000,11000)").unwrap() {
+            ExcelValue::Number(n) => {
+                assert!((n - 0.0009933).abs() < 5e-8, "got {n}")
+            }
+            other => panic!("expected number, got {other:?}"),
+        }
+        assert_eq!(
+            eval_formula_in(&wb, "=RRI(0,10000,11000)").unwrap(),
+            ExcelValue::Error(ExcelError::Num)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=RRI(10,0,11000)").unwrap(),
+            ExcelValue::Error(ExcelError::Num)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=RRI(10,10000)").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=RRI()").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
+        );
+    }
 }
