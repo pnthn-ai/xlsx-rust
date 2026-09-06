@@ -465,6 +465,7 @@ impl Interpreter {
             "FIND" => self.fn_find(args, ctx),
             "SEARCH" => self.fn_search(args, ctx),
             "VALUE" => self.fn_value(args, ctx),
+            "FIXED" => self.fn_fixed(args, ctx),
             "SUBSTITUTE" => self.fn_substitute(args, ctx),
             "TEXT" => self.fn_text(args, ctx),
             "REPLACE" => self.fn_replace(args, ctx),
@@ -2280,6 +2281,50 @@ impl Interpreter {
             Ok(pos) => Ok(ExcelValue::Number(pos)),
             Err(e) => Ok(ExcelValue::Error(e)),
         }
+    }
+
+    fn fn_fixed(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.is_empty() || args.len() > 3 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        let n = match self.as_number(&self.eval_scalar(&args[0], ctx)?) {
+            Ok(n) => n,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        let decimals = if args.len() >= 2 {
+            match &args[1] {
+                Expr::Missing => 0,
+                other => match self.as_number(&self.eval_scalar(other, ctx)?) {
+                    Ok(d) => {
+                        let t = d.trunc();
+                        if t > i32::MAX as f64 {
+                            i32::MAX
+                        } else if t < i32::MIN as f64 {
+                            i32::MIN
+                        } else {
+                            t as i32
+                        }
+                    }
+                    Err(e) => return Ok(ExcelValue::Error(e)),
+                },
+            }
+        } else {
+            2
+        };
+        let no_commas = if args.len() >= 3 {
+            match &args[2] {
+                Expr::Missing => false,
+                other => match self.as_if_cond(&self.eval_scalar(other, ctx)?) {
+                    Ok(b) => b,
+                    Err(e) => return Ok(ExcelValue::Error(e)),
+                },
+            }
+        } else {
+            false
+        };
+        Ok(ExcelValue::Text(xlsx_engine_core::excel_fixed(
+            n, decimals, no_commas,
+        )))
     }
 
     fn fn_text(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {

@@ -397,6 +397,10 @@ name = "text"
 harness = false
 
 [[bench]]
+name = "fixed"
+harness = false
+
+[[bench]]
 name = "left"
 harness = false
 

@@ -1,0 +1,576 @@
+[
+  {
+    "id": "fn.fixed-ms-1",
+    "description": "Microsoft: FIXED(1234.567, 1) is 1,234.6",
+    "tags": ["text", "fixed"],
+    "formula": "=FIXED(1234.567, 1)",
+    "expected": { "text": "1,234.6" }
+  },
+  {
+    "id": "fn.fixed-ms-neg1",
+    "description": "Microsoft: FIXED(1234.567, -1) is 1,230 (left of decimal)",
+    "tags": ["text", "fixed"],
+    "formula": "=FIXED(1234.567, -1)",
+    "expected": { "text": "1,230" }
+  },
+  {
+    "id": "fn.fixed-ms-neg-nocomma",
+    "description": "Microsoft: FIXED(-1234.567, -1, TRUE) is -1230 (no commas)",
+    "tags": ["text", "fixed"],
+    "formula": "=FIXED(-1234.567, -1, TRUE)",
+    "expected": { "text": "-1230" }
+  },
+  {
+    "id": "fn.fixed-ms-default",
+    "description": "Microsoft: FIXED(44.332) omitted decimals is 2 → 44.33",
+    "tags": ["text", "fixed"],
+    "formula": "=FIXED(44.332)",
+    "expected": { "text": "44.33" }
+  },
+  {
+    "id": "fn.fixed-ms-cell-1",
+    "description": "Microsoft table: FIXED(A2, 1) with A2=1234.567 is 1,234.6",
+    "tags": ["text", "fixed"],
+    "formula": "=FIXED(A2, 1)",
+    "expected": { "text": "1,234.6" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A2": { "number": 1234.567 }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.fixed-ms-cell-neg1",
+    "description": "Microsoft table: FIXED(A2, -1) with A2=1234.567 is 1,230",
+    "tags": ["text", "fixed"],
+    "formula": "=FIXED(A2, -1)",
+    "expected": { "text": "1,230" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A2": { "number": 1234.567 }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.fixed-ms-cell-neg-true",
+    "description": "Microsoft table: FIXED(A3, -1, TRUE) with A3=-1234.567 is -1230",
+    "tags": ["text", "fixed"],
+    "formula": "=FIXED(A3, -1, TRUE)",
+    "expected": { "text": "-1230" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A3": { "number": -1234.567 }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.fixed-ms-cell-default",
+    "description": "Microsoft table: FIXED(A4) with A4=44.332 is 44.33",
+    "tags": ["text", "fixed"],
+    "formula": "=FIXED(A4)",
+    "expected": { "text": "44.33" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A4": { "number": 44.332 }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.fixed-default-thousand",
+    "description": "FIXED(1000) is 1,000.00 (default 2 decimals + commas)",
+    "tags": ["text", "fixed"],
+    "formula": "=FIXED(1000)",
+    "expected": { "text": "1,000.00" }
+  },
+  {
+    "id": "fn.fixed-zero-decimals-comma",
+    "description": "FIXED(1000, 0) is 1,000",
+    "tags": ["text", "fixed"],
+    "formula": "=FIXED(1000, 0)",
+    "expected": { "text": "1,000" }
+  },
+  {
+    "id": "fn.fixed-zero-decimals-nocomma",
+    "description": "FIXED(1000, 0, TRUE) is 1000",
+    "tags": ["text", "fixed"],
+    "formula": "=FIXED(1000, 0, TRUE)",
+    "expected": { "text": "1000" }
+  },
+  {
+    "id": "fn.fixed-false-keeps-commas",
+    "description": "FIXED(1000, 0, FALSE) keeps the thousands comma",
+    "tags": ["text", "fixed"],
+    "formula": "=FIXED(1000, 0, FALSE)",
+    "expected": { "text": "1,000" }
+  },
+  {
+    "id": "fn.fixed-pad-trailing",
+    "description": "FIXED(1234.5) pads trailing zeros: 1,234.50",
+    "tags": ["text", "fixed"],
+    "formula": "=FIXED(1234.5)",
+    "expected": { "text": "1,234.50" }
+  },
+  {
+    "id": "fn.fixed-three-places",
+    "description": "FIXED(1234567.89, 3) is 1,234,567.890",
+    "tags": ["text", "fixed"],
+    "formula": "=FIXED(1234567.89, 3)",
+    "expected": { "text": "1,234,567.890" }
+  },
+  {
+    "id": "fn.fixed-three-places-nocomma",
+    "description": "FIXED(1234567.89, 3, TRUE) is 1234567.890",
+    "tags": ["text", "fixed"],
+    "formula": "=FIXED(1234567.89, 3, TRUE)",
+    "expected": { "text": "1234567.890" }
+  },
+  {
+    "id": "fn.fixed-neg-with-commas",
+    "description": "FIXED(-1234.56) prefixes '-' after grouping: -1,234.56",
+    "tags": ["text", "fixed"],
+    "formula": "=FIXED(-1234.56)",
+    "expected": { "text": "-1,234.56" }
+  },
+  {
+    "id": "fn.fixed-neg-nocomma-default",
+    "description": "FIXED(-1234.56, 2, TRUE) is -1234.56",
+    "tags": ["text", "fixed"],
+    "formula": "=FIXED(-1234.56, 2, TRUE)",
+    "expected": { "text": "-1234.56" }
+  },
+  {
+    "id": "fn.fixed-small-no-comma-needed",
+    "description": "FIXED(123.4, 1) has no thousands group: 123.4",
+    "tags": ["text", "fixed"],
+    "formula": "=FIXED(123.4, 1)",
+    "expected": { "text": "123.4" }
+  },
+  {
+    "id": "fn.fixed-zero",
+    "description": "FIXED(0) is 0.00",
+    "tags": ["text", "fixed"],
+    "formula": "=FIXED(0)",
+    "expected": { "text": "0.00" }
+  },
+  {
+    "id": "fn.fixed-neg-zero-input",
+    "description": "FIXED(-0) is 0.00 (no minus)",
+    "tags": ["text", "fixed"],
+    "formula": "=FIXED(-0)",
+    "expected": { "text": "0.00" }
+  },
+  {
+    "id": "fn.fixed-half-away-int",
+    "description": "FIXED(2.5, 0) is 3 — ROUND half away, not banker",
+    "tags": ["text", "fixed"],
+    "formula": "=FIXED(2.5, 0)",
+    "expected": { "text": "3" }
+  },
+  {
+    "id": "fn.fixed-half-away-neg",
+    "description": "FIXED(-1.5, 0) is -2",
+    "tags": ["text", "fixed"],
+    "formula": "=FIXED(-1.5, 0)",
+    "expected": { "text": "-2" }
+  },
+  {
+    "id": "fn.fixed-half-away-even",
+    "description": "FIXED(3.5, 0) is 4 (even neighbor also away from zero)",
+    "tags": ["text", "fixed"],
+    "formula": "=FIXED(3.5, 0)",
+    "expected": { "text": "4" }
+  },
+  {
+    "id": "fn.fixed-round-2.15",
+    "description": "FIXED(2.15, 1) is 2.2 — 15-digit leftover snap, not 2.1",
+    "tags": ["text", "fixed"],
+    "quirks": ["ieee-precision"],
+    "formula": "=FIXED(2.15, 1)",
+    "expected": { "text": "2.2" }
+  },
+  {
+    "id": "fn.fixed-round-1.1",
+    "description": "FIXED(1.1, 2) stays 1.10 (IEEE 1.1*100 leftover)",
+    "tags": ["text", "fixed"],
+    "quirks": ["ieee-precision"],
+    "formula": "=FIXED(1.1, 2)",
+    "expected": { "text": "1.10" }
+  },
+  {
+    "id": "fn.fixed-round-1.225",
+    "description": "FIXED(1.225, 2) is 1.23 (same snap as ROUND)",
+    "tags": ["text", "fixed"],
+    "quirks": ["ieee-precision"],
+    "formula": "=FIXED(1.225, 2)",
+    "expected": { "text": "1.23" }
+  },
+  {
+    "id": "fn.fixed-sign-from-rounded",
+    "description": "FIXED(-0.001, 2) is 0.00 — minus dropped after ROUND",
+    "tags": ["text", "fixed"],
+    "formula": "=FIXED(-0.001, 2)",
+    "expected": { "text": "0.00" }
+  },
+  {
+    "id": "fn.fixed-sign-kept-when-nonzero",
+    "description": "FIXED(-0.005, 2) is -0.01 (half away keeps the sign)",
+    "tags": ["text", "fixed"],
+    "formula": "=FIXED(-0.005, 2)",
+    "expected": { "text": "-0.01" }
+  },
+  {
+    "id": "fn.fixed-neg-decimals-21.5",
+    "description": "FIXED(21.5, -1) is 20",
+    "tags": ["text", "fixed"],
+    "formula": "=FIXED(21.5, -1)",
+    "expected": { "text": "20" }
+  },
+  {
+    "id": "fn.fixed-neg-decimals-626",
+    "description": "FIXED(626.3, -3) is 1,000",
+    "tags": ["text", "fixed"],
+    "formula": "=FIXED(626.3, -3)",
+    "expected": { "text": "1,000" }
+  },
+  {
+    "id": "fn.fixed-neg-decimals-to-zero",
+    "description": "FIXED(1.98, -1) is 0",
+    "tags": ["text", "fixed"],
+    "formula": "=FIXED(1.98, -1)",
+    "expected": { "text": "0" }
+  },
+  {
+    "id": "fn.fixed-neg-decimals-neg100",
+    "description": "FIXED(-50.55, -2) is -100",
+    "tags": ["text", "fixed"],
+    "formula": "=FIXED(-50.55, -2)",
+    "expected": { "text": "-100" }
+  },
+  {
+    "id": "fn.fixed-pad-five",
+    "description": "FIXED(1.5, 5) pads to 1.50000",
+    "tags": ["text", "fixed"],
+    "formula": "=FIXED(1.5, 5)",
+    "expected": { "text": "1.50000" }
+  },
+  {
+    "id": "fn.fixed-pad-ten-len",
+    "description": "LEN(FIXED(1, 10, TRUE)) is 12 (1. + 10 zeros)",
+    "tags": ["text", "fixed"],
+    "formula": "=LEN(FIXED(1, 10, TRUE))",
+    "expected": { "number": 12 }
+  },
+  {
+    "id": "fn.fixed-is-text",
+    "description": "TYPE(FIXED(1)) is 2 (text), not a number",
+    "tags": ["text", "fixed"],
+    "formula": "=TYPE(FIXED(1))",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.fixed-concat-proves-text",
+    "description": "FIXED result concatenates as text",
+    "tags": ["text", "fixed"],
+    "formula": "=\"x\"&FIXED(1, 0)",
+    "expected": { "text": "x1" }
+  },
+  {
+    "id": "fn.fixed-missing-decimals-is-zero",
+    "description": "FIXED(1234.567,) empty decimals slot is 0 → 1,235",
+    "tags": ["text", "fixed"],
+    "formula": "=FIXED(1234.567,)",
+    "expected": { "text": "1,235" }
+  },
+  {
+    "id": "fn.fixed-missing-both-optional",
+    "description": "FIXED(1234.567,,TRUE) empty decimals=0, no commas → 1235",
+    "tags": ["text", "fixed"],
+    "formula": "=FIXED(1234.567,,TRUE)",
+    "expected": { "text": "1235" }
+  },
+  {
+    "id": "fn.fixed-missing-nocomma-false",
+    "description": "FIXED(1234.567, 1,) empty no_commas is FALSE → 1,234.6",
+    "tags": ["text", "fixed"],
+    "formula": "=FIXED(1234.567, 1,)",
+    "expected": { "text": "1,234.6" }
+  },
+  {
+    "id": "fn.fixed-decimals-trunc",
+    "description": "FIXED(1234.567, 1.9) truncates decimals toward 0 → 1,234.6",
+    "tags": ["text", "fixed"],
+    "formula": "=FIXED(1234.567, 1.9)",
+    "expected": { "text": "1,234.6" }
+  },
+  {
+    "id": "fn.fixed-decimals-trunc-neg",
+    "description": "FIXED(1234.567, -1.9) truncates to -1 → 1,230",
+    "tags": ["text", "fixed"],
+    "formula": "=FIXED(1234.567, -1.9)",
+    "expected": { "text": "1,230" }
+  },
+  {
+    "id": "fn.fixed-true-number",
+    "description": "FIXED(TRUE) coerces to 1 → 1.00",
+    "tags": ["text", "fixed", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=FIXED(TRUE)",
+    "expected": { "text": "1.00" }
+  },
+  {
+    "id": "fn.fixed-false-number",
+    "description": "FIXED(FALSE) coerces to 0 → 0.00",
+    "tags": ["text", "fixed", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=FIXED(FALSE)",
+    "expected": { "text": "0.00" }
+  },
+  {
+    "id": "fn.fixed-true-decimals",
+    "description": "FIXED(1234.567, TRUE) decimals=1 → 1,234.6",
+    "tags": ["text", "fixed", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=FIXED(1234.567, TRUE)",
+    "expected": { "text": "1,234.6" }
+  },
+  {
+    "id": "fn.fixed-nocomma-one",
+    "description": "FIXED(1234.567, 1, 1) nonzero no_commas is TRUE → 1234.6",
+    "tags": ["text", "fixed", "coercion"],
+    "formula": "=FIXED(1234.567, 1, 1)",
+    "expected": { "text": "1234.6" }
+  },
+  {
+    "id": "fn.fixed-nocomma-zero",
+    "description": "FIXED(1234.567, 1, 0) is FALSE → 1,234.6",
+    "tags": ["text", "fixed", "coercion"],
+    "formula": "=FIXED(1234.567, 1, 0)",
+    "expected": { "text": "1,234.6" }
+  },
+  {
+    "id": "fn.fixed-text-number",
+    "description": "FIXED(\"1234.567\", 1) parses numeric text",
+    "tags": ["text", "fixed", "coercion"],
+    "formula": "=FIXED(\"1234.567\", 1)",
+    "expected": { "text": "1,234.6" }
+  },
+  {
+    "id": "fn.fixed-text-spaces",
+    "description": "FIXED trims ASCII spaces on numeric text",
+    "tags": ["text", "fixed", "coercion"],
+    "formula": "=FIXED(\"  44.332  \")",
+    "expected": { "text": "44.33" }
+  },
+  {
+    "id": "fn.fixed-text-scientific",
+    "description": "FIXED(\"1E3\", 0) is 1,000",
+    "tags": ["text", "fixed", "coercion"],
+    "formula": "=FIXED(\"1E3\", 0)",
+    "expected": { "text": "1,000" }
+  },
+  {
+    "id": "fn.fixed-percent",
+    "description": "FIXED(50%) is FIXED(0.5) → 0.50",
+    "tags": ["text", "fixed"],
+    "formula": "=FIXED(50%)",
+    "expected": { "text": "0.50" }
+  },
+  {
+    "id": "fn.fixed-blank-number",
+    "description": "Blank number cell coerces to 0 → 0.00",
+    "tags": ["text", "fixed", "coercion"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=FIXED(A1)",
+    "expected": { "text": "0.00" }
+  },
+  {
+    "id": "fn.fixed-blank-decimals",
+    "description": "Blank decimals cell coerces to 0 → 1,235",
+    "tags": ["text", "fixed", "coercion"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=FIXED(1234.567, A1)",
+    "expected": { "text": "1,235" }
+  },
+  {
+    "id": "fn.fixed-blank-nocomma",
+    "description": "Blank no_commas cell is FALSE → commas kept",
+    "tags": ["text", "fixed", "coercion"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=FIXED(1234.567, 1, A1)",
+    "expected": { "text": "1,234.6" }
+  },
+  {
+    "id": "fn.fixed-text-junk",
+    "description": "Non-numeric text is #VALUE!",
+    "tags": ["text", "fixed", "errors"],
+    "formula": "=FIXED(\"x\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.fixed-text-empty",
+    "description": "Stored empty string is #VALUE! (not blank)",
+    "tags": ["text", "fixed", "errors"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=FIXED(\"\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.fixed-nocomma-text",
+    "description": "Text no_commas is #VALUE! (IF logical coerce)",
+    "tags": ["text", "fixed", "errors"],
+    "formula": "=FIXED(1, 2, \"x\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.fixed-nocomma-true-text",
+    "description": "Text \"TRUE\" is not a logical here → #VALUE!",
+    "tags": ["text", "fixed", "errors"],
+    "formula": "=FIXED(1, 2, \"TRUE\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.fixed-arity-none",
+    "description": "FIXED() is #VALUE!",
+    "tags": ["text", "fixed", "errors"],
+    "formula": "=FIXED()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.fixed-arity-extra",
+    "description": "FIXED with four arguments is #VALUE!",
+    "tags": ["text", "fixed", "errors"],
+    "formula": "=FIXED(1, 2, TRUE, 0)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.fixed-err-ltr-div0",
+    "description": "FIXED(#DIV/0!, #N/A) keeps #DIV/0! (left-to-right)",
+    "tags": ["text", "fixed", "errors"],
+    "quirks": ["error-propagation"],
+    "formula": "=FIXED(#DIV/0!, #N/A)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.fixed-err-ltr-na",
+    "description": "FIXED(#N/A, #DIV/0!) keeps #N/A (left-to-right)",
+    "tags": ["text", "fixed", "errors"],
+    "quirks": ["error-propagation"],
+    "formula": "=FIXED(#N/A, #DIV/0!)",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.fixed-err-decimals",
+    "description": "FIXED(1, 1/0) propagates #DIV/0!",
+    "tags": ["text", "fixed", "errors"],
+    "formula": "=FIXED(1, 1/0)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.fixed-err-nocomma",
+    "description": "FIXED(1, 2, 1/0) propagates #DIV/0!",
+    "tags": ["text", "fixed", "errors"],
+    "formula": "=FIXED(1, 2, 1/0)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.fixed-named",
+    "description": "FIXED of a defined name holding 1234.567, 1 is 1,234.6",
+    "tags": ["text", "fixed"],
+    "formula": "=FIXED(Amt, 1)",
+    "expected": { "text": "1,234.6" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "number": 1234.567 }
+          }
+        }
+      ],
+      "names": [{ "name": "Amt", "refers_to": "Sheet1!A1" }]
+    }
+  },
+  {
+    "id": "fn.fixed-implicit-intersect",
+    "description": "FIXED(A1:A3, 1) from host B2 uses implicit intersection (A2=1234.567 → 1,234.6)",
+    "tags": ["text", "fixed"],
+    "quirks": ["implicit-intersection"],
+    "at": "Sheet1!B2",
+    "formula": "=FIXED(A1:A3, 1)",
+    "expected": { "text": "1,234.6" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "number": 44.332 },
+            "A2": { "number": 1234.567 },
+            "A3": { "number": -1234.567 }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.fixed-implicit-intersect-decimals",
+    "description": "decimals range implicit-intersects the host row (B2 → B2=1)",
+    "tags": ["text", "fixed"],
+    "quirks": ["implicit-intersection"],
+    "at": "Sheet1!A2",
+    "formula": "=FIXED(1234.567, B1:B3)",
+    "expected": { "text": "1,234.6" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "B1": { "number": 0 },
+            "B2": { "number": 1 },
+            "B3": { "number": 2 }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.fixed-array-literal",
+    "description": "Scalar FIXED takes the top-left of an array literal",
+    "tags": ["text", "fixed"],
+    "formula": "=FIXED({1234.567,-1.5}, 1)",
+    "expected": { "text": "1,234.6" }
+  },
+  {
+    "id": "fn.fixed-vs-text-grouped",
+    "description": "FIXED(1234.5, 2) matches TEXT with #,##0.00 (commas + pad)",
+    "tags": ["text", "fixed"],
+    "formula": "=FIXED(1234.5, 2)=TEXT(1234.5, \"#,##0.00\")",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.fixed-vs-text-nocomma",
+    "description": "FIXED(1234.5, 2, TRUE) matches TEXT with 0.00 (no commas)",
+    "tags": ["text", "fixed"],
+    "formula": "=FIXED(1234.5, 2, TRUE)=TEXT(1234.5, \"0.00\")",
+    "expected": { "bool": true }
+  }
+]

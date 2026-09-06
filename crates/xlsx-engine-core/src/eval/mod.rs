@@ -24,6 +24,7 @@ pub mod excel_let;
 pub mod expand;
 pub mod filter;
 pub mod find;
+pub mod fixed;
 pub mod functions;
 pub mod hstack;
 pub mod ifs;
@@ -982,6 +983,55 @@ mod tests {
         assert_eq!(
             eval_formula_in(&wb, "=SUMPRODUCT({1,2},{1,2,3})").unwrap(),
             ExcelValue::Error(ExcelError::Value)
+        );
+    }
+
+    #[test]
+    fn fixed_microsoft_and_quirks() {
+        let wb = Workbook::default();
+        assert_eq!(
+            eval_formula_in(&wb, "=FIXED(1234.567, 1)").unwrap(),
+            ExcelValue::Text("1,234.6".into())
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=FIXED(1234.567, -1)").unwrap(),
+            ExcelValue::Text("1,230".into())
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=FIXED(-1234.567, -1, TRUE)").unwrap(),
+            ExcelValue::Text("-1230".into())
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=FIXED(44.332)").unwrap(),
+            ExcelValue::Text("44.33".into())
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=FIXED(1234.5)").unwrap(),
+            ExcelValue::Text("1,234.50".into())
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=FIXED(2.15, 1)").unwrap(),
+            ExcelValue::Text("2.2".into())
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=FIXED(-0.001, 2)").unwrap(),
+            ExcelValue::Text("0.00".into())
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=FIXED(TRUE)").unwrap(),
+            ExcelValue::Text("1.00".into())
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=FIXED()").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=FIXED(#DIV/0!, #N/A)").unwrap(),
+            ExcelValue::Error(ExcelError::Div0)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=TYPE(FIXED(1))").unwrap(),
+            ExcelValue::Number(2.0)
         );
     }
 
