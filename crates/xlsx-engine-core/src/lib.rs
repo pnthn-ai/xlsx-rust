@@ -12,6 +12,7 @@
 //! - [`eval::concat`] — Excel `CONCAT` (range/array flatten + 32767 cap)
 //! - [`eval::clean`] — Excel `CLEAN` (strip ASCII C0 `0..=31`)
 //! - [`eval::rept`] — Excel `REPT` (repeat + 32767 UTF-16 cap)
+//! - [`dates::edate_serial`] — Excel `EDATE` (same-day month shift + clip)
 //! - [`dates::weekday`] — O(1) Excel `WEEKDAY` on the date serial
 //! - [`dates::yearfrac`] — Excel `YEARFRAC` day-count bases 0–4
 //! - [`dates::workday_serial_intl`] — O(1) Excel `WORKDAY.INTL` weekend mask
