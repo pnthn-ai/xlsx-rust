@@ -1381,15 +1381,12 @@ fn fn_exact(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelVal
     if args.len() != 2 {
         return Ok(ExcelValue::Error(ExcelError::Value));
     }
-    let a = match coerce::to_text(&ev.eval_scalar(&args[0], ctx)?) {
-        Ok(s) => s,
-        Err(e) => return Ok(ExcelValue::Error(e)),
-    };
-    let b = match coerce::to_text(&ev.eval_scalar(&args[1], ctx)?) {
-        Ok(s) => s,
-        Err(e) => return Ok(ExcelValue::Error(e)),
-    };
-    Ok(ExcelValue::Bool(a == b))
+    let a = ev.eval_scalar(&args[0], ctx)?;
+    let b = ev.eval_scalar(&args[1], ctx)?;
+    match super::exact::exact(&a, &b) {
+        Ok(eq) => Ok(ExcelValue::Bool(eq)),
+        Err(e) => Ok(ExcelValue::Error(e)),
+    }
 }
 
 fn fn_substitute(

@@ -13,6 +13,7 @@ pub mod compare;
 pub mod concat;
 pub mod drop;
 pub mod empty;
+pub mod exact;
 pub mod expand;
 pub mod filter;
 pub mod find;

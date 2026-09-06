@@ -35,6 +35,7 @@
 //! - [`eval::randarray`] — `RANDARRAY` dynamic-array kernel (xorshift64*; not Excel's RNG)
 //! - [`eval::makearray`] — `MAKEARRAY(rows, cols, LAMBDA(r, c, body))`
 //! - [`eval::textsplit`] — `TEXTSPLIT` col/row split kernel (pad / `#CALC!`)
+//! - [`eval::exact`] — Excel `EXACT` (case-sensitive text compare)
 //! - [`eval::textafter`] — Excel `TEXTAFTER` kernel (nth delimiter, `match_end`)
 //! - [`eval::irr`] — Excel `IRR` Newton / secant kernel
 //! - [`xlsx_types::excel_nper`] — Excel `NPER` closed form (`ln1p`)
@@ -66,6 +67,7 @@ pub use eval::choosecols::{select as excel_choosecols, select_naive as excel_cho
 pub use eval::chooserows::{select as excel_chooserows, select_naive as excel_chooserows_naive};
 pub use eval::concat::{concat_naive_join, eval_concat_formula, ConcatBuilder, CONCAT_MAX_CHARS};
 pub use eval::drop::{apply as excel_drop, apply_naive as excel_drop_naive};
+pub use eval::exact::{exact as excel_exact, exact_naive as excel_exact_naive};
 pub use eval::expand::{
     dim_from_value as expand_dim_from_value, expand as excel_expand,
     expand_naive as excel_expand_naive, output_shape as expand_output_shape,

@@ -302,7 +302,7 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 | [`eval/coerce.rs`](crates/xlsx-engine-core/src/eval/coerce.rs) | Arithmetic / `&` / `IF` coercion (`"2"+1` = 3, TRUE → 1, empty → 0) |
 | [`eval/compare.rs`](crates/xlsx-engine-core/src/eval/compare.rs) | 15-digit `=`, case-insensitive text, `TRUE=1`, type ranking (`FALSE>100`) |
 | [`eval/empty.rs`](crates/xlsx-engine-core/src/eval/empty.rs) | Blank ≠ 0 ≠ `""`, but `A1=0` and `A1=""` when `A1` is blank |
-| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Dispatch: aggregators (`SUM`/`SUMIF`/`SUMIFS`/`AVERAGEIF`/`AVERAGEIFS`/`COUNTIF`/`COUNTIFS`/`SUMPRODUCT`), logicals (`IF`/`IFS`/`SWITCH`), lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`/`FILTER`/`UNIQUE`/`SORT`/`SORTBY`/`TOCOL`/`TOROW`/`SEQUENCE`/`VSTACK`/`HSTACK`/`WRAPCOLS`/`WRAPROWS`/`TAKE`/`DROP`/`EXPAND`/`CHOOSECOLS`/`CHOOSEROWS`/`MAKEARRAY`), dates (`DATE`/`EOMONTH`/`NETWORKDAYS`/`NETWORKDAYS.INTL`/`WEEKDAY`/`WORKDAY`/`WORKDAY.INTL`/`YEARFRAC`), math (`ROUND`/`ROUNDUP`/`ROUNDDOWN`/`FLOOR`/`CEILING`/`RANDARRAY`), text (`LEFT`/`SUBSTITUTE`/`REPLACE`/`FIND`/`SEARCH`/`TEXT`/`TEXTJOIN`/`TEXTSPLIT`/`TEXTAFTER`/`TEXTBEFORE`/`CONCAT`), financial (`NPV`/`XNPV`/`PMT`/`FV`/`PV`/`NPER`/`RATE`/`IPMT`/`PPMT`/`CUMPRINC`/`CUMIPMT`/`IRR`/`XIRR`/`MIRR`/`EFFECT`/`NOMINAL`/`PDURATION`/`RRI`), `TYPE` / `IS*` |
+| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Dispatch: aggregators (`SUM`/`SUMIF`/`SUMIFS`/`AVERAGEIF`/`AVERAGEIFS`/`COUNTIF`/`COUNTIFS`/`SUMPRODUCT`), logicals (`IF`/`IFS`/`SWITCH`), lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`/`FILTER`/`UNIQUE`/`SORT`/`SORTBY`/`TOCOL`/`TOROW`/`SEQUENCE`/`VSTACK`/`HSTACK`/`WRAPCOLS`/`WRAPROWS`/`TAKE`/`DROP`/`EXPAND`/`CHOOSECOLS`/`CHOOSEROWS`/`MAKEARRAY`), dates (`DATE`/`EOMONTH`/`NETWORKDAYS`/`NETWORKDAYS.INTL`/`WEEKDAY`/`WORKDAY`/`WORKDAY.INTL`/`YEARFRAC`), math (`ROUND`/`ROUNDUP`/`ROUNDDOWN`/`FLOOR`/`CEILING`/`RANDARRAY`), text (`LEFT`/`SUBSTITUTE`/`REPLACE`/`FIND`/`SEARCH`/`EXACT`/`TEXT`/`TEXTJOIN`/`TEXTSPLIT`/`TEXTAFTER`/`TEXTBEFORE`/`CONCAT`), financial (`NPV`/`XNPV`/`PMT`/`FV`/`PV`/`NPER`/`RATE`/`IPMT`/`PPMT`/`CUMPRINC`/`CUMIPMT`/`IRR`/`XIRR`/`MIRR`/`EFFECT`/`NOMINAL`/`PDURATION`/`RRI`), `TYPE` / `IS*` |
 | [`eval/sumif.rs`](crates/xlsx-engine-core/src/eval/sumif.rs) | Excel `SUMIF` kernel (criteria walk, reshape `sum_range`, no array literals) |
 | [`eval/sumifs.rs`](crates/xlsx-engine-core/src/eval/sumifs.rs) | Excel `SUMIFS`: multi-criteria AND, same-shape ranges |
 | [`eval/countifs.rs`](crates/xlsx-engine-core/src/eval/countifs.rs) | Excel `COUNTIFS`: multi-criteria AND, same-shape ranges, COUNTIF matcher |
@@ -312,6 +312,7 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 | [`eval/substitute.rs`](crates/xlsx-engine-core/src/eval/substitute.rs) | Excel `SUBSTITUTE` kernel (case-sensitive, nth instance, empty `old_text` no-op) |
 | [`eval/replace.rs`](crates/xlsx-engine-core/src/eval/replace.rs) | Excel `REPLACE` kernel (1-based span, Unicode scalars / Compat v2) |
 | [`eval/find.rs`](crates/xlsx-engine-core/src/eval/find.rs) | Excel `FIND` kernel (case-sensitive, `start_num`, empty `find_text`) |
+| [`eval/exact.rs`](crates/xlsx-engine-core/src/eval/exact.rs) | Excel `EXACT` kernel (case-sensitive compare after `&` coerce) |
 | [`eval/search.rs`](crates/xlsx-engine-core/src/eval/search.rs) | Excel `SEARCH` kernel (case-insensitive, `*`/`?`/`~` wildcards, `start_num`) |
 | [`eval/textafter.rs`](crates/xlsx-engine-core/src/eval/textafter.rs) | Excel `TEXTAFTER` kernel (nth delimiter, `match_mode` / `match_end` / `if_not_found`) |
 | [`eval/textbefore.rs`](crates/xlsx-engine-core/src/eval/textbefore.rs) | Excel `TEXTBEFORE` (nth delimiter, `match_mode` / `match_end` / `if_not_found`) |
@@ -386,6 +387,10 @@ as one or the other. Documented quirk categories:
   `FALSE=0` is `TRUE` but `FALSE>0` / `FALSE<=0` use ranking (`TRUE` / `FALSE`)
 - Equality vs arithmetic coercion (`"2"=2` is false, `"2"+1` is `3`, `--"2"=2`)
 - Case-insensitive text equality (`"A"="a"`) vs case-sensitive `EXACT` / `FIND`; `SEARCH` is case-insensitive; `TEXTAFTER` / `TEXTBEFORE` are case-sensitive unless `match_mode` is TRUE
+- `EXACT(text1, text2)`: case-sensitive compare after `&`-style coercion.
+  Spaces / tabs / NBSP matter; `*` / `?` are literal. Unlike `=`, `"A"` ≠
+  `"a"` and `TRUE` ≠ `1`. `EXACT(1, "1")` is TRUE. `EXACT(0.1+0.2, 0.3)`
+  is FALSE (formatted strings differ). Wrong arity is `#VALUE!`.
 - `TEXTBEFORE(text, delimiter, [instance_num], [match_mode], [match_end], [if_not_found])`:
   Nth non-overlapping delimiter (negative counts from the end); `match_mode`
   0/1; `match_end` 1 treats the unmatched end (or start, when counting
