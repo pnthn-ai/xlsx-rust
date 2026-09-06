@@ -350,12 +350,13 @@
   },
   {
     "id": "fn.bycol.true-scalar-sum",
-    "description": "One-row TRUE coerces in SUM like SUM(TRUE)=1",
+    "description": "SUM(c) treats the bound column as a range: TRUE is skipped, not 1",
     "tags": ["bycol", "lambda"],
     "quirks": ["array-eval-mode"],
+    "notes": "SUM(TRUE) as a literal is 1. SUM(c) when c is the LAMBDA parameter is range-like, so a logical cell does not add.",
     "formula": "=BYCOL({TRUE,1},LAMBDA(c,SUM(c)))",
     "expected": {
-      "array": [[{ "number": 1 }, { "number": 1 }]]
+      "array": [[{ "number": 0 }, { "number": 1 }]]
     }
   },
   {

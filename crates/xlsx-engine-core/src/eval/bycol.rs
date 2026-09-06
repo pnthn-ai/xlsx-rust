@@ -179,28 +179,26 @@ pub fn reduce_naive(rows: &[Vec<ExcelValue>], op: &ColOp) -> ExcelValue {
         for row in rows {
             col.push(row.get(c).cloned().unwrap_or(EMPTY));
         }
-        out.push(fold_slice(&col, op, nrows == 1));
+        out.push(fold_slice(&col, op));
     }
     row_result(out)
 }
 
-fn reduce_walk(rows: &[Vec<ExcelValue>], nrows: usize, ncols: usize, op: &ColOp) -> ExcelValue {
+fn reduce_walk(rows: &[Vec<ExcelValue>], _nrows: usize, ncols: usize, op: &ColOp) -> ExcelValue {
     if let ColOp::Const(v) = op {
         return row_result(vec![v.clone(); ncols]);
     }
-    let as_scalar = nrows == 1;
     let mut out = Vec::with_capacity(ncols);
     for c in 0..ncols {
-        out.push(fold_column(rows, c, op, as_scalar));
+        out.push(fold_column(rows, c, op));
     }
     row_result(out)
 }
 
-/// Range-like fold for a column (matches `SUM`/`AVERAGE`/… on an array).
+/// Range-like fold for a column (matches `SUM(col)` when `col` is a name).
 ///
-/// `as_scalar` is `true` for a 1-row source: the cell is the whole
-/// argument (`SUM(TRUE)` → 1). Multi-row columns use range skip rules
-/// (`SUM` of a logical/text cell is 0 / skip).
+/// The bound column is a reference, so logicals and text are skipped
+/// (`SUM(TRUE)` as a literal is 1; `SUM(c)` with `c = TRUE` is 0).
 struct Acc {
     sum: f64,
     product: f64,
@@ -230,52 +228,28 @@ impl Acc {
         self.max = Some(self.max.map_or(n, |m| m.max(n)));
     }
 
-    fn feed(&mut self, v: &ExcelValue, as_scalar: bool, op: &ColOp) -> Option<ExcelError> {
+    fn feed(&mut self, v: &ExcelValue, op: &ColOp) -> Option<ExcelError> {
         if matches!(op, ColOp::CountA) {
             return self.feed_counta(v);
         }
         if matches!(op, ColOp::Count) {
-            return self.feed_count(v, as_scalar);
+            return self.feed_count(v);
         }
-        match (v, as_scalar) {
-            (ExcelValue::Error(e), _) => Some(*e),
-            (ExcelValue::Number(n), _) => {
+        match v {
+            ExcelValue::Error(e) => Some(*e),
+            ExcelValue::Number(n) => {
                 self.add_number(*n);
                 None
             }
-            (ExcelValue::Empty, _) => None,
-            (ExcelValue::Bool(b), true) => {
-                self.add_number(if *b { 1.0 } else { 0.0 });
-                None
-            }
-            (ExcelValue::Bool(_), false) => None,
-            (ExcelValue::Text(s), true) => match super::coerce::parse_numeric_text(s) {
-                Ok(n) => {
-                    self.add_number(n);
-                    None
-                }
-                Err(e) => Some(e),
-            },
-            (ExcelValue::Text(_), false) => None,
-            (ExcelValue::Array(_), _) => Some(ExcelError::Value),
+            ExcelValue::Empty | ExcelValue::Bool(_) | ExcelValue::Text(_) => None,
+            ExcelValue::Array(_) => Some(ExcelError::Value),
         }
     }
 
-    fn feed_count(&mut self, v: &ExcelValue, as_scalar: bool) -> Option<ExcelError> {
-        match (v, as_scalar) {
-            (ExcelValue::Error(_), _) => None,
-            (ExcelValue::Number(_), _) => {
+    fn feed_count(&mut self, v: &ExcelValue) -> Option<ExcelError> {
+        match v {
+            ExcelValue::Number(_) => {
                 self.count += 1;
-                None
-            }
-            (ExcelValue::Bool(_), true) => {
-                self.count += 1;
-                None
-            }
-            (ExcelValue::Text(s), true) => {
-                if super::coerce::parse_numeric_text(s).is_ok() {
-                    self.count += 1;
-                }
                 None
             }
             _ => None,
@@ -315,21 +289,21 @@ impl Acc {
     }
 }
 
-fn fold_column(rows: &[Vec<ExcelValue>], col: usize, op: &ColOp, as_scalar: bool) -> ExcelValue {
+fn fold_column(rows: &[Vec<ExcelValue>], col: usize, op: &ColOp) -> ExcelValue {
     let mut acc = Acc::new(op);
     for row in rows {
         let cell = row.get(col).unwrap_or(&EMPTY);
-        if let Some(e) = acc.feed(cell, as_scalar, op) {
+        if let Some(e) = acc.feed(cell, op) {
             return ExcelValue::Error(e);
         }
     }
     acc.finish(op)
 }
 
-fn fold_slice(col: &[ExcelValue], op: &ColOp, as_scalar: bool) -> ExcelValue {
+fn fold_slice(col: &[ExcelValue], op: &ColOp) -> ExcelValue {
     let mut acc = Acc::new(op);
     for cell in col {
-        if let Some(e) = acc.feed(cell, as_scalar, op) {
+        if let Some(e) = acc.feed(cell, op) {
             return ExcelValue::Error(e);
         }
     }
@@ -406,7 +380,6 @@ fn eval_range(
             if let ColOp::Const(v) = op {
                 return Ok(row_result(vec![v.clone(); ncols]));
             }
-            let as_scalar = nrows == 1;
             let mut out = Vec::with_capacity(ncols);
             for c in 0..ncols {
                 let mut acc = Acc::new(op);
@@ -423,7 +396,7 @@ fn eval_range(
                         },
                         ctx,
                     )?;
-                    if let Some(e) = acc.feed(&v, as_scalar, op) {
+                    if let Some(e) = acc.feed(&v, op) {
                         col_err = Some(e);
                         break;
                     }
