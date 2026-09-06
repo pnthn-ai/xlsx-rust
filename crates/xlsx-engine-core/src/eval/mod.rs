@@ -56,6 +56,7 @@ pub mod textsplit;
 pub mod tocol;
 pub mod torow;
 pub mod trim;
+pub mod unicode;
 pub mod unique;
 pub mod upper;
 pub mod value;

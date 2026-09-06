@@ -52,6 +52,7 @@
 //! - [`eval::trim`] — Excel `TRIM` (ASCII-space collapse + end trim)
 //! - [`eval::upper`] — Excel `UPPER` (SWAR ASCII + Unicode; `ß` kept)
 //! - [`eval::lower`] — Excel `LOWER` (ASCII SWAR fold + Unicode default mapping)
+//! - [`eval::unicode`] — Excel `UNICODE` (first Unicode scalar / code point)
 //! - [`eval::exact`] — Excel `EXACT` (case-sensitive text compare)
 //! - [`eval::value`] — Excel `VALUE` (en-US number / date / time text)
 //! - [`eval::textsplit`] — `TEXTSPLIT` col/row split kernel (pad / `#CALC!`)
@@ -187,6 +188,10 @@ pub use eval::torow::{
     parse_ignore as parse_torow_ignore, TorowIgnore,
 };
 pub use eval::trim::{trim as excel_trim, trim_naive as excel_trim_naive};
+pub use eval::unicode::{
+    unicode as excel_unicode, unicode_naive as excel_unicode_naive,
+    unicode_value as excel_unicode_value, unicode_value_naive as excel_unicode_value_naive,
+};
 pub use eval::unique::{unique_apply, unique_apply_naive, unique_eq};
 pub use eval::upper::{upper as excel_upper, upper_naive as excel_upper_naive};
 pub use eval::value::{parse as excel_value, parse_naive as excel_value_naive};

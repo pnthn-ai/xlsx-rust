@@ -2,7 +2,7 @@
 //!
 //! Unknown names return `#NAME?` (an Excel value, not [`EvalError`]).
 //! Dedicated kernels live in sibling modules (`ifs`, `filter`, `sort`,
-//! `xlookup`, `textsplit`, `xnpv`, `map`, `isomitted`, …). Financial TVM
+//! `xlookup`, `textsplit`, `xnpv`, `map`, `isomitted`, `unicode`, …). Financial TVM
 //! kernels live in [`xlsx_types`] (`excel_pmt` / `excel_fv` / `excel_pv` / …).
 
 use super::{coerce, compare, excel_pow, Ctx, Evaluator};
@@ -147,6 +147,7 @@ pub(crate) fn dispatch(
         "RIGHT" => fn_left_right(ev, args, ctx, false),
         "MID" => fn_mid(ev, args, ctx),
         "LEN" => fn_len(ev, args, ctx),
+        "UNICODE" => super::unicode::fn_unicode(ev, args, ctx),
         "LOWER" => fn_lower(ev, args, ctx),
         "UPPER" => fn_upper(ev, args, ctx),
         "PROPER" => fn_proper(ev, args, ctx),
