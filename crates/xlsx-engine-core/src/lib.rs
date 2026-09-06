@@ -81,9 +81,9 @@ pub use dates::{workday_serial, workday_serial_intl};
 
 pub use ast::{BinOp, Expr, UnaryOp};
 pub use dates::{
-    days360 as excel_days360, days360_naive as excel_days360_naive,
-    isoweeknum as excel_isoweeknum, isoweeknum_naive as excel_isoweeknum_naive,
-    weekday as excel_weekday, weekday_naive as excel_weekday_naive, weeknum as excel_weeknum,
+    days360 as excel_days360, days360_naive as excel_days360_naive, isoweeknum as excel_isoweeknum,
+    isoweeknum_naive as excel_isoweeknum_naive, weekday as excel_weekday,
+    weekday_naive as excel_weekday_naive, weeknum as excel_weeknum,
     weeknum_naive as excel_weeknum_naive, yearfrac as excel_yearfrac,
     yearfrac_naive as excel_yearfrac_naive,
 };

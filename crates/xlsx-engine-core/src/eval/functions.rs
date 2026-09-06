@@ -10,8 +10,8 @@ use crate::ast::Expr;
 use crate::dates::{
     date_serial, days360, edate_serial, eomonth_serial, isoweeknum, networkdays_count,
     networkdays_count_mask, parse_weekend_mask, serial_to_ymd, time_fraction, weekday,
-    weekend_mask_from_code, weekend_mask_from_string, weeknum, workday_serial,
-    workday_serial_intl, yearfrac, WEEKEND_SAT_SUN,
+    weekend_mask_from_code, weekend_mask_from_string, weeknum, workday_serial, workday_serial_intl,
+    yearfrac, WEEKEND_SAT_SUN,
 };
 use crate::text_format;
 use xlsx_types::{

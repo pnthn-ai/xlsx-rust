@@ -23,9 +23,7 @@ struct Case {
 fn cases() -> Vec<Case> {
     let ascii: Vec<f64> = (0..200_000).map(|i| 32.0 + (i % 95) as f64).collect();
     let ints_1_255: Vec<f64> = (0..200_000).map(|i| 1.0 + (i % 255) as f64).collect();
-    let fracs: Vec<f64> = (0..200_000)
-        .map(|i| 1.1 + (i % 255) as f64 + 0.7)
-        .collect();
+    let fracs: Vec<f64> = (0..200_000).map(|i| 1.1 + (i % 255) as f64 + 0.7).collect();
     let cp1252: Vec<f64> = (0..200_000).map(|i| 128.0 + (i % 128) as f64).collect();
     let mixed_domain: Vec<f64> = (0..200_000)
         .map(|i| match i % 7 {

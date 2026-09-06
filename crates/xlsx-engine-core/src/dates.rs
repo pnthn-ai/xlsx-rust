@@ -1715,7 +1715,6 @@ mod tests {
             }
         }
     }
-
 }
 
 /// True when `serial_1900 % 7` is a weekend bit in `weekend_mask`.
