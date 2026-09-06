@@ -156,7 +156,7 @@ pub(crate) fn dispatch(
         "CODE" => fn_code(ev, args, ctx),
         "CHAR" => super::excel_char::fn_char(ev, args, ctx),
         "EXACT" => fn_exact(ev, args, ctx),
-        "FIND" => fn_find(ev, args, ctx),
+        "FIND" => super::find::fn_find(ev, args, ctx),
         "SEARCH" => fn_search(ev, args, ctx),
         "VALUE" => super::value::eval(ev, args, ctx),
         "SUBSTITUTE" => fn_substitute(ev, args, ctx),
@@ -1596,37 +1596,6 @@ fn fn_substitute(
     Ok(ExcelValue::Text(super::substitute::substitute(
         &text, &old_text, &new_text, instance,
     )))
-}
-
-fn fn_find(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
-    if args.len() < 2 || args.len() > 3 {
-        return Ok(ExcelValue::Error(ExcelError::Value));
-    }
-    let find_text = match coerce::to_text(&ev.eval_scalar(&args[0], ctx)?) {
-        Ok(s) => s,
-        Err(e) => return Ok(ExcelValue::Error(e)),
-    };
-    let within_text = match coerce::to_text(&ev.eval_scalar(&args[1], ctx)?) {
-        Ok(s) => s,
-        Err(e) => return Ok(ExcelValue::Error(e)),
-    };
-    let start_num = if args.len() == 3 {
-        match coerce::to_number(&ev.eval_scalar(&args[2], ctx)?) {
-            Ok(n) => {
-                if !n.is_finite() {
-                    return Ok(ExcelValue::Error(ExcelError::Value));
-                }
-                n.trunc() as i64
-            }
-            Err(e) => return Ok(ExcelValue::Error(e)),
-        }
-    } else {
-        1
-    };
-    match super::find::find(&find_text, &within_text, start_num) {
-        Ok(pos) => Ok(ExcelValue::Number(pos)),
-        Err(e) => Ok(ExcelValue::Error(e)),
-    }
 }
 
 fn fn_search(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {

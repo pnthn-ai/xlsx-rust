@@ -336,5 +336,373 @@
     "quirks": ["error-precedence"],
     "formula": "=FIND(#DIV/0!, #N/A)",
     "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.find-err-na",
+    "description": "NA() in find_text propagates #N/A",
+    "tags": ["text", "find", "errors"],
+    "formula": "=FIND(NA(), \"abc\")",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.find-err-cell",
+    "description": "Error in a referenced cell propagates",
+    "tags": ["text", "find", "errors"],
+    "formula": "=FIND(A1, \"abc\")",
+    "expected": { "error": "#VALUE!" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "error": "#VALUE!" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.find-omitted-start",
+    "description": "Trailing-comma omitted start_num uses the default 1 (not Empty→0)",
+    "tags": ["text", "find"],
+    "formula": "=FIND(\"M\", \"Miriam McGovern\",)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.find-omitted-find-text",
+    "description": "Omitted find_text coerces to \"\" and matches at 1",
+    "tags": ["text", "find", "empty"],
+    "formula": "=FIND(, \"abc\")",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.find-omitted-within",
+    "description": "Omitted within_text is empty: non-empty needle is #VALUE!",
+    "tags": ["text", "find", "errors", "empty"],
+    "formula": "=FIND(\"a\",)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.find-omitted-both",
+    "description": "FIND(,) is FIND(\"\",\"\") → 1",
+    "tags": ["text", "find", "empty"],
+    "formula": "=FIND(,)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.find-blank-within-cell",
+    "description": "Blank within_text cell coerces to \"\" → #VALUE! for a non-empty needle",
+    "tags": ["text", "find", "errors", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=FIND(\"a\", A1)",
+    "expected": { "error": "#VALUE!" },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.find-stored-empty-within",
+    "description": "Stored \"\" within_text is empty text → #VALUE! for a non-empty needle",
+    "tags": ["text", "find", "errors"],
+    "formula": "=FIND(\"a\", A1)",
+    "expected": { "error": "#VALUE!" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.find-cell",
+    "description": "FIND of a stored text cell uses the cell value",
+    "tags": ["text", "find"],
+    "formula": "=FIND(\"a\", A1, 3)",
+    "expected": { "number": 4 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "banana" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.find-whole-string",
+    "description": "Needle equal to within_text is position 1",
+    "tags": ["text", "find"],
+    "formula": "=FIND(\"abc\", \"abc\")",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.find-needle-longer",
+    "description": "Needle longer than within_text is #VALUE!",
+    "tags": ["text", "find", "errors"],
+    "formula": "=FIND(\"abcd\", \"abc\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.find-start-num-len-plus-one-nonempty",
+    "description": "Non-empty needle with start_num = LEN+1 is #VALUE! (empty find_text may land there)",
+    "tags": ["text", "find", "errors"],
+    "formula": "=FIND(\"a\", \"abc\", 4)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.find-start-num-huge",
+    "description": "start_num 1E+20 is far past LEN+1 → #VALUE!",
+    "tags": ["text", "find", "errors"],
+    "formula": "=FIND(\"a\", \"abc\", 1E+20)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.find-overlapping",
+    "description": "Overlapping needle: FIND(\"aa\", \"aaa\") is the first character",
+    "tags": ["text", "find"],
+    "formula": "=FIND(\"aa\", \"aaa\")",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.find-overlapping-start",
+    "description": "start_num 2 takes the second overlapping \"aa\" in \"aaa\"",
+    "tags": ["text", "find"],
+    "formula": "=FIND(\"aa\", \"aaa\", 2)",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.find-literal-tilde",
+    "description": "~ is a literal character (SEARCH would treat ~ as an escape)",
+    "tags": ["text", "find"],
+    "quirks": ["wildcards"],
+    "formula": "=FIND(\"~\", \"a~b\")",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.find-vs-search-tilde-escape",
+    "description": "FIND(\"~*\", \"a*b\") is #VALUE!; SEARCH would match the escaped star",
+    "tags": ["text", "find"],
+    "quirks": ["wildcards"],
+    "formula": "=FIND(\"~*\", \"a*b\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.find-literal-tilde-star",
+    "description": "A literal ~* sequence in within_text is found by FIND",
+    "tags": ["text", "find"],
+    "quirks": ["wildcards"],
+    "formula": "=FIND(\"~*\", \"a~*b\")",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.find-case-later",
+    "description": "Case-sensitive hit later in the string: FIND(\"B\", \"aaB\") is 3",
+    "tags": ["text", "find"],
+    "quirks": ["case-insensitive-text"],
+    "formula": "=FIND(\"B\", \"aaB\")",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.find-japanese",
+    "description": "UTF-8 scalar position (日本語): 本 is character 2, matching LEN/MID",
+    "tags": ["text", "find"],
+    "formula": "=FIND(\"本\", \"日本語\")",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.find-emoji-compat-v2",
+    "description": "😀 is one Compatibility Version 2 scalar: FIND(\"😀\", \"x😀y\") is 2 (not UTF-16 unit 3)",
+    "tags": ["text", "find"],
+    "formula": "=FIND(\"😀\", \"x😀y\")",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.find-after-emoji",
+    "description": "Character after a supplementary-plane emoji is position 3",
+    "tags": ["text", "find"],
+    "formula": "=FIND(\"y\", \"x😀y\")",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.find-combining-not-precomposed",
+    "description": "Precomposed é does not match e + combining acute",
+    "tags": ["text", "find"],
+    "formula": "=FIND(\"é\", \"e\u0301\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.find-combining-mark",
+    "description": "Combining acute is its own scalar at position 2",
+    "tags": ["text", "find"],
+    "formula": "=FIND(\"\u0301\", \"e\u0301\")",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.find-unicode-start",
+    "description": "start_num skips a leading multi-byte scalar: FIND(\"a\", \"éabc\", 2) is 2",
+    "tags": ["text", "find"],
+    "formula": "=FIND(\"a\", \"éabc\", 2)",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.find-space",
+    "description": "ASCII space is a literal character",
+    "tags": ["text", "find"],
+    "formula": "=FIND(\" \", \"a b\")",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.find-tab",
+    "description": "Tab (CHAR(9)) is found; space is not a tab",
+    "tags": ["text", "find"],
+    "formula": "=FIND(CHAR(9), \"a\"&CHAR(9)&\"b\")",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.find-tab-not-space",
+    "description": "Space does not match a tab in within_text",
+    "tags": ["text", "find", "errors"],
+    "formula": "=FIND(\" \", \"a\"&CHAR(9)&\"b\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.find-nbsp",
+    "description": "NBSP CHAR(160) is not ASCII 32",
+    "tags": ["text", "find"],
+    "formula": "=FIND(CHAR(160), \"a\"&CHAR(160)&\"b\")",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.find-quote",
+    "description": "FIND locates a double quote in within_text",
+    "tags": ["text", "find"],
+    "formula": "=FIND(\"\"\"\", \"say \"\"hi\"\"\")",
+    "expected": { "number": 5 }
+  },
+  {
+    "id": "fn.find-percent",
+    "description": "10% coerces to 0.1; FIND(\"1\", 10%) is 3",
+    "tags": ["text", "find", "coercion"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=FIND(\"1\", 10%)",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.find-false-needle",
+    "description": "FALSE coerces to the text \"FALSE\"",
+    "tags": ["text", "find", "coercion"],
+    "formula": "=FIND(FALSE, \"FALSEHOOD\")",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.find-signed-zero",
+    "description": "−0 formats as \"-0\"; FIND(\"-\", −0) is 1",
+    "tags": ["text", "find", "coercion"],
+    "formula": "=FIND(\"-\", -0)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.find-plus-zero",
+    "description": "+0 formats as \"0\"; FIND(\"-\", 0) is #VALUE!",
+    "tags": ["text", "find", "errors", "coercion"],
+    "formula": "=FIND(\"-\", 0)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.find-date-serial",
+    "description": "DATE coerces to its serial text: DATE(1900,1,1) is 1",
+    "tags": ["text", "find", "coercion"],
+    "formula": "=FIND(\"1\", DATE(1900,1,1))",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.find-nested-left",
+    "description": "FIND(\"a\", LEFT(\"banana\", 3)) is 2",
+    "tags": ["text", "find"],
+    "formula": "=FIND(\"a\", LEFT(\"banana\", 3))",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.find-nested-len",
+    "description": "Empty find_text may land at LEN(within_text)+1",
+    "tags": ["text", "find"],
+    "formula": "=FIND(\"\", \"abc\", LEN(\"abc\")+1)",
+    "expected": { "number": 4 }
+  },
+  {
+    "id": "fn.find-nested-char",
+    "description": "FIND(CHAR(65), \"ABC\") is 1",
+    "tags": ["text", "find"],
+    "formula": "=FIND(CHAR(65), \"ABC\")",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.find-nested-rept",
+    "description": "FIND(\"b\", REPT(\"a\", 10)&\"b\") is 11",
+    "tags": ["text", "find"],
+    "formula": "=FIND(\"b\", REPT(\"a\", 10)&\"b\")",
+    "expected": { "number": 11 }
+  },
+  {
+    "id": "fn.find-concat",
+    "description": "FIND of concatenated pieces searches the joined text",
+    "tags": ["text", "find"],
+    "formula": "=FIND(\"c\", \"ab\"&\"cd\")",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.find-plus-one",
+    "description": "The result is a number: FIND(\"M\", \"Miriam McGovern\")+1 is 2",
+    "tags": ["text", "find"],
+    "formula": "=FIND(\"M\", \"Miriam McGovern\")+1",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.find-iferror-miss",
+    "description": "IFERROR wraps a missing needle",
+    "tags": ["text", "find", "errors"],
+    "formula": "=IFERROR(FIND(\"z\", \"abc\"), 0)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.find-array-literal",
+    "description": "FIND of an array-literal needle scalarizes to the top-left",
+    "tags": ["text", "find"],
+    "formula": "=FIND({\"a\",\"z\"}, \"abc\")",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.find-implicit-intersect",
+    "description": "FIND(\"x\", A1:A3) from host B2 uses implicit intersection (same row → A2)",
+    "tags": ["text", "find"],
+    "quirks": ["implicit-intersection"],
+    "at": "Sheet1!B2",
+    "formula": "=FIND(\"x\", A1:A3)",
+    "expected": { "number": 2 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "one" },
+            "A2": { "text": "oxen" },
+            "A3": { "text": "extra" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.find-map-sum",
+    "description": "SUM(MAP(array, LAMBDA(x, FIND(\"a\", x)))) adds first-\"a\" positions",
+    "tags": ["text", "find", "map"],
+    "formula": "=SUM(MAP({\"cat\";\"bat\";\"rat\"},LAMBDA(x,FIND(\"a\",x))))",
+    "expected": { "number": 6 }
   }
 ]

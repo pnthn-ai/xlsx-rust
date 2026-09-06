@@ -118,7 +118,10 @@ pub use eval::expand::{
     resolve_dim as expand_resolve_dim, EXPAND_MAX_COLS, EXPAND_MAX_ROWS,
 };
 pub use eval::filter::{select as excel_filter, select_naive as excel_filter_naive};
-pub use eval::find::{find as excel_find, find_naive as excel_find_naive};
+pub use eval::find::{
+    find as excel_find, find_naive as excel_find_naive, find_value as excel_find_value,
+    find_value_naive as excel_find_value_naive,
+};
 pub use eval::hstack::{hstack as excel_hstack, hstack_naive as excel_hstack_naive};
 pub use eval::ifs::{select as excel_ifs, select_naive as excel_ifs_naive};
 pub use eval::irr::{irr as excel_irr, irr_naive as excel_irr_naive, MAX_ITERS as IRR_MAX_ITERS};
