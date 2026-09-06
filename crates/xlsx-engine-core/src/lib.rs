@@ -35,6 +35,7 @@
 //! - [`eval::randarray`] — `RANDARRAY` dynamic-array kernel (xorshift64*; not Excel's RNG)
 //! - [`eval::makearray`] — `MAKEARRAY(rows, cols, LAMBDA(r, c, body))`
 //! - [`eval::textsplit`] — `TEXTSPLIT` col/row split kernel (pad / `#CALC!`)
+//! - [`eval::trim`] — Excel `TRIM` (ASCII-space collapse + end trim)
 //! - [`eval::textafter`] — Excel `TEXTAFTER` kernel (nth delimiter, `match_end`)
 //! - [`eval::irr`] — Excel `IRR` Newton / secant kernel
 //! - [`xlsx_types::excel_nper`] — Excel `NPER` closed form (`ln1p`)
@@ -112,6 +113,7 @@ pub use eval::textafter::{textafter as excel_textafter, textafter_naive as excel
 pub use eval::textbefore::{
     textbefore as excel_textbefore, textbefore_naive as excel_textbefore_naive,
 };
+pub use eval::trim::{trim as excel_trim, trim_naive as excel_trim_naive};
 pub use eval::textjoin::{
     eval_textjoin_formula, textjoin_naive_join, TextJoinBuilder, TEXTJOIN_MAX_CHARS,
 };

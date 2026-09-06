@@ -1,0 +1,437 @@
+[
+  {
+    "id": "fn.trim-microsoft",
+    "description": "Microsoft example: TRIM(\"  First Quarter Earnings  \")",
+    "tags": ["text", "trim"],
+    "formula": "=TRIM(\"  First Quarter Earnings  \")",
+    "expected": { "text": "First Quarter Earnings" }
+  },
+  {
+    "id": "fn.trim-empty",
+    "description": "TRIM(\"\") is empty text",
+    "tags": ["text", "trim"],
+    "formula": "=TRIM(\"\")",
+    "expected": { "text": "" }
+  },
+  {
+    "id": "fn.trim-spaces-only",
+    "description": "A string of only ASCII spaces becomes empty",
+    "tags": ["text", "trim"],
+    "formula": "=TRIM(\"     \")",
+    "expected": { "text": "" }
+  },
+  {
+    "id": "fn.trim-single-space",
+    "description": "TRIM(\" \") is empty",
+    "tags": ["text", "trim"],
+    "formula": "=TRIM(\" \")",
+    "expected": { "text": "" }
+  },
+  {
+    "id": "fn.trim-no-spaces",
+    "description": "Text with no spaces is unchanged",
+    "tags": ["text", "trim"],
+    "formula": "=TRIM(\"hello\")",
+    "expected": { "text": "hello" }
+  },
+  {
+    "id": "fn.trim-already-clean",
+    "description": "Already-trimmed single spaces stay (idempotent)",
+    "tags": ["text", "trim"],
+    "formula": "=TRIM(\"a b c\")",
+    "expected": { "text": "a b c" }
+  },
+  {
+    "id": "fn.trim-leading-only",
+    "description": "Leading ASCII spaces are stripped",
+    "tags": ["text", "trim"],
+    "formula": "=TRIM(\"   hello\")",
+    "expected": { "text": "hello" }
+  },
+  {
+    "id": "fn.trim-trailing-only",
+    "description": "Trailing ASCII spaces are stripped",
+    "tags": ["text", "trim"],
+    "formula": "=TRIM(\"hello   \")",
+    "expected": { "text": "hello" }
+  },
+  {
+    "id": "fn.trim-many-internal",
+    "description": "Internal ASCII space runs collapse to one space",
+    "tags": ["text", "trim"],
+    "formula": "=TRIM(\"a    b     c\")",
+    "expected": { "text": "a b c" }
+  },
+  {
+    "id": "fn.trim-nested",
+    "description": "TRIM is idempotent: TRIM(TRIM(…)) matches TRIM",
+    "tags": ["text", "trim"],
+    "formula": "=TRIM(TRIM(\"  a  b  \"))",
+    "expected": { "text": "a b" }
+  },
+  {
+    "id": "fn.trim-len",
+    "description": "LEN(TRIM(\"  a  b  \")) is 3",
+    "tags": ["text", "trim"],
+    "formula": "=LEN(TRIM(\"  a  b  \"))",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.trim-exact",
+    "description": "EXACT confirms TRIM result is a single internal space",
+    "tags": ["text", "trim"],
+    "formula": "=EXACT(TRIM(\"  a  b  \"), \"a b\")",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.trim-concat",
+    "description": "TRIM of concatenated padded pieces",
+    "tags": ["text", "trim"],
+    "formula": "=TRIM(\"  \"&\"a\"&\"  \"&\"b\"&\"  \")",
+    "expected": { "text": "a b" }
+  },
+  {
+    "id": "fn.trim-cell",
+    "description": "TRIM of a cell with irregular ASCII spaces",
+    "tags": ["text", "trim"],
+    "formula": "=TRIM(A1)",
+    "expected": { "text": "x y" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "  x   y  " }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.trim-blank-cell",
+    "description": "Blank cell coerces like & to empty text",
+    "tags": ["text", "trim", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=TRIM(A1)",
+    "expected": { "text": "" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {}
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.trim-stored-empty",
+    "description": "Stored \"\" is already empty after TRIM",
+    "tags": ["text", "trim"],
+    "formula": "=TRIM(A1)",
+    "expected": { "text": "" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.trim-number",
+    "description": "TRIM(123) coerces to text \"123\"",
+    "tags": ["text", "trim", "coercion"],
+    "formula": "=TRIM(123)",
+    "expected": { "text": "123" }
+  },
+  {
+    "id": "fn.trim-number-decimal",
+    "description": "TRIM(1.5) coerces to \"1.5\"",
+    "tags": ["text", "trim", "coercion"],
+    "formula": "=TRIM(1.5)",
+    "expected": { "text": "1.5" }
+  },
+  {
+    "id": "fn.trim-number-neg",
+    "description": "TRIM(-2) coerces to \"-2\"",
+    "tags": ["text", "trim", "coercion"],
+    "formula": "=TRIM(-2)",
+    "expected": { "text": "-2" }
+  },
+  {
+    "id": "fn.trim-numeric-text",
+    "description": "TRIM of padded numeric text stays text \"42\" (not VALUE)",
+    "tags": ["text", "trim"],
+    "formula": "=TRIM(\"  42  \")",
+    "expected": { "text": "42" }
+  },
+  {
+    "id": "fn.trim-true",
+    "description": "TRIM(TRUE) coerces to \"TRUE\"",
+    "tags": ["text", "trim", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=TRIM(TRUE)",
+    "expected": { "text": "TRUE" }
+  },
+  {
+    "id": "fn.trim-false",
+    "description": "TRIM(FALSE) coerces to \"FALSE\"",
+    "tags": ["text", "trim", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=TRIM(FALSE)",
+    "expected": { "text": "FALSE" }
+  },
+  {
+    "id": "fn.trim-tab-kept",
+    "description": "Tab (ASCII 9) is not an ASCII space and is kept",
+    "tags": ["text", "trim"],
+    "formula": "=TRIM(A1)",
+    "expected": { "text": "\ta\t" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "\ta\t" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.trim-tab-with-spaces",
+    "description": "ASCII spaces around a tab collapse independently; tab stays",
+    "tags": ["text", "trim"],
+    "formula": "=TRIM(A1)",
+    "expected": { "text": "a \t b" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "  a  \t  b  " }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.trim-only-tabs",
+    "description": "Tabs-only text is unchanged",
+    "tags": ["text", "trim"],
+    "formula": "=TRIM(A1)",
+    "expected": { "text": "\t\t" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "\t\t" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.trim-lf-kept",
+    "description": "Line feed is not ASCII 32 and is kept",
+    "tags": ["text", "trim"],
+    "formula": "=TRIM(A1)",
+    "expected": { "text": "\n a \n" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": " \n a \n " }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.trim-cr-kept",
+    "description": "Carriage return is not ASCII 32 and is kept",
+    "tags": ["text", "trim"],
+    "formula": "=TRIM(A1)",
+    "expected": { "text": "\ra\r" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "\ra\r" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.trim-nbsp-kept",
+    "description": "NBSP CHAR(160) is not trimmed (Microsoft TRIM note)",
+    "tags": ["text", "trim"],
+    "formula": "=TRIM(A1)",
+    "expected": { "text": "\u00a0" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "\u00a0" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.trim-nbsp-pair",
+    "description": "Adjacent NBSPs are not collapsed (only ASCII 32 collapses)",
+    "tags": ["text", "trim"],
+    "formula": "=TRIM(A1)",
+    "expected": { "text": "\u00a0\u00a0" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "  \u00a0\u00a0  " }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.trim-nbsp-with-spaces",
+    "description": "ASCII spaces next to NBSP collapse; NBSP stays",
+    "tags": ["text", "trim"],
+    "formula": "=TRIM(A1)",
+    "expected": { "text": "a\u00a0 b" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "  a\u00a0  b  " }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.trim-ideographic-space",
+    "description": "Ideographic space U+3000 is kept",
+    "tags": ["text", "trim"],
+    "formula": "=TRIM(A1)",
+    "expected": { "text": "\u3000" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": " \u3000 " }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.trim-unicode",
+    "description": "Multibyte scalars survive end-trim",
+    "tags": ["text", "trim"],
+    "formula": "=TRIM(\"  café  \")",
+    "expected": { "text": "café" }
+  },
+  {
+    "id": "fn.trim-unicode-collapse",
+    "description": "ASCII spaces between multibyte words collapse",
+    "tags": ["text", "trim"],
+    "formula": "=TRIM(\"  日本語   テスト  \")",
+    "expected": { "text": "日本語 テスト" }
+  },
+  {
+    "id": "fn.trim-emoji",
+    "description": "Emoji scalars plus ASCII space collapse",
+    "tags": ["text", "trim"],
+    "formula": "=TRIM(A1)",
+    "expected": { "text": "😀 🎉" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "  😀  🎉  " }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.trim-implicit-intersect",
+    "description": "TRIM(A1:A3) from host B1 uses implicit intersection (same row → A1)",
+    "tags": ["text", "trim"],
+    "quirks": ["implicit-intersection"],
+    "at": "Sheet1!B1",
+    "formula": "=TRIM(A1:A3)",
+    "expected": { "text": "one" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "  one  " },
+            "A2": { "text": "  two  " },
+            "A3": { "text": "  three  " }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.trim-err-div0",
+    "description": "Error argument propagates #DIV/0!",
+    "tags": ["text", "trim", "errors"],
+    "formula": "=TRIM(1/0)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.trim-err-na",
+    "description": "NA() propagates #N/A",
+    "tags": ["text", "trim", "errors"],
+    "formula": "=TRIM(NA())",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.trim-err-cell",
+    "description": "Error in the referenced cell propagates",
+    "tags": ["text", "trim", "errors"],
+    "formula": "=TRIM(A1)",
+    "expected": { "error": "#VALUE!" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "error": "#VALUE!" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.trim-arity-zero",
+    "description": "TRIM() with no arguments is #VALUE!",
+    "tags": ["text", "trim", "errors"],
+    "formula": "=TRIM()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.trim-arity-two",
+    "description": "TRIM with two arguments is #VALUE!",
+    "tags": ["text", "trim", "errors"],
+    "formula": "=TRIM(\"a\",\"b\")",
+    "expected": { "error": "#VALUE!" }
+  }
+]

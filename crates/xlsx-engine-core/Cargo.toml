@@ -264,3 +264,7 @@ harness = false
 name = "textbefore"
 harness = false
 
+[[bench]]
+name = "trim"
+harness = false
+
