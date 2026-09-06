@@ -24,6 +24,7 @@ pub mod excel_let;
 pub mod expand;
 pub mod filter;
 pub mod find;
+pub mod fixed;
 pub mod functions;
 pub mod hstack;
 pub mod ifs;

@@ -1,0 +1,529 @@
+[
+  {
+    "id": "fn.fixed-ms-1",
+    "description": "Microsoft example: FIXED(1234.567, 1) is 1,234.6",
+    "notes": "Excel golden from Microsoft FIXED help. Result is text.",
+    "tags": ["fixed", "text"],
+    "formula": "=FIXED(1234.567, 1)",
+    "expected": { "text": "1,234.6" }
+  },
+  {
+    "id": "fn.fixed-ms-neg-dec",
+    "description": "Microsoft example: FIXED(1234.567, -1) is 1,230",
+    "notes": "Excel golden from Microsoft FIXED help. Negative decimals round left of the point.",
+    "tags": ["fixed", "text"],
+    "formula": "=FIXED(1234.567, -1)",
+    "expected": { "text": "1,230" }
+  },
+  {
+    "id": "fn.fixed-ms-neg-no-commas",
+    "description": "Microsoft example: FIXED(-1234.567, -1, TRUE) is -1230",
+    "notes": "Excel golden from Microsoft FIXED help (A3 / TRUE).",
+    "tags": ["fixed", "text"],
+    "formula": "=FIXED(-1234.567, -1, TRUE)",
+    "expected": { "text": "-1230" }
+  },
+  {
+    "id": "fn.fixed-ms-default",
+    "description": "Microsoft example: FIXED(44.332) is 44.33",
+    "notes": "Excel golden from Microsoft FIXED help. Omitted decimals defaults to 2.",
+    "tags": ["fixed", "text"],
+    "formula": "=FIXED(44.332)",
+    "expected": { "text": "44.33" }
+  },
+  {
+    "id": "fn.fixed-default-thousands",
+    "description": "FIXED(1000) is 1,000.00 (commas + 2 decimals)",
+    "notes": "Excel golden: omitted decimals = 2, omitted no_commas = FALSE.",
+    "tags": ["fixed", "text"],
+    "formula": "=FIXED(1000)",
+    "expected": { "text": "1,000.00" }
+  },
+  {
+    "id": "fn.fixed-dec-2",
+    "description": "FIXED(1234.567, 2) is 1,234.57",
+    "tags": ["fixed", "text"],
+    "formula": "=FIXED(1234.567, 2)",
+    "expected": { "text": "1,234.57" }
+  },
+  {
+    "id": "fn.fixed-dec-0",
+    "description": "FIXED(1234.5, 0) is 1,235 (ROUND half away)",
+    "tags": ["fixed", "text"],
+    "formula": "=FIXED(1234.5, 0)",
+    "expected": { "text": "1,235" }
+  },
+  {
+    "id": "fn.fixed-dec-3",
+    "description": "FIXED(1.2, 3) pads to 1.200",
+    "tags": ["fixed", "text"],
+    "formula": "=FIXED(1.2, 3)",
+    "expected": { "text": "1.200" }
+  },
+  {
+    "id": "fn.fixed-dec-6",
+    "description": "FIXED(1, 6) pads six zeros",
+    "tags": ["fixed", "text"],
+    "formula": "=FIXED(1, 6)",
+    "expected": { "text": "1.000000" }
+  },
+  {
+    "id": "fn.fixed-dec-neg-2",
+    "description": "FIXED(1234.567, -2) is 1,200",
+    "tags": ["fixed", "text"],
+    "formula": "=FIXED(1234.567, -2)",
+    "expected": { "text": "1,200" }
+  },
+  {
+    "id": "fn.fixed-dec-frac-trunc",
+    "description": "FIXED(1234.567, 1.9) truncates decimals toward 0 → 1",
+    "tags": ["fixed", "text", "coercion"],
+    "formula": "=FIXED(1234.567, 1.9)",
+    "expected": { "text": "1,234.6" }
+  },
+  {
+    "id": "fn.fixed-dec-true",
+    "description": "FIXED(1234.567, TRUE) coerces decimals to 1",
+    "tags": ["fixed", "text", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=FIXED(1234.567, TRUE)",
+    "expected": { "text": "1,234.6" }
+  },
+  {
+    "id": "fn.fixed-dec-false",
+    "description": "FIXED(1234.567, FALSE) coerces decimals to 0",
+    "tags": ["fixed", "text", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=FIXED(1234.567, FALSE)",
+    "expected": { "text": "1,235" }
+  },
+  {
+    "id": "fn.fixed-omitted-decimals-slot",
+    "description": "FIXED(1234.567,) omitted decimals slot is 2 (not blank 0)",
+    "tags": ["fixed", "text"],
+    "formula": "=FIXED(1234.567,)",
+    "expected": { "text": "1,234.57" }
+  },
+  {
+    "id": "fn.fixed-blank-decimals",
+    "description": "Blank decimals cell coerces to 0",
+    "tags": ["fixed", "text", "coercion"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=FIXED(A1, B1)",
+    "expected": { "text": "1,235" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": { "A1": { "number": 1234.567 } }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.fixed-no-commas-true",
+    "description": "FIXED(1234.567, 1, TRUE) drops commas",
+    "notes": "Excel golden: no_commas TRUE suppresses thousands separators.",
+    "tags": ["fixed", "text"],
+    "formula": "=FIXED(1234.567, 1, TRUE)",
+    "expected": { "text": "1234.6" }
+  },
+  {
+    "id": "fn.fixed-no-commas-false",
+    "description": "FIXED(1000, 0, FALSE) keeps the thousands comma",
+    "notes": "Excel golden: no_commas FALSE (Microsoft) includes commas.",
+    "tags": ["fixed", "text"],
+    "formula": "=FIXED(1000, 0, FALSE)",
+    "expected": { "text": "1,000" }
+  },
+  {
+    "id": "fn.fixed-no-commas-1",
+    "description": "FIXED(1000, 0, 1) treats nonzero as TRUE",
+    "tags": ["fixed", "text", "coercion"],
+    "formula": "=FIXED(1000, 0, 1)",
+    "expected": { "text": "1000" }
+  },
+  {
+    "id": "fn.fixed-no-commas-0",
+    "description": "FIXED(1000, 0, 0) treats 0 as FALSE",
+    "tags": ["fixed", "text", "coercion"],
+    "formula": "=FIXED(1000, 0, 0)",
+    "expected": { "text": "1,000" }
+  },
+  {
+    "id": "fn.fixed-omitted-no-commas-slot",
+    "description": "FIXED(1234.567,,TRUE) omitted decimals = 2, no commas",
+    "tags": ["fixed", "text"],
+    "formula": "=FIXED(1234.567,,TRUE)",
+    "expected": { "text": "1234.57" }
+  },
+  {
+    "id": "fn.fixed-no-commas-text",
+    "description": "Text no_commas is #VALUE! (IF logical coerce)",
+    "tags": ["fixed", "text", "errors", "coercion"],
+    "formula": "=FIXED(1, 2, \"x\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.fixed-true",
+    "description": "FIXED(TRUE) coerces to 1.00",
+    "tags": ["fixed", "text", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=FIXED(TRUE)",
+    "expected": { "text": "1.00" }
+  },
+  {
+    "id": "fn.fixed-false",
+    "description": "FIXED(FALSE) coerces to 0.00",
+    "tags": ["fixed", "text", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=FIXED(FALSE)",
+    "expected": { "text": "0.00" }
+  },
+  {
+    "id": "fn.fixed-text-num",
+    "description": "FIXED(\"1234.567\") parses numeric text",
+    "tags": ["fixed", "text", "coercion"],
+    "formula": "=FIXED(\"1234.567\")",
+    "expected": { "text": "1,234.57" }
+  },
+  {
+    "id": "fn.fixed-text-spaces",
+    "description": "FIXED trims ASCII spaces on numeric text",
+    "tags": ["fixed", "text", "coercion"],
+    "formula": "=FIXED(\"  44.332  \")",
+    "expected": { "text": "44.33" }
+  },
+  {
+    "id": "fn.fixed-text-scientific",
+    "description": "FIXED(\"1E3\", 0) is 1,000",
+    "tags": ["fixed", "text", "coercion"],
+    "formula": "=FIXED(\"1E3\", 0)",
+    "expected": { "text": "1,000" }
+  },
+  {
+    "id": "fn.fixed-text-junk",
+    "description": "Non-numeric text is #VALUE!",
+    "tags": ["fixed", "text", "errors"],
+    "formula": "=FIXED(\"x\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.fixed-text-empty",
+    "description": "Stored empty string is #VALUE! (not blank)",
+    "tags": ["fixed", "text", "errors"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=FIXED(\"\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.fixed-text-currency",
+    "description": "FIXED(\"$5\") is #VALUE! — arithmetic coerce is not VALUE",
+    "tags": ["fixed", "text", "errors", "coercion"],
+    "formula": "=FIXED(\"$5\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.fixed-text-comma",
+    "description": "FIXED(\"1,000\") is #VALUE! — thousands comma is VALUE-only",
+    "tags": ["fixed", "text", "errors", "coercion"],
+    "formula": "=FIXED(\"1,000\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.fixed-blank-cell",
+    "description": "Blank cell coerces to 0.00",
+    "tags": ["fixed", "text", "coercion"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=FIXED(A1)",
+    "expected": { "text": "0.00" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {}
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.fixed-stored-empty",
+    "description": "Cell storing \"\" is #VALUE! (COUNTA 1, not blank)",
+    "tags": ["fixed", "text", "errors"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=FIXED(A1)",
+    "expected": { "error": "#VALUE!" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": { "A1": { "text": "" } }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.fixed-half-away-pos",
+    "description": "FIXED(2.5, 0) is 3 (ROUND half away from zero)",
+    "tags": ["fixed", "text"],
+    "formula": "=FIXED(2.5, 0)",
+    "expected": { "text": "3" }
+  },
+  {
+    "id": "fn.fixed-half-away-neg",
+    "description": "FIXED(-1.5, 0) is -2",
+    "tags": ["fixed", "text"],
+    "formula": "=FIXED(-1.5, 0)",
+    "expected": { "text": "-2" }
+  },
+  {
+    "id": "fn.fixed-ieee-215",
+    "description": "FIXED(2.15, 1) is 2.2 (same leftover snap as ROUND)",
+    "tags": ["fixed", "text"],
+    "formula": "=FIXED(2.15, 1)",
+    "expected": { "text": "2.2" }
+  },
+  {
+    "id": "fn.fixed-sign-drop",
+    "description": "FIXED(-0.001, 2) is 0.00 (sign from the rounded value)",
+    "tags": ["fixed", "text"],
+    "formula": "=FIXED(-0.001, 2)",
+    "expected": { "text": "0.00" }
+  },
+  {
+    "id": "fn.fixed-zero",
+    "description": "FIXED(0) is 0.00",
+    "tags": ["fixed", "text"],
+    "formula": "=FIXED(0)",
+    "expected": { "text": "0.00" }
+  },
+  {
+    "id": "fn.fixed-pi",
+    "description": "FIXED(PI()) is 3.14",
+    "tags": ["fixed", "text"],
+    "formula": "=FIXED(PI())",
+    "expected": { "text": "3.14" }
+  },
+  {
+    "id": "fn.fixed-millions",
+    "description": "FIXED(1234567.89) groups millions",
+    "tags": ["fixed", "text"],
+    "formula": "=FIXED(1234567.89)",
+    "expected": { "text": "1,234,567.89" }
+  },
+  {
+    "id": "fn.fixed-neg-grouped",
+    "description": "FIXED(-1234.567, 1) keeps the minus outside the commas",
+    "tags": ["fixed", "text"],
+    "formula": "=FIXED(-1234.567, 1)",
+    "expected": { "text": "-1,234.6" }
+  },
+  {
+    "id": "fn.fixed-eq-text-round",
+    "description": "FIXED(n, 1) equals TEXT(ROUND(n, 1), \"#,##0.0\")",
+    "notes": "Documented relationship: FIXED is ROUND + a 0 / #,##0 skeleton. Engine does not read this golden.",
+    "tags": ["fixed", "text"],
+    "formula": "=FIXED(1234.567, 1)=TEXT(ROUND(1234.567, 1), \"#,##0.0\")",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.fixed-eq-text-plain",
+    "description": "FIXED(n, 2, TRUE) equals TEXT(ROUND(n, 2), \"0.00\")",
+    "tags": ["fixed", "text"],
+    "formula": "=FIXED(44.332, 2, TRUE)=TEXT(ROUND(44.332, 2), \"0.00\")",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.fixed-value-roundtrip",
+    "description": "VALUE(FIXED(1234.5, 1)) is 1234.5",
+    "tags": ["fixed", "text", "value"],
+    "formula": "=VALUE(FIXED(1234.5, 1))",
+    "expected": { "number": 1234.5 }
+  },
+  {
+    "id": "fn.fixed-type",
+    "description": "TYPE(FIXED(1)) is 2 (text)",
+    "tags": ["fixed", "text"],
+    "formula": "=TYPE(FIXED(1))",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.fixed-istext",
+    "description": "ISTEXT(FIXED(1)) is TRUE",
+    "tags": ["fixed", "text"],
+    "formula": "=ISTEXT(FIXED(1))",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.fixed-arith-text",
+    "description": "FIXED(1)+0 coerces the numeric text back to 1",
+    "tags": ["fixed", "text", "coercion"],
+    "formula": "=FIXED(1)+0",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.fixed-cell",
+    "description": "FIXED of a number cell (Microsoft A2 shape)",
+    "tags": ["fixed", "text"],
+    "formula": "=FIXED(A1, 1)",
+    "expected": { "text": "1,234.6" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": { "A1": { "number": 1234.567 } }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.fixed-cell-text",
+    "description": "FIXED of numeric text in a cell",
+    "tags": ["fixed", "text", "coercion"],
+    "formula": "=FIXED(A1, 0)",
+    "expected": { "text": "12" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": { "A1": { "text": "12.4" } }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.fixed-named",
+    "description": "FIXED of a defined name",
+    "tags": ["fixed", "text", "named"],
+    "formula": "=FIXED(Amt, 1)",
+    "expected": { "text": "1,234.6" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": { "A1": { "number": 1234.567 } }
+        }
+      ],
+      "names": [{ "name": "Amt", "refers_to": "Sheet1!A1" }]
+    }
+  },
+  {
+    "id": "fn.fixed-intersect",
+    "description": "FIXED of a column range implicit-intersects the host row",
+    "tags": ["fixed", "text"],
+    "quirks": ["implicit-intersection"],
+    "formula": "=FIXED(A1:A3, 0)",
+    "at": "Sheet1!B2",
+    "expected": { "text": "20" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "number": 10 },
+            "A2": { "number": 20 },
+            "A3": { "number": 30 }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.fixed-array-top-left",
+    "description": "FIXED of an array literal takes the top-left (no FIXED spill)",
+    "tags": ["fixed", "text"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=FIXED({1234.567, 1}, 1)",
+    "expected": { "text": "1,234.6" }
+  },
+  {
+    "id": "fn.fixed-iferror",
+    "description": "IFERROR(FIXED(\"x\"), \"n\") is n",
+    "tags": ["fixed", "text", "errors"],
+    "formula": "=IFERROR(FIXED(\"x\"), \"n\")",
+    "expected": { "text": "n" }
+  },
+  {
+    "id": "fn.fixed-arity-0",
+    "description": "FIXED() is #VALUE!",
+    "tags": ["fixed", "text", "errors"],
+    "formula": "=FIXED()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.fixed-arity-4",
+    "description": "Four arguments is #VALUE!",
+    "tags": ["fixed", "text", "errors"],
+    "formula": "=FIXED(1, 2, TRUE, 4)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.fixed-decimals-128",
+    "description": "decimals 128 is #VALUE! (Microsoft max 127)",
+    "notes": "Excel golden: decimals can be as large as 127; 128 after truncate is #VALUE!.",
+    "tags": ["fixed", "text", "errors"],
+    "formula": "=FIXED(1, 128)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.fixed-decimals-127-9",
+    "description": "FIXED(1, 127.9) truncates to 127 and succeeds (text length 129)",
+    "tags": ["fixed", "text"],
+    "formula": "=LEN(FIXED(1, 127.9))",
+    "expected": { "number": 129 }
+  },
+  {
+    "id": "fn.fixed-err-div0",
+    "description": "Error in number propagates",
+    "tags": ["fixed", "text", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=FIXED(1/0)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.fixed-err-ltr",
+    "description": "Number error wins over later #N/A (left-to-right)",
+    "tags": ["fixed", "text", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=FIXED(#DIV/0!, #N/A)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.fixed-err-na-short",
+    "description": "#N/A in number is not replaced by a later #DIV/0!",
+    "tags": ["fixed", "text", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=FIXED(#N/A, 1/0)",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.fixed-err-value",
+    "description": "#VALUE! in number propagates",
+    "tags": ["fixed", "text", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=FIXED(#VALUE!)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.fixed-err-name",
+    "description": "Unknown callee inside FIXED is #NAME?",
+    "tags": ["fixed", "text", "errors"],
+    "formula": "=FIXED(NOTAFUNCTION(1))",
+    "expected": { "error": "#NAME?" }
+  },
+  {
+    "id": "fn.fixed-err-decimals",
+    "description": "Error in decimals propagates after a good number",
+    "tags": ["fixed", "text", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=FIXED(1, 1/0)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.fixed-nested",
+    "description": "VALUE(FIXED(FIXED-input)) after one FIXED still parses",
+    "tags": ["fixed", "text"],
+    "formula": "=FIXED(VALUE(FIXED(99.99, 1)), 0)",
+    "expected": { "text": "100" }
+  }
+]
