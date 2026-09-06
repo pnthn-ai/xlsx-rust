@@ -2478,4 +2478,3 @@ fn flatten_vector(v: ExcelValue) -> Vec<ExcelValue> {
         other => vec![other],
     }
 }
-
