@@ -1,7 +1,8 @@
 //! Before/after microbench for Excel `ROUNDDOWN`.
 //!
-//! Compares the textbook two-`powi` baseline (`rounddown_naive` / slice)
-//! with the production kernel (specialised `0` / `±1`…`±4` + table scale).
+//! Compares the first-draft two-`powi` + `excel_round_15` baseline
+//! (`rounddown_naive` / slice) with the production kernel (specialised
+//! `0` / `±1`…`±4` + cheap 15-digit snap).
 //!
 //! ```text
 //! cargo bench -p xlsx-engine-core --bench rounddown
@@ -79,7 +80,7 @@ fn tens() -> Vec<f64> {
 }
 
 fn main() {
-    println!("ROUNDDOWN kernel bench (two-powi baseline vs specialized)");
+    println!("ROUNDDOWN kernel bench (15-digit snap-then-trunc vs specialized)");
     println!(
         "{:<46} {:>12} {:>12} {:>8}",
         "case", "naive", "optimized", "speedup"

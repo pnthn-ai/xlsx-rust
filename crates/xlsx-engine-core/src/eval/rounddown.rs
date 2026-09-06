@@ -25,7 +25,7 @@
 
 use super::{coerce, Ctx, Evaluator};
 use crate::ast::Expr;
-use xlsx_types::{EvalError, ExcelError, ExcelValue};
+use xlsx_types::{excel_round_15, EvalError, ExcelError, ExcelValue};
 
 /// Exact `10^e` for `e` in `0..=22` (all representable as f64 integers).
 const POW10: [f64; 23] = [
@@ -71,8 +71,9 @@ pub fn rounddown(n: f64, digits: i32) -> f64 {
     }
 }
 
-/// Textbook baseline used by the hill-climb bench: two `powi` calls, no
-/// specialized digit paths. Same 15-digit snap as production so results match.
+/// First-draft kernel: two `powi` calls and a full `excel_round_15`
+/// (`log10` / `powi`) snap before `trunc`. Same results on clean inputs;
+/// benches print before/after against the cheap relative snap.
 #[inline]
 pub fn rounddown_naive(n: f64, digits: i32) -> f64 {
     if !n.is_finite() {
@@ -87,7 +88,7 @@ pub fn rounddown_naive(n: f64, digits: i32) -> f64 {
     let sign = if n < 0.0 { -1.0 } else { 1.0 };
     let mag = n.abs();
     let scaled = if digits >= 0 { mag * p } else { mag / p };
-    let rounded = snap_15(scaled).trunc();
+    let rounded = excel_round_15(scaled).trunc();
     if digits >= 0 {
         sign * rounded / unscale
     } else {
