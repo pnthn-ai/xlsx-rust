@@ -1,24 +1,40 @@
 //! Excel `SEARCH` kernel.
 //!
-//! Semantics (desktop Excel):
-//! - `SEARCH(find_text, within_text, [start_num])` — case-insensitive.
-//! - Wildcards in `find_text`: `*` (any sequence), `?` (one character),
-//!   `~` escapes the next character (`~*`, `~?`, `~~`).
-//! - 1-based character index (Unicode scalars, matching this crate's `LEN`/`MID`).
+//! Semantics (desktop Excel / Microsoft docs):
+//! - `SEARCH(find_text, within_text, [start_num])` — **case-insensitive**.
+//!   Wildcards in `find_text`: `*` (any sequence, including empty), `?`
+//!   (one character), `~` escapes the next character (`~*`, `~?`, `~~`).
+//!   `FIND` is a separate workstream (case-sensitive, no wildcards).
+//! - 1-based character index. Indexing matches this crate's `LEN` / `MID` /
+//!   `LEFT` / `RIGHT` / `REPLACE` / `UNICODE`: Unicode scalar values
+//!   (`str::chars`). That is Excel Compatibility Version 2 — a
+//!   supplementary-plane emoji is **one** character (`SEARCH("😀","x😀")`
+//!   is 2). Combining marks stay separate scalars.
 //! - Missing needle → `#VALUE!` (not `#N/A`).
-//! - Empty `find_text` matches at `start_num` when `start_num <= LEN(within_text)`.
-//! - `start_num` is 1-based; omitted means 1. `< 1` or `> LEN(within_text)` is
-//!   `#VALUE!`. This is stricter than `FIND`, which allows empty `find_text`
-//!   one past `LEN`.
+//! - Empty `find_text` matches at `start_num` when `start_num <=
+//!   LEN(within_text)`. This is stricter than `FIND`, which allows empty
+//!   `find_text` one past `LEN`.
+//! - `start_num` is 1-based; omitted (including a trailing-comma slot)
+//!   means 1. A blank cell / `FALSE` / `0` is `#VALUE!`. `< 1` or
+//!   `> LEN(within_text)` is `#VALUE!`.
 //! - A leading `*` still reports `start_num` (`SEARCH("*z","XYZ")` is 1),
 //!   because `*` can match the empty prefix. `*` cannot test "ends with".
+//! - Numbers / bools coerce like `&` before the search. Errors propagate
+//!   left-to-right. Wrong arity is `#VALUE!`.
 //!
-//! Production path: ASCII case-insensitive last-byte SWAR probe for literal
-//! needles, leading-`*` shortcut, first-literal skip for general wildcards.
-//! The `Vec<char>` try-every-index baseline lives beside that path so benches
-//! can print before/after.
+//! Production path: borrow `Text` / bool / empty (no `to_text` clone);
+//! skip tokenizing when `find_text` has no `*` / `?` / `~`; ASCII
+//! case-insensitive last-byte SWAR; UTF-8 first-byte probe for Unicode;
+//! leading-`*` shortcut; first-literal skip; iterative `*` backtrack.
+//! The `Vec<char>` try-every-index baseline lives beside that path so
+//! benches can print before/after. This kernel does **not** read fixture
+//! goldens.
 
-use xlsx_types::ExcelError;
+use std::borrow::Cow;
+
+use super::{coerce, Ctx, Evaluator};
+use crate::ast::Expr;
+use xlsx_types::{EvalError, ExcelError, ExcelValue};
 
 /// Production `SEARCH` kernel.
 ///
@@ -34,6 +50,33 @@ pub fn search(find_text: &str, within_text: &str, start_num: i64) -> Result<f64,
 /// `cargo bench -p xlsx-engine-core --bench search` can print before/after.
 pub fn search_naive(find_text: &str, within_text: &str, start_num: i64) -> Result<f64, ExcelError> {
     search_impl(find_text, within_text, start_num, SearchMode::Naive)
+}
+
+/// Production `SEARCH` on already-evaluated Excel values (no `Text` clone).
+///
+/// `start_num` is already truncated toward zero. Errors in `find_text`
+/// beat errors in `within_text`.
+pub fn search_value(
+    find_text: &ExcelValue,
+    within_text: &ExcelValue,
+    start_num: i64,
+) -> Result<f64, ExcelError> {
+    let needle = text_cow(find_text)?;
+    let hay = text_cow(within_text)?;
+    search(&needle, &hay, start_num)
+}
+
+/// Value-level baseline: full `to_text` clone + [`search_naive`].
+pub fn search_value_naive(
+    find_text: &ExcelValue,
+    within_text: &ExcelValue,
+    start_num: i64,
+) -> Result<f64, ExcelError> {
+    search_naive(
+        &coerce::to_text(find_text)?,
+        &coerce::to_text(within_text)?,
+        start_num,
+    )
 }
 
 #[derive(Clone, Copy)]
@@ -116,7 +159,7 @@ fn match_here_chars(pat: &[char], hay: &[char]) -> bool {
 
 fn search_fast(find_text: &str, within_text: &str, start_num: i64) -> Result<f64, ExcelError> {
     let skip = (start_num as usize) - 1;
-    let Some(suffix) = skip_chars(within_text, skip) else {
+    let Some(suffix) = skip_n_chars(within_text, skip) else {
         return Err(ExcelError::Value);
     };
     // `start_num > LEN` (including empty within_text): leftover is empty.
@@ -126,9 +169,23 @@ fn search_fast(find_text: &str, within_text: &str, start_num: i64) -> Result<f64
     if find_text.is_empty() {
         return Ok(start_num as f64);
     }
+    // Common path: no `*` / `?` / `~` — skip tokenizing.
+    if !has_wildcard_or_escape(find_text) {
+        return match ci_find(suffix, find_text) {
+            Some(rel) => Ok((start_num as usize + rel) as f64),
+            None => Err(ExcelError::Value),
+        };
+    }
     let toks = parse_pat(find_text);
     if toks.iter().all(|t| matches!(t, Tok::Star)) {
         return Ok(start_num as f64);
+    }
+    if toks.iter().all(|t| matches!(t, Tok::Any)) {
+        return if skip_n_chars(suffix, toks.len()).is_some() {
+            Ok(start_num as f64)
+        } else {
+            Err(ExcelError::Value)
+        };
     }
     // Leading `*` matches the empty prefix, so a hit always reports start_num.
     if matches!(toks.first(), Some(Tok::Star)) {
@@ -141,6 +198,26 @@ fn search_fast(find_text: &str, within_text: &str, start_num: i64) -> Result<f64
     match first_match(&toks, suffix) {
         Some(rel) => Ok((start_num as usize + rel) as f64),
         None => Err(ExcelError::Value),
+    }
+}
+
+/// `*` / `?` / `~` are ASCII; they never appear as UTF-8 continuation bytes.
+fn has_wildcard_or_escape(s: &str) -> bool {
+    s.as_bytes()
+        .iter()
+        .any(|&b| b == b'*' || b == b'?' || b == b'~')
+}
+
+/// `&`-style text without cloning `Text` / bool / empty.
+fn text_cow(v: &ExcelValue) -> Result<Cow<'_, str>, ExcelError> {
+    match v {
+        ExcelValue::Error(e) => Err(*e),
+        ExcelValue::Text(s) => Ok(Cow::Borrowed(s)),
+        ExcelValue::Empty => Ok(Cow::Borrowed("")),
+        ExcelValue::Bool(true) => Ok(Cow::Borrowed("TRUE")),
+        ExcelValue::Bool(false) => Ok(Cow::Borrowed("FALSE")),
+        ExcelValue::Number(n) => Ok(Cow::Owned(coerce::format_plain(*n))),
+        ExcelValue::Array(_) => Err(ExcelError::Value),
     }
 }
 
@@ -221,42 +298,70 @@ fn first_match(toks: &[Tok], hay: &str) -> Option<usize> {
     }
 }
 
+/// Prefix wildcard match. Leftover hay after the pattern is allowed.
+///
+/// Iterative last-`*` backtrack is O(n·m) instead of the recursive
+/// try-every-index tree.
 fn match_here(toks: &[Tok], hay: &str) -> bool {
-    if toks.is_empty() {
-        return true;
-    }
-    match &toks[0] {
-        Tok::Star => {
-            if toks.len() == 1 {
-                return true;
-            }
-            let rest = &toks[1..];
-            let mut cur = hay;
-            loop {
-                if match_here(rest, cur) {
+    let mut ti = 0usize;
+    let mut h = hay;
+    let mut star_ti: Option<usize> = None;
+    let mut star_h: Option<&str> = None;
+
+    while ti < toks.len() {
+        match &toks[ti] {
+            Tok::Star => {
+                ti += 1;
+                while ti < toks.len() && matches!(toks[ti], Tok::Star) {
+                    ti += 1;
+                }
+                if ti == toks.len() {
                     return true;
                 }
-                if cur.is_empty() {
+                star_ti = Some(ti);
+                star_h = Some(h);
+            }
+            Tok::Any => {
+                if h.is_empty() {
+                    if !star_advance(&mut ti, &mut h, &mut star_ti, &mut star_h) {
+                        return false;
+                    }
+                    continue;
+                }
+                h = skip_n_chars(h, 1).unwrap_or("");
+                ti += 1;
+            }
+            Tok::Lit(s) => {
+                if ci_starts_with(h, s) {
+                    let n = s.chars().count();
+                    h = skip_n_chars(h, n).unwrap_or("");
+                    ti += 1;
+                } else if !star_advance(&mut ti, &mut h, &mut star_ti, &mut star_h) {
                     return false;
                 }
-                cur = skip_n_chars(cur, 1).unwrap_or("");
-            }
-        }
-        Tok::Any => match skip_n_chars(hay, 1) {
-            Some(rest) if !hay.is_empty() => match_here(&toks[1..], rest),
-            _ => false,
-        },
-        Tok::Lit(s) => {
-            if !ci_starts_with(hay, s) {
-                return false;
-            }
-            let n = s.chars().count();
-            match skip_n_chars(hay, n) {
-                Some(rest) => match_here(&toks[1..], rest),
-                None => false,
             }
         }
     }
+    true
+}
+
+fn star_advance<'a>(
+    ti: &mut usize,
+    h: &mut &'a str,
+    star_ti: &mut Option<usize>,
+    star_h: &mut Option<&'a str>,
+) -> bool {
+    let (Some(sti), Some(sh)) = (*star_ti, *star_h) else {
+        return false;
+    };
+    if sh.is_empty() {
+        return false;
+    }
+    let next = skip_n_chars(sh, 1).unwrap_or("");
+    *star_h = Some(next);
+    *h = next;
+    *ti = sti;
+    true
 }
 
 fn ci_find(hay: &str, needle: &str) -> Option<usize> {
@@ -474,10 +579,6 @@ fn memchr2_byte(hay: &[u8], a: u8, b: u8) -> Option<usize> {
         .map(|p| i + p)
 }
 
-fn skip_chars(s: &str, n: usize) -> Option<&str> {
-    skip_n_chars(s, n)
-}
-
 fn skip_n_chars(s: &str, n: usize) -> Option<&str> {
     if s.is_ascii() {
         if n > s.len() {
@@ -494,9 +595,43 @@ fn skip_n_chars(s: &str, n: usize) -> Option<&str> {
     }
 }
 
+/// Production SEARCH (scalar args, borrow / SWAR / wildcard kernel).
+pub(crate) fn fn_search(
+    ev: &Evaluator,
+    args: &[Expr],
+    ctx: &mut Ctx<'_>,
+) -> Result<ExcelValue, EvalError> {
+    if args.len() < 2 || args.len() > 3 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let find_text = ev.eval_scalar(&args[0], ctx)?;
+    let within_text = ev.eval_scalar(&args[1], ctx)?;
+    // Omitted optional start_num (not provided, or a trailing-comma slot)
+    // defaults to 1. A blank cell is Empty → 0 → #VALUE!, which is different.
+    let start_num = if args.len() == 3 && !args[2].is_omitted() {
+        match coerce::to_number(&ev.eval_scalar(&args[2], ctx)?) {
+            Ok(n) => {
+                if !n.is_finite() {
+                    return Ok(ExcelValue::Error(ExcelError::Value));
+                }
+                n.trunc() as i64
+            }
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        }
+    } else {
+        1
+    };
+    match search_value(&find_text, &within_text, start_num) {
+        Ok(pos) => Ok(ExcelValue::Number(pos)),
+        Err(e) => Ok(ExcelValue::Error(e)),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::eval::eval_formula_in;
+    use xlsx_types::{Cell, ExcelError, ExcelValue, Sheet, Workbook};
 
     fn both(needle: &str, hay: &str, start: i64) -> Result<f64, ExcelError> {
         let fast = search(needle, hay, start);
@@ -506,6 +641,20 @@ mod tests {
             "naive/fast mismatch for {needle:?} in {hay:?} start={start}"
         );
         fast
+    }
+
+    fn both_value(needle: &ExcelValue, hay: &ExcelValue, start: i64) -> Result<f64, ExcelError> {
+        let fast = search_value(needle, hay, start);
+        let slow = search_value_naive(needle, hay, start);
+        assert_eq!(
+            fast, slow,
+            "value naive/fast mismatch for {needle:?} in {hay:?} start={start}"
+        );
+        fast
+    }
+
+    fn t(s: &str) -> ExcelValue {
+        ExcelValue::Text(s.into())
     }
 
     #[test]
@@ -524,6 +673,13 @@ mod tests {
         assert_eq!(both("m", "Miriam McGovern", 1), Ok(1.0));
         assert_eq!(both("MARGIN", "Profit Margin", 1), Ok(8.0));
         assert_eq!(both("z", "abc", 1), Err(ExcelError::Value));
+        assert_eq!(both("B", "aaB", 1), Ok(3.0));
+        assert_eq!(both("AN", "BANANA", 1), Ok(2.0));
+        assert_eq!(both("aa", "AAA", 1), Ok(1.0));
+        assert_eq!(both("aa", "AAA", 2), Ok(2.0));
+        assert_eq!(both("aa", "AAA", 3), Err(ExcelError::Value));
+        assert_eq!(both("ABC", "abc", 1), Ok(1.0));
+        assert_eq!(both("abcd", "abc", 1), Err(ExcelError::Value));
     }
 
     #[test]
@@ -535,6 +691,7 @@ mod tests {
         assert_eq!(both("c", "abc", 4), Err(ExcelError::Value));
         assert_eq!(both("a", "abc", 0), Err(ExcelError::Value));
         assert_eq!(both("a", "abc", -1), Err(ExcelError::Value));
+        assert_eq!(both("a", "abc", 4), Err(ExcelError::Value));
     }
 
     #[test]
@@ -545,6 +702,8 @@ mod tests {
         assert_eq!(both("", "abc", 4), Err(ExcelError::Value));
         assert_eq!(both("", "", 1), Err(ExcelError::Value));
         assert_eq!(both("a", "", 1), Err(ExcelError::Value));
+        assert_eq!(both("*", "", 1), Err(ExcelError::Value));
+        assert_eq!(both("?", "", 1), Err(ExcelError::Value));
     }
 
     #[test]
@@ -563,6 +722,22 @@ mod tests {
         assert_eq!(both("*", "abc", 2), Ok(2.0));
         assert_eq!(both("*c", "abc", 3), Ok(3.0));
         assert_eq!(both("*x", "abc", 2), Err(ExcelError::Value));
+        assert_eq!(both("A*", "abc", 1), Ok(1.0));
+        assert_eq!(both("?C", "abc", 1), Ok(2.0));
+        assert_eq!(both("*Z", "xyZ", 1), Ok(1.0));
+        assert_eq!(both("X*B", "aaaxyz123abczzz", 1), Ok(4.0));
+        assert_eq!(both("a**b", "ab", 1), Ok(1.0));
+        assert_eq!(both("?*", "abc", 1), Ok(1.0));
+        assert_eq!(both("*?", "abc", 1), Ok(1.0));
+        assert_eq!(both("??*", "ab", 1), Ok(1.0));
+        assert_eq!(both("???*", "ab", 1), Err(ExcelError::Value));
+        assert_eq!(both("a?c", "ABC", 1), Ok(1.0));
+        assert_eq!(both("?*z", "xyz", 1), Ok(1.0));
+        assert_eq!(both("?z", "xyz", 1), Ok(2.0));
+        assert_eq!(both("x*", "abc", 1), Err(ExcelError::Value));
+        assert_eq!(both("*c", "ABC", 2), Ok(2.0));
+        assert_eq!(both("a*z", "abcz", 1), Ok(1.0));
+        assert_eq!(both("**", "abc", 1), Ok(1.0));
     }
 
     #[test]
@@ -577,14 +752,43 @@ mod tests {
         assert_eq!(both("~x", "ax", 1), Ok(2.0));
         assert_eq!(both("a~*", "a*b", 1), Ok(1.0));
         assert_eq!(both("*", "a*b", 1), Ok(1.0));
+        assert_eq!(both("~*", "*", 1), Ok(1.0));
+        assert_eq!(both("~?", "?", 1), Ok(1.0));
+        assert_eq!(both("~~", "~", 1), Ok(1.0));
+        assert_eq!(both("~a", "a", 1), Ok(1.0));
+        assert_eq!(both("~~a", "~a", 1), Ok(1.0));
+        assert_eq!(both("*~*", "a*b", 1), Ok(1.0));
+        assert_eq!(both("~**", "*x", 1), Ok(1.0));
+        assert_eq!(both("~*~?", "*?", 1), Ok(1.0));
+        assert_eq!(both("a~?b", "a?b", 1), Ok(1.0));
     }
 
     #[test]
     fn unicode_scalar_index_and_casefold() {
         assert_eq!(both("é", "café", 1), Ok(4.0));
         assert_eq!(both("É", "café", 1), Ok(4.0));
+        assert_eq!(both("é*", "CAFÉ", 1), Ok(4.0));
+        assert_eq!(both("?é", "café", 1), Ok(3.0));
         assert_eq!(both("日", "日本語", 1), Ok(1.0));
+        assert_eq!(both("本", "日本語", 1), Ok(2.0));
         assert_eq!(both("語", "日本語", 1), Ok(3.0));
+        assert_eq!(both("*語", "日本語", 1), Ok(1.0));
+        assert_eq!(both("語*", "日本語", 1), Ok(3.0));
+        assert_eq!(both("??", "日本語", 1), Ok(1.0));
+        assert_eq!(both("?", "日", 1), Ok(1.0));
+        assert_eq!(both("😀", "x😀y", 1), Ok(2.0));
+        assert_eq!(both("y", "x😀y", 1), Ok(3.0));
+        assert_eq!(both("Y", "x😀y", 1), Ok(3.0));
+        assert_eq!(both("😀", "😀", 1), Ok(1.0));
+        // Combining acute is not precomposed é.
+        assert_eq!(both("é", "e\u{0301}", 1), Err(ExcelError::Value));
+        assert_eq!(both("E", "e\u{0301}", 1), Ok(1.0));
+        assert_eq!(both("\u{0301}", "e\u{0301}", 1), Ok(2.0));
+        assert_eq!(both("a", "ÉABC", 2), Ok(2.0));
+        assert_eq!(both(" ", "a b", 1), Ok(2.0));
+        assert_eq!(both("\t", "a\tb", 1), Ok(2.0));
+        assert_eq!(both(" ", "a\tb", 1), Err(ExcelError::Value));
+        assert_eq!(both("\u{00a0}", "a\u{00a0}b", 1), Ok(2.0));
     }
 
     #[test]
@@ -597,5 +801,222 @@ mod tests {
         let hay = format!("{}aab", "aaa".repeat(80));
         assert_eq!(both("AAB", &hay, 1), Ok((hay.len() - 2) as f64));
         assert_eq!(both("AAC", &hay, 1), Err(ExcelError::Value));
+    }
+
+    #[test]
+    fn ascii_one_byte_memchr_ci() {
+        let hay = format!("{}z", "x".repeat(4_000));
+        assert_eq!(both("Z", &hay, 1), Ok(4_001.0));
+        assert_eq!(both("z", &hay, 4_000), Ok(4_001.0));
+        assert_eq!(both("y", &hay, 1), Err(ExcelError::Value));
+        assert_eq!(both("X", &hay, 2), Ok(2.0));
+    }
+
+    #[test]
+    fn value_borrows_text_and_bools() {
+        assert_eq!(both_value(&t("n"), &t("printer"), 1), Ok(4.0));
+        assert_eq!(both_value(&t(""), &t("abc"), 1), Ok(1.0));
+        assert_eq!(both_value(&ExcelValue::Empty, &t("abc"), 1), Ok(1.0));
+        assert_eq!(
+            both_value(&t("a"), &ExcelValue::Empty, 1),
+            Err(ExcelError::Value)
+        );
+        assert_eq!(
+            both_value(&ExcelValue::Bool(true), &t("trueBLUE"), 1),
+            Ok(1.0)
+        );
+        assert_eq!(both_value(&t("r"), &ExcelValue::Bool(true), 1), Ok(2.0));
+        assert_eq!(
+            both_value(&ExcelValue::Number(2.0), &ExcelValue::Number(12321.0), 1),
+            Ok(2.0)
+        );
+        assert_eq!(both_value(&t("."), &ExcelValue::Number(12.5), 1), Ok(3.0));
+        assert_eq!(both_value(&t("-"), &ExcelValue::Number(-0.0), 1), Ok(1.0));
+        assert_eq!(
+            both_value(&t("-"), &ExcelValue::Number(0.0), 1),
+            Err(ExcelError::Value)
+        );
+        assert_eq!(
+            both_value(&t("1*3"), &ExcelValue::Number(123.0), 1),
+            Ok(1.0)
+        );
+        assert_eq!(both_value(&t("T*E"), &ExcelValue::Bool(true), 1), Ok(1.0));
+        assert_eq!(
+            both_value(&ExcelValue::Error(ExcelError::Div0), &t("abc"), 1),
+            Err(ExcelError::Div0)
+        );
+        assert_eq!(
+            both_value(&t("a"), &ExcelValue::Error(ExcelError::Na), 1),
+            Err(ExcelError::Na)
+        );
+        let long = "x".repeat(8_000) + "needle";
+        assert_eq!(both_value(&t("NEEDLE"), &t(&long), 1), Ok(8_001.0));
+        assert_eq!(both_value(&t("*NEEDLE"), &t(&long), 1), Ok(1.0));
+    }
+
+    #[test]
+    fn formula_microsoft_and_omitted_start() {
+        let wb = Workbook::default();
+        assert_eq!(
+            eval_formula_in(&wb, "=SEARCH(\"n\",\"printer\")").unwrap(),
+            ExcelValue::Number(4.0)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=SEARCH(\"margin\",\"Profit Margin\")").unwrap(),
+            ExcelValue::Number(8.0)
+        );
+        // Trailing-comma omitted start_num uses the default 1, not Empty→0.
+        assert_eq!(
+            eval_formula_in(&wb, "=SEARCH(\"n\",\"printer\",)").unwrap(),
+            ExcelValue::Number(4.0)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=SEARCH(, \"abc\")").unwrap(),
+            ExcelValue::Number(1.0)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=SEARCH(\"a\",)").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
+        );
+        // SEARCH("","") is #VALUE! (FIND would be 1).
+        assert_eq!(
+            eval_formula_in(&wb, "=SEARCH(,)").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
+        );
+    }
+
+    #[test]
+    fn formula_coercion_nested_wildcards_and_arity() {
+        let wb = Workbook::default();
+        assert_eq!(
+            eval_formula_in(&wb, "=SEARCH(2, 12321)").unwrap(),
+            ExcelValue::Number(2.0)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=SEARCH(\"r\", TRUE)").unwrap(),
+            ExcelValue::Number(2.0)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=SEARCH(\"1\", 10%)").unwrap(),
+            ExcelValue::Number(3.0)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=SEARCH(\"a\", LEFT(\"BANANA\", 3))").unwrap(),
+            ExcelValue::Number(2.0)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=SEARCH(\"\", \"abc\", LEN(\"abc\"))").unwrap(),
+            ExcelValue::Number(3.0)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=SEARCH(\"\", \"abc\", LEN(\"abc\")+1)").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=SEARCH(CHAR(97), \"ABC\")").unwrap(),
+            ExcelValue::Number(1.0)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=SEARCH(\"b\", REPT(\"a\", 10)&\"b\")").unwrap(),
+            ExcelValue::Number(11.0)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=SEARCH(\"c\", \"ab\"&\"cd\")").unwrap(),
+            ExcelValue::Number(3.0)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=SEARCH(\"1\", DATE(1900,1,1))").unwrap(),
+            ExcelValue::Number(1.0)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=SEARCH(\"M\", \"Miriam McGovern\")+1").unwrap(),
+            ExcelValue::Number(2.0)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=IFERROR(SEARCH(\"z\", \"abc\"), 0)").unwrap(),
+            ExcelValue::Number(0.0)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=SEARCH(\"A*\", \"abc\")").unwrap(),
+            ExcelValue::Number(1.0)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=SEARCH(\"1*3\", 123)").unwrap(),
+            ExcelValue::Number(1.0)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=SEARCH(\"T*E\", TRUE)").unwrap(),
+            ExcelValue::Number(1.0)
+        );
+        assert_eq!(
+            eval_formula_in(
+                &wb,
+                "=SUM(MAP({\"Cat\";\"Bat\";\"Rat\"},LAMBDA(x,SEARCH(\"a\",x))))"
+            )
+            .unwrap(),
+            ExcelValue::Number(6.0)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=SEARCH()").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=SEARCH(\"a\")").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=SEARCH(\"a\", \"abc\", 1, 1)").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=SEARCH(1/0, \"abc\")").unwrap(),
+            ExcelValue::Error(ExcelError::Div0)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=SEARCH(#DIV/0!, #N/A)").unwrap(),
+            ExcelValue::Error(ExcelError::Div0)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=SEARCH(\"a\", \"abc\", 1E+20)").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=SEARCH({\"a\",\"z\"}, \"ABC\")").unwrap(),
+            ExcelValue::Number(1.0)
+        );
+    }
+
+    #[test]
+    fn formula_blank_cell_vs_omitted() {
+        let mut sheet = Sheet::new("Sheet1");
+        sheet
+            .cells
+            .insert("A1".into(), Cell::value(ExcelValue::Empty));
+        sheet
+            .cells
+            .insert("A2".into(), Cell::value(ExcelValue::Text("banana".into())));
+        sheet
+            .cells
+            .insert("A3".into(), Cell::value(ExcelValue::Text(String::new())));
+        let wb = Workbook {
+            sheets: vec![sheet],
+            names: vec![],
+        };
+        assert_eq!(
+            eval_formula_in(&wb, "=SEARCH(\"a\", \"abc\", A1)").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=SEARCH(A1, \"abc\")").unwrap(),
+            ExcelValue::Number(1.0)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=SEARCH(\"a\", A2, 3)").unwrap(),
+            ExcelValue::Number(4.0)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=SEARCH(\"a\", A3)").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
+        );
     }
 }

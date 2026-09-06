@@ -548,5 +548,636 @@
     "quirks": ["error-precedence"],
     "formula": "=SEARCH(#DIV/0!,#N/A)",
     "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.search-err-na",
+    "description": "NA() in find_text propagates #N/A",
+    "tags": ["text", "search", "errors"],
+    "formula": "=SEARCH(NA(),\"abc\")",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.search-err-cell",
+    "description": "Error in a referenced cell propagates",
+    "tags": ["text", "search", "errors"],
+    "formula": "=SEARCH(A1,\"abc\")",
+    "expected": { "error": "#VALUE!" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "error": "#VALUE!" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.search-omitted-start",
+    "description": "Trailing-comma omitted start_num uses the default 1 (not Empty→0)",
+    "tags": ["text", "search"],
+    "formula": "=SEARCH(\"n\",\"printer\",)",
+    "expected": { "number": 4 }
+  },
+  {
+    "id": "fn.search-omitted-find-text",
+    "description": "Omitted find_text coerces to \"\" and matches at 1",
+    "tags": ["text", "search", "empty"],
+    "formula": "=SEARCH(, \"abc\")",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.search-omitted-within",
+    "description": "Omitted within_text is empty: non-empty needle is #VALUE!",
+    "tags": ["text", "search", "errors", "empty"],
+    "formula": "=SEARCH(\"a\",)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.search-omitted-both",
+    "description": "SEARCH(,) is SEARCH(\"\",\"\") → #VALUE! (FIND would be 1)",
+    "tags": ["text", "search", "errors", "empty"],
+    "formula": "=SEARCH(,)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.search-blank-within-cell",
+    "description": "Blank within_text cell coerces to \"\" → #VALUE! for a non-empty needle",
+    "tags": ["text", "search", "errors", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=SEARCH(\"a\", A1)",
+    "expected": { "error": "#VALUE!" },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.search-stored-empty-within",
+    "description": "Stored \"\" within_text is empty text → #VALUE! for a non-empty needle",
+    "tags": ["text", "search", "errors"],
+    "formula": "=SEARCH(\"a\", A1)",
+    "expected": { "error": "#VALUE!" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.search-cell",
+    "description": "SEARCH of a stored text cell uses the cell value",
+    "tags": ["text", "search"],
+    "formula": "=SEARCH(\"a\", A1, 3)",
+    "expected": { "number": 4 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "banana" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.search-whole-string",
+    "description": "Needle equal to within_text (case-insensitive) is position 1",
+    "tags": ["text", "search"],
+    "quirks": ["case-insensitive-text"],
+    "formula": "=SEARCH(\"ABC\", \"abc\")",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.search-needle-longer",
+    "description": "Needle longer than within_text is #VALUE!",
+    "tags": ["text", "search", "errors"],
+    "formula": "=SEARCH(\"abcd\", \"abc\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.search-start-num-huge",
+    "description": "start_num 1E+20 is far past LEN → #VALUE!",
+    "tags": ["text", "search", "errors"],
+    "formula": "=SEARCH(\"a\", \"abc\", 1E+20)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.search-overlapping",
+    "description": "Overlapping case-insensitive needle: SEARCH(\"aa\", \"AAA\") is 1",
+    "tags": ["text", "search"],
+    "quirks": ["case-insensitive-text"],
+    "formula": "=SEARCH(\"aa\", \"AAA\")",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.search-overlapping-start",
+    "description": "start_num 2 takes the second overlapping \"aa\" in \"AAA\"",
+    "tags": ["text", "search"],
+    "quirks": ["case-insensitive-text"],
+    "formula": "=SEARCH(\"aa\", \"AAA\", 2)",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.search-overlapping-last",
+    "description": "start_num 3 cannot fit \"aa\" in \"AAA\"",
+    "tags": ["text", "search", "errors"],
+    "formula": "=SEARCH(\"aa\", \"AAA\", 3)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.search-case-later",
+    "description": "Case-insensitive hit later in the string: SEARCH(\"B\", \"aaB\") is 3",
+    "tags": ["text", "search"],
+    "quirks": ["case-insensitive-text"],
+    "formula": "=SEARCH(\"B\", \"aaB\")",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.search-wildcard-case-a-star",
+    "description": "SEARCH(\"A*\", \"abc\") is 1 (case-insensitive wildcard)",
+    "tags": ["text", "search"],
+    "quirks": ["wildcards", "case-insensitive-text"],
+    "formula": "=SEARCH(\"A*\", \"abc\")",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.search-wildcard-case-q-c",
+    "description": "SEARCH(\"?C\", \"abc\") is 2",
+    "tags": ["text", "search"],
+    "quirks": ["wildcards", "case-insensitive-text"],
+    "formula": "=SEARCH(\"?C\", \"abc\")",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.search-wildcard-case-lead-z",
+    "description": "SEARCH(\"*Z\", \"xyZ\") is 1 (leading * reports start_num)",
+    "tags": ["text", "search"],
+    "quirks": ["wildcards", "case-insensitive-text"],
+    "formula": "=SEARCH(\"*Z\", \"xyZ\")",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.search-wildcard-case-x-star-b",
+    "description": "SEARCH(\"X*B\", \"aaaxyz123abczzz\") is 4",
+    "tags": ["text", "search"],
+    "quirks": ["wildcards", "case-insensitive-text"],
+    "formula": "=SEARCH(\"X*B\", \"aaaxyz123abczzz\")",
+    "expected": { "number": 4 }
+  },
+  {
+    "id": "fn.search-wildcard-double-star",
+    "description": "Consecutive * collapse: SEARCH(\"a**b\", \"ab\") is 1",
+    "tags": ["text", "search"],
+    "quirks": ["wildcards"],
+    "formula": "=SEARCH(\"a**b\", \"ab\")",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.search-wildcard-q-star",
+    "description": "SEARCH(\"?*\", \"abc\") is 1 (? consumes one, * the rest)",
+    "tags": ["text", "search"],
+    "quirks": ["wildcards"],
+    "formula": "=SEARCH(\"?*\", \"abc\")",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.search-wildcard-star-q",
+    "description": "SEARCH(\"*?\", \"abc\") is 1 (leading * reports start_num)",
+    "tags": ["text", "search"],
+    "quirks": ["wildcards"],
+    "formula": "=SEARCH(\"*?\", \"abc\")",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.search-wildcard-two-q-star",
+    "description": "SEARCH(\"??*\", \"ab\") is 1 (two chars + empty *)",
+    "tags": ["text", "search"],
+    "quirks": ["wildcards"],
+    "formula": "=SEARCH(\"??*\", \"ab\")",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.search-wildcard-three-q-star-miss",
+    "description": "SEARCH(\"???*\", \"ab\") is #VALUE! (needs three characters)",
+    "tags": ["text", "search", "errors"],
+    "quirks": ["wildcards"],
+    "formula": "=SEARCH(\"???*\", \"ab\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.search-wildcard-a-q-c-case",
+    "description": "SEARCH(\"a?c\", \"ABC\") is 1",
+    "tags": ["text", "search"],
+    "quirks": ["wildcards", "case-insensitive-text"],
+    "formula": "=SEARCH(\"a?c\", \"ABC\")",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.search-wildcard-q-star-z",
+    "description": "SEARCH(\"?*z\", \"xyz\") is 1",
+    "tags": ["text", "search"],
+    "quirks": ["wildcards"],
+    "formula": "=SEARCH(\"?*z\", \"xyz\")",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.search-wildcard-q-z",
+    "description": "SEARCH(\"?z\", \"xyz\") is 2",
+    "tags": ["text", "search"],
+    "quirks": ["wildcards"],
+    "formula": "=SEARCH(\"?z\", \"xyz\")",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.search-wildcard-x-star-miss",
+    "description": "SEARCH(\"x*\", \"abc\") is #VALUE!",
+    "tags": ["text", "search", "errors"],
+    "quirks": ["wildcards"],
+    "formula": "=SEARCH(\"x*\", \"abc\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.search-wildcard-star-c-start-2",
+    "description": "SEARCH(\"*c\", \"ABC\", 2) is 2 (leading * reports start_num)",
+    "tags": ["text", "search"],
+    "quirks": ["wildcards", "case-insensitive-text"],
+    "formula": "=SEARCH(\"*c\", \"ABC\", 2)",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.search-escape-star-only",
+    "description": "SEARCH(\"~*\", \"*\") is 1",
+    "tags": ["text", "search"],
+    "quirks": ["wildcards"],
+    "formula": "=SEARCH(\"~*\", \"*\")",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.search-escape-q-only",
+    "description": "SEARCH(\"~?\", \"?\") is 1",
+    "tags": ["text", "search"],
+    "quirks": ["wildcards"],
+    "formula": "=SEARCH(\"~?\", \"?\")",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.search-escape-tilde-only",
+    "description": "SEARCH(\"~~\", \"~\") is 1",
+    "tags": ["text", "search"],
+    "quirks": ["wildcards"],
+    "formula": "=SEARCH(\"~~\", \"~\")",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.search-escape-letter",
+    "description": "~a is a literal a: SEARCH(\"~a\", \"a\") is 1",
+    "tags": ["text", "search"],
+    "quirks": ["wildcards"],
+    "formula": "=SEARCH(\"~a\", \"a\")",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.search-escape-tilde-then-a",
+    "description": "SEARCH(\"~~a\", \"~a\") is 1",
+    "tags": ["text", "search"],
+    "quirks": ["wildcards"],
+    "formula": "=SEARCH(\"~~a\", \"~a\")",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.search-escape-star-in-star",
+    "description": "SEARCH(\"*~*\", \"a*b\") is 1 (leading * then literal *)",
+    "tags": ["text", "search"],
+    "quirks": ["wildcards"],
+    "formula": "=SEARCH(\"*~*\", \"a*b\")",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.search-escape-star-then-star",
+    "description": "SEARCH(\"~**\", \"*x\") is 1 (literal * then *)",
+    "tags": ["text", "search"],
+    "quirks": ["wildcards"],
+    "formula": "=SEARCH(\"~**\", \"*x\")",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.search-escape-star-q",
+    "description": "SEARCH(\"~*~?\", \"*?\") is 1",
+    "tags": ["text", "search"],
+    "quirks": ["wildcards"],
+    "formula": "=SEARCH(\"~*~?\", \"*?\")",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.search-escape-q-in-literal",
+    "description": "SEARCH(\"a~?b\", \"a?b\") is 1",
+    "tags": ["text", "search"],
+    "quirks": ["wildcards"],
+    "formula": "=SEARCH(\"a~?b\", \"a?b\")",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.search-wildcard-number",
+    "description": "Numbers coerce then wildcard: SEARCH(\"1*3\", 123) is 1",
+    "tags": ["text", "search", "coercion"],
+    "quirks": ["wildcards", "equality-vs-arithmetic-coercion"],
+    "formula": "=SEARCH(\"1*3\", 123)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.search-wildcard-bool",
+    "description": "SEARCH(\"T*E\", TRUE) is 1",
+    "tags": ["text", "search", "coercion"],
+    "quirks": ["wildcards"],
+    "formula": "=SEARCH(\"T*E\", TRUE)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.search-wildcard-empty-star",
+    "description": "SEARCH(\"*\", \"\") is #VALUE! (start_num 1 > LEN 0)",
+    "tags": ["text", "search", "errors"],
+    "quirks": ["wildcards"],
+    "formula": "=SEARCH(\"*\", \"\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.search-wildcard-empty-q",
+    "description": "SEARCH(\"?\", \"\") is #VALUE!",
+    "tags": ["text", "search", "errors"],
+    "quirks": ["wildcards"],
+    "formula": "=SEARCH(\"?\", \"\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.search-japanese",
+    "description": "UTF-8 scalar position (日本語): 本 is character 2",
+    "tags": ["text", "search"],
+    "formula": "=SEARCH(\"本\", \"日本語\")",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.search-wildcard-lead-japanese",
+    "description": "SEARCH(\"*語\", \"日本語\") is 1 (leading * reports start_num)",
+    "tags": ["text", "search"],
+    "quirks": ["wildcards"],
+    "formula": "=SEARCH(\"*語\", \"日本語\")",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.search-wildcard-trail-japanese",
+    "description": "SEARCH(\"語*\", \"日本語\") is 3",
+    "tags": ["text", "search"],
+    "quirks": ["wildcards"],
+    "formula": "=SEARCH(\"語*\", \"日本語\")",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.search-wildcard-two-q-japanese",
+    "description": "SEARCH(\"??\", \"日本語\") is 1",
+    "tags": ["text", "search"],
+    "quirks": ["wildcards"],
+    "formula": "=SEARCH(\"??\", \"日本語\")",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.search-wildcard-one-q-cjk",
+    "description": "SEARCH(\"?\", \"日\") is 1",
+    "tags": ["text", "search"],
+    "quirks": ["wildcards"],
+    "formula": "=SEARCH(\"?\", \"日\")",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.search-emoji-compat-v2",
+    "description": "😀 is one Compatibility Version 2 scalar: SEARCH(\"😀\", \"x😀y\") is 2",
+    "tags": ["text", "search"],
+    "formula": "=SEARCH(\"😀\", \"x😀y\")",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.search-after-emoji",
+    "description": "Character after a supplementary-plane emoji is position 3",
+    "tags": ["text", "search"],
+    "formula": "=SEARCH(\"y\", \"x😀y\")",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.search-after-emoji-case",
+    "description": "SEARCH(\"Y\", \"x😀y\") is 3 (case-insensitive after emoji)",
+    "tags": ["text", "search"],
+    "quirks": ["case-insensitive-text"],
+    "formula": "=SEARCH(\"Y\", \"x😀y\")",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.search-combining-not-precomposed",
+    "description": "Precomposed é does not match e + combining acute",
+    "tags": ["text", "search"],
+    "formula": "=SEARCH(\"é\", \"e\u0301\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.search-combining-base-letter",
+    "description": "SEARCH(\"E\", \"e\"&CHAR) of combining sequence hits the base e",
+    "tags": ["text", "search"],
+    "quirks": ["case-insensitive-text"],
+    "formula": "=SEARCH(\"E\", \"e\u0301\")",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.search-combining-mark",
+    "description": "Combining acute is its own scalar at position 2",
+    "tags": ["text", "search"],
+    "formula": "=SEARCH(\"\u0301\", \"e\u0301\")",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.search-unicode-start",
+    "description": "start_num skips a leading multi-byte scalar: SEARCH(\"a\", \"ÉABC\", 2) is 2",
+    "tags": ["text", "search"],
+    "quirks": ["case-insensitive-text"],
+    "formula": "=SEARCH(\"a\", \"ÉABC\", 2)",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.search-wildcard-e-star-cafe",
+    "description": "SEARCH(\"é*\", \"CAFÉ\") is 4",
+    "tags": ["text", "search"],
+    "quirks": ["wildcards", "case-insensitive-text"],
+    "formula": "=SEARCH(\"é*\", \"CAFÉ\")",
+    "expected": { "number": 4 }
+  },
+  {
+    "id": "fn.search-wildcard-q-e-cafe",
+    "description": "SEARCH(\"?é\", \"café\") is 3",
+    "tags": ["text", "search"],
+    "quirks": ["wildcards"],
+    "formula": "=SEARCH(\"?é\", \"café\")",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.search-space",
+    "description": "ASCII space is a literal character",
+    "tags": ["text", "search"],
+    "formula": "=SEARCH(\" \", \"a b\")",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.search-tab",
+    "description": "Tab (CHAR(9)) is found; space is not a tab",
+    "tags": ["text", "search"],
+    "formula": "=SEARCH(CHAR(9), \"a\"&CHAR(9)&\"b\")",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.search-tab-not-space",
+    "description": "Space does not match a tab in within_text",
+    "tags": ["text", "search", "errors"],
+    "formula": "=SEARCH(\" \", \"a\"&CHAR(9)&\"b\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.search-nbsp",
+    "description": "NBSP CHAR(160) is not ASCII 32",
+    "tags": ["text", "search"],
+    "formula": "=SEARCH(CHAR(160), \"a\"&CHAR(160)&\"b\")",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.search-percent",
+    "description": "10% coerces to 0.1; SEARCH(\"1\", 10%) is 3",
+    "tags": ["text", "search", "coercion"],
+    "quirks": ["equality-vs-arithmetic-coercion", "percent-unary"],
+    "formula": "=SEARCH(\"1\", 10%)",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.search-false-needle",
+    "description": "FALSE coerces to the text \"FALSE\"",
+    "tags": ["text", "search", "coercion"],
+    "formula": "=SEARCH(FALSE, \"falsehood\")",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.search-signed-zero",
+    "description": "−0 formats as \"-0\"; SEARCH(\"-\", −0) is 1",
+    "tags": ["text", "search", "coercion"],
+    "formula": "=SEARCH(\"-\", -0)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.search-plus-zero",
+    "description": "+0 formats as \"0\"; SEARCH(\"-\", 0) is #VALUE!",
+    "tags": ["text", "search", "errors", "coercion"],
+    "formula": "=SEARCH(\"-\", 0)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.search-date-serial",
+    "description": "DATE coerces to its serial text: DATE(1900,1,1) is 1",
+    "tags": ["text", "search", "coercion"],
+    "formula": "=SEARCH(\"1\", DATE(1900,1,1))",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.search-nested-left",
+    "description": "SEARCH(\"a\", LEFT(\"BANANA\", 3)) is 2",
+    "tags": ["text", "search"],
+    "quirks": ["case-insensitive-text"],
+    "formula": "=SEARCH(\"a\", LEFT(\"BANANA\", 3))",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.search-nested-len",
+    "description": "Empty find_text with start_num = LEN is allowed; LEN+1 is not",
+    "tags": ["text", "search"],
+    "formula": "=SEARCH(\"\", \"abc\", LEN(\"abc\"))",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.search-nested-len-plus-one",
+    "description": "Empty find_text with LEN+1 is #VALUE! (FIND would allow it)",
+    "tags": ["text", "search", "errors"],
+    "formula": "=SEARCH(\"\", \"abc\", LEN(\"abc\")+1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.search-nested-char",
+    "description": "SEARCH(CHAR(97), \"ABC\") is 1 (case-insensitive)",
+    "tags": ["text", "search"],
+    "quirks": ["case-insensitive-text"],
+    "formula": "=SEARCH(CHAR(97), \"ABC\")",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.search-nested-rept",
+    "description": "SEARCH(\"b\", REPT(\"a\", 10)&\"b\") is 11",
+    "tags": ["text", "search"],
+    "formula": "=SEARCH(\"b\", REPT(\"a\", 10)&\"b\")",
+    "expected": { "number": 11 }
+  },
+  {
+    "id": "fn.search-concat",
+    "description": "SEARCH of concatenated pieces searches the joined text",
+    "tags": ["text", "search"],
+    "formula": "=SEARCH(\"c\", \"ab\"&\"cd\")",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.search-plus-one",
+    "description": "The result is a number: SEARCH(\"M\", \"Miriam McGovern\")+1 is 2",
+    "tags": ["text", "search"],
+    "formula": "=SEARCH(\"M\", \"Miriam McGovern\")+1",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.search-iferror-miss",
+    "description": "IFERROR wraps a missing needle",
+    "tags": ["text", "search", "errors"],
+    "formula": "=IFERROR(SEARCH(\"z\", \"abc\"), 0)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.search-array-literal",
+    "description": "SEARCH of an array-literal needle scalarizes to the top-left",
+    "tags": ["text", "search"],
+    "formula": "=SEARCH({\"a\",\"z\"}, \"ABC\")",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.search-implicit-intersect",
+    "description": "SEARCH(\"x\", A1:A3) from host B2 uses implicit intersection (same row → A2)",
+    "tags": ["text", "search"],
+    "quirks": ["implicit-intersection"],
+    "at": "Sheet1!B2",
+    "formula": "=SEARCH(\"x\", A1:A3)",
+    "expected": { "number": 2 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "one" },
+            "A2": { "text": "oxen" },
+            "A3": { "text": "extra" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.search-map-sum",
+    "description": "SUM(MAP(array, LAMBDA(x, SEARCH(\"a\", x)))) adds first-\"a\" positions (case-insensitive)",
+    "tags": ["text", "search", "map"],
+    "quirks": ["case-insensitive-text"],
+    "formula": "=SUM(MAP({\"Cat\";\"Bat\";\"Rat\"},LAMBDA(x,SEARCH(\"a\",x))))",
+    "expected": { "number": 6 }
   }
 ]

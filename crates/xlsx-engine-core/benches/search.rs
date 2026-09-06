@@ -1,8 +1,10 @@
 //! Before/after microbench for Excel `SEARCH`.
 //!
-//! Compares the `Vec<char>` try-every-index baseline (`excel_search_naive`)
-//! with the production kernel (`excel_search`: ASCII case-insensitive last-byte
-//! SWAR, leading-`*` shortcut, first-literal skip).
+//! Compares the `Vec<char>` try-every-index baseline (`excel_search_naive` /
+//! `excel_search_value_naive`) with the production kernel (`excel_search`:
+//! no-wildcard skip, ASCII case-insensitive last-byte SWAR, UTF-8 probe,
+//! leading-`*` shortcut, first-literal skip; `excel_search_value` borrows
+//! `Text` instead of `to_text` clone).
 //!
 //! ```text
 //! cargo bench -p xlsx-engine-core --bench search
@@ -10,7 +12,10 @@
 
 use std::hint::black_box;
 use std::time::{Duration, Instant};
-use xlsx_engine_core::{excel_search, excel_search_naive};
+use xlsx_engine_core::{
+    excel_search, excel_search_naive, excel_search_value, excel_search_value_naive,
+};
+use xlsx_types::ExcelValue;
 
 const ITERS_HEAVY: u32 = 20;
 const ITERS_LIGHT: u32 = 80;
@@ -70,6 +75,17 @@ fn cases() -> Vec<Case> {
             iters: ITERS_LIGHT,
         },
         Case {
+            name: "200k 'x' + 'Z' (1-byte CI)",
+            needle: "Z".into(),
+            haystack: {
+                let mut s = "x".repeat(200_000);
+                s.push('z');
+                s
+            },
+            start_num: 1,
+            iters: ITERS_HEAVY,
+        },
+        Case {
             name: "240k 'aaa' + 'AAB' (almost-match)",
             needle: "AAB".into(),
             haystack: almost,
@@ -107,6 +123,13 @@ fn cases() -> Vec<Case> {
         Case {
             name: "20k 'x' miss 'a*b' wildcard",
             needle: "a*b".into(),
+            haystack: wild_miss.clone(),
+            start_num: 1,
+            iters: ITERS_WILD,
+        },
+        Case {
+            name: "20k 'x' miss '???*' (all ?)",
+            needle: "???*".into(),
             haystack: wild_miss,
             start_num: 1,
             iters: ITERS_WILD,
@@ -165,5 +188,71 @@ fn main() {
         let a = excel_search_naive(&c.needle, &c.haystack, c.start_num);
         let b = excel_search(&c.needle, &c.haystack, c.start_num);
         assert_eq!(a, b, "semantic mismatch on {}", c.name);
+    }
+
+    println!();
+    println!("SEARCH value path (to_text clone vs Text borrow)");
+    println!(
+        "{:<42} {:>12} {:>12} {:>8}",
+        "case", "naive", "optimized", "speedup"
+    );
+    println!("{}", "-".repeat(78));
+    let long = "x".repeat(200_000) + "needle";
+    let value_cases: [(&str, ExcelValue, ExcelValue, i64, u32); 4] = [
+        (
+            "200k Text borrow hit (ci)",
+            ExcelValue::Text("NEEDLE".into()),
+            ExcelValue::Text(long),
+            1,
+            ITERS_HEAVY,
+        ),
+        (
+            "TRUE in trueBLUE (bool borrow)",
+            ExcelValue::Bool(true),
+            ExcelValue::Text("trueBLUE".into()),
+            1,
+            ITERS_LIGHT,
+        ),
+        (
+            "empty needle vs 200k Text",
+            ExcelValue::Empty,
+            ExcelValue::Text("x".repeat(200_000)),
+            50_000,
+            ITERS_LIGHT,
+        ),
+        (
+            "int 2 in 12321 (format_plain)",
+            ExcelValue::Number(2.0),
+            ExcelValue::Number(12321.0),
+            1,
+            ITERS_LIGHT,
+        ),
+    ];
+    for (name, needle, hay, start, iters) in value_cases {
+        let naive = time_it(iters, || {
+            let _ = black_box(excel_search_value_naive(
+                black_box(&needle),
+                black_box(&hay),
+                black_box(start),
+            ));
+        });
+        let fast = time_it(iters, || {
+            let _ = black_box(excel_search_value(
+                black_box(&needle),
+                black_box(&hay),
+                black_box(start),
+            ));
+        });
+        let speedup = naive.as_secs_f64() / fast.as_secs_f64().max(1e-12);
+        println!(
+            "{:<42} {:>12} {:>12} {:>7.1}x",
+            name,
+            fmt_dur(naive),
+            fmt_dur(fast),
+            speedup
+        );
+        let a = excel_search_value_naive(&needle, &hay, start);
+        let b = excel_search_value(&needle, &hay, start);
+        assert_eq!(a, b, "value-path semantic mismatch on {name}");
     }
 }

@@ -155,7 +155,10 @@ pub use eval::round::{
 pub use eval::scan::{
     classify as classify_scan, scan_fast as excel_scan, scan_naive as excel_scan_naive, FastScan,
 };
-pub use eval::search::{search as excel_search, search_naive as excel_search_naive};
+pub use eval::search::{
+    search as excel_search, search_naive as excel_search_naive, search_value as excel_search_value,
+    search_value_naive as excel_search_value_naive,
+};
 pub use eval::sequence::{
     sequence as excel_sequence, sequence_naive as excel_sequence_naive,
     MAX_CELLS as SEQUENCE_MAX_CELLS,
