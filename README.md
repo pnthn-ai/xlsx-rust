@@ -313,7 +313,7 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 | [`eval/replace.rs`](crates/xlsx-engine-core/src/eval/replace.rs) | Excel `REPLACE` kernel (1-based span, Unicode scalars / Compat v2) |
 | [`eval/right.rs`](crates/xlsx-engine-core/src/eval/right.rs) | Excel `RIGHT` (Compat v2 Unicode-scalar suffix; ASCII slice / UTF-8 walk) |
 | [`eval/mid.rs`](crates/xlsx-engine-core/src/eval/mid.rs) | Excel `MID` kernel (1-based slice, Unicode scalars / Compat v2) |
-| [`eval/find.rs`](crates/xlsx-engine-core/src/eval/find.rs) | Excel `FIND` kernel (case-sensitive, `start_num`, empty `find_text`) |
+| [`eval/find.rs`](crates/xlsx-engine-core/src/eval/find.rs) | Excel `FIND` kernel (case-sensitive, Compat v2 scalars, omitted `start_num` = 1, empty `find_text`) |
 | [`eval/search.rs`](crates/xlsx-engine-core/src/eval/search.rs) | Excel `SEARCH` kernel (case-insensitive, `*`/`?`/`~` wildcards, `start_num`) |
 | [`eval/textafter.rs`](crates/xlsx-engine-core/src/eval/textafter.rs) | Excel `TEXTAFTER` kernel (nth delimiter, `match_mode` / `match_end` / `if_not_found`) |
 | [`eval/textbefore.rs`](crates/xlsx-engine-core/src/eval/textbefore.rs) | Excel `TEXTBEFORE` (nth delimiter, `match_mode` / `match_end` / `if_not_found`) |
@@ -423,7 +423,7 @@ as one or the other. Documented quirk categories:
 - Type ranking for `<`/`>` (logical > text > number). Signature split:
   `FALSE=0` is `TRUE` but `FALSE>0` / `FALSE<=0` use ranking (`TRUE` / `FALSE`)
 - Equality vs arithmetic coercion (`"2"=2` is false, `"2"+1` is `3`, `--"2"=2`)
-- Case-insensitive text equality (`"A"="a"`) vs case-sensitive `EXACT` / `FIND`; `SEARCH` is case-insensitive; `TEXTAFTER` / `TEXTBEFORE` are case-sensitive unless `match_mode` is TRUE
+- Case-insensitive text equality (`"A"="a"`) vs case-sensitive `EXACT` / `FIND`; `SEARCH` is case-insensitive; `TEXTAFTER` / `TEXTBEFORE` are case-sensitive unless `match_mode` is TRUE. `FIND` indexes Unicode scalars (Compatibility Version 2, matching `LEN` / `MID`); omitted `start_num` (including a trailing-comma slot) defaults to 1, while a blank cell is 0 → `#VALUE!`.
 - `LEN(text)` returns the Unicode **scalar** count (Compatibility Version 2,
   matching `MID` / `LEFT` / `RIGHT` / `REPLACE` / `UNICODE`). `LEN("café")`
   is 4; `LEN("😀")` is 1 (not 2 UTF-16 units). Combining marks are separate

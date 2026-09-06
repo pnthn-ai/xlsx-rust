@@ -139,3 +139,7 @@ harness = false
 name = "fn_right"
 harness = false
 
+[[bench]]
+name = "fn_find"
+harness = false
+
