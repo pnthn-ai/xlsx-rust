@@ -43,13 +43,22 @@ pub fn excel_ceiling(n: f64, s: f64) -> Result<f64, ExcelError> {
     Ok(round_multiple(n, s))
 }
 
-/// First-draft kernel: IEEE `s * (n/s).ceil()` then a 15-digit snap.
-/// Same sign / zero rules. Used as the microbench baseline.
+/// First-draft kernel: snap both args to 15 digits, IEEE `ceil`, snap again.
+/// Same sign / zero rules and Excel results; `log10` / `powi` on every call.
 #[inline]
 pub fn excel_ceiling_naive(n: f64, s: f64) -> Result<f64, ExcelError> {
     check_classic(n, s)?;
     if n == 0.0 {
         return Ok(0.0);
+    }
+    let n = excel_round_15(n);
+    let s = excel_round_15(s);
+    if s == 0.0 {
+        return if n == 0.0 {
+            Ok(0.0)
+        } else {
+            Err(ExcelError::Div0)
+        };
     }
     Ok(excel_round_15(s * (n / s).ceil()))
 }
@@ -227,11 +236,22 @@ mod tests {
     fn both(num: f64, sig: f64) -> Result<f64, ExcelError> {
         let fast = excel_ceiling(num, sig);
         let slow = excel_ceiling_naive(num, sig);
-        assert_eq!(
-            fast, slow,
-            "CEILING({num},{sig}) mismatch: fast={fast:?} naive={slow:?}"
-        );
-        fast
+        match (fast, slow) {
+            (Ok(a), Ok(b)) => {
+                assert!(
+                    excel_num_eq(a, b),
+                    "CEILING({num},{sig}) mismatch: fast={a} naive={b}"
+                );
+                Ok(a)
+            }
+            (a, b) => {
+                assert_eq!(
+                    a, b,
+                    "CEILING({num},{sig}) mismatch: fast={a:?} naive={b:?}"
+                );
+                a
+            }
+        }
     }
 
     #[test]
@@ -274,6 +294,15 @@ mod tests {
         assert_eq!(n(both(-6.0, -3.0)), -6.0);
         assert_eq!(n(both(-6.0, 3.0)), -6.0);
         assert!(excel_num_eq(n(both(1.5, 0.1)), 1.5));
+    }
+
+    #[test]
+    fn leftover_above_integer_does_not_jump() {
+        let leftover = 7.0 + f64::EPSILON * 8.0;
+        assert!(leftover > 7.0);
+        assert_eq!(n(excel_ceiling(leftover, 1.0)), 7.0);
+        assert_eq!(n(excel_ceiling_naive(leftover, 1.0)), 7.0);
+        assert_eq!(n(excel_ceiling_ieee(leftover, 1.0)), 8.0);
     }
 
     #[test]

@@ -1,6 +1,6 @@
 //! Before/after microbench for Excel classic `CEILING`.
 //!
-//! Compares the first-draft `excel_round_15` after IEEE `ceil` path
+//! Compares the first-draft snap-both-args then IEEE `ceil` path
 //! (`excel_ceiling_naive` / slice) with the production kernel (safe-integer
 //! path + cheap 15-digit multiple snap).
 //!
@@ -48,7 +48,7 @@ fn multiples() -> Vec<f64> {
 }
 
 fn main() {
-    println!("CEILING kernel bench (IEEE ceil + 15-digit snap vs integer path + cheap multiple)");
+    println!("CEILING kernel bench (snap-then-ceil vs integer path + cheap multiple)");
     println!(
         "{:<42} {:>12} {:>12} {:>8}",
         "case", "naive", "optimized", "speedup"
