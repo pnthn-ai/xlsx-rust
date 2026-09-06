@@ -40,20 +40,24 @@ fn clean_from(text: &str, first: usize) -> String {
     let mut out = Vec::with_capacity(bytes.len() - 1);
     out.extend_from_slice(&bytes[..first]);
     let mut i = first + 1;
-    while i < bytes.len() {
-        if bytes[i] < 32 {
-            i += 1;
-            continue;
-        }
-        let start = i;
-        i += 1;
-        if let Some(next) = first_c0(&bytes[i..]) {
-            i += next;
-            out.extend_from_slice(&bytes[start..i]);
-            i += 1;
+    // 8-wide: memcpy a clean chunk, else keep bytes `>= 32` one by one.
+    // Avoids restarting a SWAR scan after every 1-byte run (dense C0).
+    while i + 8 <= bytes.len() {
+        let chunk = u64::from_ne_bytes(bytes[i..i + 8].try_into().unwrap());
+        if chunk_has_c0(chunk) {
+            for &b in &bytes[i..i + 8] {
+                if b >= 32 {
+                    out.push(b);
+                }
+            }
         } else {
-            out.extend_from_slice(&bytes[start..]);
-            break;
+            out.extend_from_slice(&bytes[i..i + 8]);
+        }
+        i += 8;
+    }
+    for &b in &bytes[i..] {
+        if b >= 32 {
+            out.push(b);
         }
     }
     // SAFETY: every dropped byte is `< 32` (a standalone C0 code unit).
