@@ -320,3 +320,7 @@ harness = false
 name = "textbefore"
 harness = false
 
+[[bench]]
+name = "text"
+harness = false
+

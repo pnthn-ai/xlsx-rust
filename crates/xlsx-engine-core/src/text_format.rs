@@ -2,20 +2,26 @@
 //!
 //! Supported (`en-US` punctuation):
 //! - number: `0`, `#`, `.`, grouping `,` between digit placeholders, `%`
+//! - text placeholder: `@` (alone or with literals; not mixed with `0`/`#`/dates)
 //! - literals: `$`, punctuation, quoted `"..."`, escaped `\`
 //! - dates: `yyyy`/`yy`, `mm`/`m`, `dd`/`d` (month, not minutes)
 //! - `General` (case-insensitive)
 //!
-//! Not implemented (no goldens; these codes return `#VALUE!`):
-//! scientific `E+`, fractions `?/?`, sections `;`, colors/conditions `[…]`,
-//! fill/skip `*` `_`, `?` placeholders, trailing-comma scaling, time (`h`/`s`,
-//! `AM/PM`), month/day names (`mmm`/`dddd`), mixed date+number skeletons.
+//! Not implemented — corpus cases use `ignore` (do **not** invent goldens).
+//! The kernel fails closed with `#VALUE!` if those tokens appear, so a wrong
+//! string is never emitted. Unsupported: scientific `E+`, fractions `?/?`,
+//! sections `;`, colors/conditions `[…]`, fill/skip `*` `_`, `?` placeholders,
+//! trailing-comma scaling, time (`h`/`s`, `AM/PM`), month/day names
+//! (`mmm`/`dddd`), mixed date+number skeletons, `@` mixed with digits/dates.
 //!
 //! Quirks this subset does implement:
 //! - non-numeric text is returned unchanged (Excel does not `#VALUE!` it)
-//! - numeric text is parsed (`VALUE`-style trim + `f64`)
+//! - numeric text is parsed (`VALUE`-style trim + `f64`) except under `@`,
+//!   which echoes the original text
 //! - blanks coerce to 0; stored `""` is text and is returned as `""`
-//! - `TRUE`/`FALSE` coerce to 1/0 except under `General` (`TRUE`/`FALSE`)
+//! - `TRUE`/`FALSE` coerce to 1/0 except under `General` / `@` (`TRUE`/`FALSE`)
+//! - `#` omits a leading integer `0` (`TEXT(0.5,"#.#")` → `.5`)
+//! - sign is taken from the **rounded** value (`TEXT(-0.001,"0.00")` → `0.00`)
 //! - 1900 leap-year bug and serial 0 → `1900-01-00` via [`crate::dates`]
 
 use crate::dates::serial_to_ymd;
@@ -74,6 +80,26 @@ pub fn apply_plan(
     format_with_plan(value, plan, date_system)
 }
 
+/// Baseline: no literal fast path, no plan cache. Same public contract as
+/// [`apply`]. Used by microbenches so hill-climbs stay honest.
+pub fn apply_naive(
+    value: &ExcelValue,
+    format: &str,
+    date_system: DateSystem,
+) -> Result<String, ExcelError> {
+    if let ExcelValue::Error(e) = value {
+        return Err(*e);
+    }
+    if format.is_empty() {
+        return Ok(String::new());
+    }
+    if is_general(format) {
+        return Ok(general_display(value));
+    }
+    let plan = FormatPlan::parse(format)?;
+    format_with_plan(value, &plan, date_system)
+}
+
 fn is_general(format: &str) -> bool {
     format.eq_ignore_ascii_case("general")
 }
@@ -113,6 +139,9 @@ fn format_with_plan(
     plan: &FormatPlan,
     date_system: DateSystem,
 ) -> Result<String, ExcelError> {
+    if plan.kind == Kind::Text {
+        return Ok(emit_at(value, plan));
+    }
     match coerce_number(value)? {
         Some(n) => plan.emit(n, date_system),
         None => match value {
@@ -122,14 +151,45 @@ fn format_with_plan(
     }
 }
 
+fn emit_at(value: &ExcelValue, plan: &FormatPlan) -> String {
+    let mut out = String::with_capacity(plan.tokens.len() + 8);
+    for t in &plan.tokens {
+        match t {
+            Token::Literal(c) => out.push(*c),
+            Token::Percent => out.push('%'),
+            Token::At => match value {
+                ExcelValue::Text(s) => out.push_str(s),
+                _ => out.push_str(&general_display(value)),
+            },
+            _ => {}
+        }
+    }
+    out
+}
+
 #[derive(Clone, Copy)]
 enum FastKind {
     Fixed(u32),
     Grouped(u32),
     Currency2,
     Percent(u32),
-    IsoDate,
+    Date {
+        y: u8,
+        m: u8,
+        d: u8,
+        sep1: u8,
+        sep2: u8,
+        order: DateOrder,
+    },
     PadInt(u32),
+    At,
+}
+
+#[derive(Clone, Copy)]
+enum DateOrder {
+    Ymd,
+    Mdy,
+    Dmy,
 }
 
 fn classify_fast(format: &str) -> Option<FastKind> {
@@ -137,6 +197,7 @@ fn classify_fast(format: &str) -> Option<FastKind> {
         "0.00" => Some(FastKind::Fixed(2)),
         "0" => Some(FastKind::Fixed(0)),
         "0.0" => Some(FastKind::Fixed(1)),
+        "0.000" => Some(FastKind::Fixed(3)),
         "#,##0" => Some(FastKind::Grouped(0)),
         "#,##0.00" => Some(FastKind::Grouped(2)),
         "$#,##0.00" => Some(FastKind::Currency2),
@@ -145,8 +206,55 @@ fn classify_fast(format: &str) -> Option<FastKind> {
         "0.00%" => Some(FastKind::Percent(2)),
         "000" => Some(FastKind::PadInt(3)),
         "0000000" => Some(FastKind::PadInt(7)),
-        "yyyy-mm-dd" | "YYYY-MM-DD" => Some(FastKind::IsoDate),
-        _ if format.eq_ignore_ascii_case("yyyy-mm-dd") => Some(FastKind::IsoDate),
+        "@" => Some(FastKind::At),
+        "yyyy-mm-dd" | "YYYY-MM-DD" => Some(FastKind::Date {
+            y: 4,
+            m: 2,
+            d: 2,
+            sep1: b'-',
+            sep2: b'-',
+            order: DateOrder::Ymd,
+        }),
+        "yyyy/mm/dd" | "YYYY/MM/DD" => Some(FastKind::Date {
+            y: 4,
+            m: 2,
+            d: 2,
+            sep1: b'/',
+            sep2: b'/',
+            order: DateOrder::Ymd,
+        }),
+        "mm/dd/yyyy" | "MM/DD/YYYY" => Some(FastKind::Date {
+            y: 4,
+            m: 2,
+            d: 2,
+            sep1: b'/',
+            sep2: b'/',
+            order: DateOrder::Mdy,
+        }),
+        "dd-mm-yyyy" | "DD-MM-YYYY" => Some(FastKind::Date {
+            y: 4,
+            m: 2,
+            d: 2,
+            sep1: b'-',
+            sep2: b'-',
+            order: DateOrder::Dmy,
+        }),
+        "yy-mm-dd" | "YY-MM-DD" => Some(FastKind::Date {
+            y: 2,
+            m: 2,
+            d: 2,
+            sep1: b'-',
+            sep2: b'-',
+            order: DateOrder::Ymd,
+        }),
+        _ if format.eq_ignore_ascii_case("yyyy-mm-dd") => Some(FastKind::Date {
+            y: 4,
+            m: 2,
+            d: 2,
+            sep1: b'-',
+            sep2: b'-',
+            order: DateOrder::Ymd,
+        }),
         _ => None,
     }
 }
@@ -156,6 +264,12 @@ fn try_fast(value: &ExcelValue, format: &str, date_system: DateSystem) -> Option
         return Some(general_display(value));
     }
     let kind = classify_fast(format)?;
+    if matches!(kind, FastKind::At) {
+        return Some(match value {
+            ExcelValue::Text(s) => s.clone(),
+            _ => general_display(value),
+        });
+    }
     let n = match coerce_number(value) {
         Ok(Some(n)) => n,
         Ok(None) => {
@@ -180,13 +294,22 @@ fn try_fast(value: &ExcelValue, format: &str, date_system: DateSystem) -> Option
             }
         }),
         FastKind::Percent(p) => fast_percent(n, p),
-        FastKind::IsoDate => fast_iso_date(n, date_system),
+        FastKind::Date {
+            y,
+            m,
+            d,
+            sep1,
+            sep2,
+            order,
+        } => fast_date(n, date_system, y, m, d, sep1, sep2, order),
         FastKind::PadInt(width) => fast_pad_int(n, width),
+        FastKind::At => Some(general_display(value)),
     }
 }
 
 fn fast_pad_int(n: f64, width: u32) -> Option<String> {
-    let (neg, int_part, _) = split_rounded(n, 0, 1)?;
+    let (neg, int_part, frac_part) = split_rounded(n, 0, 1)?;
+    let neg = drop_minus_if_rounded_zero(neg, int_part, frac_part);
     let mut s = String::with_capacity(width as usize + 1);
     if neg {
         s.push('-');
@@ -214,8 +337,13 @@ fn fast_pad_int(n: f64, width: u32) -> Option<String> {
     Some(s)
 }
 
+fn drop_minus_if_rounded_zero(neg: bool, int_part: u128, frac_part: u128) -> bool {
+    neg && (int_part != 0 || frac_part != 0)
+}
+
 fn fast_fixed(n: f64, places: u32) -> Option<String> {
     let (neg, int_part, frac_part) = split_rounded(n, places, 1)?;
+    let neg = drop_minus_if_rounded_zero(neg, int_part, frac_part);
     let mut s = String::with_capacity(20);
     if neg {
         s.push('-');
@@ -230,6 +358,7 @@ fn fast_fixed(n: f64, places: u32) -> Option<String> {
 
 fn fast_grouped(n: f64, places: u32) -> Option<String> {
     let (neg, int_part, frac_part) = split_rounded(n, places, 1)?;
+    let neg = drop_minus_if_rounded_zero(neg, int_part, frac_part);
     let mut s = String::with_capacity(24);
     if neg {
         s.push('-');
@@ -244,6 +373,7 @@ fn fast_grouped(n: f64, places: u32) -> Option<String> {
 
 fn fast_percent(n: f64, places: u32) -> Option<String> {
     let (neg, int_part, frac_part) = split_rounded(n, places, 100)?;
+    let neg = drop_minus_if_rounded_zero(neg, int_part, frac_part);
     let mut s = String::with_capacity(16);
     if neg {
         s.push('-');
@@ -257,17 +387,49 @@ fn fast_percent(n: f64, places: u32) -> Option<String> {
     Some(s)
 }
 
-fn fast_iso_date(n: f64, date_system: DateSystem) -> Option<String> {
+fn fast_date(
+    n: f64,
+    date_system: DateSystem,
+    y_width: u8,
+    m_width: u8,
+    d_width: u8,
+    sep1: u8,
+    sep2: u8,
+    order: DateOrder,
+) -> Option<String> {
     if n < 0.0 {
         return None;
     }
     let (y, m, d) = serial_to_ymd(n, date_system).ok()?;
-    let mut s = String::with_capacity(10);
-    push_u32_pad(&mut s, y.unsigned_abs(), 4);
-    s.push('-');
-    push_u32_pad(&mut s, m, 2);
-    s.push('-');
-    push_u32_pad(&mut s, d, 2);
+    let year = if y_width >= 4 {
+        y.unsigned_abs()
+    } else {
+        y.unsigned_abs() % 100
+    };
+    let mut s = String::with_capacity(12);
+    match order {
+        DateOrder::Ymd => {
+            push_date_part(&mut s, year, y_width as usize);
+            s.push(sep1 as char);
+            push_date_part(&mut s, m, m_width as usize);
+            s.push(sep2 as char);
+            push_date_part(&mut s, d, d_width as usize);
+        }
+        DateOrder::Mdy => {
+            push_date_part(&mut s, m, m_width as usize);
+            s.push(sep1 as char);
+            push_date_part(&mut s, d, d_width as usize);
+            s.push(sep2 as char);
+            push_date_part(&mut s, year, y_width as usize);
+        }
+        DateOrder::Dmy => {
+            push_date_part(&mut s, d, d_width as usize);
+            s.push(sep1 as char);
+            push_date_part(&mut s, m, m_width as usize);
+            s.push(sep2 as char);
+            push_date_part(&mut s, year, y_width as usize);
+        }
+    }
     Some(s)
 }
 
@@ -360,6 +522,7 @@ enum Token {
     Decimal,
     Group,
     Percent,
+    At,
     Year { width: u8 },
     Month { width: u8 },
     Day { width: u8 },
@@ -370,6 +533,7 @@ enum Token {
 enum Kind {
     Number,
     Date,
+    Text,
 }
 
 /// Parsed format — intern and reuse on hot generic paths.
@@ -381,6 +545,8 @@ pub struct FormatPlan {
     group: bool,
     min_int: usize,
     frac_keep: Vec<bool>,
+    force_zero: bool,
+    has_decimal: bool,
 }
 
 impl FormatPlan {
@@ -396,6 +562,7 @@ impl FormatPlan {
         match self.kind {
             Kind::Date => emit_date(&self.tokens, n, date_system),
             Kind::Number => emit_number(self, n),
+            Kind::Text => Err(ExcelError::Value),
         }
     }
 }
@@ -457,6 +624,10 @@ fn tokenize(format: &str) -> Result<Vec<Token>, ExcelError> {
                 out.push(Token::DigitHash);
                 i += 1;
             }
+            '@' => {
+                out.push(Token::At);
+                i += 1;
+            }
             '.' => {
                 out.push(Token::Decimal);
                 i += 1;
@@ -510,9 +681,7 @@ fn tokenize(format: &str) -> Result<Vec<Token>, ExcelError> {
                 i += 1;
             }
             'a' | 'A' => {
-                // AM/PM is out of subset.
-                let rest: String = chars[i..].iter().collect::<String>().to_ascii_lowercase();
-                if rest.starts_with("am/pm") || rest.starts_with("a/p") {
+                if is_ampm_run(&chars, i) {
                     return Err(ExcelError::Value);
                 }
                 out.push(Token::Literal(c));
@@ -535,9 +704,27 @@ fn take_run(chars: &[char], start: usize, set: &[char]) -> usize {
     n
 }
 
+fn is_ampm_run(chars: &[char], i: usize) -> bool {
+    fn fold(c: char) -> char {
+        c.to_ascii_lowercase()
+    }
+    let n = chars.len().saturating_sub(i);
+    if n >= 5
+        && fold(chars[i]) == 'a'
+        && fold(chars[i + 1]) == 'm'
+        && chars[i + 2] == '/'
+        && fold(chars[i + 3]) == 'p'
+        && fold(chars[i + 4]) == 'm'
+    {
+        return true;
+    }
+    n >= 3 && fold(chars[i]) == 'a' && chars[i + 1] == '/' && fold(chars[i + 2]) == 'p'
+}
+
 fn classify(tokens: Vec<Token>) -> Result<FormatPlan, ExcelError> {
     let mut has_date = false;
     let mut has_digit = false;
+    let mut has_at = false;
     let mut pct = 0u32;
     let mut seen_decimal = false;
     let mut group = false;
@@ -545,12 +732,14 @@ fn classify(tokens: Vec<Token>) -> Result<FormatPlan, ExcelError> {
     let mut frac_keep = Vec::new();
     let mut last_int_was_digit = false;
     let mut trailing_scale = false;
+    let mut force_zero = false;
 
     for t in &tokens {
         match t {
             Token::Year { .. } | Token::Month { .. } | Token::Day { .. } => has_date = true,
             Token::Digit0 => {
                 has_digit = true;
+                force_zero = true;
                 if seen_decimal {
                     frac_keep.push(true);
                 } else {
@@ -590,6 +779,7 @@ fn classify(tokens: Vec<Token>) -> Result<FormatPlan, ExcelError> {
                 }
             }
             Token::Percent => pct += 1,
+            Token::At => has_at = true,
             Token::Literal(_) => {}
         }
     }
@@ -597,8 +787,23 @@ fn classify(tokens: Vec<Token>) -> Result<FormatPlan, ExcelError> {
         // last integer-side comma had no digit after it → `/1000` scaling
         return Err(ExcelError::Value);
     }
+    if has_at && (has_date || has_digit || pct > 0) {
+        return Err(ExcelError::Value);
+    }
     if has_date && has_digit {
         return Err(ExcelError::Value);
+    }
+    if has_at {
+        return Ok(FormatPlan {
+            kind: Kind::Text,
+            tokens,
+            pct_scale: 1,
+            group: false,
+            min_int: 0,
+            frac_keep: Vec::new(),
+            force_zero: false,
+            has_decimal: false,
+        });
     }
     if has_date {
         return Ok(FormatPlan {
@@ -608,6 +813,8 @@ fn classify(tokens: Vec<Token>) -> Result<FormatPlan, ExcelError> {
             group: false,
             min_int: 0,
             frac_keep: Vec::new(),
+            force_zero: false,
+            has_decimal: false,
         });
     }
     Ok(FormatPlan {
@@ -617,6 +824,8 @@ fn classify(tokens: Vec<Token>) -> Result<FormatPlan, ExcelError> {
         group,
         min_int,
         frac_keep,
+        force_zero,
+        has_decimal: seen_decimal,
     })
 }
 
@@ -640,7 +849,7 @@ fn emit_date(tokens: &[Token], n: f64, date_system: DateSystem) -> Result<String
             Token::Day { width } => push_date_part(&mut out, d, width as usize),
             Token::Literal(c) => out.push(c),
             Token::Percent => out.push('%'),
-            Token::Digit0 | Token::DigitHash | Token::Decimal | Token::Group => {
+            Token::At | Token::Digit0 | Token::DigitHash | Token::Decimal | Token::Group => {
                 return Err(ExcelError::Value)
             }
         }
@@ -651,55 +860,39 @@ fn emit_date(tokens: &[Token], n: f64, date_system: DateSystem) -> Result<String
 fn emit_number(plan: &FormatPlan, n: f64) -> Result<String, ExcelError> {
     let places = plan.frac_keep.len() as u32;
     let scale = plan.pct_scale.max(1);
-    let neg = n.is_sign_negative() && n != 0.0;
     let abs = excel_round_15(n.abs()) * scale as f64;
     if !abs.is_finite() {
         return Err(ExcelError::Num);
     }
     let (int_part, frac_part) = match split_rounded_parts(abs, places) {
         Some(p) => p,
-        None => return emit_number_fallback(plan, abs, neg, places),
-    };
-
-    let mut int_digits = u128_digits(int_part);
-    let mut frac_digits = frac_digits_pad(frac_part, places as usize);
-    // Drop trailing optional (`#`) zeros.
-    while let Some(false) = plan.frac_keep.get(frac_digits.len().saturating_sub(1)) {
-        if frac_digits.last() == Some(&0) {
-            frac_digits.pop();
-        } else {
-            break;
+        None => {
+            return emit_number_fallback(plan, abs, n.is_sign_negative() && n != 0.0, places);
         }
-    }
-
-    let force_zero = plan.tokens.iter().any(|t| matches!(t, Token::Digit0));
-    if int_part == 0 && plan.min_int == 0 && frac_digits.is_empty() && !force_zero {
-        int_digits.clear();
-    }
-    while int_digits.len() < plan.min_int {
-        int_digits.insert(0, 0);
-    }
-    if int_digits.is_empty() && force_zero {
-        int_digits.push(0);
-    }
-
-    let int_str = if plan.group && !int_digits.is_empty() {
-        group_digits(&int_digits)
-    } else {
-        digits_to_string(&int_digits)
     };
+    let rounded_zero = int_part == 0 && frac_part == 0;
+    let neg = n.is_sign_negative() && n != 0.0 && !rounded_zero;
 
-    let mut out = String::with_capacity(int_str.len() + frac_digits.len() + 8);
-    if neg
-        && (!int_str.is_empty()
-            || !frac_digits.is_empty()
-            || plan.tokens.iter().any(|t| matches!(t, Token::Digit0)))
-    {
+    let mut frac = [0u8; 16];
+    let mut frac_len = places as usize;
+    let mut fp = frac_part;
+    for i in (0..frac_len).rev() {
+        frac[i] = (fp % 10) as u8;
+        fp /= 10;
+    }
+    while frac_len > 0 && !plan.frac_keep[frac_len - 1] && frac[frac_len - 1] == 0 {
+        frac_len -= 1;
+    }
+
+    let mut int_buf = [0u8; 40];
+    let int_len = fill_int_digits(&mut int_buf, int_part, plan.min_int);
+
+    let mut out = String::with_capacity(int_len + int_len / 3 + frac_len + 8);
+    if neg && (int_len > 0 || frac_len > 0 || plan.force_zero) {
         out.push('-');
     }
 
     let mut emitted_number = false;
-    let has_decimal_tok = plan.tokens.iter().any(|t| matches!(t, Token::Decimal));
     for t in &plan.tokens {
         match t {
             Token::Literal(c) => out.push(*c),
@@ -709,20 +902,62 @@ fn emit_number(plan: &FormatPlan, n: f64) -> Result<String, ExcelError> {
                     continue;
                 }
                 emitted_number = true;
-                out.push_str(&int_str);
-                if has_decimal_tok {
+                if plan.group && int_len > 0 {
+                    push_grouped_digits(&mut out, &int_buf[..int_len]);
+                } else {
+                    for &d in &int_buf[..int_len] {
+                        out.push((b'0' + d) as char);
+                    }
+                }
+                if plan.has_decimal {
                     out.push('.');
-                    for d in &frac_digits {
+                    for &d in &frac[..frac_len] {
                         out.push((b'0' + d) as char);
                     }
                 }
             }
-            Token::Year { .. } | Token::Month { .. } | Token::Day { .. } => {
+            Token::At | Token::Year { .. } | Token::Month { .. } | Token::Day { .. } => {
                 return Err(ExcelError::Value);
             }
         }
     }
     Ok(out)
+}
+
+fn fill_int_digits(buf: &mut [u8; 40], int_part: u128, min_int: usize) -> usize {
+    if int_part == 0 && min_int == 0 {
+        return 0;
+    }
+    if int_part == 0 {
+        return min_int.min(40);
+    }
+    let mut raw = [0u8; 40];
+    let mut raw_len = 0usize;
+    let mut x = int_part;
+    while x > 0 && raw_len < 40 {
+        raw[raw_len] = (x % 10) as u8;
+        x /= 10;
+        raw_len += 1;
+    }
+    raw[..raw_len].reverse();
+    if raw_len < min_int {
+        let pad = (min_int - raw_len).min(40 - raw_len);
+        buf[..pad].fill(0);
+        buf[pad..pad + raw_len].copy_from_slice(&raw[..raw_len]);
+        pad + raw_len
+    } else {
+        buf[..raw_len].copy_from_slice(&raw[..raw_len]);
+        raw_len
+    }
+}
+
+fn push_grouped_digits(out: &mut String, digits: &[u8]) {
+    for (i, &d) in digits.iter().enumerate() {
+        if i > 0 && (digits.len() - i) % 3 == 0 {
+            out.push(',');
+        }
+        out.push((b'0' + d) as char);
+    }
 }
 
 fn split_rounded_parts(abs: f64, places: u32) -> Option<(u128, u128)> {
@@ -755,50 +990,13 @@ fn emit_number_fallback(
     Ok(s)
 }
 
-fn u128_digits(mut n: u128) -> Vec<u8> {
-    if n == 0 {
-        return vec![0];
-    }
-    let mut d = Vec::with_capacity(20);
-    while n > 0 {
-        d.push((n % 10) as u8);
-        n /= 10;
-    }
-    d.reverse();
-    d
-}
-
-fn frac_digits_pad(mut n: u128, places: usize) -> Vec<u8> {
-    let mut d = vec![0u8; places];
-    for i in (0..places).rev() {
-        d[i] = (n % 10) as u8;
-        n /= 10;
-    }
-    d
-}
-
-fn digits_to_string(d: &[u8]) -> String {
-    d.iter().map(|x| (b'0' + x) as char).collect()
-}
-
-fn group_digits(d: &[u8]) -> String {
-    let mut out = String::with_capacity(d.len() + d.len() / 3);
-    for (i, digit) in d.iter().enumerate() {
-        let from_right = d.len() - i;
-        if i > 0 && from_right % 3 == 0 {
-            out.push(',');
-        }
-        out.push((b'0' + digit) as char);
-    }
-    out
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
     fn t(n: f64, fmt: &str) -> String {
-        apply(&ExcelValue::Number(n), fmt, DateSystem::Excel1900).unwrap()
+        apply(&ExcelValue::Number(n), fmt, DateSystem::Excel1900)
+            .unwrap_or_else(|e| panic!("{n} {fmt:?}: {e:?}"))
     }
 
     #[test]
@@ -892,6 +1090,40 @@ mod tests {
             ""
         );
         assert_eq!(t(1234.5, "General"), "1234.5");
+        assert_eq!(t(0.0, "#"), "");
+        assert_eq!(t(0.4, "#"), "");
+        assert_eq!(t(0.5, "#"), "1");
+        assert_eq!(t(0.5, "#.#"), ".5");
+        assert_eq!(t(1.5, "0.##"), "1.5");
+        assert_eq!(t(1.0, "0.##"), "1.");
+        assert_eq!(t(-0.001, "0.00"), "0.00");
+        assert_eq!(t(-0.006, "0.00"), "-0.01");
+        assert_eq!(t(-0.5, "#.#"), "-.5");
+        assert_eq!(t(9.99, "0.0"), "10.0");
+        assert_eq!(t(999.5, "#,##0"), "1,000");
+        assert_eq!(t(0.5, "0%%"), "5000%%");
+        assert_eq!(t(0.5, "0\\%"), "1%");
+        assert_eq!(t(1234.0, "\"USD \"#,##0"), "USD 1,234");
+        assert_eq!(t(12.0, "0\\k"), "12k");
+        assert_eq!(t(1234.5, "@"), "1234.5");
+        assert_eq!(t(1234.0, "n=@"), "n=1234");
+        assert_eq!(t(1234.0, "\"ID: \"@"), "ID: 1234");
+        assert_eq!(
+            apply(
+                &ExcelValue::Text("  12  ".into()),
+                "@",
+                DateSystem::Excel1900
+            )
+            .unwrap(),
+            "  12  "
+        );
+        assert_eq!(
+            apply(&ExcelValue::Bool(true), "@", DateSystem::Excel1900).unwrap(),
+            "TRUE"
+        );
+        assert_eq!(t(-1234.567, "$#,##0.00"), "-$1,234.57");
+        assert_eq!(t(1.0, "GENERAL"), "1");
+        assert_eq!(t(45366.75, "yyyy-mm-dd"), "2024-03-15");
     }
 
     #[test]
@@ -920,6 +1152,18 @@ mod tests {
             apply(&ExcelValue::Number(1000.0), "#,##0,", DateSystem::Excel1900),
             Err(ExcelError::Value)
         );
+        assert_eq!(
+            apply(&ExcelValue::Number(1.0), "0@", DateSystem::Excel1900),
+            Err(ExcelError::Value)
+        );
+        assert_eq!(
+            apply(&ExcelValue::Number(1.0), "# ?/?", DateSystem::Excel1900),
+            Err(ExcelError::Value)
+        );
+        assert_eq!(
+            apply(&ExcelValue::Number(1.0), "[Red]0", DateSystem::Excel1900),
+            Err(ExcelError::Value)
+        );
     }
 
     #[test]
@@ -932,11 +1176,18 @@ mod tests {
             (0.285, "0.0%"),
             (45366.0, "yyyy-mm-dd"),
             (1234.0, "0000000"),
+            (-0.001, "0.00"),
+            (0.5, "#.#"),
+            (1234.567, "$#,##0.00"),
+            (45366.0, "mm/dd/yyyy"),
+            (45366.0, "yyyy/mm/dd"),
         ] {
             let a = apply(&ExcelValue::Number(n), fmt, DateSystem::Excel1900).unwrap();
             clear_plan_cache();
             let b = apply_generic(&ExcelValue::Number(n), fmt, DateSystem::Excel1900).unwrap();
+            let c = apply_naive(&ExcelValue::Number(n), fmt, DateSystem::Excel1900).unwrap();
             assert_eq!(a, b, "{n} {fmt}");
+            assert_eq!(a, c, "naive {n} {fmt}");
         }
     }
 }

@@ -447,5 +447,390 @@
     "quirks": ["error-precedence"],
     "formula": "=TEXT(#DIV/0!,#N/A)",
     "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.text-hash-zero-omitted",
+    "description": "TEXT(0,\"#\") is empty — optional # drops a zero integer",
+    "tags": ["text", "text-fn"],
+    "formula": "=TEXT(0,\"#\")",
+    "expected": { "text": "" }
+  },
+  {
+    "id": "fn.text-hash-frac-round-empty",
+    "description": "TEXT(0.4,\"#\") rounds to 0 then omits the optional digit",
+    "tags": ["text", "text-fn"],
+    "formula": "=TEXT(0.4,\"#\")",
+    "expected": { "text": "" }
+  },
+  {
+    "id": "fn.text-hash-half-away",
+    "description": "TEXT(0.5,\"#\") rounds half away from zero to 1",
+    "tags": ["text", "text-fn"],
+    "formula": "=TEXT(0.5,\"#\")",
+    "expected": { "text": "1" }
+  },
+  {
+    "id": "fn.text-hash-omit-leading-zero",
+    "description": "TEXT(0.5,\"#.#\") omits the integer 0",
+    "tags": ["text", "text-fn"],
+    "formula": "=TEXT(0.5,\"#.#\")",
+    "expected": { "text": ".5" }
+  },
+  {
+    "id": "fn.text-optional-frac-drop",
+    "description": "TEXT(1.5,\"0.##\") drops a trailing optional zero",
+    "tags": ["text", "text-fn"],
+    "formula": "=TEXT(1.5,\"0.##\")",
+    "expected": { "text": "1.5" }
+  },
+  {
+    "id": "fn.text-optional-frac-keeps-dot",
+    "description": "TEXT(1,\"0.##\") keeps the decimal point after dropping # zeros",
+    "tags": ["text", "text-fn"],
+    "formula": "=TEXT(1,\"0.##\")",
+    "expected": { "text": "1." }
+  },
+  {
+    "id": "fn.text-neg-rounds-to-unsigned-zero",
+    "description": "Sign is taken after rounding: TEXT(-0.001,\"0.00\") is 0.00",
+    "tags": ["text", "text-fn"],
+    "formula": "=TEXT(-0.001,\"0.00\")",
+    "expected": { "text": "0.00" }
+  },
+  {
+    "id": "fn.text-neg-half-away-stays",
+    "description": "TEXT(-0.006,\"0.00\") is -0.01",
+    "tags": ["text", "text-fn"],
+    "formula": "=TEXT(-0.006,\"0.00\")",
+    "expected": { "text": "-0.01" }
+  },
+  {
+    "id": "fn.text-neg-hash-omit-int",
+    "description": "TEXT(-0.5,\"#.#\") is -.5",
+    "tags": ["text", "text-fn"],
+    "formula": "=TEXT(-0.5,\"#.#\")",
+    "expected": { "text": "-.5" }
+  },
+  {
+    "id": "fn.text-round-carry",
+    "description": "TEXT(9.99,\"0.0\") carries into the integer",
+    "tags": ["text", "text-fn"],
+    "formula": "=TEXT(9.99,\"0.0\")",
+    "expected": { "text": "10.0" }
+  },
+  {
+    "id": "fn.text-group-round-carry",
+    "description": "TEXT(999.5,\"#,##0\") becomes 1,000",
+    "tags": ["text", "text-fn"],
+    "formula": "=TEXT(999.5,\"#,##0\")",
+    "expected": { "text": "1,000" }
+  },
+  {
+    "id": "fn.text-double-percent",
+    "description": "Each % multiplies by 100: TEXT(0.5,\"0%%\") is 5000%%",
+    "tags": ["text", "text-fn"],
+    "formula": "=TEXT(0.5,\"0%%\")",
+    "expected": { "text": "5000%%" }
+  },
+  {
+    "id": "fn.text-escaped-percent-no-scale",
+    "description": "Escaped \\% is a literal and does not scale",
+    "tags": ["text", "text-fn"],
+    "formula": "=TEXT(0.5,\"0\\%\")",
+    "expected": { "text": "1%" }
+  },
+  {
+    "id": "fn.text-quoted-literal-prefix",
+    "description": "Quoted literal before a grouped integer",
+    "tags": ["text", "text-fn"],
+    "formula": "=TEXT(1234,\"\"\"USD \"\"#,##0\")",
+    "expected": { "text": "USD 1,234" }
+  },
+  {
+    "id": "fn.text-escaped-letter",
+    "description": "Backslash escapes a following letter as a literal",
+    "tags": ["text", "text-fn"],
+    "formula": "=TEXT(12,\"0\\k\")",
+    "expected": { "text": "12k" }
+  },
+  {
+    "id": "fn.text-at-general-number",
+    "description": "TEXT(1234.5,\"@\") is General text of the number",
+    "tags": ["text", "text-fn"],
+    "formula": "=TEXT(1234.5,\"@\")",
+    "expected": { "text": "1234.5" }
+  },
+  {
+    "id": "fn.text-at-literal-prefix",
+    "description": "@ inserts General next to literals (letters that are not date/time tokens)",
+    "tags": ["text", "text-fn"],
+    "formula": "=TEXT(1234,\"n=@\")",
+    "expected": { "text": "n=1234" }
+  },
+  {
+    "id": "fn.text-at-quoted-prefix",
+    "description": "Quoted prefix plus @ (\"ID: \" is safe; unquoted D/S are date/time tokens)",
+    "tags": ["text", "text-fn"],
+    "formula": "=TEXT(1234,\"\"\"ID: \"\"@\")",
+    "expected": { "text": "ID: 1234" }
+  },
+  {
+    "id": "fn.text-at-echoes-text",
+    "description": "@ on a text value echoes the original string, including spaces",
+    "tags": ["text", "text-fn"],
+    "formula": "=TEXT(\"  12  \",\"@\")",
+    "expected": { "text": "  12  " }
+  },
+  {
+    "id": "fn.text-at-true",
+    "description": "TEXT(TRUE,\"@\") stays TRUE (like General)",
+    "tags": ["text", "text-fn", "coercion"],
+    "formula": "=TEXT(TRUE,\"@\")",
+    "expected": { "text": "TRUE" }
+  },
+  {
+    "id": "fn.text-currency-neg",
+    "description": "Negative currency puts '-' before $",
+    "tags": ["text", "text-fn"],
+    "formula": "=TEXT(-1234.567,\"$#,##0.00\")",
+    "expected": { "text": "-$1,234.57" }
+  },
+  {
+    "id": "fn.text-general-upper",
+    "description": "GENERAL is accepted case-insensitively",
+    "tags": ["text", "text-fn"],
+    "formula": "=TEXT(1,\"GENERAL\")",
+    "expected": { "text": "1" }
+  },
+  {
+    "id": "fn.text-general-lower",
+    "description": "general is accepted case-insensitively",
+    "tags": ["text", "text-fn"],
+    "formula": "=TEXT(1,\"general\")",
+    "expected": { "text": "1" }
+  },
+  {
+    "id": "fn.text-date-serial-as-number",
+    "description": "A date serial with a number format is just that integer",
+    "tags": ["text", "text-fn", "dates"],
+    "formula": "=TEXT(DATE(2024,3,15),\"0\")",
+    "expected": { "text": "45366" }
+  },
+  {
+    "id": "fn.text-date-fraction-truncates-time",
+    "description": "Date tokens use the civil day; the time fraction is dropped",
+    "tags": ["text", "text-fn", "dates"],
+    "formula": "=TEXT(45366.75,\"yyyy-mm-dd\")",
+    "expected": { "text": "2024-03-15" }
+  },
+  {
+    "id": "fn.text-date-quoted-label",
+    "description": "Quoted label plus yyyy",
+    "tags": ["text", "text-fn", "dates"],
+    "formula": "=TEXT(DATE(2024,3,15),\"\"\"Year \"\"yyyy\")",
+    "expected": { "text": "Year 2024" }
+  },
+  {
+    "id": "fn.text-true-fixed",
+    "description": "TEXT(TRUE,\"0.00\") is 1.00",
+    "tags": ["text", "text-fn", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=TEXT(TRUE,\"0.00\")",
+    "expected": { "text": "1.00" }
+  },
+  {
+    "id": "fn.text-false-general",
+    "description": "TEXT(FALSE,\"General\") stays FALSE",
+    "tags": ["text", "text-fn", "coercion"],
+    "formula": "=TEXT(FALSE,\"General\")",
+    "expected": { "text": "FALSE" }
+  },
+  {
+    "id": "fn.text-blank-date",
+    "description": "TEXT of a blank cell with a date format is 1900-01-00",
+    "tags": ["text", "text-fn", "empty", "dates"],
+    "quirks": ["empty-cell-duality", "date-1900-leap-year"],
+    "formula": "=TEXT(A1,\"yyyy-mm-dd\")",
+    "expected": { "text": "1900-01-00" },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.text-format-from-cell",
+    "description": "Format string can come from another cell",
+    "tags": ["text", "text-fn"],
+    "formula": "=TEXT(A1,B1)",
+    "expected": { "text": "1,234.57" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "number": 1234.567 },
+            "B1": { "text": "#,##0.00" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.text-implicit-intersect",
+    "description": "TEXT(A1:A3,\"0\") from B1 uses implicit intersection (A1)",
+    "tags": ["text", "text-fn"],
+    "quirks": ["implicit-intersection"],
+    "at": "Sheet1!B1",
+    "formula": "=TEXT(A1:A3,\"0\")",
+    "expected": { "text": "10" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "number": 10 },
+            "A2": { "number": 20 },
+            "A3": { "number": 30 }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.text-array-top-left",
+    "description": "TEXT of an array literal scalarizes to the top-left",
+    "tags": ["text", "text-fn"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TEXT({1234.5,0},\"0.00\")",
+    "expected": { "text": "1234.50" }
+  },
+  {
+    "id": "fn.text-numeric-text-pad",
+    "description": "Padded numeric text is parsed then re-padded",
+    "tags": ["text", "text-fn", "coercion"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=TEXT(\"  003  \",\"00000\")",
+    "expected": { "text": "00003" }
+  },
+  {
+    "id": "fn.text-ignore-scientific",
+    "description": "Scientific E+ is not in the TEXT subset",
+    "ignore": "Scientific 0.00E+00 is not implemented. Excel would emit a mantissa/exponent string. Do not invent a #VALUE! or format golden.",
+    "tags": ["text", "text-fn"],
+    "formula": "=TEXT(12200000,\"0.00E+00\")"
+  },
+  {
+    "id": "fn.text-ignore-scientific-alt",
+    "description": "Microsoft-style ##0.0E+0 is not implemented",
+    "ignore": "Scientific ##0.0E+0 is not implemented. Do not invent a golden.",
+    "tags": ["text", "text-fn"],
+    "formula": "=TEXT(123456,\"##0.0E+0\")"
+  },
+  {
+    "id": "fn.text-ignore-fraction",
+    "description": "Fraction ?/? placeholders are not implemented",
+    "ignore": "Fraction tokens ?/? are not implemented. Excel would emit a mixed number. Do not invent a #VALUE! or fraction golden.",
+    "tags": ["text", "text-fn"],
+    "formula": "=TEXT(4.34,\"# ?/?\")"
+  },
+  {
+    "id": "fn.text-ignore-sections",
+    "description": "Positive;negative sections are not implemented",
+    "ignore": "Format sections separated by ';' are not implemented (including the Microsoft phone-number example). Do not invent a golden.",
+    "tags": ["text", "text-fn"],
+    "formula": "=TEXT(-1.2,\"0.00;(0.00)\")"
+  },
+  {
+    "id": "fn.text-ignore-color",
+    "description": "Color conditions [Red] are not implemented",
+    "ignore": "Color / condition brackets [Red], [>=n] are not implemented. TEXT still returns plain text in Excel, but the exact string is locale- and version-sensitive. Do not invent a golden.",
+    "tags": ["text", "text-fn"],
+    "formula": "=TEXT(1,\"[Red]0.00\")"
+  },
+  {
+    "id": "fn.text-ignore-fill-star",
+    "description": "Fill * is not implemented",
+    "ignore": "Repeat-to-fill '*' is not implemented. Column width is not modeled. Do not invent a golden.",
+    "tags": ["text", "text-fn"],
+    "formula": "=TEXT(12,\"*0\")"
+  },
+  {
+    "id": "fn.text-ignore-skip-underscore",
+    "description": "Skip-width _ is not implemented",
+    "ignore": "Alignment skip '_' is not implemented. Do not invent a golden.",
+    "tags": ["text", "text-fn"],
+    "formula": "=TEXT(12,\"_($0\")"
+  },
+  {
+    "id": "fn.text-ignore-question-placeholder",
+    "description": "? space-padded digit is not implemented",
+    "ignore": "Question-mark digit placeholders are not implemented (they pad with spaces). Do not invent a golden.",
+    "tags": ["text", "text-fn"],
+    "formula": "=TEXT(1.2,\"0.??\")"
+  },
+  {
+    "id": "fn.text-ignore-trailing-comma-scale",
+    "description": "Trailing-comma /1000 scaling is not implemented",
+    "ignore": "A comma after the last integer placeholder scales by 1000. Not implemented; do not invent a #VALUE! or scaled golden.",
+    "tags": ["text", "text-fn"],
+    "formula": "=TEXT(12000,\"#,##0,\")"
+  },
+  {
+    "id": "fn.text-ignore-time-hm",
+    "description": "Time hh:mm is not implemented",
+    "ignore": "Time tokens h/hh and minute-mm after h are not implemented. Excel would emit a clock time. Do not invent a #VALUE! or time golden.",
+    "tags": ["text", "text-fn"],
+    "formula": "=TEXT(0.5,\"hh:mm\")"
+  },
+  {
+    "id": "fn.text-ignore-time-ampm",
+    "description": "AM/PM clock is not implemented",
+    "ignore": "AM/PM (and A/P) are not implemented. Do not invent a golden.",
+    "tags": ["text", "text-fn"],
+    "formula": "=TEXT(0.75,\"h:mm AM/PM\")"
+  },
+  {
+    "id": "fn.text-ignore-month-name",
+    "description": "mmm month names are not implemented",
+    "ignore": "Month names (mmm/mmmm) are locale-dependent. Not implemented; do not invent an en-US 'Mar'/'March' golden.",
+    "tags": ["text", "text-fn", "dates"],
+    "quirks": ["locale"],
+    "formula": "=TEXT(DATE(2024,3,15),\"mmm\")"
+  },
+  {
+    "id": "fn.text-ignore-day-name",
+    "description": "dddd day names are not implemented",
+    "ignore": "Weekday names (ddd/dddd) are locale-dependent. Not implemented; do not invent an en-US weekday golden.",
+    "tags": ["text", "text-fn", "dates"],
+    "quirks": ["locale"],
+    "formula": "=TEXT(DATE(2024,3,15),\"dddd\")"
+  },
+  {
+    "id": "fn.text-ignore-elapsed-hours",
+    "description": "[h] elapsed hours are not implemented",
+    "ignore": "Elapsed-time brackets [h]/[mm]/[ss] are not implemented. Do not invent a golden.",
+    "tags": ["text", "text-fn"],
+    "formula": "=TEXT(1.5,\"[h]:mm\")"
+  },
+  {
+    "id": "fn.text-ignore-mixed-at-digits",
+    "description": "@ mixed with 0/# is not implemented",
+    "ignore": "@ mixed with digit placeholders is not in the subset. Excel's exact mix is easy to mis-record; do not invent a golden.",
+    "tags": ["text", "text-fn"],
+    "formula": "=TEXT(12,\"0@\")"
+  },
+  {
+    "id": "fn.text-ignore-unquoted-usd",
+    "description": "Unquoted USD collides with time/date letters S and D",
+    "ignore": "Unquoted S/H are reserved as time tokens (fail-closed). Excel's TEXT(123,\"USD\") is a time/date parse, not the letters USD. Do not invent a golden.",
+    "tags": ["text", "text-fn"],
+    "formula": "=TEXT(123,\"USD\")"
+  },
+  {
+    "id": "fn.text-ignore-locale-decimal",
+    "description": "Locale #.##0,00 is not implemented",
+    "ignore": "Locale decimal/grouping punctuation is not modeled (en-US only). Do not invent a golden.",
+    "tags": ["text", "text-fn"],
+    "quirks": ["locale"],
+    "formula": "=TEXT(1234.5,\"#.##0,00\")"
   }
 ]
