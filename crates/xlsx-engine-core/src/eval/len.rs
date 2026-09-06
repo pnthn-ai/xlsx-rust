@@ -18,8 +18,8 @@
 //! - `LENB` (DBCS / byte count) is out of scope.
 //!
 //! Production path counts UTF-8 scalars without allocating: ASCII is the
-//! byte length after a SWAR high-bit probe; mixed UTF-8 is `len −`
-//! continuation bytes (also SWAR). `Text` is borrowed (no `to_text`
+//! byte length after `is_ascii`; mixed UTF-8 is `len −` SWAR-counted
+//! continuation bytes. `Text` is borrowed (no `to_text`
 //! clone). Integers in the `format_plain` short path use a digit count
 //! instead of formatting. The `to_text` + `Vec<char>` baseline lives
 //! beside that path so benches can print before/after. This kernel does
@@ -88,21 +88,15 @@ fn int_digit_count(n: i64) -> usize {
 
 /// Unicode scalar count = UTF-8 byte length minus continuation bytes.
 ///
-/// ASCII (no high bit) is the byte length. Mixed UTF-8 is counted in the
-/// same SWAR pass: continuation bytes are `10xxxxxx`.
+/// ASCII uses the slice `is_ascii` probe (byte length). Mixed UTF-8 is
+/// `len −` SWAR-counted `10xxxxxx` continuation bytes.
 #[inline]
 pub fn scalar_count(text: &str) -> usize {
     let bytes = text.as_bytes();
-    let n = bytes.len();
-    if n == 0 {
-        return 0;
+    if bytes.is_ascii() {
+        return bytes.len();
     }
-    let (hi, cont) = ascii_and_continuations(bytes);
-    if hi == 0 {
-        n
-    } else {
-        n - cont
-    }
+    bytes.len() - continuation_count(bytes)
 }
 
 const HI8: u64 = 0x8080_8080_8080_8080;
@@ -110,33 +104,40 @@ const B6_8: u64 = 0x4040_4040_4040_4040;
 const HI16: u128 = 0x8080_8080_8080_8080_8080_8080_8080_8080;
 const B6_16: u128 = 0x4040_4040_4040_4040_4040_4040_4040_4040;
 
-/// One pass: OR of high bits + continuation-byte count.
-fn ascii_and_continuations(bytes: &[u8]) -> (u64, usize) {
+/// Count UTF-8 continuation bytes (`10xxxxxx`) in 16-byte SWAR chunks.
+fn continuation_count(bytes: &[u8]) -> usize {
     let n = bytes.len();
     let mut i = 0;
-    let mut hi = 0u64;
     let mut cont = 0usize;
+    while i + 32 <= n {
+        let a = u128::from_ne_bytes(bytes[i..i + 16].try_into().unwrap());
+        let b = u128::from_ne_bytes(bytes[i + 16..i + 32].try_into().unwrap());
+        cont += cont_ones_u128(a) + cont_ones_u128(b);
+        i += 32;
+    }
     while i + 16 <= n {
         let v = u128::from_ne_bytes(bytes[i..i + 16].try_into().unwrap());
-        hi |= ((v & HI16) != 0) as u64;
-        let c = ((v & HI16) >> 1) & (!v & B6_16);
-        cont += c.count_ones() as usize;
+        cont += cont_ones_u128(v);
         i += 16;
     }
     while i + 8 <= n {
         let v = u64::from_ne_bytes(bytes[i..i + 8].try_into().unwrap());
-        hi |= v & HI8;
         let c = ((v & HI8) >> 1) & (!v & B6_8);
         cont += c.count_ones() as usize;
         i += 8;
     }
     while i < n {
         let b = bytes[i];
-        hi |= (b as u64) & 0x80;
         cont += (b >= 0x80 && b < 0xC0) as usize;
         i += 1;
     }
-    (hi, cont)
+    cont
+}
+
+#[inline]
+fn cont_ones_u128(v: u128) -> usize {
+    let c = ((v & HI16) >> 1) & (!v & B6_16);
+    c.count_ones() as usize
 }
 
 /// Production LEN (scalar arg, UTF-8 scalar-count kernel).

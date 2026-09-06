@@ -44,21 +44,21 @@
   {
     "id": "fn.len-text",
     "description": "LEN(\"abc\") is 3",
-    "tags": ["text"],
+    "tags": ["text", "len"],
     "formula": "=LEN(\"abc\")",
     "expected": { "number": 3 }
   },
   {
     "id": "fn.len-number",
     "description": "LEN(123) coerces to text \"123\"",
-    "tags": ["text", "coercion"],
+    "tags": ["text", "len", "coercion"],
     "formula": "=LEN(123)",
     "expected": { "number": 3 }
   },
   {
     "id": "fn.len-true",
     "description": "LEN(TRUE) is 4",
-    "tags": ["text", "coercion"],
+    "tags": ["text", "len", "coercion"],
     "formula": "=LEN(TRUE)",
     "expected": { "number": 4 }
   },
