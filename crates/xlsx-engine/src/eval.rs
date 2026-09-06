@@ -472,6 +472,7 @@ impl Interpreter {
             "DROP" => self.fn_drop(args, ctx),
             "CHOOSEROWS" => self.fn_chooserows(args, ctx),
             "MAKEARRAY" | "_XLFN.MAKEARRAY" => self.fn_makearray(args, ctx),
+            "BYROW" | "_XLFN.BYROW" => self.fn_byrow(args, ctx),
             "LAMBDA" | "_XLFN.LAMBDA" => Ok(ExcelValue::Error(ExcelError::Calc)),
             "CHOOSECOLS" => self.fn_choosecols(args, ctx),
             "NETWORKDAYS.INTL" => self.fn_networkdays_intl(args, ctx),
@@ -3757,6 +3758,56 @@ impl Interpreter {
         Ok(ExcelValue::Array(grid))
     }
 
+    fn fn_byrow(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.len() != 2 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        let array = self.eval_expr(&args[0], ctx)?;
+        if let ExcelValue::Error(e) = array {
+            return Ok(ExcelValue::Error(e));
+        }
+        let grid = match xlsx_engine_core::eval::byrow::to_grid(array) {
+            Ok(g) => g,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        match resolve_seed_lambda_arity(&args[1], ctx, 1, 0) {
+            Ok((params, body)) => {
+                let base = ctx.locals.len();
+                ctx.locals
+                    .push((params[0].clone(), ExcelValue::Array(vec![grid[0].clone()])));
+                let mut out = Vec::with_capacity(grid.len());
+                for row in grid {
+                    ctx.locals[base].1 = ExcelValue::Array(vec![row]);
+                    let v = self.eval_expr(&body, ctx)?;
+                    out.push(vec![match v {
+                        ExcelValue::Array(_) => ExcelValue::Error(ExcelError::Calc),
+                        other => other,
+                    }]);
+                }
+                ctx.locals.truncate(base);
+                Ok(ExcelValue::Array(out))
+            }
+            Err(xlsx_engine_core::LambdaError::WrongArity) => {
+                Ok(ExcelValue::Error(ExcelError::Value))
+            }
+            Err(xlsx_engine_core::LambdaError::NotLambda) => {
+                if let Expr::Name(n) = &args[1] {
+                    if let Some(kind) = xlsx_engine_core::eta_agg(n) {
+                        return Ok(xlsx_engine_core::excel_byrow(
+                            &grid,
+                            &xlsx_engine_core::RowPlan::Agg(kind),
+                        ));
+                    }
+                }
+                let second = self.eval_expr(&args[1], ctx)?;
+                if let ExcelValue::Error(e) = second {
+                    return Ok(ExcelValue::Error(e));
+                }
+                Ok(ExcelValue::Error(ExcelError::Calc))
+            }
+        }
+    }
+
     fn fn_rri(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
         if args.len() != 3 {
             return Ok(ExcelValue::Error(ExcelError::Value));
@@ -5099,39 +5150,54 @@ fn seed_lambda_name(name: &str) -> bool {
     xlsx_engine_core::eval::makearray::is_lambda_name(name)
 }
 
+fn seed_param_name(expr: &Expr) -> Option<String> {
+    match expr {
+        Expr::Name(n) => Some(xlsx_engine_core::eval::makearray::strip_xlpm(n).to_string()),
+        _ => None,
+    }
+}
 
 fn resolve_seed_lambda(
     expr: &Expr,
     ctx: &Ctx<'_>,
     depth: usize,
 ) -> Result<(String, String, Expr), ExcelError> {
+    let (params, body) =
+        resolve_seed_lambda_arity(expr, ctx, 2, depth).map_err(|_| ExcelError::Value)?;
+    Ok((params[0].clone(), params[1].clone(), body))
+}
+
+fn resolve_seed_lambda_arity(
+    expr: &Expr,
+    ctx: &Ctx<'_>,
+    arity: usize,
+    depth: usize,
+) -> Result<(Vec<String>, Expr), xlsx_engine_core::LambdaError> {
     if depth > 16 {
-        return Err(ExcelError::Value);
+        return Err(xlsx_engine_core::LambdaError::NotLambda);
     }
     match expr {
         Expr::Call { name, args } if seed_lambda_name(name) => {
-            if args.len() != 3 {
-                return Err(ExcelError::Value);
+            if args.len() != arity + 1 {
+                return Err(xlsx_engine_core::LambdaError::WrongArity);
             }
-            let row = match &args[0] {
-                Expr::Name(n) => xlsx_engine_core::eval::makearray::strip_xlpm(n).to_string(),
-                _ => return Err(ExcelError::Value),
-            };
-            let col = match &args[1] {
-                Expr::Name(n) => xlsx_engine_core::eval::makearray::strip_xlpm(n).to_string(),
-                _ => return Err(ExcelError::Value),
-            };
-            Ok((row, col, args[2].clone()))
+            let mut params = Vec::with_capacity(arity);
+            for p in &args[..arity] {
+                params.push(
+                    seed_param_name(p).ok_or(xlsx_engine_core::LambdaError::WrongArity)?,
+                );
+            }
+            Ok((params, args[arity].clone()))
         }
         Expr::Name(n) => {
             let def = ctx
                 .spec
                 .workbook
                 .defined_name(n)
-                .map_err(|_| ExcelError::Value)?;
-            let ast = parse(&def.refers_to).map_err(|_| ExcelError::Value)?;
-            resolve_seed_lambda(&ast, ctx, depth + 1)
+                .map_err(|_| xlsx_engine_core::LambdaError::NotLambda)?;
+            let ast = parse(&def.refers_to).map_err(|_| xlsx_engine_core::LambdaError::NotLambda)?;
+            resolve_seed_lambda_arity(&ast, ctx, arity, depth + 1)
         }
-        _ => Err(ExcelError::Value),
+        _ => Err(xlsx_engine_core::LambdaError::NotLambda),
     }
 }

@@ -64,6 +64,7 @@ pub(crate) fn dispatch(
         "DROP" => super::drop::eval(ev, args, ctx),
         "CHOOSEROWS" => fn_chooserows(ev, args, ctx),
         "MAKEARRAY" | "_XLFN.MAKEARRAY" => fn_makearray(ev, args, ctx),
+        "BYROW" | "_XLFN.BYROW" => super::byrow::eval(ev, args, ctx),
         "LAMBDA" | "_XLFN.LAMBDA" => Ok(ExcelValue::Error(ExcelError::Calc)),
         "INDEX" => fn_index(ev, args, ctx),
         "MATCH" => fn_match(ev, args, ctx),
