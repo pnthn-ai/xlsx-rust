@@ -66,6 +66,7 @@
 //! - [`xlsx_types::excel_effect`] — Excel `EFFECT` (nominal → effective annual)
 //! - [`xlsx_types::excel_nominal`] — Excel `NOMINAL` (effective → nominal annual)
 //! - [`xlsx_types::excel_pduration`] — Excel `PDURATION` (lump-sum periods)
+//! - [`xlsx_types::excel_int`] — Excel `INT` (floor toward −∞; 15-digit snap)
 //! - Financial TVM: `PMT` / `RRI` via [`xlsx_types::excel_pmt`] / [`xlsx_types::excel_rri`]
 //!
 //! This crate depends only on [`xlsx_types`]. It never reads fixture expected
@@ -228,7 +229,8 @@ pub use text_format::{
 };
 pub use xlsx_types::{
     excel_cumipmt, excel_cumipmt_naive, excel_cumprinc, excel_cumprinc_naive, excel_effect,
-    excel_effect_naive, excel_fv, excel_fv_naive, excel_ipmt, excel_ipmt_naive, excel_nominal,
+    excel_effect_naive, excel_fv, excel_fv_naive, excel_int, excel_int_naive, excel_int_round15,
+    excel_int_slice, excel_int_slice_naive, excel_ipmt, excel_ipmt_naive, excel_nominal,
     excel_nominal_naive, excel_nper, excel_nper_naive, excel_pduration, excel_pduration_naive,
     excel_pmt, excel_ppmt, excel_ppmt_naive, excel_pv, excel_pv_naive, excel_rate,
     excel_rate_naive, excel_rri, excel_rri_naive,

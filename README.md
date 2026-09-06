@@ -302,7 +302,7 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 | [`eval/coerce.rs`](crates/xlsx-engine-core/src/eval/coerce.rs) | Arithmetic / `&` / `IF` coercion (`"2"+1` = 3, TRUE → 1, empty → 0) |
 | [`eval/compare.rs`](crates/xlsx-engine-core/src/eval/compare.rs) | 15-digit `=`, case-insensitive text, `TRUE=1`, type ranking (`FALSE>100`) |
 | [`eval/empty.rs`](crates/xlsx-engine-core/src/eval/empty.rs) | Blank ≠ 0 ≠ `""`, but `A1=0` and `A1=""` when `A1` is blank |
-| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Dispatch: aggregators (`SUM`/`SUMIF`/`SUMIFS`/`AVERAGEIF`/`AVERAGEIFS`/`COUNTIF`/`COUNTIFS`/`SUMPRODUCT`), logicals (`IF`/`IFS`/`SWITCH`/`LET`), lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`/`FILTER`/`UNIQUE`/`SORT`/`SORTBY`/`TOCOL`/`TOROW`/`SEQUENCE`/`VSTACK`/`HSTACK`/`WRAPCOLS`/`WRAPROWS`/`TAKE`/`DROP`/`EXPAND`/`CHOOSECOLS`/`CHOOSEROWS`/`MAKEARRAY`/`MAP`/`SCAN`/`BYROW`/`REDUCE`/`BYCOL`), dates (`DATE`/`EDATE`/`EOMONTH`/`NETWORKDAYS`/`NETWORKDAYS.INTL`/`WEEKDAY`/`WEEKNUM`/`ISOWEEKNUM`/`WORKDAY`/`WORKDAY.INTL`/`YEARFRAC`/`DAYS360`), math (`ROUND`/`ROUNDUP`/`ROUNDDOWN`/`FLOOR`/`CEILING`/`RANDARRAY`), text (`LEFT`/`LOWER`/`UPPER`/`PROPER`/`TRIM`/`CLEAN`/`EXACT`/`SUBSTITUTE`/`REPLACE`/`FIND`/`SEARCH`/`TEXT`/`VALUE`/`TEXTJOIN`/`TEXTSPLIT`/`TEXTAFTER`/`TEXTBEFORE`/`CONCAT`/`REPT`/`CODE`/`CHAR`/`UNICODE`/`UNICHAR`), financial (`NPV`/`XNPV`/`PMT`/`FV`/`PV`/`NPER`/`RATE`/`IPMT`/`PPMT`/`CUMPRINC`/`CUMIPMT`/`IRR`/`XIRR`/`MIRR`/`EFFECT`/`NOMINAL`/`PDURATION`/`RRI`), `TYPE` / `IS*` / `ISOMITTED` |
+| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Dispatch: aggregators (`SUM`/`SUMIF`/`SUMIFS`/`AVERAGEIF`/`AVERAGEIFS`/`COUNTIF`/`COUNTIFS`/`SUMPRODUCT`), logicals (`IF`/`IFS`/`SWITCH`/`LET`), lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`/`FILTER`/`UNIQUE`/`SORT`/`SORTBY`/`TOCOL`/`TOROW`/`SEQUENCE`/`VSTACK`/`HSTACK`/`WRAPCOLS`/`WRAPROWS`/`TAKE`/`DROP`/`EXPAND`/`CHOOSECOLS`/`CHOOSEROWS`/`MAKEARRAY`/`MAP`/`SCAN`/`BYROW`/`REDUCE`/`BYCOL`), dates (`DATE`/`EDATE`/`EOMONTH`/`NETWORKDAYS`/`NETWORKDAYS.INTL`/`WEEKDAY`/`WEEKNUM`/`ISOWEEKNUM`/`WORKDAY`/`WORKDAY.INTL`/`YEARFRAC`/`DAYS360`), math (`INT`/`ROUND`/`ROUNDUP`/`ROUNDDOWN`/`FLOOR`/`CEILING`/`RANDARRAY`), text (`LEFT`/`LOWER`/`UPPER`/`PROPER`/`TRIM`/`CLEAN`/`EXACT`/`SUBSTITUTE`/`REPLACE`/`FIND`/`SEARCH`/`TEXT`/`VALUE`/`TEXTJOIN`/`TEXTSPLIT`/`TEXTAFTER`/`TEXTBEFORE`/`CONCAT`/`REPT`/`CODE`/`CHAR`/`UNICODE`/`UNICHAR`), financial (`NPV`/`XNPV`/`PMT`/`FV`/`PV`/`NPER`/`RATE`/`IPMT`/`PPMT`/`CUMPRINC`/`CUMIPMT`/`IRR`/`XIRR`/`MIRR`/`EFFECT`/`NOMINAL`/`PDURATION`/`RRI`), `TYPE` / `IS*` / `ISOMITTED` |
 | [`eval/sumif.rs`](crates/xlsx-engine-core/src/eval/sumif.rs) | Excel `SUMIF` kernel (criteria walk, reshape `sum_range`, no array literals) |
 | [`eval/sumifs.rs`](crates/xlsx-engine-core/src/eval/sumifs.rs) | Excel `SUMIFS`: multi-criteria AND, same-shape ranges |
 | [`eval/countifs.rs`](crates/xlsx-engine-core/src/eval/countifs.rs) | Excel `COUNTIFS`: multi-criteria AND, same-shape ranges, COUNTIF matcher |
@@ -319,6 +319,7 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 | [`eval/textsplit.rs`](crates/xlsx-engine-core/src/eval/textsplit.rs) | `TEXTSPLIT` col/row split, `ignore_empty`, `match_mode`, `pad_with` |
 | [`eval/concat.rs`](crates/xlsx-engine-core/src/eval/concat.rs) | Excel `CONCAT`: row-major flatten, blanks/`""` add nothing, 32,767 UTF-16 cap |
 | [`eval/round.rs`](crates/xlsx-engine-core/src/eval/round.rs) | Excel `ROUNDUP` / `ROUNDDOWN` (away / toward zero, negative `num_digits`) |
+| [`xlsx-types/src/excel_int.rs`](crates/xlsx-types/src/excel_int.rs) | Excel `INT` (floor toward −∞; 15-digit leftover snap) |
 | [`eval/switch.rs`](crates/xlsx-engine-core/src/eval/switch.rs) | Excel `SWITCH` exact-match kernel (first hit, default / `#N/A`) |
 | [`eval/ifs.rs`](crates/xlsx-engine-core/src/eval/ifs.rs) | `IFS` pair-selection kernel (eager eval, first TRUE, no-match `#N/A`) |
 | [`eval/unique.rs`](crates/xlsx-engine-core/src/eval/unique.rs) | `UNIQUE(array, [by_col], [exactly_once])` hash distinctness |
@@ -376,7 +377,9 @@ families above. Criterion matching for `SUMIF` / `SUMIFS` / `AVERAGEIF` /
 (`compile` vs `parse`). TVM helpers (`PMT` / `FV` / `PV` / `NPER` / `RATE` /
 `IPMT` / `PPMT` / `CUMPRINC` / `CUMIPMT` / `EFFECT` / `NOMINAL` / `PDURATION`
 / `RRI`) live in
-[`xlsx-types/src/financial.rs`](crates/xlsx-types/src/financial.rs). Workbook
+[`xlsx-types/src/financial.rs`](crates/xlsx-types/src/financial.rs).
+`INT` lives in
+[`xlsx-types/src/excel_int.rs`](crates/xlsx-types/src/excel_int.rs). Workbook
 input is the snippet type in `xlsx-types` (no `.xlsx` IO). Kernels do **not**
 read fixture goldens.
 
@@ -444,6 +447,7 @@ as one or the other. Documented quirk categories:
   `#VALUE!`. Array delimiters take the leftmost / longest match. `TEXTAFTER`
   / `TEXTSPLIT` share the same delimiter / instance conventions.
 - Classic `FLOOR` / `CEILING`: same-sign multiples; positive number + negative significance is `#NUM!`; significance `0` is `#DIV/0!` except `(0, 0)` → `0`. Negative number + positive significance is allowed (Excel 2010+). `FLOOR.MATH` / `CEILING.MATH` ignore significance sign, treat significance `0` as `0`, and take an optional mode.
+- `INT(number)`: floor toward −∞ (`INT(-8.9)` is `-9`). That is not `TRUNC` (toward zero: `TRUNC(-8.9)` is `-8`). `INT(n)` matches classic `FLOOR(n, 1)`. Excel's 15-significant-digit leftover (`1/3+1/3+1/3`) snaps to the integer, so `INT` of that sum is `1` (IEEE `floor` is `0`). Wrong arity / non-numeric text is `#VALUE!`. TVM / `FLOOR` kernels live in `xlsx-types`; `INT` is [`excel_int`](crates/xlsx-types/src/excel_int.rs).
 - `TRUE=1` / `FALSE=0` in `=` and in arithmetic; `ISNUMBER(TRUE)` is still false
 - `SUM` / `AVERAGE` / `COUNT` / `PRODUCT` / `MIN` / `MAX`: skip logicals/text
   in ranges and array literals; coerce scalar arguments (`SUM(TRUE)` is 1,
