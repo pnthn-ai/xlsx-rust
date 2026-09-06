@@ -929,4 +929,31 @@ mod tests {
             ExcelValue::Error(ExcelError::Value)
         );
     }
+    #[test]
+    fn pduration_microsoft_and_errors() {
+        let wb = Workbook::default();
+        match eval_formula_in(&wb, "=PDURATION(2.5%,2000,2200)").unwrap() {
+            ExcelValue::Number(n) => {
+                let published = 3.859866162622648;
+                assert!((n - published).abs() / published < 1e-12, "got {n}")
+            }
+            other => panic!("expected number, got {other:?}"),
+        }
+        assert_eq!(
+            eval_formula_in(&wb, "=PDURATION(0.1,100,110)").unwrap(),
+            ExcelValue::Number(1.0)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=PDURATION(0,1000,2000)").unwrap(),
+            ExcelValue::Error(ExcelError::Num)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=PDURATION(0.05,1000)").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=PDURATION()").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
+        );
+    }
 }
