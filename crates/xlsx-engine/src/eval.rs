@@ -2535,19 +2535,16 @@ impl Interpreter {
         if let ExcelValue::Error(e) = delim_v {
             return Ok(ExcelValue::Error(e));
         }
-        let mut delims = Vec::new();
-        if let Err(e) = flatten_join_texts(&delim_v, &mut delims, self) {
-            return Ok(ExcelValue::Error(e));
-        }
-        if delims.is_empty() {
-            delims.push(String::new());
-        }
+        let delims = match xlsx_engine_core::textjoin_collect_delims(&delim_v) {
+            Ok(d) => d,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
         let ie = self.eval_scalar(&args[1], ctx)?;
         let ignore_empty = match self.as_if_cond(&ie) {
             Ok(b) => b,
             Err(e) => return Ok(ExcelValue::Error(e)),
         };
-        let mut parts = Vec::new();
+        let mut builder = xlsx_engine_core::TextJoinBuilder::new(delims);
         for arg in &args[2..] {
             if let Expr::Range(r) = arg {
                 let sheet = r.sheet.as_deref().unwrap_or(ctx.current_sheet.as_str());
@@ -2555,41 +2552,18 @@ impl Interpreter {
                     return Ok(ExcelValue::Error(ExcelError::Ref));
                 }
             }
+            if let Expr::Cell(c) = arg {
+                let sheet = c.sheet.as_deref().unwrap_or(ctx.current_sheet.as_str());
+                if ctx.spec.workbook.sheet(Some(sheet)).is_err() {
+                    return Ok(ExcelValue::Error(ExcelError::Ref));
+                }
+            }
             let v = self.eval_expr(arg, ctx)?;
-            if let Err(e) = flatten_join_texts(&v, &mut parts, self) {
+            if let Err(e) = xlsx_engine_core::textjoin_feed_value(&mut builder, &v, ignore_empty) {
                 return Ok(ExcelValue::Error(e));
             }
         }
-        let kept: Vec<&str> = if ignore_empty {
-            parts
-                .iter()
-                .map(String::as_str)
-                .filter(|s| !s.is_empty())
-                .collect()
-        } else {
-            parts.iter().map(String::as_str).collect()
-        };
-        if kept.is_empty() {
-            return Ok(ExcelValue::Text(String::new()));
-        }
-        let mut out = String::new();
-        let mut utf16 = 0usize;
-        for (i, part) in kept.iter().enumerate() {
-            if i > 0 {
-                let d = delims[(i - 1) % delims.len()].as_str();
-                utf16 += d.encode_utf16().count();
-                if utf16 > 32767 {
-                    return Ok(ExcelValue::Error(ExcelError::Value));
-                }
-                out.push_str(d);
-            }
-            utf16 += part.encode_utf16().count();
-            if utf16 > 32767 {
-                return Ok(ExcelValue::Error(ExcelError::Value));
-            }
-            out.push_str(part);
-        }
-        Ok(ExcelValue::Text(out))
+        Ok(ExcelValue::Text(builder.finish()))
     }
 
     fn fn_concat(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
@@ -5040,27 +5014,6 @@ fn format_plain(n: f64) -> String {
         format!("{n:.0}")
     } else {
         format!("{n}")
-    }
-}
-
-fn flatten_join_texts(
-    v: &ExcelValue,
-    out: &mut Vec<String>,
-    interp: &Interpreter,
-) -> Result<(), ExcelError> {
-    match v {
-        ExcelValue::Array(rows) => {
-            for row in rows {
-                for c in row {
-                    flatten_join_texts(c, out, interp)?;
-                }
-            }
-            Ok(())
-        }
-        other => {
-            out.push(interp.as_text(other)?);
-            Ok(())
-        }
     }
 }
 

@@ -243,7 +243,8 @@ pub use eval::textbefore::{
     textbefore as excel_textbefore, textbefore_naive as excel_textbefore_naive,
 };
 pub use eval::textjoin::{
-    eval_textjoin_formula, textjoin_naive_join, TextJoinBuilder, TEXTJOIN_MAX_CHARS,
+    eval_textjoin_formula, textjoin_collect_delims, textjoin_feed_value, textjoin_naive_join,
+    TextJoinBuilder, TextJoinWalk, TEXTJOIN_MAX_CHARS,
 };
 pub use eval::textsplit::{
     apply_values as excel_textsplit_apply, textsplit as excel_textsplit,
