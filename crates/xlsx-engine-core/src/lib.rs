@@ -73,6 +73,7 @@
 //! - [`xlsx_types::excel_pduration`] — Excel `PDURATION` (lump-sum periods)
 //! - [`xlsx_types::excel_int`] — Excel `INT` (floor toward −∞; leftover snap)
 //! - [`eval::roundup`] — Excel `ROUNDUP` (away from zero; omitted digits → 0)
+//! - [`eval::rounddown`] — Excel `ROUNDDOWN` (toward zero; omitted `num_digits` = 0)
 //! - Financial TVM: `PMT` / `RRI` via [`xlsx_types::excel_pmt`] / [`xlsx_types::excel_rri`]
 //!
 //! This crate depends only on [`xlsx_types`]. It never reads fixture expected
@@ -186,7 +187,13 @@ pub use eval::right::{
     right as excel_right, right_naive as excel_right_naive, right_owned as excel_right_owned,
     trunc_num_chars as right_trunc_num_chars,
 };
-pub use eval::round::{rounddown as excel_rounddown, rounddown_naive as excel_rounddown_naive};
+pub use eval::rounddown::{
+    rounddown as excel_rounddown, rounddown_naive as excel_rounddown_naive,
+    rounddown_slice as excel_rounddown_slice,
+    rounddown_slice_digits as excel_rounddown_slice_digits,
+    rounddown_slice_digits_naive as excel_rounddown_slice_digits_naive,
+    rounddown_slice_naive as excel_rounddown_slice_naive,
+};
 pub use eval::roundup::{
     roundup as excel_roundup, roundup_naive as excel_roundup_naive,
     roundup_slice as excel_roundup_slice, roundup_slice_naive as excel_roundup_slice_naive,

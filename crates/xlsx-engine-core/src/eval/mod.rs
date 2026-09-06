@@ -44,6 +44,7 @@ pub mod replace;
 pub mod rept;
 pub mod right;
 pub mod round;
+pub mod rounddown;
 pub mod roundup;
 pub mod scan;
 pub mod search;

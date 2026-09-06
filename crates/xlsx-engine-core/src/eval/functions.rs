@@ -90,7 +90,7 @@ pub(crate) fn dispatch(
         "TRUNC" => fn_trunc(ev, args, ctx),
         "ROUND" => fn_round(ev, args, ctx),
         "ROUNDUP" => super::roundup::fn_roundup(ev, args, ctx),
-        "ROUNDDOWN" => fn_round_dir(ev, args, ctx),
+        "ROUNDDOWN" => super::rounddown::fn_rounddown(ev, args, ctx),
         "FLOOR" => fn_floor_ceil(ev, args, ctx, FloorCeil::Floor),
         "CEILING" => fn_floor_ceil(ev, args, ctx, FloorCeil::Ceiling),
         "FLOOR.MATH" => fn_floor_ceil_math(ev, args, ctx, FloorCeil::Floor),
@@ -787,21 +787,6 @@ fn fn_round(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelVal
         0
     };
     Ok(ExcelValue::Number(excel_round(n, digits)))
-}
-
-fn fn_round_dir(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
-    if args.len() != 2 {
-        return Ok(ExcelValue::Error(ExcelError::Value));
-    }
-    let n = match coerce::to_number(&ev.eval_scalar(&args[0], ctx)?) {
-        Ok(n) => n,
-        Err(e) => return Ok(ExcelValue::Error(e)),
-    };
-    let digits = match coerce::to_number(&ev.eval_scalar(&args[1], ctx)?) {
-        Ok(d) => d.trunc() as i32,
-        Err(e) => return Ok(ExcelValue::Error(e)),
-    };
-    Ok(ExcelValue::Number(super::round::rounddown(n, digits)))
 }
 
 fn fn_mod(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {

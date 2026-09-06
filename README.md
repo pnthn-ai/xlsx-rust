@@ -320,9 +320,10 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 | [`eval/textjoin.rs`](crates/xlsx-engine-core/src/eval/textjoin.rs) | `TEXTJOIN` with cycling delimiters and `ignore_empty` |
 | [`eval/textsplit.rs`](crates/xlsx-engine-core/src/eval/textsplit.rs) | `TEXTSPLIT` col/row split, `ignore_empty`, `match_mode`, `pad_with` |
 | [`eval/concat.rs`](crates/xlsx-engine-core/src/eval/concat.rs) | Excel `CONCAT`: row-major flatten, occupied sparse walk, 32,767 UTF-16 cap (not Compat-v2 `LEN`) |
-| [`eval/round.rs`](crates/xlsx-engine-core/src/eval/round.rs) | Excel `ROUNDUP` / `ROUNDDOWN` (away / toward zero, negative `num_digits`) |
+| [`eval/round.rs`](crates/xlsx-engine-core/src/eval/round.rs) | Shared `ROUNDUP` / `ROUNDDOWN` table kernel (combined bench) |
 | [`xlsx-types/src/excel_round.rs`](crates/xlsx-types/src/excel_round.rs) | Excel `ROUND` (half away from zero; omitted `num_digits` = 0; 15-digit leftover snap) |
 | [`eval/roundup.rs`](crates/xlsx-engine-core/src/eval/roundup.rs) | Excel `ROUNDUP` (away from zero; omitted `num_digits` → 0; 15-digit snap) |
+| [`eval/rounddown.rs`](crates/xlsx-engine-core/src/eval/rounddown.rs) | Excel `ROUNDDOWN` (toward zero; omitted `num_digits` = 0; 15-digit snap) |
 | [`xlsx-types/src/excel_int.rs`](crates/xlsx-types/src/excel_int.rs) | Excel `INT` (floor toward −∞; 15-digit leftover snap) |
 | [`eval/switch.rs`](crates/xlsx-engine-core/src/eval/switch.rs) | Excel `SWITCH` exact-match kernel (first hit, default / `#N/A`) |
 | [`eval/ifs.rs`](crates/xlsx-engine-core/src/eval/ifs.rs) | `IFS` pair-selection kernel (eager eval, first TRUE, no-match `#N/A`) |
@@ -478,6 +479,7 @@ as one or the other. Documented quirk categories:
 - Classic `FLOOR` / `CEILING`: same-sign multiples; positive number + negative significance is `#NUM!`; significance `0` is `#DIV/0!` except `(0, 0)` → `0`. Negative number + positive significance is allowed (Excel 2010+). `FLOOR.MATH` / `CEILING.MATH` ignore significance sign, treat significance `0` as `0`, and take an optional mode.
 - `INT(number)`: floor toward −∞ (`INT(-8.9)` is `-9`). That is not `TRUNC` (toward zero: `TRUNC(-8.9)` is `-8`). `INT(n)` matches classic `FLOOR(n, 1)`. Excel's 15-significant-digit leftover snap treats repeated `+0.1` (IEEE `0.999…9`) as `1` and `0.3-0.1-0.2` (tiny negative) as `0`. Wrong arity / non-numeric text is `#VALUE!`. TVM / `FLOOR` kernels live in `xlsx-types`; `INT` is [`excel_int`](crates/xlsx-types/src/excel_int.rs).
 - `ROUNDUP(number, [num_digits])`: always away from zero (`ROUNDUP(-3.2, 0)` is `-4`). Omitted `num_digits` defaults to `0`. Negative `num_digits` rounds left of the decimal (`ROUNDUP(123, -1)` is `130`). Fractional digits truncate toward zero. Arithmetic coerce; errors left-to-right; `ROUNDUP()` / extra args are `#VALUE!`. IEEE leftovers that agree to 15 significant digits do not bump (`ROUNDUP(1.1, 2)` stays `1.1`). Dedicated kernel: [`eval/roundup.rs`](crates/xlsx-engine-core/src/eval/roundup.rs). `ROUND` / `ROUNDDOWN` / `TRUNC` are separate.
+- `ROUNDDOWN(number, [num_digits])`: always toward zero (`ROUNDDOWN(-3.2, 0)` is `-3`; that is `TRUNC`, not `INT`). Omitted `num_digits` (one-arg form, trailing-comma slot, or blank) is 0. Negative `num_digits` rounds left of the decimal (`31415.92654` / `-2` → `31400`). Arithmetic coerce; errors left-to-right; 0 or 3+ args is `#VALUE!`. A 15-digit snap keeps `ROUNDDOWN(1.15, 2)` at `1.15`. Kernel: [`eval/rounddown.rs`](crates/xlsx-engine-core/src/eval/rounddown.rs). `ROUND` / `ROUNDUP` / `TRUNC` are separate.
 - `TRUE=1` / `FALSE=0` in `=` and in arithmetic; `ISNUMBER(TRUE)` is still false
 - `SUM` / `AVERAGE` / `COUNT` / `PRODUCT` / `MIN` / `MAX`: skip logicals/text
   in ranges and array literals; coerce scalar arguments (`SUM(TRUE)` is 1,
