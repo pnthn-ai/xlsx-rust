@@ -8,9 +8,10 @@
 //! - [`eval::textbefore`] — Excel `TEXTBEFORE` (nth delimiter, match_end / if_not_found)
 //! - [`eval::proper`] — Excel `PROPER` (ASCII title-case; apostrophe / digit breaks)
 //! - [`text_format`] — Excel `TEXT` for a documented number/date format subset
-//! - [`eval::functions`] also dispatches `SUMIF` / `COUNTIF` / `COUNTIFS` / `SUMPRODUCT` / `SUBSTITUTE` / `CLEAN`
+//! - [`eval::functions`] also dispatches `SUMIF` / `COUNTIF` / `COUNTIFS` / `SUMPRODUCT` / `SUBSTITUTE` / `CLEAN` / `CODE`
 //! - [`eval::concat`] — Excel `CONCAT` (range/array flatten + 32767 cap)
 //! - [`eval::clean`] — Excel `CLEAN` (strip ASCII C0 `0..=31`)
+//! - [`eval::code`] — Excel `CODE` (Windows-1252 first-character code)
 //! - [`eval::rept`] — Excel `REPT` (repeat + 32767 UTF-16 cap)
 //! - [`dates::weekday`] — O(1) Excel `WEEKDAY` on the date serial
 //! - [`dates::yearfrac`] — Excel `YEARFRAC` day-count bases 0–4
@@ -86,6 +87,10 @@ pub use eval::byrow::{
 pub use eval::choosecols::{select as excel_choosecols, select_naive as excel_choosecols_naive};
 pub use eval::chooserows::{select as excel_chooserows, select_naive as excel_chooserows_naive};
 pub use eval::clean::{clean as excel_clean, clean_naive as excel_clean_naive};
+pub use eval::code::{
+    code as excel_code, code_naive as excel_code_naive, code_value as excel_code_value,
+    code_value_naive as excel_code_value_naive,
+};
 pub use eval::concat::{concat_naive_join, eval_concat_formula, ConcatBuilder, CONCAT_MAX_CHARS};
 pub use eval::drop::{apply as excel_drop, apply_naive as excel_drop_naive};
 pub use eval::exact::{exact as excel_exact, exact_naive as excel_exact_naive};
