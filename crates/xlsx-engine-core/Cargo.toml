@@ -337,6 +337,10 @@ name = "value"
 harness = false
 
 [[bench]]
+name = "unichar"
+harness = false
+
+[[bench]]
 name = "textsplit"
 harness = false
 
