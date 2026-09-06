@@ -1,9 +1,10 @@
 //! Large-concat hill-climb for Excel `CONCAT`.
 //!
 //! Compares the materializing baseline (`eval_expr` → 2-D `Array` → collect →
-//! join) with the production walk (sheet-direct read, stream append).
-//! Workloads stay under Excel’s 32,767-character result cap so the bench
-//! measures a completed concat, not the `#VALUE!` overflow path.
+//! join), a dense rectangle walk, and the production walk (occupied-cell
+//! gather on sparse ranges, stream append). Workloads stay under Excel’s
+//! 32,767 UTF-16-unit result cap so the bench measures a completed concat,
+//! not the `#VALUE!` overflow path.
 //!
 //! ```text
 //! cargo bench -p xlsx-engine-core --bench concat
@@ -13,11 +14,14 @@
 
 use std::hint::black_box;
 use std::time::{Duration, Instant};
-use xlsx_engine_core::{concat_naive_join, eval_concat_formula, ConcatBuilder};
+use xlsx_engine_core::{
+    concat_naive_join, eval_concat_formula, ConcatBuilder, ConcatWalk, CONCAT_MAX_CHARS,
+};
 use xlsx_types::{Cell, CellAddr, ExcelValue, Sheet, Workbook};
 
 const N_10K: u32 = 10_000;
 const N_50K: u32 = 50_000;
+const N_200K: u32 = 200_000;
 
 fn col_a_fixed(n: u32, text: &str, keep: impl Fn(u32) -> bool) -> Workbook {
     let mut sheet = Sheet::new("Sheet1");
@@ -73,13 +77,15 @@ fn fmt_dur(d: Duration) -> String {
 }
 
 fn assert_same(formula: &str, wb: &Workbook) {
-    let walk = eval_concat_formula(wb, formula, false).expect("walk");
-    let mat = eval_concat_formula(wb, formula, true).expect("materialize");
-    assert_eq!(walk, mat, "walk and materialize must agree for {formula}");
-    match walk {
+    let auto = eval_concat_formula(wb, formula, ConcatWalk::Auto).expect("auto");
+    let dense = eval_concat_formula(wb, formula, ConcatWalk::Dense).expect("dense");
+    let mat = eval_concat_formula(wb, formula, ConcatWalk::Materialize).expect("materialize");
+    assert_eq!(auto, dense, "auto and dense must agree for {formula}");
+    assert_eq!(auto, mat, "auto and materialize must agree for {formula}");
+    match auto {
         ExcelValue::Text(s) => assert!(
-            s.encode_utf16().count() <= 32767,
-            "{formula} overflowed the Excel cap ({} chars)",
+            s.encode_utf16().count() <= CONCAT_MAX_CHARS,
+            "{formula} overflowed the Excel cap ({} UTF-16 units)",
             s.encode_utf16().count()
         ),
         ExcelValue::Error(_) => {
@@ -98,6 +104,9 @@ fn main() {
     let grid_4k = two_cols(4_000, "a", "b");
     // 50k sparse walk: 2% filled ("x") → 1000 chars.
     let sparse_50k = col_a_fixed(N_50K, "x", |i| i % 50 == 0);
+    // 200k very sparse: 0.5% filled ("x") → 1000 chars. Occupied gather
+    // should beat a 200k dense lookup / 2-D materialize.
+    let sparse_200k = col_a_fixed(N_200K, "x", |i| i % 200 == 0);
 
     let cases: &[(&str, &str, &Workbook, u32)] = &[
         ("8k dense", "=CONCAT(A1:A8000)", &dense_8k, 10),
@@ -110,29 +119,34 @@ fn main() {
             10,
         ),
         ("50k sparse", "=CONCAT(A1:A50000)", &sparse_50k, 6),
+        ("200k sparse", "=CONCAT(A1:A200000)", &sparse_200k, 4),
     ];
 
-    println!("CONCAT eval bench (materialize 2-D array vs walk+stream)");
+    println!("CONCAT eval bench (materialize / dense walk / occupied auto)");
     println!(
-        "{:<24} {:>12} {:>12} {:>8}",
-        "case", "materialize", "walk", "speedup"
+        "{:<24} {:>12} {:>12} {:>12} {:>8}",
+        "case", "materialize", "dense", "auto", "vs mat"
     );
-    println!("{}", "-".repeat(60));
+    println!("{}", "-".repeat(72));
 
     for (name, formula, wb, iters) in cases {
         assert_same(formula, wb);
         let mat = time_it(*iters, || {
-            black_box(eval_concat_formula(wb, formula, true).unwrap());
+            black_box(eval_concat_formula(wb, formula, ConcatWalk::Materialize).unwrap());
         });
-        let walk = time_it(*iters, || {
-            black_box(eval_concat_formula(wb, formula, false).unwrap());
+        let dense = time_it(*iters, || {
+            black_box(eval_concat_formula(wb, formula, ConcatWalk::Dense).unwrap());
         });
-        let speedup = mat.as_secs_f64() / walk.as_secs_f64();
+        let auto = time_it(*iters, || {
+            black_box(eval_concat_formula(wb, formula, ConcatWalk::Auto).unwrap());
+        });
+        let speedup = mat.as_secs_f64() / auto.as_secs_f64();
         println!(
-            "{:<24} {:>12} {:>12} {:>7.2}×",
+            "{:<24} {:>12} {:>12} {:>12} {:>7.2}×",
             name,
             fmt_dur(mat),
-            fmt_dur(walk),
+            fmt_dur(dense),
+            fmt_dur(auto),
             speedup
         );
     }
