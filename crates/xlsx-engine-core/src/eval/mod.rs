@@ -57,6 +57,7 @@ pub mod torow;
 pub mod trim;
 pub mod unique;
 pub mod upper;
+pub mod value;
 pub mod vstack;
 pub mod wrapcols;
 pub mod wraprows;

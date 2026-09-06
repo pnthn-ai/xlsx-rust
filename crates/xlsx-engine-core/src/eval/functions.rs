@@ -155,7 +155,7 @@ pub(crate) fn dispatch(
         "EXACT" => fn_exact(ev, args, ctx),
         "FIND" => fn_find(ev, args, ctx),
         "SEARCH" => fn_search(ev, args, ctx),
-        "VALUE" => fn_value(ev, args, ctx),
+        "VALUE" => super::value::eval(ev, args, ctx),
         "SUBSTITUTE" => fn_substitute(ev, args, ctx),
         "TEXT" => fn_text(ev, args, ctx),
         "REPLACE" => fn_replace(ev, args, ctx),
@@ -2421,24 +2421,6 @@ fn collect_cashflows_into(
             Ok(_) => Err(ExcelError::Num),
             Err(e) => Err(e),
         },
-    }
-}
-fn fn_value(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
-    if args.len() != 1 {
-        return Ok(ExcelValue::Error(ExcelError::Value));
-    }
-    let v = ev.eval_scalar(&args[0], ctx)?;
-    match v {
-        ExcelValue::Number(n) => Ok(ExcelValue::Number(n)),
-        ExcelValue::Bool(true) => Ok(ExcelValue::Number(1.0)),
-        ExcelValue::Bool(false) => Ok(ExcelValue::Number(0.0)),
-        ExcelValue::Empty => Ok(ExcelValue::Number(0.0)),
-        ExcelValue::Text(s) => match coerce::parse_numeric_text(&s) {
-            Ok(n) => Ok(ExcelValue::Number(n)),
-            Err(e) => Ok(ExcelValue::Error(e)),
-        },
-        ExcelValue::Error(e) => Ok(ExcelValue::Error(e)),
-        ExcelValue::Array(_) => Ok(ExcelValue::Error(ExcelError::Value)),
     }
 }
 

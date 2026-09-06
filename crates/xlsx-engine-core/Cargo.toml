@@ -325,6 +325,10 @@ name = "exact"
 harness = false
 
 [[bench]]
+name = "value"
+harness = false
+
+[[bench]]
 name = "textsplit"
 harness = false
 
