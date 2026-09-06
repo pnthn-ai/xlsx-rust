@@ -929,4 +929,31 @@ mod tests {
             ExcelValue::Error(ExcelError::Value)
         );
     }
+    #[test]
+    fn nominal_microsoft_and_errors() {
+        let wb = Workbook::default();
+        match eval_formula_in(&wb, "=NOMINAL(0.053543,4)").unwrap() {
+            ExcelValue::Number(n) => {
+                let published = 0.05250032;
+                assert!((n - published).abs() / published < 1e-6, "got {n}")
+            }
+            other => panic!("expected number, got {other:?}"),
+        }
+        assert_eq!(
+            eval_formula_in(&wb, "=NOMINAL(0.1,1)").unwrap(),
+            ExcelValue::Number(0.1)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=NOMINAL(0,12)").unwrap(),
+            ExcelValue::Error(ExcelError::Num)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=NOMINAL(0.05)").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=NOMINAL()").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
+        );
+    }
 }

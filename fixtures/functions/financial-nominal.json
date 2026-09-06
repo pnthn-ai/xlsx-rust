@@ -1,0 +1,225 @@
+[
+  {
+    "id": "fn.nominal.ms-quarterly",
+    "description": "Microsoft NOMINAL example: 5.3543% effective, quarterly compounding",
+    "tags": ["nominal", "financial"],
+    "notes": "support.microsoft.com NOMINAL(0.053543, 4) prints 0.05250032. Golden is the OpenFormula 6.12.32 identity n*((1+e)^(1/n)-1) in IEEE (expm1/ln1p).",
+    "formula": "=NOMINAL(0.053543, 4)",
+    "expected": { "number": 0.05250031986835587 }
+  },
+  {
+    "id": "fn.nominal.ms-cells",
+    "description": "Same Microsoft quarterly example via cell refs",
+    "tags": ["nominal", "financial"],
+    "formula": "=NOMINAL(A2, A3)",
+    "expected": { "number": 0.05250031986835587 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A2": { "number": 0.053543 },
+          "A3": { "number": 4 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.nominal.percent",
+    "description": "Postfix % on the effective rate: NOMINAL(5.3543%, 4)",
+    "tags": ["nominal", "financial"],
+    "quirks": ["percent-unary"],
+    "formula": "=NOMINAL(5.3543%, 4)",
+    "expected": { "number": 0.05250031986835587 }
+  },
+  {
+    "id": "fn.nominal.annual",
+    "description": "npery=1 is the identity: NOMINAL(effect, 1) = effect",
+    "tags": ["nominal", "financial"],
+    "formula": "=NOMINAL(0.1, 1)",
+    "expected": { "number": 0.1 }
+  },
+  {
+    "id": "fn.nominal.semiannual",
+    "description": "npery=2 closed form: 2e / (sqrt(1+e)+1)",
+    "tags": ["nominal", "financial"],
+    "formula": "=NOMINAL(0.1025, 2)",
+    "expected": { "number": 0.1 }
+  },
+  {
+    "id": "fn.nominal.quarterly-5",
+    "description": "5% effective compounded quarterly",
+    "tags": ["nominal", "financial"],
+    "formula": "=NOMINAL(0.05, 4)",
+    "expected": { "number": 0.049088937716157084 }
+  },
+  {
+    "id": "fn.nominal.monthly-8",
+    "description": "8% effective compounded monthly",
+    "tags": ["nominal", "financial"],
+    "formula": "=NOMINAL(0.08, 12)",
+    "expected": { "number": 0.07720836132004145 }
+  },
+  {
+    "id": "fn.nominal.monthly-12",
+    "description": "12% effective compounded monthly",
+    "tags": ["nominal", "financial"],
+    "formula": "=NOMINAL(0.12, 12)",
+    "expected": { "number": 0.11386551521499569 }
+  },
+  {
+    "id": "fn.nominal.weekly-5",
+    "description": "5% effective compounded weekly",
+    "tags": ["nominal", "financial"],
+    "formula": "=NOMINAL(0.05, 52)",
+    "expected": { "number": 0.04881306056180964 }
+  },
+  {
+    "id": "fn.nominal.daily-6",
+    "description": "6% effective compounded daily (365)",
+    "tags": ["nominal", "financial"],
+    "formula": "=NOMINAL(0.06, 365)",
+    "expected": { "number": 0.05827355942032582 }
+  },
+  {
+    "id": "fn.nominal.trunc-npery",
+    "description": "npery is truncated toward zero: 12.9 → 12",
+    "tags": ["nominal", "financial"],
+    "formula": "=NOMINAL(0.1, 12.9)",
+    "expected": { "number": 0.09568968514684489 }
+  },
+  {
+    "id": "fn.nominal.trunc-npery-to-one",
+    "description": "1.9 truncates to 1, so NOMINAL is the identity",
+    "tags": ["nominal", "financial"],
+    "formula": "=NOMINAL(0.1, 1.9)",
+    "expected": { "number": 0.1 }
+  },
+  {
+    "id": "fn.nominal.numeric-text",
+    "description": "Numeric text coerces like other scalar financial args",
+    "tags": ["nominal", "financial"],
+    "formula": "=NOMINAL(\"0.053543\", \"4\")",
+    "expected": { "number": 0.05250031986835587 }
+  },
+  {
+    "id": "fn.nominal.bool-npery-true",
+    "description": "TRUE npery coerces to 1 (identity)",
+    "tags": ["nominal", "financial"],
+    "formula": "=NOMINAL(0.1, TRUE)",
+    "expected": { "number": 0.1 }
+  },
+  {
+    "id": "fn.nominal.bool-effect-true",
+    "description": "TRUE effect coerces to 1; npery=1 → 1",
+    "tags": ["nominal", "financial"],
+    "formula": "=NOMINAL(TRUE, 1)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.nominal.bool-npery-false",
+    "description": "FALSE npery coerces to 0 → #NUM!",
+    "tags": ["nominal", "financial"],
+    "formula": "=NOMINAL(0.1, FALSE)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.nominal.blank-effect",
+    "description": "Blank effect_rate coerces to 0 → #NUM!",
+    "tags": ["nominal", "financial"],
+    "formula": "=NOMINAL(A1, 12)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.nominal.blank-npery",
+    "description": "Blank npery coerces to 0 → #NUM!",
+    "tags": ["nominal", "financial"],
+    "formula": "=NOMINAL(0.05, A1)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.nominal.zero-effect",
+    "description": "effect_rate ≤ 0 is #NUM!",
+    "tags": ["nominal", "financial"],
+    "formula": "=NOMINAL(0, 12)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.nominal.neg-effect",
+    "description": "Negative effect_rate is #NUM!",
+    "tags": ["nominal", "financial"],
+    "formula": "=NOMINAL(-0.05, 12)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.nominal.npery-zero",
+    "description": "npery < 1 is #NUM!",
+    "tags": ["nominal", "financial"],
+    "formula": "=NOMINAL(0.05, 0)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.nominal.npery-fraction",
+    "description": "0.9 truncates to 0 → #NUM!",
+    "tags": ["nominal", "financial"],
+    "formula": "=NOMINAL(0.05, 0.9)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.nominal.npery-neg",
+    "description": "Negative npery is #NUM!",
+    "tags": ["nominal", "financial"],
+    "formula": "=NOMINAL(0.05, -1)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.nominal.overflow",
+    "description": "(1+effect)^(1/npery) overflow is #NUM! (same as POWER)",
+    "tags": ["nominal", "financial"],
+    "formula": "=NOMINAL(1.7976931348623157E+308, 2)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.nominal.too-few-args",
+    "description": "NOMINAL requires effect_rate and npery",
+    "tags": ["nominal", "financial", "errors"],
+    "formula": "=NOMINAL(0.05)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.nominal.no-args",
+    "description": "NOMINAL() is #VALUE!",
+    "tags": ["nominal", "financial", "errors"],
+    "formula": "=NOMINAL()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.nominal.too-many-args",
+    "description": "More than two arguments is #VALUE!",
+    "tags": ["nominal", "financial", "errors"],
+    "formula": "=NOMINAL(0.05, 4, 1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.nominal.text-effect",
+    "description": "Non-numeric text effect_rate is #VALUE!",
+    "tags": ["nominal", "financial", "errors"],
+    "formula": "=NOMINAL(\"x\", 4)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.nominal.error-left",
+    "description": "Left-to-right error precedence: first arg error wins",
+    "tags": ["nominal", "financial", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=NOMINAL(#DIV/0!, #VALUE!)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.nominal.error-second",
+    "description": "Second-arg error surfaces when effect_rate is fine",
+    "tags": ["nominal", "financial", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=NOMINAL(0.05, #NAME?)",
+    "expected": { "error": "#NAME?" }
+  }
+]
