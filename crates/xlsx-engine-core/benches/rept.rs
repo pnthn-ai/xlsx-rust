@@ -130,10 +130,10 @@ fn main() {
             assert!(naive_v.is_ok(), "{} should complete under the cap", c.name);
         }
         let naive = time_it(c.iters, || {
-            black_box(excel_rept_naive(black_box(&c.text), black_box(c.times)));
+            let _ = black_box(excel_rept_naive(black_box(&c.text), black_box(c.times)));
         });
         let fast = time_it(c.iters, || {
-            black_box(excel_rept(black_box(&c.text), black_box(c.times)));
+            let _ = black_box(excel_rept(black_box(&c.text), black_box(c.times)));
         });
         let speedup = naive.as_secs_f64() / fast.as_secs_f64().max(1e-12);
         println!(
