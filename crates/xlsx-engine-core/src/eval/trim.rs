@@ -72,25 +72,36 @@ fn trim_fast(text: &str) -> String {
 fn collapse(src: &[u8]) -> String {
     debug_assert!(!src.is_empty());
     debug_assert!(src[0] != b' ' && src[src.len() - 1] != b' ');
-    let mut out = Vec::with_capacity(src.len());
-    let mut i = 0;
-    while i < src.len() {
-        if src[i] == b' ' {
-            out.push(b' ');
-            i += 1;
-            match find_non_space(&src[i..]) {
-                Some(n) => i += n,
-                None => break,
+    let n = src.len();
+    let mut out = Vec::with_capacity(n);
+    let dst: *mut u8 = out.as_mut_ptr();
+    let mut w = 0usize;
+    let mut i = 0usize;
+    while i < n {
+        let b = src[i];
+        i += 1;
+        if b == b' ' {
+            // SAFETY: `w < n` because we write at most one byte per input byte.
+            unsafe {
+                *dst.add(w) = b' ';
+            }
+            w += 1;
+            while i < n && src[i] == b' ' {
+                i += 1;
             }
         } else {
-            let run = find_byte(&src[i..], b' ').unwrap_or(src.len() - i);
-            out.extend_from_slice(&src[i..i + run]);
-            i += run;
+            unsafe {
+                *dst.add(w) = b;
+            }
+            w += 1;
         }
     }
-    // SAFETY: only `0x20` bytes were dropped; remaining bytes are a
-    // subsequence of valid UTF-8 and `0x20` is a 1-byte scalar.
-    unsafe { String::from_utf8_unchecked(out) }
+    // SAFETY: `w` bytes were written into reserved capacity; those bytes are
+    // a subsequence of valid UTF-8 with only `0x20` dropped.
+    unsafe {
+        out.set_len(w);
+        String::from_utf8_unchecked(out)
+    }
 }
 
 fn copy_utf8(bytes: &[u8]) -> String {
@@ -153,13 +164,27 @@ fn rfind_non_space(hay: &[u8]) -> Option<usize> {
 }
 
 fn has_double_space(hay: &[u8]) -> bool {
+    let n = hay.len();
+    if n < 2 {
+        return false;
+    }
     let mut i = 0;
-    while let Some(p) = find_byte(&hay[i..], b' ') {
-        let abs = i + p;
-        if abs + 1 < hay.len() && hay[abs + 1] == b' ' {
+    while i + 8 <= n {
+        let w = u64::from_le_bytes(hay[i..i + 8].try_into().unwrap());
+        let x = w ^ SP;
+        let spaces = x.wrapping_sub(LO) & !x & HI;
+        // Adjacent `0x80` markers mean a `0x20 0x20` pair inside the word.
+        if spaces & (spaces << 8) != 0 {
             return true;
         }
-        i = abs + 1;
+        // Overlap the last byte so a pair that straddles two words is seen.
+        i += 7;
+    }
+    while i + 1 < n {
+        if hay[i] == b' ' && hay[i + 1] == b' ' {
+            return true;
+        }
+        i += 1;
     }
     false
 }
