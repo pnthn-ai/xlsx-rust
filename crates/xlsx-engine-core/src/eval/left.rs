@@ -196,7 +196,7 @@ mod tests {
         assert_eq!(trunc_num_chars(-1.9), Err(ExcelError::Value));
         assert_eq!(trunc_num_chars(f64::NAN), Err(ExcelError::Value));
         assert_eq!(trunc_num_chars(f64::INFINITY), Err(ExcelError::Value));
-        assert_eq!(trunc_num_chars(1e20).unwrap(), 100_000_000_000_000_000_000);
+        assert_eq!(trunc_num_chars(1e20).unwrap(), u64::MAX);
     }
 
     #[test]
