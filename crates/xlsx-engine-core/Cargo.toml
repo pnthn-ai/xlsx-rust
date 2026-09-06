@@ -133,6 +133,10 @@ name = "irr"
 harness = false
 
 [[bench]]
+name = "clean"
+harness = false
+
+[[bench]]
 name = "fv"
 harness = false
 

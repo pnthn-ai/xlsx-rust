@@ -7,6 +7,7 @@ pub mod averageif;
 pub mod choosecols;
 pub mod chooserows;
 pub mod averageifs;
+pub mod clean;
 pub mod coerce;
 pub mod countifs;
 pub mod compare;
@@ -988,6 +989,31 @@ mod tests {
         assert_eq!(
             eval_formula_in(&wb, "=TEXT(1)").unwrap(),
             ExcelValue::Error(ExcelError::Value)
+        );
+    }
+
+    #[test]
+    fn clean_strips_c0_keeps_space_and_del() {
+        let wb = Workbook::default();
+        assert_eq!(
+            eval_formula_in(&wb, "=CLEAN(\"\tMonthly report\n\")").unwrap(),
+            ExcelValue::Text("Monthly report".into())
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=CLEAN(\"  a  b  \")").unwrap(),
+            ExcelValue::Text("  a  b  ".into())
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=CLEAN(TRUE)").unwrap(),
+            ExcelValue::Text("TRUE".into())
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=CLEAN()").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=CLEAN(1/0)").unwrap(),
+            ExcelValue::Error(ExcelError::Div0)
         );
     }
 
