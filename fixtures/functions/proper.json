@@ -1,0 +1,211 @@
+[
+  {
+    "id": "fn.proper-ms-title",
+    "description": "PROPER(\"this is a TITLE\") is \"This Is A Title\" (Microsoft example)",
+    "tags": ["text", "proper"],
+    "formula": "=PROPER(\"this is a TITLE\")",
+    "expected": { "text": "This Is A Title" }
+  },
+  {
+    "id": "fn.proper-ms-hyphen",
+    "description": "PROPER(\"2-way street\") is \"2-Way Street\" (Microsoft; hyphen is a non-letter break)",
+    "tags": ["text", "proper"],
+    "formula": "=PROPER(\"2-way street\")",
+    "expected": { "text": "2-Way Street" }
+  },
+  {
+    "id": "fn.proper-ms-digit-prefix",
+    "description": "PROPER(\"76BudGet\") is \"76Budget\" (Microsoft; digit is a non-letter, then one capital)",
+    "tags": ["text", "proper"],
+    "formula": "=PROPER(\"76BudGet\")",
+    "expected": { "text": "76Budget" }
+  },
+  {
+    "id": "fn.proper-ms-a2",
+    "description": "PROPER(A2) of \"this is a TITLE\" is \"This Is A Title\" (Microsoft table)",
+    "tags": ["text", "proper"],
+    "formula": "=PROPER(A2)",
+    "expected": { "text": "This Is A Title" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A2": { "text": "this is a TITLE" },
+            "A3": { "text": "2-way street" },
+            "A4": { "text": "76BudGet" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.proper-ms-a3",
+    "description": "PROPER(A3) of \"2-way street\" is \"2-Way Street\" (Microsoft table)",
+    "tags": ["text", "proper"],
+    "formula": "=PROPER(A3)",
+    "expected": { "text": "2-Way Street" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A3": { "text": "2-way street" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.proper-ms-a4",
+    "description": "PROPER(A4) of \"76BudGet\" is \"76Budget\" (Microsoft table)",
+    "tags": ["text", "proper"],
+    "formula": "=PROPER(A4)",
+    "expected": { "text": "76Budget" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A4": { "text": "76BudGet" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.proper-apostrophe-dont",
+    "description": "Apostrophe is not a letter, so PROPER(\"don't\") is \"Don'T\"",
+    "tags": ["text", "proper"],
+    "formula": "=PROPER(\"don't\")",
+    "expected": { "text": "Don'T" }
+  },
+  {
+    "id": "fn.proper-apostrophe-obrien",
+    "description": "PROPER(\"o'brien\") is \"O'Brien\" (letter after apostrophe is capitalized)",
+    "tags": ["text", "proper"],
+    "formula": "=PROPER(\"o'brien\")",
+    "expected": { "text": "O'Brien" }
+  },
+  {
+    "id": "fn.proper-apostrophe-possessive",
+    "description": "PROPER(\"mary's\") is \"Mary'S\" (same non-letter rule as don't)",
+    "tags": ["text", "proper"],
+    "formula": "=PROPER(\"mary's\")",
+    "expected": { "text": "Mary'S" }
+  },
+  {
+    "id": "fn.proper-mcdonald",
+    "description": "No Mc-special case: PROPER(\"mcdonald\") is \"Mcdonald\"",
+    "tags": ["text", "proper"],
+    "formula": "=PROPER(\"mcdonald\")",
+    "expected": { "text": "Mcdonald" }
+  },
+  {
+    "id": "fn.proper-acronym",
+    "description": "Mid-word capitals flatten: PROPER(\"IBM\") is \"Ibm\"",
+    "tags": ["text", "proper"],
+    "formula": "=PROPER(\"IBM\")",
+    "expected": { "text": "Ibm" }
+  },
+  {
+    "id": "fn.proper-allcaps-words",
+    "description": "PROPER(\"HELLO WORLD\") is \"Hello World\"",
+    "tags": ["text", "proper"],
+    "formula": "=PROPER(\"HELLO WORLD\")",
+    "expected": { "text": "Hello World" }
+  },
+  {
+    "id": "fn.proper-already",
+    "description": "Already-title-cased ASCII is unchanged",
+    "tags": ["text", "proper"],
+    "formula": "=PROPER(\"Hello World\")",
+    "expected": { "text": "Hello World" }
+  },
+  {
+    "id": "fn.proper-hyphen-name",
+    "description": "Hyphen starts a new word: PROPER(\"anne-marie\") is \"Anne-Marie\"",
+    "tags": ["text", "proper"],
+    "formula": "=PROPER(\"anne-marie\")",
+    "expected": { "text": "Anne-Marie" }
+  },
+  {
+    "id": "fn.proper-digit-ordinal",
+    "description": "Digit is a non-letter, so PROPER(\"2nd floor\") is \"2Nd Floor\"",
+    "tags": ["text", "proper"],
+    "formula": "=PROPER(\"2nd floor\")",
+    "expected": { "text": "2Nd Floor" }
+  },
+  {
+    "id": "fn.proper-leading-punct",
+    "description": "Leading punctuation is kept; first letter after it is capitalized",
+    "tags": ["text", "proper"],
+    "formula": "=PROPER(\"...hello\")",
+    "expected": { "text": "...Hello" }
+  },
+  {
+    "id": "fn.proper-leading-spaces",
+    "description": "Leading spaces stay; letter after a space is capitalized",
+    "tags": ["text", "proper"],
+    "formula": "=PROPER(\"  hello  \")",
+    "expected": { "text": "  Hello  " }
+  },
+  {
+    "id": "fn.proper-empty",
+    "description": "PROPER(\"\") is empty text",
+    "tags": ["text", "proper"],
+    "formula": "=PROPER(\"\")",
+    "expected": { "text": "" }
+  },
+  {
+    "id": "fn.proper-blank-cell",
+    "description": "Blank cell coerces to empty text (concatenation/text duality)",
+    "tags": ["text", "proper", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=PROPER(A1)",
+    "expected": { "text": "" }
+  },
+  {
+    "id": "fn.proper-true",
+    "description": "PROPER(TRUE) coerces TRUE → \"TRUE\" then title-cases to \"True\"",
+    "tags": ["text", "proper", "coercion"],
+    "formula": "=PROPER(TRUE)",
+    "expected": { "text": "True" }
+  },
+  {
+    "id": "fn.proper-false",
+    "description": "PROPER(FALSE) coerces FALSE → \"FALSE\" then title-cases to \"False\"",
+    "tags": ["text", "proper", "coercion"],
+    "formula": "=PROPER(FALSE)",
+    "expected": { "text": "False" }
+  },
+  {
+    "id": "fn.proper-number",
+    "description": "PROPER(123) coerces to text \"123\" (digits are not letters)",
+    "tags": ["text", "proper", "coercion"],
+    "formula": "=PROPER(123)",
+    "expected": { "text": "123" }
+  },
+  {
+    "id": "fn.proper-error",
+    "description": "Error argument propagates",
+    "tags": ["text", "proper", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=PROPER(1/0)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.proper-no-args",
+    "description": "PROPER() is #VALUE! (text is required)",
+    "tags": ["text", "proper", "errors"],
+    "formula": "=PROPER()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.proper-extra-arg",
+    "description": "PROPER with a second argument is #VALUE!",
+    "tags": ["text", "proper", "errors"],
+    "formula": "=PROPER(\"abc\", 1)",
+    "expected": { "error": "#VALUE!" }
+  }
+]

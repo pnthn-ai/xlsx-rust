@@ -137,6 +137,7 @@ pub(crate) fn dispatch(
         "LEN" => fn_len(ev, args, ctx),
         "LOWER" => fn_case(ev, args, ctx, true),
         "UPPER" => fn_case(ev, args, ctx, false),
+        "PROPER" => fn_proper(ev, args, ctx),
         "TRIM" => fn_trim(ev, args, ctx),
         "EXACT" => fn_exact(ev, args, ctx),
         "FIND" => fn_find(ev, args, ctx),
@@ -1329,6 +1330,16 @@ fn fn_len(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue
     }
     match coerce::to_text(&ev.eval_scalar(&args[0], ctx)?) {
         Ok(s) => Ok(ExcelValue::Number(s.chars().count() as f64)),
+        Err(e) => Ok(ExcelValue::Error(e)),
+    }
+}
+
+fn fn_proper(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    if args.len() != 1 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    match coerce::to_text(&ev.eval_scalar(&args[0], ctx)?) {
+        Ok(s) => Ok(ExcelValue::Text(super::proper::proper(&s))),
         Err(e) => Ok(ExcelValue::Error(e)),
     }
 }
