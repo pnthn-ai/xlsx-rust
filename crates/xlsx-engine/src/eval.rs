@@ -1369,14 +1369,14 @@ impl Interpreter {
     }
 
     fn fn_trunc(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
-        if args.is_empty() {
+        if args.is_empty() || args.len() > 2 {
             return Ok(ExcelValue::Error(ExcelError::Value));
         }
         let n = match self.as_number(&self.eval_scalar(&args[0], ctx)?) {
             Ok(n) => n,
             Err(e) => return Ok(ExcelValue::Error(e)),
         };
-        let digits = if args.len() >= 2 {
+        let digits = if args.len() == 2 && !matches!(args[1], Expr::Missing) {
             match self.as_number(&self.eval_scalar(&args[1], ctx)?) {
                 Ok(d) => d.trunc() as i32,
                 Err(e) => return Ok(ExcelValue::Error(e)),
@@ -1384,7 +1384,7 @@ impl Interpreter {
         } else {
             0
         };
-        Ok(ExcelValue::Number(excel_trunc(n, digits)))
+        Ok(ExcelValue::Number(xlsx_engine_core::excel_trunc(n, digits)))
     }
 
     fn fn_floor_ceil(
@@ -4896,11 +4896,6 @@ fn excel_geq(key: &ExcelValue, lookup: &ExcelValue) -> bool {
         excel_ord(key, lookup, std::cmp::Ordering::Less, true),
         ExcelValue::Bool(true)
     )
-}
-
-fn excel_trunc(n: f64, digits: i32) -> f64 {
-    let factor = 10f64.powi(digits);
-    (n * factor).trunc() / factor
 }
 
 fn npv_feed(

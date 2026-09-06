@@ -73,6 +73,10 @@ name = "rounddown"
 harness = false
 
 [[bench]]
+name = "trunc"
+harness = false
+
+[[bench]]
 name = "concat"
 harness = false
 
