@@ -20,6 +20,10 @@ name = "xlsx-bench-snapshot"
 path = "src/bin/xlsx-bench-snapshot.rs"
 
 [[bench]]
+name = "fn_abs"
+harness = false
+
+[[bench]]
 name = "fn_sum"
 harness = false
 

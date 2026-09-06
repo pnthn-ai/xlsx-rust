@@ -13,6 +13,10 @@ xlsx-types = { workspace = true }
 criterion = { workspace = true }
 
 [[bench]]
+name = "abs"
+harness = false
+
+[[bench]]
 name = "substitute"
 harness = false
 

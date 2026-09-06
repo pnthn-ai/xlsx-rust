@@ -76,7 +76,7 @@ pub(crate) fn dispatch(
         "MATCH" => fn_match(ev, args, ctx),
         "CHOOSE" => fn_choose(ev, args, ctx),
         "CHOOSECOLS" => super::choosecols::eval(ev, args, ctx),
-        "ABS" => fn_unary_num(ev, args, ctx, |n| ExcelValue::Number(n.abs())),
+        "ABS" => super::abs::fn_abs(ev, args, ctx),
         "SIGN" => fn_unary_num(ev, args, ctx, |n| {
             ExcelValue::Number(if n > 0.0 {
                 1.0

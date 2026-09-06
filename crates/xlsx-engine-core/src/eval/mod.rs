@@ -3,6 +3,7 @@
 //! Operators call into [`coerce`] / [`compare`] / [`empty`] for Excel quirks.
 //! Worksheet functions live in [`functions`].
 
+pub mod abs;
 pub mod averageif;
 pub mod averageifs;
 pub mod bycol;
