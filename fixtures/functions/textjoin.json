@@ -536,5 +536,450 @@
         }
       }]
     }
+  },
+  {
+    "id": "fn.textjoin-spaces-kept",
+    "description": "Leading spaces are kept (TEXTJOIN is not TRIM)",
+    "tags": ["textjoin", "text"],
+    "formula": "=TEXTJOIN(\"\", TRUE, \"   \", \"x\")",
+    "expected": { "text": "   x" }
+  },
+  {
+    "id": "fn.textjoin-tab-kept",
+    "description": "CHAR(9) tab is kept (TEXTJOIN is not TRIM / CLEAN)",
+    "tags": ["textjoin", "text"],
+    "formula": "=TEXTJOIN(\"\", TRUE, \"a\", CHAR(9), \"b\")",
+    "expected": { "text": "a\tb" }
+  },
+  {
+    "id": "fn.textjoin-lf-kept",
+    "description": "CHAR(10) line feed is kept",
+    "tags": ["textjoin", "text"],
+    "formula": "=TEXTJOIN(\"\", TRUE, \"a\", CHAR(10), \"b\")",
+    "expected": { "text": "a\nb" }
+  },
+  {
+    "id": "fn.textjoin-spaces-in-cells",
+    "description": "Stored leading/trailing spaces in cells are kept",
+    "tags": ["textjoin", "text"],
+    "formula": "=TEXTJOIN(\"\", TRUE, A1, A2)",
+    "expected": { "text": " a  b" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": " a " },
+          "A2": { "text": " b" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.textjoin-leading-zeros-text",
+    "description": "Text that looks like a number keeps leading zeros",
+    "tags": ["textjoin", "text"],
+    "formula": "=TEXTJOIN(\"\", TRUE, \"001\", 2)",
+    "expected": { "text": "0012" }
+  },
+  {
+    "id": "fn.textjoin-negative",
+    "description": "Negative numbers keep the minus sign",
+    "tags": ["textjoin", "text", "coercion"],
+    "formula": "=TEXTJOIN(\"\", TRUE, -3, \"x\")",
+    "expected": { "text": "-3x" }
+  },
+  {
+    "id": "fn.textjoin-date-serial",
+    "description": "An unformatted date serial joins as its number text, not a locale date string",
+    "tags": ["textjoin", "text", "coercion"],
+    "formula": "=TEXTJOIN(\"\", TRUE, 44927)",
+    "expected": { "text": "44927" }
+  },
+  {
+    "id": "fn.textjoin-false-mid",
+    "description": "FALSE in the middle of a range is the letters FALSE, not empty",
+    "tags": ["textjoin", "text", "coercion"],
+    "formula": "=TEXTJOIN(\",\", TRUE, A1:A3)",
+    "expected": { "text": "a,FALSE,b" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "a" },
+          "A2": { "bool": false },
+          "A3": { "text": "b" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.textjoin-text-true-and-bool",
+    "description": "Text TRUE and boolean TRUE both emit TRUE",
+    "tags": ["textjoin", "text", "coercion"],
+    "formula": "=TEXTJOIN(\"\", TRUE, \"TRUE\", TRUE)",
+    "expected": { "text": "TRUETRUE" }
+  },
+  {
+    "id": "fn.textjoin-single-cell-range",
+    "description": "A single-cell range is one piece",
+    "tags": ["textjoin", "text"],
+    "formula": "=TEXTJOIN(\",\", TRUE, A1:A1)",
+    "expected": { "text": "only" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": { "A1": { "text": "only" } }
+      }]
+    }
+  },
+  {
+    "id": "fn.textjoin-reversed-range",
+    "description": "B2:A1 is the same rectangle as A1:B2 (normalized row-major)",
+    "tags": ["textjoin", "text"],
+    "formula": "=TEXTJOIN(\",\", TRUE, B2:A1)",
+    "expected": { "text": "a,b,c,d" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "a" },
+          "B1": { "text": "b" },
+          "A2": { "text": "c" },
+          "B2": { "text": "d" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.textjoin-sparse-far",
+    "description": "ignore_empty TRUE skips blanks between far cells; order is still top-to-bottom",
+    "tags": ["textjoin", "text", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=TEXTJOIN(\",\", TRUE, A1:A100)",
+    "expected": { "text": "a,b" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "a" },
+          "A100": { "text": "b" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.textjoin-sparse-far-keep",
+    "description": "ignore_empty FALSE keeps every blank between far cells as a delimiter slot",
+    "tags": ["textjoin", "text", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=TEXTJOIN(\",\", FALSE, A1:A5)",
+    "expected": { "text": "a,,,,b" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "a" },
+          "A5": { "text": "b" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.textjoin-occupied-row-major",
+    "description": "Sparse 2-D range is still left-to-right then top-to-bottom (not A1-string key order)",
+    "tags": ["textjoin", "text", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=TEXTJOIN(\"\", TRUE, A1:B10)",
+    "expected": { "text": "abcdef" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "a" },
+          "B1": { "text": "b" },
+          "A2": { "text": "c" },
+          "B2": { "text": "d" },
+          "A10": { "text": "e" },
+          "B10": { "text": "f" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.textjoin-cross-sheet",
+    "description": "A sheet-qualified range joins that sheet row-major",
+    "tags": ["textjoin", "text"],
+    "formula": "=TEXTJOIN(\"\", TRUE, Sheet2!A1:A2)",
+    "expected": { "text": "yz" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": { "A1": { "text": "no" } }
+        },
+        {
+          "name": "Sheet2",
+          "cells": {
+            "A1": { "text": "y" },
+            "A2": { "text": "z" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.textjoin-cross-sheet-and-local",
+    "description": "Local cell then other-sheet cell, argument order",
+    "tags": ["textjoin", "text"],
+    "formula": "=TEXTJOIN(\"\", TRUE, A1, Sheet2!A1)",
+    "expected": { "text": "ab" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": { "A1": { "text": "a" } }
+        },
+        {
+          "name": "Sheet2",
+          "cells": { "A1": { "text": "b" } }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.textjoin-quoted-sheet",
+    "description": "Quoted sheet name with a space",
+    "tags": ["textjoin", "text"],
+    "formula": "=TEXTJOIN(\"\", TRUE, 'My Data'!A1:A2)",
+    "expected": { "text": "hi" },
+    "workbook": {
+      "sheets": [{
+        "name": "My Data",
+        "cells": {
+          "A1": { "text": "h" },
+          "A2": { "text": "i" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.textjoin-sheet-qualified-same",
+    "description": "Sheet1!A1:A2 on the evaluation sheet is the local range",
+    "tags": ["textjoin", "text"],
+    "formula": "=TEXTJOIN(\"\", TRUE, Sheet1!A1:A2)",
+    "expected": { "text": "ab" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "a" },
+          "A2": { "text": "b" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.textjoin-named-2d",
+    "description": "A defined name that refers to a 2-D range flattens row-major",
+    "tags": ["textjoin", "text", "named"],
+    "formula": "=TEXTJOIN(\",\", TRUE, Grid)",
+    "expected": { "text": "a,b,c,d" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "a" },
+          "B1": { "text": "b" },
+          "A2": { "text": "c" },
+          "B2": { "text": "d" }
+        }
+      }],
+      "names": [{ "name": "Grid", "refers_to": "Sheet1!A1:B2" }]
+    }
+  },
+  {
+    "id": "fn.textjoin-sequence",
+    "description": "SEQUENCE column flattens row-major as numbers coerced like &",
+    "tags": ["textjoin", "text", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TEXTJOIN(\",\", TRUE, SEQUENCE(3))",
+    "expected": { "text": "1,2,3" }
+  },
+  {
+    "id": "fn.textjoin-column-array",
+    "description": "A column array literal flattens top-to-bottom",
+    "tags": ["textjoin", "text", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TEXTJOIN(\",\", TRUE, {1;2;3})",
+    "expected": { "text": "1,2,3" }
+  },
+  {
+    "id": "fn.textjoin-mixed-range-array",
+    "description": "Range then array then scalar, argument order",
+    "tags": ["textjoin", "text", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TEXTJOIN(\",\", TRUE, A1:A2, {3,4}, \"z\")",
+    "expected": { "text": "1,2,3,4,z" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 2 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.textjoin-no-implicit-intersect",
+    "description": "TEXTJOIN stays in array context: a column range is fully flattened, not intersected at the host row",
+    "tags": ["textjoin", "text"],
+    "formula": "=TEXTJOIN(\",\", TRUE, A1:A3)",
+    "at": "Sheet1!C2",
+    "expected": { "text": "a,b,c" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "a" },
+          "A2": { "text": "b" },
+          "A3": { "text": "c" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.textjoin-err-after-text",
+    "description": "An error after successful text still wins; no partial result",
+    "tags": ["textjoin", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=TEXTJOIN(\",\", TRUE, \"ok\", #REF!)",
+    "expected": { "error": "#REF!" }
+  },
+  {
+    "id": "fn.textjoin-err-ltr-text-before-delim",
+    "description": "Delimiter is evaluated first: its error wins even if a later text also errors",
+    "tags": ["textjoin", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=TEXTJOIN(#DIV/0!, TRUE, #N/A)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.textjoin-case-fold",
+    "description": "Function name is case-insensitive",
+    "tags": ["textjoin", "text"],
+    "formula": "=textjoin(\",\", TRUE, \"A\", \"B\")",
+    "expected": { "text": "A,B" }
+  },
+  {
+    "id": "fn.textjoin-if-scalar",
+    "description": "IF result is a scalar text argument",
+    "tags": ["textjoin", "text"],
+    "formula": "=TEXTJOIN(\"\", TRUE, IF(TRUE, \"yes\", \"no\"), \"!\")",
+    "expected": { "text": "yes!" }
+  },
+  {
+    "id": "fn.textjoin-cjk",
+    "description": "BMP CJK scalars join (one UTF-16 unit each)",
+    "tags": ["textjoin", "text"],
+    "formula": "=TEXTJOIN(\"\", TRUE, \"你好\", \"世界\")",
+    "expected": { "text": "你好世界" }
+  },
+  {
+    "id": "fn.textjoin-range-plus-scalar",
+    "description": "A range argument then a scalar",
+    "tags": ["textjoin", "text"],
+    "formula": "=TEXTJOIN(\"\", TRUE, A1:A2, \"!\")",
+    "expected": { "text": "ab!" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "a" },
+          "A2": { "text": "b" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.textjoin-delim-blank-cycle",
+    "description": "A blank in a delimiter range stays in the cycle as an empty delimiter",
+    "tags": ["textjoin", "text", "empty"],
+    "quirks": ["empty-cell-duality", "array-eval-mode"],
+    "formula": "=TEXTJOIN(A1:A3, TRUE, \"w\", \"x\", \"y\", \"z\")",
+    "expected": { "text": "w,xy;z" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "," },
+          "A3": { "text": ";" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.textjoin-empty-array-delim",
+    "description": "An empty array delimiter concatenates with no separator",
+    "tags": ["textjoin", "text", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TEXTJOIN({}, TRUE, \"a\", \"b\")",
+    "expected": { "text": "ab" }
+  },
+  {
+    "id": "fn.textjoin-len-exact-cap",
+    "description": "LEN of a TEXTJOIN that sits on the ASCII cap is 32767 (UTF-16 units == scalars for ASCII). Microsoft says 32767 characters; that is the cell-width cap, not Compat-v2 LEN scalars.",
+    "tags": ["textjoin", "text"],
+    "formula": "=LEN(TEXTJOIN(\"\", TRUE, REPT(\"a\", 32767)))",
+    "expected": { "number": 32767 }
+  },
+  {
+    "id": "fn.textjoin-rept-one-over",
+    "description": "One extra ASCII unit past 32767 is #VALUE!",
+    "tags": ["textjoin", "errors"],
+    "formula": "=TEXTJOIN(\"\", TRUE, REPT(\"a\", 32767), \"y\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.textjoin-rept-split-under",
+    "description": "Two REPT pieces that sum to exactly 32767 ASCII units succeed; LEN counts scalars (= UTF-16 here)",
+    "tags": ["textjoin", "text"],
+    "formula": "=LEN(TEXTJOIN(\"\", TRUE, REPT(\"a\", 16000), REPT(\"a\", 16767)))",
+    "expected": { "number": 32767 }
+  },
+  {
+    "id": "fn.textjoin-over-limit-utf16",
+    "description": "32766 ASCII plus a supplementary-plane emoji (2 UTF-16 units) overflows the cell cap",
+    "tags": ["textjoin", "errors"],
+    "formula": "=TEXTJOIN(\"\", TRUE, REPT(\"a\", 32766), \"😀\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.textjoin-rept-emoji-over",
+    "description": "16383×😀 is 32766 UTF-16 units; one more emoji overflows the cell cap",
+    "tags": ["textjoin", "text", "errors"],
+    "formula": "=TEXTJOIN(\"\", TRUE, REPT(\"😀\", 16383), \"😀\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.textjoin-rept-emoji-under-len",
+    "description": "16383×😀 + ASCII x is 32767 UTF-16 units; Compat-v2 LEN counts 16384 scalars",
+    "tags": ["textjoin", "text"],
+    "formula": "=LEN(TEXTJOIN(\"\", TRUE, REPT(\"😀\", 16383), \"x\"))",
+    "expected": { "number": 16384 }
+  },
+  {
+    "id": "fn.textjoin-len-ab-cap",
+    "description": "LEN of a TEXTJOIN that sits on the ASCII cap via ab-repeats is 32767",
+    "tags": ["textjoin", "text"],
+    "formula": "=LEN(TEXTJOIN(\"\", TRUE, REPT(\"ab\", 16383), \"a\"))",
+    "expected": { "number": 32767 }
+  },
+  {
+    "id": "fn.textjoin-delim-counts-toward-cap",
+    "description": "Delimiters count toward the 32767 UTF-16 cap; 16384 commas between 16384 ones overflow",
+    "tags": ["textjoin", "errors"],
+    "formula": "=TEXTJOIN(\",\", TRUE, REPT(\"a\", 16384), REPT(\"a\", 16384))",
+    "expected": { "error": "#VALUE!" }
   }
 ]
