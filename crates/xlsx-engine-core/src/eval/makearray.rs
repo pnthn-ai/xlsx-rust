@@ -25,8 +25,8 @@
 //!
 //! - The engine returns an [`ExcelValue::Array`]; it does **not** write a
 //!   spill range. Occupied neighbors never produce `#SPILL!`.
-//! - Bare `LAMBDA(...)` (not consumed by `MAKEARRAY`) is `#CALC!` — this
-//!   engine has no first-class function value.
+//! - Bare `LAMBDA(...)` (not consumed by `MAKEARRAY` / `SCAN`) is `#CALC!` —
+//!   this engine has no first-class function value.
 //! - Immediately-invoked `LAMBDA(...)(args)` is not parsed.
 //! - Parameter names that tokenize as A1 refs (`A1`, `R1C1`-looking cells)
 //!   are not supported.
@@ -126,7 +126,8 @@ pub fn lookup_binding(locals: &[(String, ExcelValue)], name: &str) -> Option<Exc
         .map(|(_, v)| v.clone())
 }
 
-/// Extract `LAMBDA(row, col, body)` from an inline call or a defined name.
+/// Extract a two-parameter `LAMBDA(p1, p2, body)` from an inline call or a
+/// defined name. Used by `MAKEARRAY` (`r`, `c`) and `SCAN` (`acc`, `value`).
 pub(crate) fn resolve_lambda(
     expr: &Expr,
     ctx: &Ctx<'_>,

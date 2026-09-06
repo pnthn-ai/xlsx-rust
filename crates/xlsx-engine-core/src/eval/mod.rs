@@ -35,6 +35,7 @@ pub mod sortby;
 pub mod sequence;
 pub mod randarray;
 pub mod makearray;
+pub mod scan;
 pub mod switch;
 pub mod unique;
 pub mod tocol;
@@ -67,7 +68,7 @@ pub(crate) struct Ctx<'a> {
     visiting: HashSet<String>,
     host: CellAddr,
     pub(crate) rng: randarray::XorShift64,
-    /// LAMBDA parameter bindings (MAKEARRAY / nested LAMBDA). Innermost last.
+    /// LAMBDA parameter bindings (MAKEARRAY / SCAN / nested LAMBDA). Innermost last.
     pub(crate) locals: Vec<(String, ExcelValue)>,
 }
 
@@ -1970,6 +1971,27 @@ mod tests {
         );
         assert_eq!(
             eval_formula_in(&wb, "=MAKEARRAY(0,1,LAMBDA(r,c,1))").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
+        );
+    }
+
+    #[test]
+    fn scan_running_sum_and_index() {
+        let wb = Workbook::default();
+        assert_eq!(
+            eval_formula_in(&wb, "=SCAN(0,{1,2,3},LAMBDA(a,v,a+v))").unwrap(),
+            ExcelValue::Array(vec![vec![
+                ExcelValue::Number(1.0),
+                ExcelValue::Number(3.0),
+                ExcelValue::Number(6.0)
+            ]])
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=INDEX(SCAN(0,{1,2,3},LAMBDA(a,v,a+v)),1,3)").unwrap(),
+            ExcelValue::Number(6.0)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=SCAN({1,2,3})").unwrap(),
             ExcelValue::Error(ExcelError::Value)
         );
     }
