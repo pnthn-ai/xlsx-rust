@@ -403,17 +403,17 @@
   },
   {
     "id": "fn.dollar-len-pos",
-    "description": "LEN(DOLLAR(1234.5)) is 8 for $1,234.50",
+    "description": "LEN(DOLLAR(1234.5)) is 9 for $1,234.50",
     "tags": ["text", "dollar", "unicode"],
     "formula": "=LEN(DOLLAR(1234.5))",
-    "expected": { "number": 8 }
+    "expected": { "number": 9 }
   },
   {
     "id": "fn.dollar-len-neg",
-    "description": "LEN(DOLLAR(-1234.5)) is 10 for ($1,234.50)",
+    "description": "LEN(DOLLAR(-1234.5)) is 11 for ($1,234.50)",
     "tags": ["text", "dollar", "unicode"],
     "formula": "=LEN(DOLLAR(-1234.5))",
-    "expected": { "number": 10 }
+    "expected": { "number": 11 }
   },
   {
     "id": "fn.dollar-unicode-dollar-sign",
