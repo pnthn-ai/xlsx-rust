@@ -154,6 +154,7 @@ pub(crate) fn dispatch(
         "TRIM" => fn_trim(ev, args, ctx),
         "CLEAN" => fn_clean(ev, args, ctx),
         "CODE" => fn_code(ev, args, ctx),
+        "CHAR" => super::excel_char::fn_char(ev, args, ctx),
         "EXACT" => fn_exact(ev, args, ctx),
         "FIND" => fn_find(ev, args, ctx),
         "SEARCH" => fn_search(ev, args, ctx),

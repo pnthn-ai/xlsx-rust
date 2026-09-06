@@ -350,6 +350,7 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 | [`eval/trim.rs`](crates/xlsx-engine-core/src/eval/trim.rs) | Excel `TRIM` (ASCII-space collapse) |
 | [`eval/clean.rs`](crates/xlsx-engine-core/src/eval/clean.rs) | Excel `CLEAN` (strip ASCII C0) |
 | [`eval/code.rs`](crates/xlsx-engine-core/src/eval/code.rs) | Excel `CODE` (Windows-1252 first-character code) |
+| [`eval/excel_char.rs`](crates/xlsx-engine-core/src/eval/excel_char.rs) | Excel `CHAR` (Windows-1252, 1..=255) |
 | [`eval/proper.rs`](crates/xlsx-engine-core/src/eval/proper.rs) | Excel `PROPER` (ASCII title-case) |
 | [`eval/upper.rs`](crates/xlsx-engine-core/src/eval/upper.rs) | Excel `UPPER` |
 | [`eval/lower.rs`](crates/xlsx-engine-core/src/eval/lower.rs) | Excel `LOWER` |
@@ -424,6 +425,10 @@ as one or the other. Documented quirk categories:
   surrogates `U+D800`–`U+DFFF` are `#N/A` (Microsoft: partial surrogates).
   Supplementary-plane results are one Compatibility Version 2 scalar
   (`LEN(UNICHAR(128512))` is 1). `CHAR` / `UNICODE` / `CODE` are separate.
+- `CHAR(number)`: Windows-1252 (Western ANSI), not Latin-1 / Unicode. Codes
+  truncate toward zero; `1..=255` only (`0` / `256` / blank / `FALSE` →
+  `#VALUE!`). `CHAR(128)` is `€`; leftover C1 bytes `129` / `141` / `143` /
+  `144` / `157` exist (CLEAN does not strip them). `UNICHAR` is separate.
 - `TEXTBEFORE(text, delimiter, [instance_num], [match_mode], [match_end], [if_not_found])`:
   Nth non-overlapping delimiter (negative counts from the end); `match_mode`
   0/1; `match_end` 1 treats the unmatched end (or start, when counting
