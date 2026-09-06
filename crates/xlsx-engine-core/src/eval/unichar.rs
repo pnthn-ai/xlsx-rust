@@ -40,7 +40,10 @@ pub fn unichar(n: f64) -> Result<String, ExcelError> {
 pub fn unichar_naive(n: f64) -> Result<String, ExcelError> {
     let cp = codepoint(n)?;
     let c = char::from_u32(cp).ok_or(ExcelError::Na)?;
-    let units: Vec<u16> = c.encode_utf16().collect();
+    // Display → UTF-8, then collect UTF-16 and decode. Same errors as
+    // [`unichar`]; kept only so the Instant bench has a “before”.
+    let s = c.to_string();
+    let units: Vec<u16> = s.encode_utf16().collect();
     String::from_utf16(&units).map_err(|_| ExcelError::Na)
 }
 
