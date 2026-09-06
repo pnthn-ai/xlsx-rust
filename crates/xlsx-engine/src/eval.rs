@@ -9,10 +9,10 @@ use crate::parse::{parse, BinOp, Expr, UnaryOp};
 use std::collections::{HashMap, HashSet};
 use xlsx_types::{
     count_matches, excel_ceiling, excel_ceiling_math, excel_cumipmt, excel_cumprinc, excel_effect,
-    excel_floor, excel_floor_math, excel_fv, excel_int, excel_ipmt, excel_nominal, excel_nper,
-    excel_num_eq, excel_pduration, excel_pmt, excel_ppmt, excel_pv, excel_rate, excel_round,
-    excel_round_15, excel_rri, ArrayMode, CellAddr, CellRef, Criterion, EvalError, EvalSpec,
-    EvalTarget, ExcelError, ExcelValue, RangeRef, Workbook,
+    excel_floor, excel_floor_math, excel_fv, excel_int, excel_ipmt, excel_mround, excel_nominal,
+    excel_nper, excel_num_eq, excel_pduration, excel_pmt, excel_ppmt, excel_pv, excel_rate,
+    excel_round, excel_round_15, excel_rri, ArrayMode, CellAddr, CellRef, Criterion, EvalError,
+    EvalSpec, EvalTarget, ExcelError, ExcelValue, RangeRef, Workbook,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -411,6 +411,7 @@ impl Interpreter {
             "CEILING" => self.fn_floor_ceil(args, ctx, false),
             "FLOOR.MATH" => self.fn_floor_ceil_math(args, ctx, true),
             "CEILING.MATH" => self.fn_floor_ceil_math(args, ctx, false),
+            "MROUND" => self.fn_mround(args, ctx),
             "MOD" => self.fn_mod(args, ctx),
             "SQRT" => self.fn_sqrt(args, ctx),
             "POWER" => self.fn_power(args, ctx),
@@ -1450,6 +1451,24 @@ impl Interpreter {
             excel_ceiling_math(n, s, mode)
         };
         Ok(match r {
+            Ok(v) => ExcelValue::Number(v),
+            Err(e) => ExcelValue::Error(e),
+        })
+    }
+
+    fn fn_mround(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.len() != 2 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        let n = match self.as_number(&self.eval_scalar(&args[0], ctx)?) {
+            Ok(n) => n,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        let m = match self.as_number(&self.eval_scalar(&args[1], ctx)?) {
+            Ok(n) => n,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        Ok(match excel_mround(n, m) {
             Ok(v) => ExcelValue::Number(v),
             Err(e) => ExcelValue::Error(e),
         })
