@@ -1891,7 +1891,7 @@ impl Interpreter {
             Ok(s) => Ok(ExcelValue::Text(if lower {
                 s.to_ascii_lowercase()
             } else {
-                s.to_ascii_uppercase()
+                xlsx_engine_core::excel_upper(&s)
             })),
             Err(e) => Ok(ExcelValue::Error(e)),
         }
