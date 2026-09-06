@@ -16,9 +16,9 @@ use crate::dates::{
 use crate::text_format;
 use xlsx_types::{
     count_matches, excel_ceiling, excel_ceiling_math, excel_cumipmt, excel_cumprinc, excel_effect,
-    excel_floor, excel_floor_math, excel_fv, excel_int, excel_ipmt, excel_nominal, excel_nper,
-    excel_pduration, excel_pmt, excel_ppmt, excel_pv, excel_rate, excel_round, excel_rri,
-    Criterion, EvalError, ExcelError, ExcelValue,
+    excel_floor, excel_floor_math, excel_fv, excel_int, excel_ipmt, excel_mround, excel_nominal,
+    excel_nper, excel_pduration, excel_pmt, excel_ppmt, excel_pv, excel_rate, excel_round,
+    excel_rri, Criterion, EvalError, ExcelError, ExcelValue,
 };
 
 pub(crate) fn dispatch(
@@ -95,6 +95,7 @@ pub(crate) fn dispatch(
         "CEILING" => fn_floor_ceil(ev, args, ctx, FloorCeil::Ceiling),
         "FLOOR.MATH" => fn_floor_ceil_math(ev, args, ctx, FloorCeil::Floor),
         "CEILING.MATH" => fn_floor_ceil_math(ev, args, ctx, FloorCeil::Ceiling),
+        "MROUND" => fn_mround(ev, args, ctx),
         "MOD" => fn_mod(ev, args, ctx),
         "SQRT" => fn_unary_num(ev, args, ctx, |n| {
             if n < 0.0 {
@@ -762,6 +763,24 @@ fn fn_floor_ceil_math(
         FloorCeil::Ceiling => excel_ceiling_math(n, s, mode),
     };
     Ok(match r {
+        Ok(v) => ExcelValue::Number(v),
+        Err(e) => ExcelValue::Error(e),
+    })
+}
+
+fn fn_mround(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    if args.len() != 2 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let n = match coerce::to_number(&ev.eval_scalar(&args[0], ctx)?) {
+        Ok(n) => n,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let m = match coerce::to_number(&ev.eval_scalar(&args[1], ctx)?) {
+        Ok(n) => n,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    Ok(match excel_mround(n, m) {
         Ok(v) => ExcelValue::Number(v),
         Err(e) => ExcelValue::Error(e),
     })

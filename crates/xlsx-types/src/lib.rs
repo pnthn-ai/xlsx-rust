@@ -15,6 +15,7 @@ pub mod eval;
 pub mod excel_ceiling;
 pub mod excel_floor;
 pub mod excel_int;
+pub mod excel_mround;
 pub mod excel_round;
 pub mod financial;
 pub mod floor_ceiling;
@@ -35,6 +36,10 @@ pub use excel_ceiling::{
 pub use excel_floor::{excel_floor, excel_floor_naive, excel_floor_slice, excel_floor_slice_naive};
 pub use excel_int::{
     excel_int, excel_int_ieee, excel_int_naive, excel_int_slice, excel_int_slice_naive,
+};
+pub use excel_mround::{
+    excel_mround, excel_mround_ieee, excel_mround_naive, excel_mround_slice,
+    excel_mround_slice_naive,
 };
 pub use excel_round::{excel_round, excel_round_naive, excel_round_slice, excel_round_slice_naive};
 pub use financial::{
