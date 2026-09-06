@@ -302,7 +302,7 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 | [`eval/coerce.rs`](crates/xlsx-engine-core/src/eval/coerce.rs) | Arithmetic / `&` / `IF` coercion (`"2"+1` = 3, TRUE → 1, empty → 0) |
 | [`eval/compare.rs`](crates/xlsx-engine-core/src/eval/compare.rs) | 15-digit `=`, case-insensitive text, `TRUE=1`, type ranking (`FALSE>100`) |
 | [`eval/empty.rs`](crates/xlsx-engine-core/src/eval/empty.rs) | Blank ≠ 0 ≠ `""`, but `A1=0` and `A1=""` when `A1` is blank |
-| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Dispatch: aggregators (`SUM`/`SUMIF`/`SUMIFS`/`AVERAGEIF`/`AVERAGEIFS`/`COUNTIF`/`COUNTIFS`/`SUMPRODUCT`), logicals (`IF`/`IFS`/`SWITCH`/`LET`), lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`/`FILTER`/`UNIQUE`/`SORT`/`SORTBY`/`TOCOL`/`TOROW`/`SEQUENCE`/`VSTACK`/`HSTACK`/`WRAPCOLS`/`WRAPROWS`/`TAKE`/`DROP`/`EXPAND`/`CHOOSECOLS`/`CHOOSEROWS`/`MAKEARRAY`/`MAP`/`SCAN`/`BYROW`/`REDUCE`/`BYCOL`), dates (`DATE`/`EOMONTH`/`NETWORKDAYS`/`NETWORKDAYS.INTL`/`WEEKDAY`/`WORKDAY`/`WORKDAY.INTL`/`YEARFRAC`), math (`ROUND`/`ROUNDUP`/`ROUNDDOWN`/`FLOOR`/`CEILING`/`RANDARRAY`), text (`LEFT`/`LOWER`/`UPPER`/`PROPER`/`TRIM`/`CLEAN`/`EXACT`/`SUBSTITUTE`/`REPLACE`/`FIND`/`SEARCH`/`TEXT`/`TEXTJOIN`/`TEXTSPLIT`/`TEXTAFTER`/`TEXTBEFORE`/`CONCAT`/`REPT`), financial (`NPV`/`XNPV`/`PMT`/`FV`/`PV`/`NPER`/`RATE`/`IPMT`/`PPMT`/`CUMPRINC`/`CUMIPMT`/`IRR`/`XIRR`/`MIRR`/`EFFECT`/`NOMINAL`/`PDURATION`/`RRI`), `TYPE` / `IS*` / `ISOMITTED` |
+| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Dispatch: aggregators (`SUM`/`SUMIF`/`SUMIFS`/`AVERAGEIF`/`AVERAGEIFS`/`COUNTIF`/`COUNTIFS`/`SUMPRODUCT`), logicals (`IF`/`IFS`/`SWITCH`/`LET`), lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`/`FILTER`/`UNIQUE`/`SORT`/`SORTBY`/`TOCOL`/`TOROW`/`SEQUENCE`/`VSTACK`/`HSTACK`/`WRAPCOLS`/`WRAPROWS`/`TAKE`/`DROP`/`EXPAND`/`CHOOSECOLS`/`CHOOSEROWS`/`MAKEARRAY`/`MAP`/`SCAN`/`BYROW`/`REDUCE`/`BYCOL`), dates (`DATE`/`EOMONTH`/`NETWORKDAYS`/`NETWORKDAYS.INTL`/`WEEKDAY`/`WORKDAY`/`WORKDAY.INTL`/`YEARFRAC`/`DAYS360`), math (`ROUND`/`ROUNDUP`/`ROUNDDOWN`/`FLOOR`/`CEILING`/`RANDARRAY`), text (`LEFT`/`LOWER`/`UPPER`/`PROPER`/`TRIM`/`CLEAN`/`EXACT`/`SUBSTITUTE`/`REPLACE`/`FIND`/`SEARCH`/`TEXT`/`TEXTJOIN`/`TEXTSPLIT`/`TEXTAFTER`/`TEXTBEFORE`/`CONCAT`/`REPT`), financial (`NPV`/`XNPV`/`PMT`/`FV`/`PV`/`NPER`/`RATE`/`IPMT`/`PPMT`/`CUMPRINC`/`CUMIPMT`/`IRR`/`XIRR`/`MIRR`/`EFFECT`/`NOMINAL`/`PDURATION`/`RRI`), `TYPE` / `IS*` / `ISOMITTED` |
 | [`eval/sumif.rs`](crates/xlsx-engine-core/src/eval/sumif.rs) | Excel `SUMIF` kernel (criteria walk, reshape `sum_range`, no array literals) |
 | [`eval/sumifs.rs`](crates/xlsx-engine-core/src/eval/sumifs.rs) | Excel `SUMIFS`: multi-criteria AND, same-shape ranges |
 | [`eval/countifs.rs`](crates/xlsx-engine-core/src/eval/countifs.rs) | Excel `COUNTIFS`: multi-criteria AND, same-shape ranges, COUNTIF matcher |
@@ -360,7 +360,7 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 | [`eval/xirr.rs`](crates/xlsx-engine-core/src/eval/xirr.rs) | Excel `XIRR` Newton / bisection kernel (100 tries, `1e-8` rate, 365-day serials) |
 | [`eval/mirr.rs`](crates/xlsx-engine-core/src/eval/mirr.rs) | Excel `MIRR` kernel (finance / reinvest NPV closed form; streaming factors) |
 | [`text_format.rs`](crates/xlsx-engine-core/src/text_format.rs) | Excel `TEXT` for a documented number/date format subset |
-| [`dates.rs`](crates/xlsx-engine-core/src/dates.rs) | 1900/1904 serials, leap-year bug, `EOMONTH` / `NETWORKDAYS` / `NETWORKDAYS.INTL` / `WEEKDAY` / `WORKDAY` / `WORKDAY.INTL` / `YEARFRAC` |
+| [`dates.rs`](crates/xlsx-engine-core/src/dates.rs) | 1900/1904 serials, leap-year bug, `EOMONTH` / `NETWORKDAYS` / `NETWORKDAYS.INTL` / `WEEKDAY` / `WORKDAY` / `WORKDAY.INTL` / `YEARFRAC` / `DAYS360` |
 
 **Implemented:** arithmetic and comparison operators (unary `+/-`, `%`, `^`,
 `&`, space intersection), host-aware implicit intersection, cell refs /
@@ -475,6 +475,12 @@ as one or the other. Documented quirk categories:
   actual/365, EU 30/360). Dates swap so the result is ≥ 0. 1900 is a leap
   year (serial 60 is last-of-February; 59 is not). Basis 0 keeps the Excel
   last-day-of-February quirk (Mar 31 is not pulled down to 30).
+  `DAYS360(start, end, [method])` is a signed 30/360 **day count** (not a
+  year fraction). Omitted / `FALSE` / `0` is US (NASD); `TRUE` / nonzero is
+  European (31 → 30 only). NASD rewrites a last-day-of-month start to day 30
+  *before* the end-31st rule, so Feb 28 → Mar 31 is 30 (YEARFRAC basis 0 is
+  31). A February **end** is not rewritten (28-Feb-11 → 28-Feb-12 is 358).
+  Start after end is negative; dates truncate; serial 60 is last-of-February.
   `WORKDAY.INTL` adds weekend codes 1–7 / 11–17 and a Monday-first 7-character
   `0`/`1` string (`"0000011"` = Sat/Sun). Invalid codes are `#NUM!`; invalid
   strings (wrong length, non-`0`/`1`, or `1111111`) are `#VALUE!`. Text `"1"`

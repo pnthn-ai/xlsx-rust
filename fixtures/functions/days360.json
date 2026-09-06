@@ -1,0 +1,320 @@
+[
+  {
+    "id": "fn.days360.ms-jan30-feb1",
+    "description": "Microsoft example: DAYS360(30-Jan-11, 1-Feb-11) is 1 (NASD)",
+    "tags": ["days360", "dates"],
+    "formula": "=DAYS360(DATE(2011,1,30),DATE(2011,2,1))",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.days360.ms-jan1-dec31",
+    "description": "Microsoft example: DAYS360(1-Jan-11, 31-Dec-11) is 360 (NASD)",
+    "tags": ["days360", "dates"],
+    "formula": "=DAYS360(DATE(2011,1,1),DATE(2011,12,31))",
+    "expected": { "number": 360 }
+  },
+  {
+    "id": "fn.days360.ms-jan1-feb1",
+    "description": "Microsoft example: DAYS360(1-Jan-11, 1-Feb-11) is 30 (NASD)",
+    "tags": ["days360", "dates"],
+    "formula": "=DAYS360(DATE(2011,1,1),DATE(2011,2,1))",
+    "expected": { "number": 30 }
+  },
+  {
+    "id": "fn.days360.ms-span-209",
+    "description": "NASD 30/360: 1-Jan-12 to 30-Jul-12 is 209 (YEARFRAC basis 0 × 360)",
+    "tags": ["days360", "dates"],
+    "formula": "=DAYS360(DATE(2012,1,1),DATE(2012,7,30))",
+    "expected": { "number": 209 }
+  },
+  {
+    "id": "fn.days360.nasd-feb28-mar1",
+    "description": "NASD: last-day-of-February start becomes 30 → 28-Feb-93 to 1-Mar-93 is 1",
+    "tags": ["days360", "dates"],
+    "formula": "=DAYS360(DATE(1993,2,28),DATE(1993,3,1),FALSE)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.days360.eu-feb28-mar1",
+    "description": "European: February is never rewritten → 28-Feb-93 to 1-Mar-93 is 3",
+    "tags": ["days360", "dates"],
+    "formula": "=DAYS360(DATE(1993,2,28),DATE(1993,3,1),TRUE)",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.days360.nasd-feb29-mar1",
+    "description": "NASD leap: 29-Feb-96 to 1-Mar-96 is 1",
+    "tags": ["days360", "dates"],
+    "formula": "=DAYS360(DATE(1996,2,29),DATE(1996,3,1),FALSE)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.days360.eu-feb29-mar1",
+    "description": "European leap: 29-Feb-96 to 1-Mar-96 is 2",
+    "tags": ["days360", "dates"],
+    "formula": "=DAYS360(DATE(1996,2,29),DATE(1996,3,1),TRUE)",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.days360.omitted-is-nasd",
+    "description": "Omitted method is NASD (same 1 as FALSE)",
+    "tags": ["days360", "dates"],
+    "formula": "=DAYS360(DATE(1993,2,28),DATE(1993,3,1))",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.days360.method-0-nasd",
+    "description": "Method 0 coerces to FALSE → NASD",
+    "tags": ["days360", "dates"],
+    "formula": "=DAYS360(DATE(1993,2,28),DATE(1993,3,1),0)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.days360.method-1-eu",
+    "description": "Method 1 coerces to TRUE → European",
+    "tags": ["days360", "dates"],
+    "formula": "=DAYS360(DATE(1993,2,28),DATE(1993,3,1),1)",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.days360.nasd-feb28-mar31",
+    "description": "NASD adjusts Feb 28 start first, then Mar 31 → 30 (YEARFRAC basis 0 is 31)",
+    "tags": ["days360", "dates"],
+    "formula": "=DAYS360(DATE(2011,2,28),DATE(2011,3,31))",
+    "expected": { "number": 30 }
+  },
+  {
+    "id": "fn.days360.nasd-feb29-mar31",
+    "description": "NASD leap Feb 29 start to Mar 31 is 30 (not YEARFRAC's 31)",
+    "tags": ["days360", "dates"],
+    "formula": "=DAYS360(DATE(2012,2,29),DATE(2012,3,31))",
+    "expected": { "number": 30 }
+  },
+  {
+    "id": "fn.days360.eu-feb28-mar31",
+    "description": "European: Feb 28 stays 28, Mar 31 → 30, so 32",
+    "tags": ["days360", "dates"],
+    "formula": "=DAYS360(DATE(2011,2,28),DATE(2011,3,31),TRUE)",
+    "expected": { "number": 32 }
+  },
+  {
+    "id": "fn.days360.nasd-feb-to-feb",
+    "description": "NASD does not rewrite a February end: 28-Feb-11 to 28-Feb-12 is 358",
+    "tags": ["days360", "dates"],
+    "formula": "=DAYS360(DATE(2011,2,28),DATE(2012,2,28))",
+    "expected": { "number": 358 }
+  },
+  {
+    "id": "fn.days360.nasd-feb-to-leap-feb29",
+    "description": "NASD Feb 28 to leap Feb 29 is 359 (YEARFRAC basis 0 rewrites both ends → 360)",
+    "tags": ["days360", "dates"],
+    "formula": "=DAYS360(DATE(2011,2,28),DATE(2012,2,29))",
+    "expected": { "number": 359 }
+  },
+  {
+    "id": "fn.days360.eu-feb-to-feb",
+    "description": "European Feb 28 to Feb 28 next year is an exact 360",
+    "tags": ["days360", "dates"],
+    "formula": "=DAYS360(DATE(2011,2,28),DATE(2012,2,28),TRUE)",
+    "expected": { "number": 360 }
+  },
+  {
+    "id": "fn.days360.nasd-both-31",
+    "description": "NASD: Jan 31 start → 30, Mar 31 end with start day 30 → 30, so 60",
+    "tags": ["days360", "dates"],
+    "formula": "=DAYS360(DATE(2012,1,31),DATE(2012,3,31))",
+    "expected": { "number": 60 }
+  },
+  {
+    "id": "fn.days360.nasd-start30-end31",
+    "description": "NASD: start day 30 forces end day 31 down to 30 → 60",
+    "tags": ["days360", "dates"],
+    "formula": "=DAYS360(DATE(2012,1,30),DATE(2012,3,31))",
+    "expected": { "number": 60 }
+  },
+  {
+    "id": "fn.days360.nasd-start29-end31",
+    "description": "NASD: start day 29 < 30 leaves end as 31 (≡ 1st of next month) → 62",
+    "tags": ["days360", "dates"],
+    "formula": "=DAYS360(DATE(2012,1,29),DATE(2012,3,31))",
+    "expected": { "number": 62 }
+  },
+  {
+    "id": "fn.days360.eu-both-31",
+    "description": "European: both 31sts become 30 → Jan 31 to Mar 31 is 60",
+    "tags": ["days360", "dates"],
+    "formula": "=DAYS360(DATE(2012,1,31),DATE(2012,3,31),TRUE)",
+    "expected": { "number": 60 }
+  },
+  {
+    "id": "fn.days360.eu-start29-end31",
+    "description": "European: only the 31st is rewritten → Jan 29 to Mar 31 is 61",
+    "tags": ["days360", "dates"],
+    "formula": "=DAYS360(DATE(2012,1,29),DATE(2012,3,31),TRUE)",
+    "expected": { "number": 61 }
+  },
+  {
+    "id": "fn.days360.nasd-apr30-end",
+    "description": "NASD does not bump a 30th end (only a 31st) → 15-Apr to 30-Apr is 15",
+    "tags": ["days360", "dates"],
+    "formula": "=DAYS360(DATE(2011,4,15),DATE(2011,4,30))",
+    "expected": { "number": 15 }
+  },
+  {
+    "id": "fn.days360.reversed",
+    "description": "Start after end is a negative count (DAYS360 does not swap like YEARFRAC)",
+    "tags": ["days360", "dates"],
+    "formula": "=DAYS360(DATE(2011,2,1),DATE(2011,1,1))",
+    "expected": { "number": -30 }
+  },
+  {
+    "id": "fn.days360.same-day",
+    "description": "Equal dates are a zero-length span on both methods",
+    "tags": ["days360", "dates"],
+    "formula": "=DAYS360(DATE(2012,7,30),DATE(2012,7,30))",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.days360.serial-60-61-nasd",
+    "description": "Serial 60 is last-of-February 1900; NASD 60→61 is 1",
+    "tags": ["days360", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=DAYS360(60,61)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.days360.serial-59-61-nasd",
+    "description": "Feb 28 1900 is not last-of-month (serial 60 is), so NASD keeps 28 and 1 → 3",
+    "tags": ["days360", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=DAYS360(59,61)",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.days360.serial-60-91-nasd",
+    "description": "Last-day-of-February 1900 start to 31-Mar-1900: NASD is 30 (YEARFRAC is 31)",
+    "tags": ["days360", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=DAYS360(60,91)",
+    "expected": { "number": 30 }
+  },
+  {
+    "id": "fn.days360.serial-60-61-eu",
+    "description": "European: serial 60 stays day 29 → 60 to 61 is 2",
+    "tags": ["days360", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=DAYS360(60,61,TRUE)",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.days360.serial-0",
+    "description": "Serial 0 is 1900-01-00; DAYS360(0,31) is 31",
+    "tags": ["days360", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=DAYS360(0,31)",
+    "expected": { "number": 31 }
+  },
+  {
+    "id": "fn.days360.trunc-frac",
+    "description": "Fractional serials are truncated: +0.9 / +0.1 does not change the civil days",
+    "tags": ["days360", "dates"],
+    "formula": "=DAYS360(DATE(2011,1,1)+0.9,DATE(2011,2,1)+0.1)",
+    "expected": { "number": 30 }
+  },
+  {
+    "id": "fn.days360.trunc-method",
+    "description": "Nonzero method (1.9) is European, not truncated to NASD 1",
+    "tags": ["days360", "dates"],
+    "formula": "=DAYS360(DATE(1993,2,28),DATE(1993,3,1),1.9)",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.days360.text-serial",
+    "description": "Numeric text serials coerce: DAYS360(\"40573\",\"40575\") is the Microsoft Jan-30 span",
+    "tags": ["days360", "dates"],
+    "formula": "=DAYS360(\"40573\",\"40575\")",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.days360.empty-start",
+    "description": "Blank start coerces to 0 → DAYS360(0,31) is 31",
+    "tags": ["days360", "dates", "empty"],
+    "quirks": ["empty-cell-duality", "date-1900-leap-year"],
+    "formula": "=DAYS360(A1,31)",
+    "expected": { "number": 31 },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.days360.blank-method",
+    "description": "Blank method cell coerces to 0 → NASD",
+    "tags": ["days360", "dates", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=DAYS360(DATE(1993,2,28),DATE(1993,3,1),A1)",
+    "expected": { "number": 1 },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.days360.neg-serial",
+    "description": "Negative start serial is not a valid Excel date",
+    "tags": ["days360", "dates", "errors"],
+    "formula": "=DAYS360(-1,10)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.days360.past-max",
+    "description": "End serial past 9999-12-31 is #NUM!",
+    "tags": ["days360", "dates", "errors"],
+    "formula": "=DAYS360(1,2958466)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.days360.arity",
+    "description": "DAYS360 requires 2 or 3 arguments",
+    "tags": ["days360", "errors"],
+    "formula": "=DAYS360(1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.days360.bad-text",
+    "description": "Non-numeric text start date is #VALUE! (coercion)",
+    "tags": ["days360", "errors"],
+    "formula": "=DAYS360(\"x\",1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.days360.method-text",
+    "description": "Non-numeric text method is #VALUE!",
+    "tags": ["days360", "errors"],
+    "formula": "=DAYS360(1,2,\"x\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.days360.ltr-errors",
+    "description": "Left-to-right: bad start text wins over a negative end",
+    "tags": ["days360", "errors"],
+    "formula": "=DAYS360(\"x\",-1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.days360.system-1904",
+    "description": "DAYS360(0,31) in the 1904 system is 30 (1-Jan-04 to 1-Feb-04)",
+    "tags": ["days360", "dates"],
+    "quirks": ["date-system"],
+    "formula": "=DAYS360(0,31)",
+    "expected": { "number": 30 },
+    "options": { "date_system": "excel1904" }
+  },
+  {
+    "id": "fn.days360.system-1904-mar1",
+    "description": "1904-01-01 to 1904-03-01 (serial 60) is 60 on NASD",
+    "tags": ["days360", "dates"],
+    "quirks": ["date-system"],
+    "formula": "=DAYS360(0,60)",
+    "expected": { "number": 60 },
+    "options": { "date_system": "excel1904" }
+  }
+]

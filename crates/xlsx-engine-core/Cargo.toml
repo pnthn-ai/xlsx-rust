@@ -197,6 +197,10 @@ name = "yearfrac"
 harness = false
 
 [[bench]]
+name = "days360"
+harness = false
+
+[[bench]]
 name = "sort"
 harness = false
 

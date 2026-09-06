@@ -1,7 +1,7 @@
 //! Seed-scoped evaluator with Excel-like and intentionally naive semantics.
 
 use crate::dates::{
-    date_serial, eomonth_serial, networkdays_count, networkdays_count_mask, serial_to_ymd,
+    date_serial, days360, eomonth_serial, networkdays_count, networkdays_count_mask, serial_to_ymd,
     time_fraction, weekday, weekend_mask_from_code, weekend_mask_from_string, workday_serial,
     yearfrac, WEEKEND_SAT_SUN,
 };
@@ -445,6 +445,7 @@ impl Interpreter {
             "MONTH" => self.fn_ymd(args, ctx, YmdPart::Month),
             "DAY" => self.fn_ymd(args, ctx, YmdPart::Day),
             "WEEKDAY" => self.fn_weekday(args, ctx),
+            "DAYS360" => self.fn_days360(args, ctx),
             "LEFT" => self.fn_left_right(args, ctx, true),
             "RIGHT" => self.fn_left_right(args, ctx, false),
             "MID" => self.fn_mid(args, ctx),
@@ -2817,6 +2818,37 @@ impl Interpreter {
             Ok(ExcelValue::Error(ExcelError::Div0))
         } else {
             Ok(ExcelValue::Number(sum / count as f64))
+        }
+    }
+
+    fn fn_days360(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.len() < 2 || args.len() > 3 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        let start = match self.as_number(&self.eval_scalar(&args[0], ctx)?) {
+            Ok(n) => n,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        let end = match self.as_number(&self.eval_scalar(&args[1], ctx)?) {
+            Ok(n) => n,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        let european = if args.len() >= 3 {
+            match self.as_number(&self.eval_scalar(&args[2], ctx)?) {
+                Ok(n) => {
+                    if !n.is_finite() {
+                        return Ok(ExcelValue::Error(ExcelError::Num));
+                    }
+                    n != 0.0
+                }
+                Err(e) => return Ok(ExcelValue::Error(e)),
+            }
+        } else {
+            false
+        };
+        match days360(start, end, european, ctx.spec.options.date_system) {
+            Ok(n) => Ok(ExcelValue::Number(n)),
+            Err(e) => Ok(ExcelValue::Error(e)),
         }
     }
 

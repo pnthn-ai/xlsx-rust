@@ -1104,6 +1104,119 @@ mod tests {
         }
     }
 
+    fn d360(start: f64, end: f64, european: bool) -> f64 {
+        days360(start, end, european, DateSystem::Excel1900).unwrap()
+    }
+
+    #[test]
+    fn days360_ms_examples() {
+        // support.microsoft.com DAYS360 examples (2011).
+        assert_eq!(d360(d(2011, 1, 30), d(2011, 2, 1), false), 1.0);
+        assert_eq!(d360(d(2011, 1, 1), d(2011, 12, 31), false), 360.0);
+        assert_eq!(d360(d(2011, 1, 1), d(2011, 2, 1), false), 30.0);
+        assert_eq!(d360(d(2012, 1, 1), d(2012, 7, 30), false), 209.0);
+    }
+
+    #[test]
+    fn days360_nasd_vs_european_february() {
+        // Apache POI / Excel: NASD ignores the "missing" Feb 30; EU counts it.
+        assert_eq!(d360(d(1993, 2, 28), d(1993, 3, 1), false), 1.0);
+        assert_eq!(d360(d(1993, 2, 28), d(1993, 3, 1), true), 3.0);
+        assert_eq!(d360(d(1996, 2, 29), d(1996, 3, 1), false), 1.0);
+        assert_eq!(d360(d(1996, 2, 29), d(1996, 3, 1), true), 2.0);
+        // NASD adjusts start last-of-Feb first, then pulls Mar 31 → 30.
+        // YEARFRAC basis 0 keeps Mar 31 (31/360); DAYS360 is 30.
+        assert_eq!(d360(d(2011, 2, 28), d(2011, 3, 31), false), 30.0);
+        assert_eq!(d360(d(2012, 2, 29), d(2012, 3, 31), false), 30.0);
+        assert_eq!(d360(d(2011, 2, 28), d(2011, 3, 31), true), 32.0);
+        // NASD does not rewrite a February *end* (only a 31st end).
+        assert_eq!(d360(d(2011, 2, 28), d(2012, 2, 28), false), 358.0);
+        assert_eq!(d360(d(2011, 2, 28), d(2012, 2, 29), false), 359.0);
+        assert_eq!(d360(d(2011, 2, 28), d(2012, 2, 28), true), 360.0);
+    }
+
+    #[test]
+    fn days360_nasd_31st_rules() {
+        assert_eq!(d360(d(2012, 1, 31), d(2012, 3, 31), false), 60.0);
+        assert_eq!(d360(d(2012, 1, 30), d(2012, 3, 31), false), 60.0);
+        // start day 29 < 30: end 31 stays 31 (≡ next-month day 1) → 62.
+        assert_eq!(d360(d(2012, 1, 29), d(2012, 3, 31), false), 62.0);
+        assert_eq!(d360(d(2012, 1, 31), d(2012, 3, 31), true), 60.0);
+        assert_eq!(d360(d(2012, 1, 29), d(2012, 3, 31), true), 61.0);
+        // End on the 30th of a 30-day month is not a 31st — no next-month bump.
+        assert_eq!(d360(d(2011, 4, 15), d(2011, 4, 30), false), 15.0);
+    }
+
+    #[test]
+    fn days360_reversed_and_same_day() {
+        assert_eq!(d360(d(2011, 2, 1), d(2011, 1, 1), false), -30.0);
+        assert_eq!(d360(d(2011, 12, 31), d(2011, 1, 1), false), -360.0);
+        assert_eq!(d360(d(2012, 7, 30), d(2012, 7, 30), false), 0.0);
+        assert_eq!(d360(d(2012, 7, 30), d(2012, 7, 30), true), 0.0);
+    }
+
+    #[test]
+    fn days360_serial_60_leap_bug() {
+        let s = DateSystem::Excel1900;
+        // 1900-02-28 is *not* last-of-month (serial 60 is).
+        assert_eq!(days360(59.0, 61.0, false, s).unwrap(), 3.0);
+        assert_eq!(days360(60.0, 61.0, false, s).unwrap(), 1.0);
+        assert_eq!(days360(60.0, 91.0, false, s).unwrap(), 30.0);
+        assert_eq!(days360(59.0, 61.0, true, s).unwrap(), 3.0);
+        assert_eq!(days360(60.0, 61.0, true, s).unwrap(), 2.0);
+        assert_eq!(days360(0.0, 31.0, false, s).unwrap(), 31.0);
+    }
+
+    #[test]
+    fn days360_truncates_and_rejects() {
+        let s = DateSystem::Excel1900;
+        assert_eq!(
+            days360(d(2011, 1, 1) + 0.9, d(2011, 2, 1) + 0.1, false, s).unwrap(),
+            30.0
+        );
+        assert_eq!(days360(-1.0, 10.0, false, s), Err(ExcelError::Num));
+        assert_eq!(
+            days360(1.0, (EXCEL_MAX_SERIAL_1900 as f64) + 1.0, false, s),
+            Err(ExcelError::Num)
+        );
+    }
+
+    #[test]
+    fn days360_system_1904() {
+        let s = DateSystem::Excel1904;
+        // 0 = 1904-01-01, 31 = 1904-02-01.
+        assert_eq!(days360(0.0, 31.0, false, s).unwrap(), 30.0);
+        assert_eq!(days360(0.0, 0.0, false, s).unwrap(), 0.0);
+        // 1904-01-01 → 1904-03-01 (serial 60): NASD Jan 1 to Mar 1 is 60.
+        assert_eq!(days360(0.0, 60.0, false, s).unwrap(), 60.0);
+    }
+
+    #[test]
+    fn days360_matches_naive_on_prefix() {
+        let s = DateSystem::Excel1900;
+        for start in 0..80 {
+            for end in 0..80 {
+                for european in [false, true] {
+                    let fast = days360(start as f64, end as f64, european, s);
+                    let walk = days360_naive(start as f64, end as f64, european, s);
+                    assert_eq!(fast, walk, "DAYS360({start},{end},{european})");
+                }
+            }
+        }
+        for &(start, end) in &[
+            (d(2011, 2, 28), d(2011, 3, 31)),
+            (d(2012, 2, 29), d(2012, 3, 31)),
+            (d(2011, 1, 1), d(2011, 12, 31)),
+            (d(1990, 6, 15), d(9999, 12, 31)),
+        ] {
+            for european in [false, true] {
+                let fast = days360(start, end, european, s).unwrap();
+                let walk = days360_naive(start, end, european, s).unwrap();
+                assert_eq!(fast, walk, "DAYS360({start},{end},{european})");
+            }
+        }
+    }
+
 }
 
 
@@ -1759,7 +1872,106 @@ pub fn yearfrac_naive(
     }
 }
 
+/// Excel `DAYS360` US (NASD) / European 30/360 day count on civil y/m/d.
+///
+/// Distinct from [`basis0_us_nasd`] / [`yearfrac`] basis 0:
+/// - start after end is a **negative** count (no swap);
+/// - NASD rewrites a last-day-of-month **start** (incl. Feb 28/29) to day 30
+///   **before** the end-31st rule, so Feb 28 → Mar 31 is 30 (YEARFRAC is 31);
+/// - NASD rewrites an **end** date only when it is the 31st (February end
+///   stays 28/29; YEARFRAC may rewrite both February ends to 30).
+fn days360_count(a: (i32, i32, i32), b: (i32, i32, i32), european: bool) -> i32 {
+    let (y1, m1, mut d1) = a;
+    let (mut y2, mut m2, mut d2) = b;
+    if european {
+        if d1 == 31 {
+            d1 = 30;
+        }
+        if d2 == 31 {
+            d2 = 30;
+        }
+    } else {
+        // NASD: last day of any month (31st, or Feb 28/29) becomes 30.
+        if last_day_of_month(y1, m1, d1) {
+            d1 = 30;
+        }
+        if d2 == 31 {
+            if d1 < 30 {
+                // Equivalent to leaving day 31; written as next-month day 1
+                // to match Microsoft's DAYS360 wording.
+                d2 = 1;
+                m2 += 1;
+                if m2 > 12 {
+                    m2 = 1;
+                    y2 += 1;
+                }
+            } else {
+                d2 = 30;
+            }
+        }
+    }
+    (y2 - y1) * 360 + (m2 - m1) * 30 + (d2 - d1)
+}
 
+fn days360_from_1900(start_1900: i32, end_1900: i32, european: bool) -> Result<f64, ExcelError> {
+    if start_1900 == end_1900 {
+        return Ok(0.0);
+    }
+    let (y1, m1, d1) = serial_to_ymd(start_1900 as f64, DateSystem::Excel1900)?;
+    let (y2, m2, d2) = serial_to_ymd(end_1900 as f64, DateSystem::Excel1900)?;
+    Ok(days360_count(
+        (y1, m1 as i32, d1 as i32),
+        (y2, m2 as i32, d2 as i32),
+        european,
+    ) as f64)
+}
+
+fn days360_from_1900_walk(
+    start_1900: i32,
+    end_1900: i32,
+    european: bool,
+) -> Result<f64, ExcelError> {
+    if start_1900 == end_1900 {
+        return Ok(0.0);
+    }
+    let a = serial_to_ymd_walk(start_1900)?;
+    let b = serial_to_ymd_walk(end_1900)?;
+    Ok(days360_count(a, b, european) as f64)
+}
+
+/// Excel `DAYS360(start, end, [method])`.
+///
+/// `method` false/omitted is US (NASD); true is European. Dates are truncated.
+/// Start after end yields a negative count (unlike [`yearfrac`], which swaps).
+/// Reuses [`truncate_date_serial`] and [`serial_to_ymd`] so the 1900 leap-year
+/// bug (serial 60) is inherited. Out-of-range serials are `#NUM!`.
+pub fn days360(
+    start: f64,
+    end: f64,
+    european: bool,
+    system: DateSystem,
+) -> Result<f64, ExcelError> {
+    let start_s = truncate_date_serial(start, system)?;
+    let end_s = truncate_date_serial(end, system)?;
+    let start_1900 = to_1900_serial(start_s, system)?;
+    let end_1900 = to_1900_serial(end_s, system)?;
+    days360_from_1900(start_1900, end_1900, european)
+}
+
+/// Year-walk `DAYS360` used as the bench baseline. Same NASD / European
+/// rules; serial unpack walks from 1900 instead of the closed-form helper.
+pub fn days360_naive(
+    start: f64,
+    end: f64,
+    european: bool,
+    system: DateSystem,
+) -> Result<f64, ExcelError> {
+    let start_s = truncate_date_serial(start, system)?;
+    let end_s = truncate_date_serial(end, system)?;
+    let start_1900 = to_1900_serial(start_s, system)?;
+    let end_1900 = to_1900_serial(end_s, system)?;
+    days360_from_1900_walk(start_1900, end_1900, european)
+}
 
 /// O(1) workday count / invert for one weekend mask.
 ///
