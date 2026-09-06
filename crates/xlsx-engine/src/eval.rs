@@ -447,6 +447,7 @@ impl Interpreter {
             "TEXT" => self.fn_text(args, ctx),
             "REPLACE" => self.fn_replace(args, ctx),
             "TEXTJOIN" => self.fn_textjoin(args, ctx),
+            "TEXTBEFORE" => self.fn_textbefore(args, ctx),
             "CONCAT" => self.fn_concat(args, ctx),
             "NPV" => self.fn_npv(args, ctx),
             "UNIQUE" => self.fn_unique(args, ctx),
@@ -1700,7 +1701,7 @@ impl Interpreter {
         }
     }
 
-        fn collect_holiday_serials(&self, v: &ExcelValue, out: &mut Vec<f64>) -> Option<ExcelError> {
+    fn collect_holiday_serials(&self, v: &ExcelValue, out: &mut Vec<f64>) -> Option<ExcelError> {
         match v {
             ExcelValue::Array(rows) => {
                 for row in rows {
@@ -1981,6 +1982,85 @@ impl Interpreter {
         };
         match excel_search(&find_text, &within_text, start_num) {
             Ok(pos) => Ok(ExcelValue::Number(pos)),
+            Err(e) => Ok(ExcelValue::Error(e)),
+        }
+    }
+
+    fn fn_textbefore(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.len() < 2 || args.len() > 6 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        let text = match self.as_text(&self.eval_scalar(&args[0], ctx)?) {
+            Ok(s) => s,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        let delim_v = self.eval_expr(&args[1], ctx)?;
+        let mut delims = Vec::new();
+        if let Err(e) = flatten_textbefore_delims(&delim_v, &mut delims, self) {
+            return Ok(ExcelValue::Error(e));
+        }
+        let instance_num = if args.len() >= 3 {
+            match self.as_number(&self.eval_scalar(&args[2], ctx)?) {
+                Ok(n) => {
+                    if !n.is_finite() {
+                        return Ok(ExcelValue::Error(ExcelError::Value));
+                    }
+                    n.trunc() as i64
+                }
+                Err(e) => return Ok(ExcelValue::Error(e)),
+            }
+        } else {
+            1
+        };
+        let match_mode = if args.len() >= 4 {
+            match self.as_number(&self.eval_scalar(&args[3], ctx)?) {
+                Ok(n) => {
+                    if !n.is_finite() {
+                        return Ok(ExcelValue::Error(ExcelError::Value));
+                    }
+                    let t = n.trunc();
+                    if t != 0.0 && t != 1.0 {
+                        return Ok(ExcelValue::Error(ExcelError::Value));
+                    }
+                    t as i64
+                }
+                Err(e) => return Ok(ExcelValue::Error(e)),
+            }
+        } else {
+            0
+        };
+        let match_end = if args.len() >= 5 {
+            match self.as_number(&self.eval_scalar(&args[4], ctx)?) {
+                Ok(n) => {
+                    if !n.is_finite() {
+                        return Ok(ExcelValue::Error(ExcelError::Value));
+                    }
+                    let t = n.trunc();
+                    if t != 0.0 && t != 1.0 {
+                        return Ok(ExcelValue::Error(ExcelError::Value));
+                    }
+                    t as i64
+                }
+                Err(e) => return Ok(ExcelValue::Error(e)),
+            }
+        } else {
+            0
+        };
+        let if_not_found = if args.len() >= 6 {
+            Some(self.eval_expr(&args[5], ctx)?)
+        } else {
+            None
+        };
+        let delim_refs: Vec<&str> = delims.iter().map(String::as_str).collect();
+        match xlsx_engine_core::excel_textbefore(
+            &text,
+            &delim_refs,
+            instance_num,
+            match_mode == 1,
+            match_end == 1,
+        ) {
+            Ok(s) => Ok(ExcelValue::Text(s)),
+            Err(ExcelError::Na) => Ok(if_not_found.unwrap_or(ExcelValue::Error(ExcelError::Na))),
             Err(e) => Ok(ExcelValue::Error(e)),
         }
     }
@@ -3395,6 +3475,28 @@ fn search_match_here(pat: &[char], hay: &[char]) -> bool {
         !t.is_empty() && search_ci_eq(p[0], t[0]) && rec(&p[1..], &t[1..])
     }
     rec(pat, hay)
+}
+
+fn flatten_textbefore_delims(
+    v: &ExcelValue,
+    out: &mut Vec<String>,
+    interp: &Interpreter,
+) -> Result<(), ExcelError> {
+    match v {
+        ExcelValue::Error(e) => Err(*e),
+        ExcelValue::Array(rows) => {
+            for row in rows {
+                for cell in row {
+                    flatten_textbefore_delims(cell, out, interp)?;
+                }
+            }
+            Ok(())
+        }
+        other => {
+            out.push(interp.as_text(other)?);
+            Ok(())
+        }
+    }
 }
 
 fn search_ci_eq(a: char, b: char) -> bool {

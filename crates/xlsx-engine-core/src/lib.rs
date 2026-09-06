@@ -5,6 +5,7 @@
 //! - [`eval`] — workbook-backed walker
 //! - [`eval::coerce`] / [`eval::compare`] / [`eval::empty`] — quirk modules
 //! - [`eval::functions`] — worksheet functions used by the expanded corpus
+//! - [`eval::textbefore`] — Excel `TEXTBEFORE` (nth delimiter, match_end / if_not_found)
 //! - [`text_format`] — Excel `TEXT` for a documented number/date format subset
 //! - [`eval::functions`] also dispatches `SUMIF` / `COUNTIF` / `SUMPRODUCT` / `SUBSTITUTE`
 //! - [`eval::concat`] — Excel `CONCAT` (range/array flatten + 32767 cap)
@@ -48,13 +49,16 @@ pub use eval::switch::{
     first_match as excel_switch_first_match, first_match_naive as excel_switch_first_match_naive,
     pick_evaluated as excel_switch_pick_evaluated,
 };
+pub use eval::textbefore::{
+    textbefore as excel_textbefore, textbefore_naive as excel_textbefore_naive,
+};
 pub use eval::textjoin::{
     eval_textjoin_formula, textjoin_naive_join, TextJoinBuilder, TEXTJOIN_MAX_CHARS,
 };
 pub use eval::unique::{unique_apply, unique_apply_naive, unique_eq};
 pub use eval::{
-    eval_averageif_materialized, eval_formula_in, eval_sumif_materialized, eval_sumifs_materialized,
-    Evaluator,
+    eval_averageif_materialized, eval_formula_in, eval_sumif_materialized,
+    eval_sumifs_materialized, Evaluator,
 };
 pub use parse::parse;
 
