@@ -34,6 +34,7 @@ pub mod sort;
 pub mod sortby;
 pub mod sequence;
 pub mod randarray;
+pub mod byrow;
 pub mod makearray;
 pub mod switch;
 pub mod unique;
@@ -67,7 +68,7 @@ pub(crate) struct Ctx<'a> {
     visiting: HashSet<String>,
     host: CellAddr,
     pub(crate) rng: randarray::XorShift64,
-    /// LAMBDA parameter bindings (MAKEARRAY / nested LAMBDA). Innermost last.
+    /// LAMBDA parameter bindings (MAKEARRAY / BYROW / nested LAMBDA). Innermost last.
     pub(crate) locals: Vec<(String, ExcelValue)>,
 }
 
@@ -1950,6 +1951,48 @@ mod tests {
         );
         assert_eq!(
             eval_formula_in(&wb, "=PDURATION()").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
+        );
+    }
+
+    #[test]
+    fn byrow_sum_and_index() {
+        let mut sheet = xlsx_types::Sheet::new("Sheet1");
+        sheet
+            .cells
+            .insert("A1".into(), xlsx_types::Cell::value(ExcelValue::Number(1.0)));
+        sheet
+            .cells
+            .insert("B1".into(), xlsx_types::Cell::value(ExcelValue::Number(2.0)));
+        sheet
+            .cells
+            .insert("C1".into(), xlsx_types::Cell::value(ExcelValue::Number(3.0)));
+        sheet
+            .cells
+            .insert("A2".into(), xlsx_types::Cell::value(ExcelValue::Number(4.0)));
+        sheet
+            .cells
+            .insert("B2".into(), xlsx_types::Cell::value(ExcelValue::Number(5.0)));
+        sheet
+            .cells
+            .insert("C2".into(), xlsx_types::Cell::value(ExcelValue::Number(6.0)));
+        let wb = Workbook {
+            sheets: vec![sheet],
+            names: vec![],
+        };
+        assert_eq!(
+            eval_formula_in(&wb, "=BYROW(A1:C2,LAMBDA(r,SUM(r)))").unwrap(),
+            ExcelValue::Array(vec![
+                vec![ExcelValue::Number(6.0)],
+                vec![ExcelValue::Number(15.0)],
+            ])
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=INDEX(BYROW(A1:C2,SUM),2)").unwrap(),
+            ExcelValue::Number(15.0)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=BYROW({1,2},LAMBDA(a,b,a))").unwrap(),
             ExcelValue::Error(ExcelError::Value)
         );
     }

@@ -253,6 +253,10 @@ name = "makearray"
 harness = false
 
 [[bench]]
+name = "byrow"
+harness = false
+
+[[bench]]
 name = "textsplit"
 harness = false
 

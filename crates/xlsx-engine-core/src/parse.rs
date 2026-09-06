@@ -677,6 +677,25 @@ mod tests {
     }
 
     #[test]
+    fn parse_byrow_lambda() {
+        match parse("=BYROW(A1:C2,LAMBDA(row,SUM(row)))").unwrap() {
+            Expr::Call { name, args } => {
+                assert!(name.eq_ignore_ascii_case("BYROW"));
+                assert_eq!(args.len(), 2);
+                match &args[1] {
+                    Expr::Call { name, args } => {
+                        assert!(name.eq_ignore_ascii_case("LAMBDA"));
+                        assert_eq!(args.len(), 2);
+                        assert!(matches!(&args[0], Expr::Name(n) if n == "row"));
+                    }
+                    other => panic!("{other:?}"),
+                }
+            }
+            other => panic!("{other:?}"),
+        }
+    }
+
+    #[test]
     fn parse_makearray_lambda() {
         match parse("=MAKEARRAY(3,3,LAMBDA(r,c,r*c))").unwrap() {
             Expr::Call { name, args } => {

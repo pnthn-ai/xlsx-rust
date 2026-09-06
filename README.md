@@ -302,7 +302,7 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 | [`eval/coerce.rs`](crates/xlsx-engine-core/src/eval/coerce.rs) | Arithmetic / `&` / `IF` coercion (`"2"+1` = 3, TRUE → 1, empty → 0) |
 | [`eval/compare.rs`](crates/xlsx-engine-core/src/eval/compare.rs) | 15-digit `=`, case-insensitive text, `TRUE=1`, type ranking (`FALSE>100`) |
 | [`eval/empty.rs`](crates/xlsx-engine-core/src/eval/empty.rs) | Blank ≠ 0 ≠ `""`, but `A1=0` and `A1=""` when `A1` is blank |
-| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Dispatch: aggregators (`SUM`/`SUMIF`/`SUMIFS`/`AVERAGEIF`/`AVERAGEIFS`/`COUNTIF`/`COUNTIFS`/`SUMPRODUCT`), logicals (`IF`/`IFS`/`SWITCH`), lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`/`FILTER`/`UNIQUE`/`SORT`/`SORTBY`/`TOCOL`/`TOROW`/`SEQUENCE`/`VSTACK`/`HSTACK`/`WRAPCOLS`/`WRAPROWS`/`TAKE`/`DROP`/`EXPAND`/`CHOOSECOLS`/`CHOOSEROWS`/`MAKEARRAY`), dates (`DATE`/`EOMONTH`/`NETWORKDAYS`/`NETWORKDAYS.INTL`/`WEEKDAY`/`WORKDAY`/`WORKDAY.INTL`/`YEARFRAC`), math (`ROUND`/`ROUNDUP`/`ROUNDDOWN`/`FLOOR`/`CEILING`/`RANDARRAY`), text (`LEFT`/`SUBSTITUTE`/`REPLACE`/`FIND`/`SEARCH`/`TEXT`/`TEXTJOIN`/`TEXTSPLIT`/`TEXTAFTER`/`TEXTBEFORE`/`CONCAT`), financial (`NPV`/`XNPV`/`PMT`/`FV`/`PV`/`NPER`/`RATE`/`IPMT`/`PPMT`/`CUMPRINC`/`CUMIPMT`/`IRR`/`XIRR`/`MIRR`/`EFFECT`/`NOMINAL`/`PDURATION`/`RRI`), `TYPE` / `IS*` |
+| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Dispatch: aggregators (`SUM`/`SUMIF`/`SUMIFS`/`AVERAGEIF`/`AVERAGEIFS`/`COUNTIF`/`COUNTIFS`/`SUMPRODUCT`), logicals (`IF`/`IFS`/`SWITCH`), lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`/`FILTER`/`UNIQUE`/`SORT`/`SORTBY`/`TOCOL`/`TOROW`/`SEQUENCE`/`VSTACK`/`HSTACK`/`WRAPCOLS`/`WRAPROWS`/`TAKE`/`DROP`/`EXPAND`/`CHOOSECOLS`/`CHOOSEROWS`/`MAKEARRAY`/`BYROW`), dates (`DATE`/`EOMONTH`/`NETWORKDAYS`/`NETWORKDAYS.INTL`/`WEEKDAY`/`WORKDAY`/`WORKDAY.INTL`/`YEARFRAC`), math (`ROUND`/`ROUNDUP`/`ROUNDDOWN`/`FLOOR`/`CEILING`/`RANDARRAY`), text (`LEFT`/`SUBSTITUTE`/`REPLACE`/`FIND`/`SEARCH`/`TEXT`/`TEXTJOIN`/`TEXTSPLIT`/`TEXTAFTER`/`TEXTBEFORE`/`CONCAT`), financial (`NPV`/`XNPV`/`PMT`/`FV`/`PV`/`NPER`/`RATE`/`IPMT`/`PPMT`/`CUMPRINC`/`CUMIPMT`/`IRR`/`XIRR`/`MIRR`/`EFFECT`/`NOMINAL`/`PDURATION`/`RRI`), `TYPE` / `IS*` |
 | [`eval/sumif.rs`](crates/xlsx-engine-core/src/eval/sumif.rs) | Excel `SUMIF` kernel (criteria walk, reshape `sum_range`, no array literals) |
 | [`eval/sumifs.rs`](crates/xlsx-engine-core/src/eval/sumifs.rs) | Excel `SUMIFS`: multi-criteria AND, same-shape ranges |
 | [`eval/countifs.rs`](crates/xlsx-engine-core/src/eval/countifs.rs) | Excel `COUNTIFS`: multi-criteria AND, same-shape ranges, COUNTIF matcher |
@@ -340,6 +340,7 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 | [`eval/chooserows.rs`](crates/xlsx-engine-core/src/eval/chooserows.rs) | `CHOOSEROWS(array, row_num1, …)` pick kernel (negative index / `#VALUE!`) |
 | [`eval/randarray.rs`](crates/xlsx-engine-core/src/eval/randarray.rs) | `RANDARRAY([rows],[columns],[min],[max],[integer])` fill (xorshift64*; not Excel's RNG) |
 | [`eval/makearray.rs`](crates/xlsx-engine-core/src/eval/makearray.rs) | `MAKEARRAY(rows, cols, LAMBDA(r, c, body))` index kernel (`r*c` / `r+c` specialized) |
+| [`eval/byrow.rs`](crates/xlsx-engine-core/src/eval/byrow.rs) | `BYROW(array, LAMBDA(row, body))` row-apply kernel (`SUM`/`MAX`/… specialized) |
 | [`eval/npv.rs`](crates/xlsx-engine-core/src/eval/npv.rs) | Excel `NPV` kernel (period-1 discount, range skip of blanks/text/logicals) |
 | [`eval/irr.rs`](crates/xlsx-engine-core/src/eval/irr.rs) | Excel `IRR` Newton / secant kernel (20 tries, `1e-7` rate, `#NUM!` on failure) |
 | [`eval/xnpv.rs`](crates/xlsx-engine-core/src/eval/xnpv.rs) | Excel `XNPV` kernel (365-day year, serial day counts, blank date → 0) |
@@ -542,8 +543,15 @@ as one or the other. Documented quirk categories:
   is `#VALUE!`; sizes above the worksheet grid are `#NUM!`. The LAMBDA must
   have exactly two name parameters (inline or a defined name that refers to
   one). A body error stays in that cell. A body that returns an array is
-  `#CALC!` in that cell. Bare `LAMBDA(...)` (not consumed by `MAKEARRAY`) is
-  `#CALC!` — this engine has no first-class function value.
+  `#CALC!` in that cell. Bare `LAMBDA(...)` (not consumed by `MAKEARRAY` /
+  `BYROW`) is `#CALC!` — this engine has no first-class function value.
+- `BYROW(array, LAMBDA(row, body))`: applies a one-parameter LAMBDA to each
+  row and returns an n×1 column. The bound `row` is a 1×w array. Wrong
+  LAMBDA arity is `#VALUE!`; a missing LAMBDA is `#CALC!`. A body that
+  returns an array is `#CALC!` in that result cell. Eta reduction
+  (`BYROW(a, SUM)`) is supported for `SUM` / `AVERAGE` / `MIN` / `MAX` /
+  `COUNT` / `COUNTA` / `COUNTBLANK` / `PRODUCT`. A body error stays in that
+  cell. A scalar first argument is 1×1.
 - **Spill limitation:** `evaluate` returns that array. The engine does **not**
   write spilled values into neighboring cells, so occupied destinations never
   yield `#SPILL!`. Scalar operators (`UNIQUE(...)+1`, `SORT(...)+1`) take the
@@ -791,6 +799,22 @@ as one or the other. Documented quirk categories:
   tokenize as A1 refs are `#VALUE!`.
 - Excel's worksheet array-size cap is enforced (`1,048,576` rows /
   `16,384` columns); larger dimensions are `#NUM!`.
+
+**`BYROW` / `LAMBDA` limits** (honest, not hidden behind a broken case):
+
+- BYROW returns an array **value** (always n×1, including 1×1). The snippet
+  workbook has no spill grid, so a blocked cell below the host never yields
+  `#SPILL!`.
+- Returning anything but a single value from the LAMBDA is `#CALC!` in that
+  result cell — nested arrays (including `LAMBDA(r, r)`) are not stacked.
+- Immediately-invoked `LAMBDA(...)(args)` is not parsed. Optional LAMBDA
+  parameters and `LET` helpers are out of scope. Parameter names that
+  tokenize as A1 refs are `#VALUE!`.
+- Eta reduction covers stock one-arg aggregators only. A bare name that is
+  not an eta aggregator and not a defined LAMBDA is evaluated: unknown
+  names are `#NAME?`; a computed number/text is `#CALC!`.
+- Scalar operators (`BYROW(...)+1`) take the top-left element (`scalarize`).
+  Consume with `INDEX` / `SUM` / `COUNTA` / `TYPE`.
 
 **`FILTER` spill / model limits** (honest, not hidden behind a broken case):
 

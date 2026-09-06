@@ -126,44 +126,55 @@ pub fn lookup_binding(locals: &[(String, ExcelValue)], name: &str) -> Option<Exc
         .map(|(_, v)| v.clone())
 }
 
-/// Extract `LAMBDA(row, col, body)` from an inline call or a defined name.
-pub(crate) fn resolve_lambda(
-    expr: &Expr,
-    ctx: &Ctx<'_>,
-) -> Result<(String, String, Expr), ExcelError> {
-    resolve_lambda_depth(expr, ctx, 0)
+/// Why a LAMBDA could not be bound. `MAKEARRAY` maps both to `#VALUE!`;
+/// `BYROW` maps wrong arity to `#VALUE!` and a missing LAMBDA to `#CALC!`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum LambdaError {
+    WrongArity,
+    NotLambda,
 }
 
-fn resolve_lambda_depth(
+/// Extract `LAMBDA(p1, …, pN, body)` with a required parameter count.
+///
+/// `lookup_refers_to` resolves a defined name to its `refers_to` formula so
+/// both calc-core and seed-compliant can share this walker.
+pub fn resolve_lambda_arity_with(
     expr: &Expr,
-    ctx: &Ctx<'_>,
+    arity: usize,
+    lookup_refers_to: &mut dyn FnMut(&str) -> Result<String, LambdaError>,
+) -> Result<(Vec<String>, Expr), LambdaError> {
+    resolve_lambda_arity_depth(expr, arity, 0, lookup_refers_to)
+}
+
+fn resolve_lambda_arity_depth(
+    expr: &Expr,
+    arity: usize,
     depth: usize,
-) -> Result<(String, String, Expr), ExcelError> {
+    lookup_refers_to: &mut dyn FnMut(&str) -> Result<String, LambdaError>,
+) -> Result<(Vec<String>, Expr), LambdaError> {
     if depth > 16 {
-        return Err(ExcelError::Value);
+        return Err(LambdaError::NotLambda);
     }
     match expr {
-        Expr::Call { name, args } if is_lambda_name(name) => lambda_params(args),
+        Expr::Call { name, args } if is_lambda_name(name) => lambda_params_n(args, arity),
         Expr::Name(n) => {
-            let def = ctx
-                .spec
-                .workbook
-                .defined_name(n)
-                .map_err(|_| ExcelError::Value)?;
-            let ast = parse(&def.refers_to).map_err(|_| ExcelError::Value)?;
-            resolve_lambda_depth(&ast, ctx, depth + 1)
+            let refers = lookup_refers_to(n)?;
+            let ast = parse(&refers).map_err(|_| LambdaError::NotLambda)?;
+            resolve_lambda_arity_depth(&ast, arity, depth + 1, lookup_refers_to)
         }
-        _ => Err(ExcelError::Value),
+        _ => Err(LambdaError::NotLambda),
     }
 }
 
-fn lambda_params(args: &[Expr]) -> Result<(String, String, Expr), ExcelError> {
-    if args.len() != 3 {
-        return Err(ExcelError::Value);
+fn lambda_params_n(args: &[Expr], arity: usize) -> Result<(Vec<String>, Expr), LambdaError> {
+    if args.len() != arity + 1 {
+        return Err(LambdaError::WrongArity);
     }
-    let row = param_name(&args[0]).ok_or(ExcelError::Value)?;
-    let col = param_name(&args[1]).ok_or(ExcelError::Value)?;
-    Ok((row, col, args[2].clone()))
+    let mut params = Vec::with_capacity(arity);
+    for p in &args[..arity] {
+        params.push(param_name(p).ok_or(LambdaError::WrongArity)?);
+    }
+    Ok((params, args[arity].clone()))
 }
 
 fn param_name(expr: &Expr) -> Option<String> {
@@ -171,6 +182,37 @@ fn param_name(expr: &Expr) -> Option<String> {
         Expr::Name(n) => Some(strip_xlpm(n).to_string()),
         _ => None,
     }
+}
+
+fn workbook_lambda_lookup<'a>(
+    ctx: &'a Ctx<'_>,
+) -> impl FnMut(&str) -> Result<String, LambdaError> + 'a {
+    move |n| {
+        ctx.spec
+            .workbook
+            .defined_name(n)
+            .map(|d| d.refers_to.clone())
+            .map_err(|_| LambdaError::NotLambda)
+    }
+}
+
+/// Extract `LAMBDA(row, col, body)` from an inline call or a defined name.
+pub(crate) fn resolve_lambda(
+    expr: &Expr,
+    ctx: &Ctx<'_>,
+) -> Result<(String, String, Expr), ExcelError> {
+    let (params, body) = resolve_lambda_arity_with(expr, 2, &mut workbook_lambda_lookup(ctx))
+        .map_err(|_| ExcelError::Value)?;
+    Ok((params[0].clone(), params[1].clone(), body))
+}
+
+/// Extract a LAMBDA with a caller-chosen arity (used by `BYROW`).
+pub(crate) fn resolve_lambda_arity(
+    expr: &Expr,
+    ctx: &Ctx<'_>,
+    arity: usize,
+) -> Result<(Vec<String>, Expr), LambdaError> {
+    resolve_lambda_arity_with(expr, arity, &mut workbook_lambda_lookup(ctx))
 }
 
 /// Classify a body that only names the two index parameters.
