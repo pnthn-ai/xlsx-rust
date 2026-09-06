@@ -15,6 +15,7 @@
 //! - [`dates::edate_serial`] — Excel `EDATE` (same-day month shift + clip)
 //! - [`dates::weekday`] — O(1) Excel `WEEKDAY` on the date serial
 //! - [`dates::yearfrac`] — Excel `YEARFRAC` day-count bases 0–4
+//! - [`dates::days360`] — Excel `DAYS360` US (NASD) / European 30/360
 //! - [`dates::workday_serial_intl`] — O(1) Excel `WORKDAY.INTL` weekend mask
 //! - [`dates::networkdays_count_mask`] — O(1) `NETWORKDAYS` / `NETWORKDAYS.INTL`
 //! - [`eval::switch`] — Excel `SWITCH` (exact `=` match, short-circuit vs `IF`)
@@ -74,7 +75,8 @@ pub use dates::{workday_serial, workday_serial_intl};
 
 pub use ast::{BinOp, Expr, UnaryOp};
 pub use dates::{
-    weekday as excel_weekday, weekday_naive as excel_weekday_naive, yearfrac as excel_yearfrac,
+    days360 as excel_days360, days360_naive as excel_days360_naive, weekday as excel_weekday,
+    weekday_naive as excel_weekday_naive, yearfrac as excel_yearfrac,
     yearfrac_naive as excel_yearfrac_naive,
 };
 pub use eval::bycol::{

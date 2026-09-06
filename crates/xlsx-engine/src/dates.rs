@@ -547,6 +547,17 @@ mod tests {
 }
 
 
+/// Excel `DAYS360(start, end, [method])`. Same NASD / European rules as
+/// `xlsx-engine-core::dates::days360` (no date swap; Feb-end is not rewritten).
+pub fn days360(
+    start: f64,
+    end: f64,
+    european: bool,
+    system: DateSystem,
+) -> Result<f64, ExcelError> {
+    xlsx_engine_core::excel_days360(start, end, european, system)
+}
+
 /// Excel `YEARFRAC(start, end, [basis])`. Same day-count rules as
 /// `xlsx-engine-core::dates::yearfrac` (Wheeler / Excel 2007).
 pub fn yearfrac(start: f64, end: f64, basis: i32, system: DateSystem) -> Result<f64, ExcelError> {
