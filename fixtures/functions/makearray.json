@@ -379,7 +379,7 @@
     "tags": ["lambda", "errors"],
     "formula": "=LAMBDA(x,x+1)",
     "expected": { "error": "#CALC!" },
-    "notes": "Excel 365 can store a LAMBDA as a cell function value. This engine only applies LAMBDA when MAKEARRAY (or a defined name consumed by MAKEARRAY) binds it."
+    "notes": "Excel 365 can store a LAMBDA as a cell function value. This engine only applies LAMBDA when MAKEARRAY / SCAN (or a defined name consumed by those) binds it."
   },
   {
     "id": "fn.makearray.spill-occupancy-not-modeled",

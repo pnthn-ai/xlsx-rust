@@ -677,6 +677,25 @@ mod tests {
     }
 
     #[test]
+    fn parse_scan_omitted_initial() {
+        match parse("=SCAN(,{1,2,3},LAMBDA(a,v,a+v))").unwrap() {
+            Expr::Call { name, args } => {
+                assert!(name.eq_ignore_ascii_case("SCAN"));
+                assert_eq!(args.len(), 3);
+                assert!(args[0].is_omitted());
+                match &args[2] {
+                    Expr::Call { name, args } => {
+                        assert!(name.eq_ignore_ascii_case("LAMBDA"));
+                        assert_eq!(args.len(), 3);
+                    }
+                    other => panic!("{other:?}"),
+                }
+            }
+            other => panic!("{other:?}"),
+        }
+    }
+
+    #[test]
     fn parse_makearray_lambda() {
         match parse("=MAKEARRAY(3,3,LAMBDA(r,c,r*c))").unwrap() {
             Expr::Call { name, args } => {

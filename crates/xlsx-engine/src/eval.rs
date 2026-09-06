@@ -472,6 +472,7 @@ impl Interpreter {
             "DROP" => self.fn_drop(args, ctx),
             "CHOOSEROWS" => self.fn_chooserows(args, ctx),
             "MAKEARRAY" | "_XLFN.MAKEARRAY" => self.fn_makearray(args, ctx),
+            "SCAN" | "_XLFN.SCAN" => self.fn_scan(args, ctx),
             "LAMBDA" | "_XLFN.LAMBDA" => Ok(ExcelValue::Error(ExcelError::Calc)),
             "CHOOSECOLS" => self.fn_choosecols(args, ctx),
             "NETWORKDAYS.INTL" => self.fn_networkdays_intl(args, ctx),
@@ -3755,6 +3756,67 @@ impl Interpreter {
         }
         ctx.locals.truncate(base);
         Ok(ExcelValue::Array(grid))
+    }
+
+    fn fn_scan(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        let (initial_expr, array_expr, lambda_expr) = match args.len() {
+            2 => (None, &args[0], &args[1]),
+            3 if matches!(args[0], Expr::Missing) => (None, &args[1], &args[2]),
+            3 => (Some(&args[0]), &args[1], &args[2]),
+            _ => return Ok(ExcelValue::Error(ExcelError::Value)),
+        };
+        let initial = if let Some(expr) = initial_expr {
+            let v = self.eval_scalar(expr, ctx)?;
+            if let ExcelValue::Error(e) = v {
+                return Ok(ExcelValue::Error(e));
+            }
+            Some(v)
+        } else {
+            None
+        };
+        let array = self.eval_expr(array_expr, ctx)?;
+        let grid = match xlsx_engine_core::eval::scan::matrix(array) {
+            Ok(g) => g,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        let (acc_p, val_p, body) = match resolve_seed_lambda(lambda_expr, ctx, 0) {
+            Ok(l) => l,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        if grid.is_empty() || grid[0].is_empty() {
+            return Ok(ExcelValue::Error(ExcelError::Calc));
+        }
+        let rows = grid.len();
+        let cols = grid[0].len();
+        let base = ctx.locals.len();
+        ctx.locals.push((acc_p, ExcelValue::Empty));
+        ctx.locals.push((val_p, ExcelValue::Empty));
+        let mut out = Vec::with_capacity(rows);
+        let mut acc = initial;
+        let omit_first = acc.is_none();
+        let mut first = true;
+        for r in 0..rows {
+            let mut row = Vec::with_capacity(cols);
+            for c in 0..cols {
+                let val = grid[r][c].clone();
+                let next = if omit_first && first {
+                    val
+                } else {
+                    ctx.locals[base].1 = acc.clone().unwrap_or(ExcelValue::Empty);
+                    ctx.locals[base + 1].1 = val;
+                    match self.eval_expr(&body, ctx)? {
+                        ExcelValue::Array(_) => ExcelValue::Error(ExcelError::Calc),
+                        other => other,
+                    }
+                };
+                first = false;
+                acc = Some(next.clone());
+                row.push(next);
+            }
+            out.push(row);
+        }
+        ctx.locals.truncate(base);
+        Ok(ExcelValue::Array(out))
     }
 
     fn fn_rri(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
