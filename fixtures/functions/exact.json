@@ -181,6 +181,13 @@
     "expected": { "bool": true }
   },
   {
+    "id": "fn.exact-neg-zero",
+    "description": "EXACT(-0, 0) is FALSE: format_plain(-0) is \"-0\"",
+    "tags": ["text", "exact", "coercion"],
+    "formula": "=EXACT(-0, 0)",
+    "expected": { "bool": false }
+  },
+  {
     "id": "fn.exact-ieee-vs-eq",
     "description": "EXACT(0.1+0.2, 0.3) is FALSE; = is TRUE (15-digit)",
     "tags": ["text", "exact"],

@@ -83,20 +83,19 @@ fn numbers_exact(a: f64, b: f64) -> bool {
     if a.to_bits() == b.to_bits() {
         return true;
     }
-    // ±0 both format as "0" on the integer `format_plain` path.
-    if a == 0.0 && b == 0.0 {
-        return true;
-    }
+    // ±0 format as "-0" / "0" (`format!("{n:.0}")`). Do not collapse them
+    // via `as i64`. Non-zero plain ints have a unique decimal form.
     let a_int = is_plain_int(a);
     let b_int = is_plain_int(b);
-    if a_int && b_int {
+    if a_int && b_int && a != 0.0 && b != 0.0 {
         return (a as i64) == (b as i64);
     }
     coerce::format_plain(a) == coerce::format_plain(b)
 }
 
 fn number_eq_text(n: f64, s: &str) -> bool {
-    if is_plain_int(n) {
+    // `n != 0.0` keeps -0.0 on the format path (`"-0"`), not itoa `"0"`.
+    if is_plain_int(n) && n != 0.0 {
         return int_eq_text(n as i64, s);
     }
     coerce::format_plain(n) == s
@@ -199,10 +198,12 @@ mod tests {
         assert_eq!(both(&ExcelValue::Number(1.5), &t("1.5")), Ok(true));
         assert_eq!(both(&ExcelValue::Number(-2.0), &t("-2")), Ok(true));
         assert_eq!(both(&ExcelValue::Number(0.0), &t("0")), Ok(true));
+        // format_plain(-0.0) is "-0"; EXACT is text, not numeric equality.
         assert_eq!(
             both(&ExcelValue::Number(-0.0), &ExcelValue::Number(0.0)),
-            Ok(true)
+            Ok(false)
         );
+        assert_eq!(both(&ExcelValue::Number(-0.0), &t("-0")), Ok(true));
         assert_eq!(both(&ExcelValue::Bool(true), &t("TRUE")), Ok(true));
         assert_eq!(both(&ExcelValue::Bool(true), &t("true")), Ok(false));
         assert_eq!(
@@ -324,6 +325,10 @@ mod tests {
         );
         assert_eq!(
             eval_formula_in(&wb, "=EXACT(0.1+0.2,0.3)").unwrap(),
+            ExcelValue::Bool(false)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=EXACT(-0,0)").unwrap(),
             ExcelValue::Bool(false)
         );
         assert_eq!(
