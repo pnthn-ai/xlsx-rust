@@ -28,6 +28,7 @@ pub mod hstack;
 pub mod ifs;
 pub mod irr;
 pub mod isomitted;
+pub mod left;
 pub mod lower;
 pub mod makearray;
 pub mod map;
