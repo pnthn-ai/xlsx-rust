@@ -97,6 +97,10 @@ name = "excel_round"
 harness = false
 
 [[bench]]
+name = "excel_floor"
+harness = false
+
+[[bench]]
 name = "search"
 harness = false
 

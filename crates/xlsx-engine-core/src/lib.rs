@@ -74,6 +74,7 @@
 //! - [`xlsx_types::excel_int`] — Excel `INT` (floor toward −∞; leftover snap)
 //! - [`eval::roundup`] — Excel `ROUNDUP` (away from zero; omitted digits → 0)
 //! - [`eval::rounddown`] — Excel `ROUNDDOWN` (toward zero; omitted `num_digits` = 0)
+//! - [`xlsx_types::excel_floor`] — Excel classic `FLOOR` (sign/zero-sig; leftover snap)
 //! - Financial TVM: `PMT` / `RRI` via [`xlsx_types::excel_pmt`] / [`xlsx_types::excel_rri`]
 //!
 //! This crate depends only on [`xlsx_types`]. It never reads fixture expected
