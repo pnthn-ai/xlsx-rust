@@ -314,7 +314,7 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 | [`eval/right.rs`](crates/xlsx-engine-core/src/eval/right.rs) | Excel `RIGHT` (Compat v2 Unicode-scalar suffix; ASCII slice / UTF-8 walk) |
 | [`eval/mid.rs`](crates/xlsx-engine-core/src/eval/mid.rs) | Excel `MID` kernel (1-based slice, Unicode scalars / Compat v2) |
 | [`eval/find.rs`](crates/xlsx-engine-core/src/eval/find.rs) | Excel `FIND` kernel (case-sensitive, Compat v2 scalars, omitted `start_num` = 1, empty `find_text`) |
-| [`eval/search.rs`](crates/xlsx-engine-core/src/eval/search.rs) | Excel `SEARCH` kernel (case-insensitive, `*`/`?`/`~` wildcards, `start_num`) |
+| [`eval/search.rs`](crates/xlsx-engine-core/src/eval/search.rs) | Excel `SEARCH` kernel (case-insensitive, `*`/`?`/`~` wildcards, `start_num`, Compat v2) |
 | [`eval/textafter.rs`](crates/xlsx-engine-core/src/eval/textafter.rs) | Excel `TEXTAFTER` kernel (nth delimiter, `match_mode` / `match_end` / `if_not_found`) |
 | [`eval/textbefore.rs`](crates/xlsx-engine-core/src/eval/textbefore.rs) | Excel `TEXTBEFORE` (nth delimiter, `match_mode` / `match_end` / `if_not_found`) |
 | [`eval/textjoin.rs`](crates/xlsx-engine-core/src/eval/textjoin.rs) | `TEXTJOIN` with cycling delimiters and `ignore_empty` |
