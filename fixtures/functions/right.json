@@ -338,10 +338,10 @@
   },
   {
     "id": "fn.right-nested-mid",
-    "description": "MID(RIGHT(\"abcdef\", 4), 2, 1) is e",
+    "description": "MID(RIGHT(\"abcdef\", 4), 2, 1) is d (RIGHT → cdef)",
     "tags": ["right", "text"],
     "formula": "=MID(RIGHT(\"abcdef\", 4), 2, 1)",
-    "expected": { "text": "e" }
+    "expected": { "text": "d" }
   },
   {
     "id": "fn.right-nested-len",
