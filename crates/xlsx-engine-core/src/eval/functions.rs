@@ -3,7 +3,7 @@
 //! Unknown names return `#NAME?` (an Excel value, not [`EvalError`]).
 //! Dedicated kernels live in sibling modules (`ifs`, `filter`, `sort`,
 //! `xlookup`, `textsplit`, `xnpv`, `map`, `isomitted`, `len`, `unicode`,
-//! `trunc`, `mround`, `fixed`, …). Financial TVM kernels live in
+//! `trunc`, `mround`, `fixed`, `dollar`, …). Financial TVM kernels live in
 //! [`xlsx_types`] (`excel_pmt` / `excel_fv` / `excel_pv` / …).
 
 use super::{coerce, compare, excel_pow, Ctx, Evaluator};
@@ -164,6 +164,7 @@ pub(crate) fn dispatch(
         "FIXED" => super::fixed::fn_fixed(ev, args, ctx),
         "SUBSTITUTE" => fn_substitute(ev, args, ctx),
         "TEXT" => fn_text(ev, args, ctx),
+        "DOLLAR" => super::dollar::fn_dollar(ev, args, ctx),
         "REPLACE" => super::replace::fn_replace(ev, args, ctx),
         "TEXTJOIN" => super::textjoin::fn_textjoin(ev, args, ctx),
         "TEXTSPLIT" => super::textsplit::fn_textsplit(ev, args, ctx),

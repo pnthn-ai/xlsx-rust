@@ -469,6 +469,7 @@ impl Interpreter {
             "FIXED" => self.fn_fixed(args, ctx),
             "SUBSTITUTE" => self.fn_substitute(args, ctx),
             "TEXT" => self.fn_text(args, ctx),
+            "DOLLAR" => self.fn_dollar(args, ctx),
             "REPLACE" => self.fn_replace(args, ctx),
             "TEXTJOIN" => self.fn_textjoin(args, ctx),
             "CONCAT" => self.fn_concat(args, ctx),
@@ -2322,6 +2323,34 @@ impl Interpreter {
             Ok(s) => Ok(ExcelValue::Text(s)),
             Err(e) => Ok(ExcelValue::Error(e)),
         }
+    }
+
+    fn fn_dollar(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.is_empty() || args.len() > 2 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        let number = self.eval_scalar(&args[0], ctx)?;
+        if let ExcelValue::Error(e) = number {
+            return Ok(ExcelValue::Error(e));
+        }
+        let decimals = if args.len() >= 2 {
+            match &args[1] {
+                Expr::Missing => None,
+                other => {
+                    let d = self.eval_scalar(other, ctx)?;
+                    if let ExcelValue::Error(e) = d {
+                        return Ok(ExcelValue::Error(e));
+                    }
+                    Some(d)
+                }
+            }
+        } else {
+            None
+        };
+        Ok(xlsx_engine_core::excel_dollar_value(
+            &number,
+            decimals.as_ref(),
+        ))
     }
 
     fn fn_replace(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {

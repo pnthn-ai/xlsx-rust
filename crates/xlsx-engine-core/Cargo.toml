@@ -17,6 +17,10 @@ name = "abs"
 harness = false
 
 [[bench]]
+name = "dollar"
+harness = false
+
+[[bench]]
 name = "substitute"
 harness = false
 
