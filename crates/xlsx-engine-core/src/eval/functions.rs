@@ -2,8 +2,8 @@
 //!
 //! Unknown names return `#NAME?` (an Excel value, not [`EvalError`]).
 //! Dedicated kernels live in sibling modules (`ifs`, `filter`, `sort`,
-//! `xlookup`, `textsplit`, `xnpv`, …). Financial TVM kernels live in
-//! [`xlsx_types`] (`excel_pmt` / `excel_fv` / `excel_pv` / …).
+//! `xlookup`, `textsplit`, `xnpv`, `isomitted`, …). Financial TVM kernels live
+//! in [`xlsx_types`] (`excel_pmt` / `excel_fv` / `excel_pv` / …).
 
 use super::{coerce, compare, excel_pow, Ctx, Evaluator};
 use crate::ast::Expr;
@@ -15,9 +15,9 @@ use crate::dates::{
 use crate::text_format;
 use xlsx_types::{
     count_matches, excel_ceiling, excel_ceiling_math, excel_cumipmt, excel_cumprinc, excel_effect,
-    excel_floor, excel_floor_math, excel_fv, excel_ipmt, excel_nominal, excel_nper, excel_pduration,
-    excel_pmt, excel_ppmt, excel_pv, excel_rate, excel_rri, Criterion, EvalError, ExcelError,
-    ExcelValue,
+    excel_floor, excel_floor_math, excel_fv, excel_ipmt, excel_nominal, excel_nper,
+    excel_pduration, excel_pmt, excel_ppmt, excel_pv, excel_rate, excel_rri, Criterion, EvalError,
+    ExcelError, ExcelValue,
 };
 
 pub(crate) fn dispatch(
@@ -117,6 +117,7 @@ pub(crate) fn dispatch(
         "ISNA" => fn_is(ev, args, ctx, |v| {
             matches!(v, ExcelValue::Error(ExcelError::Na))
         }),
+        "ISOMITTED" | "_XLFN.ISOMITTED" => fn_isomitted(args, ctx),
         "ISEVEN" => fn_even_odd(ev, args, ctx, true),
         "ISODD" => fn_even_odd(ev, args, ctx, false),
         "DATE" => fn_date(ev, args, ctx),
@@ -177,7 +178,7 @@ pub(crate) fn dispatch(
         "NOMINAL" => fn_nominal(ev, args, ctx),
         "PDURATION" => fn_pduration(ev, args, ctx),
         "RRI" => fn_rri(ev, args, ctx),
-        _ => Ok(ExcelValue::Error(ExcelError::Name)),
+        _ => apply_named_lambda(ev, name, args, ctx),
     }
 }
 
@@ -864,6 +865,26 @@ fn fn_error_type(
         },
         _ => ExcelValue::Error(ExcelError::Na),
     })
+}
+
+fn fn_isomitted(args: &[Expr], ctx: &Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    match super::isomitted::eval(args, &ctx.locals) {
+        Ok(b) => Ok(ExcelValue::Bool(b)),
+        Err(e) => Ok(ExcelValue::Error(e)),
+    }
+}
+
+/// `MyFn(args)` when `MyFn` is a defined name that refers to a LAMBDA.
+fn apply_named_lambda(
+    ev: &Evaluator,
+    name: &str,
+    args: &[Expr],
+    ctx: &mut Ctx<'_>,
+) -> Result<ExcelValue, EvalError> {
+    if ctx.spec.workbook.defined_name(name).is_err() {
+        return Ok(ExcelValue::Error(ExcelError::Name));
+    }
+    super::makearray::apply_callee(ev, &Expr::Name(name.to_string()), args, ctx)
 }
 
 fn fn_is(

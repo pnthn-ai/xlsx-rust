@@ -1,0 +1,236 @@
+[
+  {
+    "id": "fn.isomitted.ms-missing-second",
+    "description": "Microsoft ISOMITTED example: omitted y via trailing comma",
+    "tags": ["isomitted", "lambda", "information"],
+    "formula": "=LAMBDA(x,y,IF(ISOMITTED(y),\"Missing second argument\",x+y))(1,)",
+    "expected": { "text": "Missing second argument" },
+    "notes": "support.microsoft.com ISOMITTED: LAMBDA(x,y,IF(ISOMITTED(y),\"Missing second argument\",x+y))(1,)"
+  },
+  {
+    "id": "fn.isomitted.ms-both-provided",
+    "description": "Microsoft example with both LAMBDA args supplied is x+y",
+    "tags": ["isomitted", "lambda"],
+    "formula": "=LAMBDA(x,y,IF(ISOMITTED(y),\"Missing second argument\",x+y))(1,2)",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.isomitted.trailing-omit-true",
+    "description": "Omitted optional LAMBDA param (trailing comma) is TRUE",
+    "tags": ["isomitted", "lambda"],
+    "formula": "=LAMBDA(x,y,ISOMITTED(y))(1,)",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.isomitted.short-call-true",
+    "description": "Omitted optional LAMBDA param (fewer args than params) is TRUE",
+    "tags": ["isomitted", "lambda"],
+    "formula": "=LAMBDA(x,y,ISOMITTED(y))(1)",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.isomitted.provided-false",
+    "description": "A supplied LAMBDA argument is not omitted",
+    "tags": ["isomitted", "lambda"],
+    "formula": "=LAMBDA(x,y,ISOMITTED(y))(1,2)",
+    "expected": { "bool": false }
+  },
+  {
+    "id": "fn.isomitted.provided-zero",
+    "description": "Explicit 0 is provided, not omitted",
+    "tags": ["isomitted", "lambda"],
+    "formula": "=LAMBDA(x,y,ISOMITTED(y))(1,0)",
+    "expected": { "bool": false }
+  },
+  {
+    "id": "fn.isomitted.provided-empty-string",
+    "description": "Explicit \"\" is provided, not omitted",
+    "tags": ["isomitted", "lambda", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=LAMBDA(x,y,ISOMITTED(y))(1,\"\")",
+    "expected": { "bool": false }
+  },
+  {
+    "id": "fn.isomitted.provided-false-bool",
+    "description": "Explicit FALSE is provided, not omitted",
+    "tags": ["isomitted", "lambda"],
+    "formula": "=LAMBDA(x,y,ISOMITTED(y))(1,FALSE)",
+    "expected": { "bool": false }
+  },
+  {
+    "id": "fn.isomitted.no-args-all-omitted",
+    "description": "Calling a one-arg LAMBDA with no args omits x",
+    "tags": ["isomitted", "lambda"],
+    "formula": "=LAMBDA(x,ISOMITTED(x))()",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.isomitted.blank-cell-is-provided",
+    "description": "A blank cell passed into LAMBDA is provided (ISOMITTED FALSE)",
+    "tags": ["isomitted", "lambda", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=LAMBDA(x,ISOMITTED(x))(A1)",
+    "expected": { "bool": false },
+    "workbook": { "sheets": [{ "name": "Sheet1", "cells": {} }] }
+  },
+  {
+    "id": "fn.isomitted.outside-literal-false",
+    "description": "ISOMITTED(1) outside LAMBDA is FALSE — the argument was supplied",
+    "tags": ["isomitted", "information"],
+    "formula": "=ISOMITTED(1)",
+    "expected": { "bool": false }
+  },
+  {
+    "id": "fn.isomitted.outside-blank-cell-false",
+    "description": "ISOMITTED of a blank cell is FALSE (blank ≠ omitted)",
+    "tags": ["isomitted", "empty", "information"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=ISOMITTED(A1)",
+    "expected": { "bool": false },
+    "workbook": { "sheets": [{ "name": "Sheet1", "cells": {} }] }
+  },
+  {
+    "id": "fn.isomitted.no-args-value",
+    "description": "ISOMITTED() is #VALUE!",
+    "tags": ["isomitted", "errors"],
+    "formula": "=ISOMITTED()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.isomitted.too-many-args-value",
+    "description": "ISOMITTED(1,2) is #VALUE!",
+    "tags": ["isomitted", "errors"],
+    "formula": "=ISOMITTED(1,2)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.isomitted.provided-na-false",
+    "description": "A provided #N/A is not omitted (ISOMITTED does not propagate)",
+    "tags": ["isomitted", "errors"],
+    "formula": "=ISOMITTED(#N/A)",
+    "expected": { "bool": false }
+  },
+  {
+    "id": "fn.isomitted.provided-div0-false",
+    "description": "A provided #DIV/0! is not omitted",
+    "tags": ["isomitted", "errors"],
+    "formula": "=ISOMITTED(#DIV/0!)",
+    "expected": { "bool": false }
+  },
+  {
+    "id": "fn.isomitted.lambda-error-arg-false",
+    "description": "LAMBDA param bound to 1/0 is provided, so ISOMITTED is FALSE",
+    "tags": ["isomitted", "lambda", "errors"],
+    "formula": "=LAMBDA(x,ISOMITTED(x))(1/0)",
+    "expected": { "bool": false }
+  },
+  {
+    "id": "fn.isomitted.middle-slot-omitted",
+    "description": "Middle omitted LAMBDA arg (1,,2) is TRUE for that param",
+    "tags": ["isomitted", "lambda"],
+    "formula": "=LAMBDA(a,b,c,ISOMITTED(b))(1,,2)",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.isomitted.middle-slot-provided-zero",
+    "description": "Middle 0 is provided even when neighbors exist",
+    "tags": ["isomitted", "lambda"],
+    "formula": "=LAMBDA(a,b,c,ISOMITTED(b))(1,0,2)",
+    "expected": { "bool": false }
+  },
+  {
+    "id": "fn.isomitted.and-two-omitted",
+    "description": "AND of two omitted trailing LAMBDA params",
+    "tags": ["isomitted", "lambda"],
+    "formula": "=LAMBDA(a,b,c,AND(ISOMITTED(b),ISOMITTED(c)))(1)",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.isomitted.default-via-if",
+    "description": "IF(ISOMITTED(y), default, y) supplies 10 when y is omitted",
+    "tags": ["isomitted", "lambda"],
+    "formula": "=LAMBDA(x,y,x+IF(ISOMITTED(y),10,y))(5)",
+    "expected": { "number": 15 }
+  },
+  {
+    "id": "fn.isomitted.named-lambda-omitted",
+    "description": "Defined-name LAMBDA with omitted optional param",
+    "tags": ["isomitted", "lambda", "names"],
+    "formula": "=HasOpt(1)",
+    "expected": { "bool": true },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }],
+      "names": [{ "name": "HasOpt", "refers_to": "=LAMBDA(a,b,ISOMITTED(b))" }]
+    }
+  },
+  {
+    "id": "fn.isomitted.named-lambda-provided",
+    "description": "Defined-name LAMBDA with the optional param supplied",
+    "tags": ["isomitted", "lambda", "names"],
+    "formula": "=HasOpt(1,9)",
+    "expected": { "bool": false },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }],
+      "names": [{ "name": "HasOpt", "refers_to": "=LAMBDA(a,b,ISOMITTED(b))" }]
+    }
+  },
+  {
+    "id": "fn.isomitted.xlfn-prefix",
+    "description": "Excel-stored _xlfn.ISOMITTED / _xlfn.LAMBDA names",
+    "tags": ["isomitted", "lambda"],
+    "formula": "=_xlfn.LAMBDA(x,y,_xlfn.ISOMITTED(y))(1,)",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.isomitted.makearray-provided-index",
+    "description": "MAKEARRAY always binds c, so ISOMITTED(c) is FALSE",
+    "tags": ["isomitted", "lambda", "makearray"],
+    "formula": "=MAKEARRAY(1,2,LAMBDA(r,c,ISOMITTED(c)))",
+    "expected": { "array": [[{ "bool": false }, { "bool": false }]] }
+  },
+  {
+    "id": "fn.isomitted.isblank-of-omitted-empty",
+    "description": "Omitted LAMBDA param evaluates as empty, so ISBLANK is TRUE while the pair shows the duality",
+    "tags": ["isomitted", "lambda", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=LAMBDA(x,AND(ISOMITTED(x),ISBLANK(x)))()",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.isomitted.isblank-of-blank-cell",
+    "description": "Blank cell: ISBLANK TRUE, ISOMITTED FALSE",
+    "tags": ["isomitted", "lambda", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=LAMBDA(x,AND(NOT(ISOMITTED(x)),ISBLANK(x)))(A1)",
+    "expected": { "bool": true },
+    "workbook": { "sheets": [{ "name": "Sheet1", "cells": {} }] }
+  },
+  {
+    "id": "fn.isomitted.too-many-lambda-args",
+    "description": "More call args than LAMBDA params is #VALUE!",
+    "tags": ["isomitted", "lambda", "errors"],
+    "formula": "=LAMBDA(x,ISOMITTED(x))(1,2)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.isomitted.paren-iife",
+    "description": "Parenthesized LAMBDA IIFE still binds omitted params",
+    "tags": ["isomitted", "lambda"],
+    "formula": "=(LAMBDA(x,y,ISOMITTED(y)))(1,)",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.isomitted.not-omitted",
+    "description": "NOT(ISOMITTED(y)) when y is supplied",
+    "tags": ["isomitted", "lambda"],
+    "formula": "=LAMBDA(x,y,NOT(ISOMITTED(y)))(1,2)",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.isomitted.unknown-name",
+    "description": "Unknown function name is still #NAME? (not a LAMBDA)",
+    "tags": ["isomitted", "errors"],
+    "formula": "=NotALambda(1)",
+    "expected": { "error": "#NAME?" }
+  }
+]

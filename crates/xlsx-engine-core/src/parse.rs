@@ -4,6 +4,7 @@
 //! qualification), ranges, defined names, literals (number / text / bool /
 //! error / array), function calls, and space intersection (`A1:B2 B2`).
 //! Locale-specific argument separators and the union operator are deferred.
+//! Immediately-invoked `LAMBDA(...)(args)` is parsed as [`Expr::Apply`].
 
 use crate::ast::{BinOp, Expr, UnaryOp};
 use xlsx_types::{CellAddr, CellRef, EvalError, ExcelError, RangeRef};
@@ -424,12 +425,26 @@ impl Parser {
 
     fn parse_postfix(&mut self) -> Result<Expr, EvalError> {
         let mut expr = self.parse_primary()?;
-        while matches!(self.peek(), Token::Percent) {
-            self.bump();
-            expr = Expr::Unary {
-                op: UnaryOp::Percent,
-                expr: Box::new(expr),
-            };
+        loop {
+            if matches!(self.peek(), Token::Percent) {
+                self.bump();
+                expr = Expr::Unary {
+                    op: UnaryOp::Percent,
+                    expr: Box::new(expr),
+                };
+                continue;
+            }
+            // `LAMBDA(x,y,body)(1,)` — IIFE / named-function apply.
+            if matches!(self.peek(), Token::LParen) {
+                self.bump();
+                let args = self.parse_args()?;
+                expr = Expr::Apply {
+                    callee: Box::new(expr),
+                    args,
+                };
+                continue;
+            }
+            break;
         }
         Ok(expr)
     }
@@ -672,6 +687,25 @@ mod tests {
         }
         match parse("=SUM()").unwrap() {
             Expr::Call { args, .. } => assert!(args.is_empty()),
+            other => panic!("{other:?}"),
+        }
+    }
+
+    #[test]
+    fn parse_iife_lambda() {
+        match parse("=LAMBDA(x,y,ISOMITTED(y))(1,)").unwrap() {
+            Expr::Apply { callee, args } => {
+                match *callee {
+                    Expr::Call { name, args: lam } => {
+                        assert!(name.eq_ignore_ascii_case("LAMBDA"));
+                        assert_eq!(lam.len(), 3);
+                    }
+                    other => panic!("{other:?}"),
+                }
+                assert_eq!(args.len(), 2);
+                assert!(matches!(&args[0], Expr::Number(n) if *n == 1.0));
+                assert!(args[1].is_omitted());
+            }
             other => panic!("{other:?}"),
         }
     }
