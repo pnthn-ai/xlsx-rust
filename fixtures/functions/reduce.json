@@ -351,6 +351,13 @@
     "expected": { "number": 6 }
   },
   {
+    "id": "fn.reduce.missing-sheet",
+    "description": "A missing sheet in the array range is #REF!",
+    "tags": ["reduce", "errors"],
+    "formula": "=REDUCE(0,Missing!A1:A3,LAMBDA(a,b,a+b))",
+    "expected": { "error": "#REF!" }
+  },
+  {
     "id": "fn.reduce.iife-lambda-not-parsed",
     "description": "Immediately-invoked LAMBDA(...)(args) is not parsed",
     "tags": ["reduce", "lambda"],

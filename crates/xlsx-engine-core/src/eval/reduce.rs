@@ -43,7 +43,7 @@
 use super::{concat, excel_pow, Ctx, Evaluator};
 use crate::ast::{BinOp, Expr, UnaryOp};
 use std::collections::HashMap;
-use xlsx_types::{EvalError, ExcelError, ExcelValue};
+use xlsx_types::{CellRef, EvalError, ExcelError, ExcelValue, RangeRef};
 
 use super::makearray::{names_eq, resolve_lambda_n};
 
@@ -466,6 +466,60 @@ fn apply_general(
     Ok(acc.unwrap_or(ExcelValue::Error(ExcelError::Calc)))
 }
 
+fn apply_range(
+    ev: &Evaluator,
+    ctx: &mut Ctx<'_>,
+    initial: Option<ExcelValue>,
+    range: &RangeRef,
+    acc_param: &str,
+    val_param: &str,
+    body: &Expr,
+) -> Result<ExcelValue, EvalError> {
+    let sheet = range
+        .sheet
+        .clone()
+        .unwrap_or_else(|| ctx.current_sheet.clone());
+    if ctx.spec.workbook.sheet(Some(&sheet)).is_err() {
+        return Ok(ExcelValue::Error(ExcelError::Ref));
+    }
+    let plan = classify(body, acc_param, val_param);
+    let mut acc = initial;
+    let mut started = acc.is_some();
+    let base = ctx.locals.len();
+    if plan.is_none() {
+        ctx.locals.push((acc_param.to_string(), ExcelValue::Empty));
+        ctx.locals.push((val_param.to_string(), ExcelValue::Empty));
+    }
+    for addr in range.cells() {
+        let v = ev.eval_cell(
+            &CellRef {
+                sheet: Some(sheet.clone()),
+                addr,
+            },
+            ctx,
+        )?;
+        if !started {
+            acc = Some(v);
+            started = true;
+            continue;
+        }
+        let Some(cur) = acc.take() else {
+            continue;
+        };
+        if let Some(plan) = plan.as_ref() {
+            acc = Some(eval_fast(plan, &cur, &v));
+        } else {
+            ctx.locals[base].1 = cur;
+            ctx.locals[base + 1].1 = v;
+            acc = Some(ev.eval_expr(body, ctx)?);
+        }
+    }
+    if plan.is_none() {
+        ctx.locals.truncate(base);
+    }
+    Ok(acc.unwrap_or(ExcelValue::Error(ExcelError::Calc)))
+}
+
 /// `REDUCE([initial], array, LAMBDA(acc, value, body))`.
 pub(crate) fn eval(
     ev: &Evaluator,
@@ -494,6 +548,21 @@ pub(crate) fn eval(
     } else {
         None
     };
+
+    if let Expr::Range(range) = array_expr {
+        let sheet = range
+            .sheet
+            .clone()
+            .unwrap_or_else(|| ctx.current_sheet.clone());
+        if ctx.spec.workbook.sheet(Some(&sheet)).is_err() {
+            return Ok(ExcelValue::Error(ExcelError::Ref));
+        }
+        let (names, body) = match resolve_lambda_n(lambda_expr, ctx, 2) {
+            Ok(l) => l,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        return apply_range(ev, ctx, initial, range, &names[0], &names[1], &body);
+    }
 
     let array = ev.eval_expr(array_expr, ctx)?;
     if let ExcelValue::Error(e) = array {
@@ -711,6 +780,15 @@ mod tests {
             )
             .unwrap(),
             n(3.0)
+        );
+    }
+
+    #[test]
+    fn missing_sheet_is_ref() {
+        let wb = Workbook::default();
+        assert_eq!(
+            eval_formula_in(&wb, "=REDUCE(0,Missing!A1:A3,LAMBDA(a,b,a+b))").unwrap(),
+            ExcelValue::Error(ExcelError::Ref)
         );
     }
 

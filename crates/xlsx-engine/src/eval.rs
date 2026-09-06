@@ -3780,6 +3780,15 @@ impl Interpreter {
         } else {
             None
         };
+        if let Expr::Range(range) = array_expr {
+            let sheet = range
+                .sheet
+                .clone()
+                .unwrap_or_else(|| ctx.current_sheet.clone());
+            if ctx.spec.workbook.sheet(Some(&sheet)).is_err() {
+                return Ok(ExcelValue::Error(ExcelError::Ref));
+            }
+        }
         let array = self.eval_expr(array_expr, ctx)?;
         if let ExcelValue::Error(e) = array {
             return Ok(ExcelValue::Error(e));

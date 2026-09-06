@@ -87,12 +87,20 @@ fn kernel_bench(
     );
 }
 
+fn column_wb(n: usize) -> Workbook {
+    let mut wb = Workbook::default();
+    for i in 1..=n {
+        wb.set_value("Sheet1", &format!("A{i}"), ExcelValue::Number(i as f64))
+            .unwrap();
+    }
+    wb
+}
+
 fn evaluate_bench(n: usize, init: &str, body: &str, iters: u32) {
-    let seq = (1..=n).map(|i| i.to_string()).collect::<Vec<_>>().join(",");
-    let formula = format!("=REDUCE({init},{{{seq}}},LAMBDA(a,b,{body}))");
+    let formula = format!("=REDUCE({init},A1:A{n},LAMBDA(a,b,{body}))");
     let spec = EvalSpec {
         case_id: "bench.reduce".into(),
-        workbook: Workbook::default(),
+        workbook: column_wb(n),
         target: EvalTarget::formula(formula.clone()),
         options: Default::default(),
     };
@@ -104,7 +112,7 @@ fn evaluate_bench(n: usize, init: &str, body: &str, iters: u32) {
     let ms = time_ms(iters, || {
         black_box(engine.evaluate(black_box(&spec)).unwrap());
     });
-    println!("evaluate n={n:<6} body={body:<8}  {ms:.4}ms/call");
+    println!("evaluate n={n:<6} body={body:<8}  {ms:.4}ms/call  {formula}");
 }
 
 fn main() {
