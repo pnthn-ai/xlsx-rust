@@ -172,7 +172,7 @@ set `ignore` with a reason. Do not invent a golden.
 | `tags` | Free-form; CLI `--tag sum` filters on these. |
 | `quirks` | From the catalog in [`crates/xlsx-types/src/quirk.rs`](crates/xlsx-types/src/quirk.rs). |
 | `ignore` | If set, the case is skipped (reason is the string). |
-| `options` | `locale`, `date_system`, `array_mode` (modeled; seed uses defaults). |
+| `options` | `locale`, `date_system`, `array_mode` (modeled; seed uses defaults). Optional `rng_seed` is a **test hook** for volatile RNG — not an Excel argument. |
 
 **`expected` / cell values:**
 
@@ -285,7 +285,7 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 | [`eval/coerce.rs`](crates/xlsx-engine-core/src/eval/coerce.rs) | Arithmetic / `&` / `IF` coercion (`"2"+1` = 3, TRUE → 1, empty → 0) |
 | [`eval/compare.rs`](crates/xlsx-engine-core/src/eval/compare.rs) | 15-digit `=`, case-insensitive text, `TRUE=1`, type ranking (`FALSE>100`) |
 | [`eval/empty.rs`](crates/xlsx-engine-core/src/eval/empty.rs) | Blank ≠ 0 ≠ `""`, but `A1=0` and `A1=""` when `A1` is blank |
-| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Dispatch: aggregators (`SUM`/`SUMIF`/`SUMIFS`/`AVERAGEIF`/`COUNTIF`/`SUMPRODUCT`), logicals (`IF`/`IFS`/`SWITCH`), lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`/`FILTER`/`UNIQUE`), dates (`DATE`/`EOMONTH`/`NETWORKDAYS`/`WEEKDAY`/`WORKDAY`), math (`ROUND`/`ROUNDUP`/`ROUNDDOWN`/`FLOOR`/`CEILING`), text (`LEFT`/`SUBSTITUTE`/`REPLACE`/`FIND`/`SEARCH`/`TEXT`/`TEXTJOIN`/`CONCAT`), financial (`NPV`/`PMT`/`IRR`), `TYPE` / `IS*` |
+| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Dispatch: aggregators (`SUM`/`SUMIF`/`SUMIFS`/`AVERAGEIF`/`COUNTIF`/`SUMPRODUCT`), logicals (`IF`/`IFS`/`SWITCH`), lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`/`FILTER`/`UNIQUE`), dates (`DATE`/`EOMONTH`/`NETWORKDAYS`/`WEEKDAY`/`WORKDAY`), math (`ROUND`/`ROUNDUP`/`ROUNDDOWN`/`FLOOR`/`CEILING`/`RANDARRAY`), text (`LEFT`/`SUBSTITUTE`/`REPLACE`/`FIND`/`SEARCH`/`TEXT`/`TEXTJOIN`/`CONCAT`), financial (`NPV`/`PMT`/`IRR`), `TYPE` / `IS*` |
 | [`eval/sumif.rs`](crates/xlsx-engine-core/src/eval/sumif.rs) | Excel `SUMIF` kernel (criteria walk, reshape `sum_range`, no array literals) |
 | [`eval/sumifs.rs`](crates/xlsx-engine-core/src/eval/sumifs.rs) | Excel `SUMIFS`: multi-criteria AND, same-shape ranges |
 | [`eval/averageif.rs`](crates/xlsx-engine-core/src/eval/averageif.rs) | Excel `AVERAGEIF` kernel (reshape `average_range`, `#DIV/0!` when empty) |
@@ -301,6 +301,7 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 | [`eval/ifs.rs`](crates/xlsx-engine-core/src/eval/ifs.rs) | `IFS` pair-selection kernel (eager eval, first TRUE, no-match `#N/A`) |
 | [`eval/unique.rs`](crates/xlsx-engine-core/src/eval/unique.rs) | `UNIQUE(array, [by_col], [exactly_once])` hash distinctness |
 | [`eval/filter.rs`](crates/xlsx-engine-core/src/eval/filter.rs) | `FILTER` mask/select kernel (`#CALC!` / `if_empty`, row vs column) |
+| [`eval/randarray.rs`](crates/xlsx-engine-core/src/eval/randarray.rs) | `RANDARRAY([rows],[columns],[min],[max],[integer])` fill (xorshift64*; not Excel's RNG) |
 | [`eval/npv.rs`](crates/xlsx-engine-core/src/eval/npv.rs) | Excel `NPV` kernel (period-1 discount, range skip of blanks/text/logicals) |
 | [`eval/irr.rs`](crates/xlsx-engine-core/src/eval/irr.rs) | Excel `IRR` Newton / secant kernel (20 tries, `1e-7` rate, `#NUM!` on failure) |
 | [`text_format.rs`](crates/xlsx-engine-core/src/text_format.rs) | Excel `TEXT` for a documented number/date format subset |
@@ -388,6 +389,18 @@ as one or the other. Documented quirk categories:
   (or columns when `by_col` is TRUE); case-insensitive text; type-strict
   (`1` ≠ `"1"` ≠ `TRUE`); blanks collapse to one empty; `exactly_once` with
   no survivors is `#CALC!`. Result is always an array value.
+- `RANDARRAY([rows], [columns], [min], [max], [integer])`: omitted args
+  default to 1 / 1 / 0 / 1 / FALSE. A **blank cell** is 0, not omitted, so
+  `RANDARRAY(A1)` of a blank `A1` is `#CALC!`. Decimal dimensions truncate
+  toward zero; `< 1` is `#CALC!`. `min > max` is `#VALUE!`; `min == max` is
+  a constant fill. `integer=TRUE` requires whole `min`/`max` else `#VALUE!`.
+  Integers are inclusive; decimals use `[min, max)` (`u * (max-min)`).
+  Result is always an array value (including 1×1). **Volatile:** each
+  `evaluate` is a recalc with a new stream. The kernel is xorshift64*,
+  **not** Excel's undocumented generator — do not invent sequence goldens.
+  `EvalOptions.rng_seed` is a test/bench hook only (not a sixth argument).
+  Unseeded `RANDARRAY()` is ignored in the corpus. `RAND()` is a later
+  workstream.
 - **Spill limitation:** `evaluate` returns that array. The engine does **not**
   write spilled values into neighboring cells, so occupied destinations never
   yield `#SPILL!`. Scalar operators (`UNIQUE(...)+1`) take the top-left
@@ -406,7 +419,9 @@ as one or the other. Documented quirk categories:
   for a quiet period). Convergence failure, no sign change, guess `-1`,
   or a Newton step to `r <= -1` → `#NUM!`. `NPV` is a separate function.
 - Volatile / locale / precision-as-displayed / hidden-row `SUBTOTAL` are
-  catalogued as `ignore` until they can be evaluated honestly
+  catalogued as `ignore` until they can be evaluated honestly. `RANDARRAY`
+  is implemented; unseeded `RANDARRAY()` / `RAND()` stay ignored because
+  there is no Excel-matching sequence to record.
 
 **`FILTER` spill / model limits** (honest, not hidden behind a broken case):
 
