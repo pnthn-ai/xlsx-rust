@@ -497,10 +497,10 @@
   },
   {
     "id": "fn.replace-nested-left",
-    "description": "REPLACE(LEFT(\"hello\", 3), 2, 1, \"X\") → \"hXo\"",
+    "description": "REPLACE(LEFT(\"hello\", 3), 2, 1, \"X\") → \"hXl\"",
     "tags": ["text", "replace"],
     "formula": "=REPLACE(LEFT(\"hello\", 3), 2, 1, \"X\")",
-    "expected": { "text": "hXo" }
+    "expected": { "text": "hXl" }
   },
   {
     "id": "fn.replace-len-last",

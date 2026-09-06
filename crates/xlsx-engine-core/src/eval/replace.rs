@@ -569,7 +569,7 @@ mod tests {
         );
         assert_eq!(
             eval_formula_in(&wb, "=REPLACE(LEFT(\"hello\",3),2,1,\"X\")").unwrap(),
-            ExcelValue::Text("hXo".into())
+            ExcelValue::Text("hXl".into())
         );
         assert_eq!(
             eval_formula_in(&wb, "=REPLACE(\"abc\",LEN(\"abc\"),1,\"Z\")").unwrap(),

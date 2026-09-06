@@ -143,8 +143,10 @@ fn fmt_dur(d: Duration) -> String {
     let us = d.as_secs_f64() * 1e6;
     if us >= 1000.0 {
         format!("{:.2} ms", us / 1000.0)
-    } else {
+    } else if us >= 1.0 {
         format!("{us:.1} µs")
+    } else {
+        format!("{:.1} ns", us * 1000.0)
     }
 }
 
