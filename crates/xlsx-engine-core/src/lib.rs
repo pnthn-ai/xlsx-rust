@@ -229,7 +229,7 @@ pub use text_format::{
 };
 pub use xlsx_types::{
     excel_cumipmt, excel_cumipmt_naive, excel_cumprinc, excel_cumprinc_naive, excel_effect,
-    excel_effect_naive, excel_fv, excel_fv_naive, excel_int, excel_int_naive, excel_int_round15,
+    excel_effect_naive, excel_fv, excel_fv_naive, excel_int, excel_int_ieee, excel_int_naive,
     excel_int_slice, excel_int_slice_naive, excel_ipmt, excel_ipmt_naive, excel_nominal,
     excel_nominal_naive, excel_nper, excel_nper_naive, excel_pduration, excel_pduration_naive,
     excel_pmt, excel_ppmt, excel_ppmt_naive, excel_pv, excel_pv_naive, excel_rate,

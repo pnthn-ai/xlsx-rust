@@ -26,7 +26,7 @@ pub use eval::{
     ArrayMode, Candidate, DateSystem, EvalError, EvalOptions, EvalSpec, EvalTarget, Locale,
 };
 pub use excel_int::{
-    excel_int, excel_int_naive, excel_int_round15, excel_int_slice, excel_int_slice_naive,
+    excel_int, excel_int_ieee, excel_int_naive, excel_int_slice, excel_int_slice_naive,
 };
 pub use financial::{
     cumipmt as excel_cumipmt, cumipmt_naive as excel_cumipmt_naive, cumprinc as excel_cumprinc,
