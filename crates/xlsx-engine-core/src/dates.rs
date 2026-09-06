@@ -163,7 +163,6 @@ pub fn time_fraction(hour: f64, minute: f64, second: f64) -> Result<f64, ExcelEr
     Ok((total % secs_per_day) / secs_per_day)
 }
 
-
 pub fn serial_to_ymd(serial: f64, system: DateSystem) -> Result<(i32, u32, u32), ExcelError> {
     if !serial.is_finite() {
         return Err(ExcelError::Num);
@@ -255,6 +254,47 @@ pub fn eomonth_serial(start: f64, months: f64, system: DateSystem) -> Result<f64
     }
     let last = days_in_month(year, month);
     let s1900 = ymd_to_serial_1900(year, month, last)?;
+    match system {
+        DateSystem::Excel1900 => Ok(s1900 as f64),
+        DateSystem::Excel1904 => {
+            let s = s1900 - EXCEL1904_EPOCH_IN_1900;
+            if s < 0 {
+                Err(ExcelError::Num)
+            } else {
+                Ok(s as f64)
+            }
+        }
+    }
+}
+
+/// Excel `EDATE(start_date, months)`: the civil day that is `months` months
+/// before or after `start_date`, clipped to the last day of the target month
+/// when the start day does not exist there (`31-Jan` + 1 → `28/29-Feb`).
+///
+/// `months` is truncated toward zero. Reuses [`serial_to_ymd`],
+/// [`normalize_year_month`], [`days_in_month`], and [`ymd_to_serial_1900`]
+/// so the 1900 leap-year bug (serial 60) is inherited, not re-implemented.
+/// Serial 0 is the fictitious `1900-01-00`; `EDATE(0, 0)` stays 0.
+pub fn edate_serial(start: f64, months: f64, system: DateSystem) -> Result<f64, ExcelError> {
+    if !start.is_finite() || !months.is_finite() || start < 0.0 {
+        return Err(ExcelError::Num);
+    }
+    let (year, month, day) = serial_to_ymd(start, system)?;
+    // ±120_000 months is ~10_000 years — past every Excel-representable date.
+    let months_i = months.trunc();
+    if months_i.abs() > 120_000.0 {
+        return Err(ExcelError::Num);
+    }
+    let month_sum = month as i32 + months_i as i32;
+    let (year, month) = normalize_year_month(year, month_sum)?;
+    if year < 1900 || year > 9999 {
+        return Err(ExcelError::Num);
+    }
+    let last = days_in_month(year, month);
+    // Day 0 (serial 0 → 1900-01-00) is kept so `DATE`-style underflow works:
+    // `EDATE(0, 1)` is `DATE(1900, 2, 0)` = 31. Positive days clip to `last`.
+    let day = if day == 0 { 0 } else { (day as i32).min(last) };
+    let s1900 = ymd_to_serial_1900(year, month, day)?;
     match system {
         DateSystem::Excel1900 => Ok(s1900 as f64),
         DateSystem::Excel1904 => {
@@ -486,7 +526,6 @@ pub fn workday_serial_walk(
     Ok(from_1900_serial(cur, system)? as f64)
 }
 
-
 pub fn weekday_count_sat_sun(lo_1900: i32, hi_1900: i32) -> i32 {
     if hi_1900 < lo_1900 {
         return 0;
@@ -531,7 +570,6 @@ pub fn networkdays_count(
     }
     Ok((sign * work) as f64)
 }
-
 
 pub fn serial_as_1900_int(serial: f64, system: DateSystem) -> Result<i32, ExcelError> {
     if !serial.is_finite() || serial < 0.0 {
@@ -608,11 +646,9 @@ pub fn weekday_naive(serial: f64, return_type: i32, system: DateSystem) -> Resul
     map_weekday_return_type(type1_from_1900_serial(s1900), return_type)
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
-
 
     #[test]
     fn known_1900_serials() {
@@ -771,6 +807,134 @@ mod tests {
             date_serial(1904, 2, 29, s).unwrap()
         );
         assert_eq!(eomonth_serial(0.0, -1.0, s), Err(ExcelError::Num));
+    }
+
+    #[test]
+    fn edate_ms_examples() {
+        // support.microsoft.com EDATE examples (15-Jan-11 ± months).
+        assert_eq!(
+            edate_serial(d(2011, 1, 15), 1.0, DateSystem::Excel1900).unwrap(),
+            d(2011, 2, 15)
+        );
+        assert_eq!(
+            edate_serial(d(2011, 1, 15), -1.0, DateSystem::Excel1900).unwrap(),
+            d(2010, 12, 15)
+        );
+        assert_eq!(
+            edate_serial(d(2011, 1, 15), 2.0, DateSystem::Excel1900).unwrap(),
+            d(2011, 3, 15)
+        );
+    }
+
+    #[test]
+    fn edate_keeps_day_when_it_exists() {
+        let s = DateSystem::Excel1900;
+        assert_eq!(
+            edate_serial(d(2011, 1, 15), 0.0, s).unwrap(),
+            d(2011, 1, 15)
+        );
+        // Feb 28 is not promoted to March 31 — unlike a "month-end flag".
+        assert_eq!(
+            edate_serial(d(2011, 2, 28), 1.0, s).unwrap(),
+            d(2011, 3, 28)
+        );
+        assert_eq!(edate_serial(d(2011, 1, 1), 13.0, s).unwrap(), d(2012, 2, 1));
+    }
+
+    #[test]
+    fn edate_clips_missing_days() {
+        let s = DateSystem::Excel1900;
+        assert_eq!(
+            edate_serial(d(2011, 1, 31), 1.0, s).unwrap(),
+            d(2011, 2, 28)
+        );
+        assert_eq!(
+            edate_serial(d(2012, 1, 31), 1.0, s).unwrap(),
+            d(2012, 2, 29)
+        );
+        assert_eq!(
+            edate_serial(d(2011, 3, 31), -1.0, s).unwrap(),
+            d(2011, 2, 28)
+        );
+        assert_eq!(
+            edate_serial(d(2024, 3, 31), -1.0, s).unwrap(),
+            d(2024, 2, 29)
+        );
+        assert_eq!(
+            edate_serial(d(2000, 1, 31), 1.0, s).unwrap(),
+            d(2000, 2, 29)
+        );
+        assert_eq!(
+            edate_serial(d(2011, 1, 31), 3.0, s).unwrap(),
+            d(2011, 4, 30)
+        );
+    }
+
+    #[test]
+    fn edate_serial_60_leap_bug() {
+        let s = DateSystem::Excel1900;
+        assert_eq!(edate_serial(60.0, 0.0, s).unwrap(), 60.0);
+        // Unlike EOMONTH, EDATE(59,0) keeps 28-Feb (serial 59).
+        assert_eq!(edate_serial(59.0, 0.0, s).unwrap(), 59.0);
+        assert_eq!(edate_serial(60.0, 1.0, s).unwrap(), d(1900, 3, 29));
+        assert_eq!(edate_serial(60.0, -1.0, s).unwrap(), d(1900, 1, 29));
+        assert_eq!(edate_serial(d(1900, 1, 31), 1.0, s).unwrap(), 60.0);
+        assert_eq!(edate_serial(d(1900, 3, 1), -1.0, s).unwrap(), d(1900, 2, 1));
+        assert_eq!(edate_serial(d(1900, 3, 31), -1.0, s).unwrap(), 60.0);
+        assert_eq!(edate_serial(60.0, 12.0, s).unwrap(), d(1901, 2, 28));
+    }
+
+    #[test]
+    fn edate_truncates_toward_zero() {
+        let s = DateSystem::Excel1900;
+        assert_eq!(
+            edate_serial(d(2011, 1, 15), 1.9, s).unwrap(),
+            d(2011, 2, 15)
+        );
+        assert_eq!(
+            edate_serial(d(2011, 1, 15), -1.9, s).unwrap(),
+            d(2010, 12, 15)
+        );
+        assert_eq!(
+            edate_serial(d(2011, 1, 15) + 0.9, 0.0, s).unwrap(),
+            d(2011, 1, 15)
+        );
+    }
+
+    #[test]
+    fn edate_serial_zero_is_jan_zero() {
+        let s = DateSystem::Excel1900;
+        assert_eq!(edate_serial(0.0, 0.0, s).unwrap(), 0.0);
+        // 1900-01-00 + 1 month → DATE(1900, 2, 0) = 31-Jan-1900.
+        assert_eq!(edate_serial(0.0, 1.0, s).unwrap(), 31.0);
+        assert_eq!(edate_serial(0.0, -1.0, s), Err(ExcelError::Num));
+    }
+
+    #[test]
+    fn edate_rejects_out_of_range() {
+        let s = DateSystem::Excel1900;
+        assert_eq!(edate_serial(d(1900, 1, 1), -1.0, s), Err(ExcelError::Num));
+        assert_eq!(edate_serial(-1.0, 0.0, s), Err(ExcelError::Num));
+        assert_eq!(edate_serial(d(9999, 12, 31), 1.0, s), Err(ExcelError::Num));
+        assert_eq!(
+            edate_serial(d(9999, 11, 15), 1.0, s).unwrap(),
+            d(9999, 12, 15)
+        );
+    }
+
+    #[test]
+    fn edate_system_1904() {
+        let s = DateSystem::Excel1904;
+        assert_eq!(edate_serial(0.0, 0.0, s).unwrap(), 0.0);
+        assert_eq!(
+            edate_serial(date_serial(1904, 1, 31, s).unwrap(), 1.0, s).unwrap(),
+            date_serial(1904, 2, 29, s).unwrap()
+        );
+        assert_eq!(
+            edate_serial(date_serial(1904, 2, 1, s).unwrap(), 0.0, s).unwrap(),
+            date_serial(1904, 2, 1, s).unwrap()
+        );
+        assert_eq!(edate_serial(0.0, -1.0, s), Err(ExcelError::Num));
     }
 
     #[test]
@@ -934,12 +1098,7 @@ mod tests {
             weekday(EXCEL_MAX_SERIAL_1900 as f64, 1, DateSystem::Excel1900).unwrap(),
             6.0
         );
-        assert!(weekday(
-            (EXCEL_MAX_SERIAL_1900 + 1) as f64,
-            1,
-            DateSystem::Excel1900
-        )
-        .is_err());
+        assert!(weekday((EXCEL_MAX_SERIAL_1900 + 1) as f64, 1, DateSystem::Excel1900).is_err());
     }
 
     #[test]
@@ -1103,9 +1262,7 @@ mod tests {
             assert_eq!(invert_workdays_through(w as i64).unwrap(), n, "n={n}");
         }
     }
-
 }
-
 
 /// True when `serial_1900 % 7` is a weekend bit in `weekend_mask`.
 #[inline]
@@ -1113,7 +1270,6 @@ pub fn is_weekend_mask_1900(serial_1900: i32, weekend_mask: u8) -> bool {
     let w = serial_1900.rem_euclid(7);
     weekend_mask & (1 << w) != 0
 }
-
 
 /// Excel `NETWORKDAYS.INTL` / `WORKDAY.INTL` weekend number (1–7, 11–17).
 ///
@@ -1137,8 +1293,6 @@ pub fn weekend_mask_from_code(code: i32) -> Result<u8, ExcelError> {
         _ => Err(ExcelError::Num),
     }
 }
-
-
 
 /// Weekend string: seven characters Monday→Sunday; `1` = weekend, `0` = workday.
 ///
@@ -1182,7 +1336,6 @@ pub fn workdays_through_mask(n: i32, weekend_mask: u8) -> i32 {
     complete * work_per_week + extra
 }
 
-
 /// Workday count in `[lo, hi]` inclusive under `weekend_mask`. O(1).
 pub fn weekday_count_mask(lo_1900: i32, hi_1900: i32, weekend_mask: u8) -> i32 {
     if hi_1900 < lo_1900 {
@@ -1190,7 +1343,6 @@ pub fn weekday_count_mask(lo_1900: i32, hi_1900: i32, weekend_mask: u8) -> i32 {
     }
     workdays_through_mask(hi_1900, weekend_mask) - workdays_through_mask(lo_1900 - 1, weekend_mask)
 }
-
 
 /// Excel `NETWORKDAYS.INTL` count for a pre-parsed weekend mask.
 ///
@@ -1227,7 +1379,6 @@ pub fn networkdays_count_mask(
     }
     Ok((sign * work) as f64)
 }
-
 
 /// Day-walk reference for benches and cross-checks. Not used on the hot path.
 pub fn networkdays_count_mask_walk(
@@ -1267,12 +1418,10 @@ pub fn networkdays_count_mask_walk(
     Ok((sign * work) as f64)
 }
 
-
 /// Monday-first weekend bitmask: bit 0 = Monday … bit 6 = Sunday. Set = weekend.
 ///
 /// Code 1 / omitted `WORKDAY.INTL` weekend (Saturday + Sunday).
 pub const WEEKEND_MASK_SAT_SUN: u8 = 0b0110_0000;
-
 
 /// Excel 1900-system weekend test for an arbitrary Monday-first mask.
 #[inline]
@@ -1280,7 +1429,6 @@ pub fn is_weekend_mask_mon_first(serial_1900: i32, mask: u8) -> bool {
     let mon_idx = (serial_1900.rem_euclid(7) + 5) % 7;
     (mask & (1 << mon_idx)) != 0
 }
-
 
 /// Map Excel weekend codes 1–7 / 11–17 onto a Monday-first bitmask.
 ///
@@ -1305,7 +1453,6 @@ pub fn weekend_mask_from_code_mon_first(code: i32) -> Result<u8, ExcelError> {
     })
 }
 
-
 /// Parse a 7-character Monday-first `0`/`1` weekend string.
 ///
 /// Wrong length, non-`0`/`1` characters, or `1111111` are `#VALUE!`.
@@ -1328,7 +1475,6 @@ pub fn weekend_mask_from_string_mon_first(s: &str) -> Result<u8, ExcelError> {
     Ok(mask)
 }
 
-
 /// Resolve the optional `WORKDAY.INTL` weekend argument to a bitmask.
 ///
 /// Omitted → Sat/Sun. Text is a weekend string (never numeric-coerced, so
@@ -1349,7 +1495,6 @@ pub fn parse_weekend_mask(weekend: Option<&ExcelValue>) -> Result<u8, ExcelError
     }
 }
 
-
 fn weekend_mask_from_number(n: f64) -> Result<u8, ExcelError> {
     if !n.is_finite() {
         return Err(ExcelError::Num);
@@ -1360,7 +1505,6 @@ fn weekend_mask_from_number(n: f64) -> Result<u8, ExcelError> {
     }
     weekend_mask_from_code_mon_first(t as i32)
 }
-
 
 fn workday_intl_1900_no_holidays(
     start: i32,
@@ -1378,7 +1522,6 @@ fn workday_intl_1900_no_holidays(
         sched.invert(target)
     }
 }
-
 
 fn workday_intl_1900(
     start: i32,
@@ -1402,7 +1545,6 @@ fn workday_intl_1900(
     }
 }
 
-
 fn collect_workday_holidays(
     holidays: &[f64],
     system: DateSystem,
@@ -1419,7 +1561,6 @@ fn collect_workday_holidays(
     hols.dedup();
     Ok(hols)
 }
-
 
 /// Excel `WORKDAY.INTL(start, days, [weekend], [holidays])`.
 ///
@@ -1448,7 +1589,6 @@ pub fn workday_serial_intl(
     let result_1900 = workday_intl_1900(start_1900, days_i, &hols, &sched)?;
     Ok(from_1900_serial(result_1900, system)? as f64)
 }
-
 
 /// Day-walk reference for `WORKDAY.INTL` benches and cross-checks.
 pub fn workday_serial_intl_walk(
@@ -1489,7 +1629,6 @@ pub fn workday_serial_intl_walk(
     Ok(from_1900_serial(cur, system)? as f64)
 }
 
-
 /// Excel `YEARFRAC(start, end, [basis])` day-count bases 0–4.
 ///
 /// Matches the Excel 2007 algorithm documented by David Wheeler and confirmed
@@ -1497,19 +1636,15 @@ pub fn workday_serial_intl_walk(
 ///
 /// - Dates are truncated;
 
-
 /// Year-walk `YEARFRAC` used as the bench baseline. Same day-count rules;
-
 
 fn last_day_of_month(year: i32, month: i32, day: i32) -> bool {
     month >= 1 && month <= 12 && day == days_in_month(year, month)
 }
 
-
 fn ymd_lt(y1: i32, m1: i32, d1: i32, y2: i32, m2: i32, d2: i32) -> bool {
     (y1, m1, d1) < (y2, m2, d2)
 }
-
 
 /// US (NASD) 30/360. February last-day rules sit in the `else` chain after
 /// the 31st-day rules — matching Excel, including the documented “incorrect
@@ -1534,7 +1669,6 @@ fn basis0_us_nasd(a: (i32, i32, i32), b: (i32, i32, i32)) -> f64 {
     daydiff as f64 / 360.0
 }
 
-
 fn basis4_eu_30_360(a: (i32, i32, i32), b: (i32, i32, i32)) -> f64 {
     let (y1, m1, mut d1) = a;
     let (y2, m2, mut d2) = b;
@@ -1548,7 +1682,6 @@ fn basis4_eu_30_360(a: (i32, i32, i32), b: (i32, i32, i32)) -> f64 {
     daydiff as f64 / 360.0
 }
 
-
 fn appears_le_year(a: (i32, i32, i32), b: (i32, i32, i32)) -> bool {
     let (y1, m1, d1) = a;
     let (y2, m2, d2) = b;
@@ -1557,7 +1690,6 @@ fn appears_le_year(a: (i32, i32, i32), b: (i32, i32, i32)) -> bool {
     }
     y1 + 1 == y2 && (m1 > m2 || (m1 == m2 && d1 >= d2))
 }
-
 
 fn feb29_strictly_between(a: (i32, i32, i32), b: (i32, i32, i32)) -> bool {
     let (y1, m1, d1) = a;
@@ -1570,7 +1702,6 @@ fn feb29_strictly_between(a: (i32, i32, i32), b: (i32, i32, i32)) -> bool {
     false
 }
 
-
 fn basis1_year_length(a: (i32, i32, i32), b: (i32, i32, i32)) -> f64 {
     let (y1, _m1, _d1) = a;
     let (y2, m2, d2) = b;
@@ -1582,7 +1713,6 @@ fn basis1_year_length(a: (i32, i32, i32), b: (i32, i32, i32)) -> f64 {
         365.0
     }
 }
-
 
 fn basis1_actual_actual(
     a: (i32, i32, i32),
@@ -1598,7 +1728,6 @@ fn basis1_actual_actual(
     let days_in_years = serial_of_year_start(y2 + 1)? - serial_of_year_start(y1)?;
     Ok(actual * (num_years as f64) / (days_in_years as f64))
 }
-
 
 fn serial_of_year_start_walk(year: i32) -> i32 {
     if year < 1900 {
@@ -1616,7 +1745,6 @@ fn serial_of_year_start_walk(year: i32) -> i32 {
     }
     serial
 }
-
 
 fn serial_to_ymd_walk(s: i32) -> Result<(i32, i32, i32), ExcelError> {
     if s < 0 || s > EXCEL_MAX_SERIAL_1900 {
@@ -1653,7 +1781,6 @@ fn serial_to_ymd_walk(s: i32) -> Result<(i32, i32, i32), ExcelError> {
     Err(ExcelError::Num)
 }
 
-
 fn basis1_actual_actual_walk(
     a: (i32, i32, i32),
     b: (i32, i32, i32),
@@ -1668,7 +1795,6 @@ fn basis1_actual_actual_walk(
     let days_in_years = serial_of_year_start_walk(y2 + 1) - serial_of_year_start_walk(y1);
     Ok(actual * (num_years as f64) / (days_in_years as f64))
 }
-
 
 /// Excel `YEARFRAC(start, end, [basis])` day-count bases 0–4.
 ///
@@ -1719,7 +1845,6 @@ pub fn yearfrac(start: f64, end: f64, basis: i32, system: DateSystem) -> Result<
     }
 }
 
-
 /// Year-walk `YEARFRAC` used as the bench baseline. Same day-count rules;
 /// serial unpack and inclusive-year length walk from 1900 instead of the
 /// closed-form helpers.
@@ -1758,8 +1883,6 @@ pub fn yearfrac_naive(
         _ => Err(ExcelError::Num),
     }
 }
-
-
 
 /// O(1) workday count / invert for one weekend mask.
 ///

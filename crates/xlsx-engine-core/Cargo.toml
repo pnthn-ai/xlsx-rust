@@ -69,6 +69,10 @@ name = "eomonth"
 harness = false
 
 [[bench]]
+name = "edate"
+harness = false
+
+[[bench]]
 name = "floor_ceiling"
 harness = false
 

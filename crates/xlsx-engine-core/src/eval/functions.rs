@@ -8,9 +8,9 @@
 use super::{coerce, compare, excel_pow, Ctx, Evaluator};
 use crate::ast::Expr;
 use crate::dates::{
-    date_serial, eomonth_serial, networkdays_count, networkdays_count_mask, parse_weekend_mask,
-    serial_to_ymd, time_fraction, weekday, weekend_mask_from_code, weekend_mask_from_string,
-    workday_serial, workday_serial_intl, yearfrac, WEEKEND_SAT_SUN,
+    date_serial, edate_serial, eomonth_serial, networkdays_count, networkdays_count_mask,
+    parse_weekend_mask, serial_to_ymd, time_fraction, weekday, weekend_mask_from_code,
+    weekend_mask_from_string, workday_serial, workday_serial_intl, yearfrac, WEEKEND_SAT_SUN,
 };
 use crate::text_format;
 use xlsx_types::{
@@ -128,6 +128,7 @@ pub(crate) fn dispatch(
         "ISODD" => fn_even_odd(ev, args, ctx, false),
         "DATE" => fn_date(ev, args, ctx),
         "TIME" => fn_time(ev, args, ctx),
+        "EDATE" => fn_edate(ev, args, ctx),
         "EOMONTH" => fn_eomonth(ev, args, ctx),
         "NETWORKDAYS" => fn_networkdays(ev, args, ctx),
         "NETWORKDAYS.INTL" => fn_networkdays_intl(ev, args, ctx),
@@ -977,6 +978,24 @@ fn fn_time(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValu
         Err(e) => return Ok(ExcelValue::Error(e)),
     };
     match time_fraction(h, m, s) {
+        Ok(n) => Ok(ExcelValue::Number(n)),
+        Err(e) => Ok(ExcelValue::Error(e)),
+    }
+}
+
+fn fn_edate(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    if args.len() != 2 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let start = match coerce::to_number(&ev.eval_scalar(&args[0], ctx)?) {
+        Ok(n) => n,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let months = match coerce::to_number(&ev.eval_scalar(&args[1], ctx)?) {
+        Ok(n) => n,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    match edate_serial(start, months, ctx.spec.options.date_system) {
         Ok(n) => Ok(ExcelValue::Number(n)),
         Err(e) => Ok(ExcelValue::Error(e)),
     }

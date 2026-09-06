@@ -438,6 +438,7 @@ impl Interpreter {
             "ISODD" => self.fn_even_odd(args, ctx, false),
             "DATE" => self.fn_date(args, ctx),
             "TIME" => self.fn_time(args, ctx),
+            "EDATE" => self.fn_edate(args, ctx),
             "EOMONTH" => self.fn_eomonth(args, ctx),
             "NETWORKDAYS" => self.fn_networkdays(args, ctx),
             "WORKDAY" => self.fn_workday(args, ctx),
@@ -1712,6 +1713,24 @@ impl Interpreter {
             Err(e) => return Ok(ExcelValue::Error(e)),
         };
         match time_fraction(h, m, s) {
+            Ok(n) => Ok(ExcelValue::Number(n)),
+            Err(e) => Ok(ExcelValue::Error(e)),
+        }
+    }
+
+    fn fn_edate(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.len() != 2 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        let start = match self.as_number(&self.eval_scalar(&args[0], ctx)?) {
+            Ok(n) => n,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        let months = match self.as_number(&self.eval_scalar(&args[1], ctx)?) {
+            Ok(n) => n,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        match xlsx_engine_core::dates::edate_serial(start, months, ctx.spec.options.date_system) {
             Ok(n) => Ok(ExcelValue::Number(n)),
             Err(e) => Ok(ExcelValue::Error(e)),
         }
