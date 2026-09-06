@@ -36,6 +36,7 @@ pub mod makearray;
 pub mod map;
 pub mod mid;
 pub mod mirr;
+pub mod mround;
 pub mod npv;
 pub mod proper;
 pub mod randarray;

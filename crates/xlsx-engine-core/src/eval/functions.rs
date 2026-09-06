@@ -95,6 +95,7 @@ pub(crate) fn dispatch(
         "CEILING" => fn_floor_ceil(ev, args, ctx, FloorCeil::Ceiling),
         "FLOOR.MATH" => fn_floor_ceil_math(ev, args, ctx, FloorCeil::Floor),
         "CEILING.MATH" => fn_floor_ceil_math(ev, args, ctx, FloorCeil::Ceiling),
+        "MROUND" => super::mround::fn_mround(ev, args, ctx),
         "MOD" => fn_mod(ev, args, ctx),
         "SQRT" => fn_unary_num(ev, args, ctx, |n| {
             if n < 0.0 {
