@@ -695,4 +695,25 @@ mod tests {
             other => panic!("{other:?}"),
         }
     }
+
+    #[test]
+    fn parse_reduce_omitted_initial() {
+        match parse("=REDUCE(,{1,2},LAMBDA(a,b,a+b))").unwrap() {
+            Expr::Call { name, args } => {
+                assert!(name.eq_ignore_ascii_case("REDUCE"));
+                assert_eq!(args.len(), 3);
+                assert!(args[0].is_omitted());
+                match &args[2] {
+                    Expr::Call { name, args } => {
+                        assert!(name.eq_ignore_ascii_case("LAMBDA"));
+                        assert_eq!(args.len(), 3);
+                        assert!(matches!(&args[0], Expr::Name(n) if n == "a"));
+                        assert!(matches!(&args[1], Expr::Name(n) if n == "b"));
+                    }
+                    other => panic!("{other:?}"),
+                }
+            }
+            other => panic!("{other:?}"),
+        }
+    }
 }
