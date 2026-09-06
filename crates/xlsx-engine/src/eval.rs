@@ -942,11 +942,7 @@ impl Interpreter {
         }
         let mut vals: [Option<ExcelValue>; 5] = [None, None, None, None, None];
         for (i, arg) in args.iter().enumerate() {
-            let v = self.eval_scalar(arg, ctx)?;
-            if let ExcelValue::Error(e) = v {
-                return Ok(ExcelValue::Error(e));
-            }
-            vals[i] = Some(v);
+            vals[i] = Some(self.eval_scalar(arg, ctx)?);
         }
         Ok(xlsx_engine_core::excel_randarray(
             vals[0].as_ref(),

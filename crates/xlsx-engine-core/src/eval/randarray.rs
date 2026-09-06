@@ -120,13 +120,11 @@ pub(crate) fn eval(
     if args.len() > 5 {
         return Ok(ExcelValue::Error(ExcelError::Value));
     }
+    // Eager: evaluate every supplied argument (Excel does not skip later
+    // args). Coercion / error selection is left-to-right inside [`apply`].
     let mut vals: [Option<ExcelValue>; 5] = [None, None, None, None, None];
     for (i, arg) in args.iter().enumerate() {
-        let v = ev.eval_scalar(arg, ctx)?;
-        if let ExcelValue::Error(e) = v {
-            return Ok(ExcelValue::Error(e));
-        }
-        vals[i] = Some(v);
+        vals[i] = Some(ev.eval_scalar(arg, ctx)?);
     }
     Ok(apply(
         vals[0].as_ref(),

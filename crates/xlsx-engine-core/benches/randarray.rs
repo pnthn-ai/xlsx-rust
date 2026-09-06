@@ -81,7 +81,7 @@ fn evaluate_bench(rows: u32, cols: u32, integer: bool, iters: u32) {
     let ms = time_ms(iters, || {
         black_box(engine.evaluate(black_box(&spec)).unwrap());
     });
-    println!("evaluate {rows:>5}×{cols:<5}  {ms:.4}ms/call  formula={formula}");
+    println!("evaluate {rows:>5}×{cols:<5}  {ms:.4}ms/call  {formula}");
 }
 
 fn main() {
