@@ -35,6 +35,7 @@ pub mod sortby;
 pub mod sequence;
 pub mod randarray;
 pub mod makearray;
+pub mod bycol;
 pub mod switch;
 pub mod unique;
 pub mod tocol;
@@ -1970,6 +1971,27 @@ mod tests {
         );
         assert_eq!(
             eval_formula_in(&wb, "=MAKEARRAY(0,1,LAMBDA(r,c,1))").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
+        );
+    }
+
+    #[test]
+    fn bycol_sum_and_index() {
+        let wb = Workbook::default();
+        assert_eq!(
+            eval_formula_in(&wb, "=BYCOL({1,2,3;4,5,6},LAMBDA(c,SUM(c)))").unwrap(),
+            ExcelValue::Array(vec![vec![
+                ExcelValue::Number(5.0),
+                ExcelValue::Number(7.0),
+                ExcelValue::Number(9.0),
+            ]])
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=INDEX(BYCOL({1,2;3,4},LAMBDA(c,SUM(c))),1,2)").unwrap(),
+            ExcelValue::Number(6.0)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=BYCOL({1},LAMBDA(r,c,r))").unwrap(),
             ExcelValue::Error(ExcelError::Value)
         );
     }
