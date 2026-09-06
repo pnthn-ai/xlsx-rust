@@ -1344,7 +1344,12 @@ impl Interpreter {
     }
 
     fn fn_abs(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
-        self.fn_unary_num(args, ctx, |n| ExcelValue::Number(n.abs()))
+        if args.len() != 1 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        Ok(xlsx_engine_core::excel_abs_value(
+            &self.eval_scalar(&args[0], ctx)?,
+        ))
     }
 
     fn fn_sign(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {

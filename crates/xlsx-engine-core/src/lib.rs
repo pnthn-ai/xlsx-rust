@@ -12,6 +12,7 @@
 //! - [`eval::concat`] — Excel `CONCAT` (row-major flatten + 32767 UTF-16 cap)
 //! - [`eval::clean`] — Excel `CLEAN` (strip ASCII C0 `0..=31`)
 //! - [`eval::code`] — Excel `CODE` (Windows-1252 first-character code)
+//! - [`eval::abs`] — Excel `ABS` (sign-bit-clear absolute value)
 //! - [`eval::excel_char`] — Excel `CHAR` (Windows-1252, 1..=255)
 //! - [`eval::left`] — Excel `LEFT` (Unicode scalars / Compat v2)
 //! - [`eval::rept`] — Excel `REPT` (repeat + 32767 UTF-16 cap)
@@ -90,6 +91,11 @@ pub use dates::{
     weekday_naive as excel_weekday_naive, weeknum as excel_weeknum,
     weeknum_naive as excel_weeknum_naive, yearfrac as excel_yearfrac,
     yearfrac_naive as excel_yearfrac_naive,
+};
+pub use eval::abs::{
+    abs as excel_abs, abs_naive as excel_abs_naive, abs_slice as excel_abs_slice,
+    abs_slice_naive as excel_abs_slice_naive, abs_value as excel_abs_value,
+    abs_value_naive as excel_abs_value_naive,
 };
 pub use eval::bycol::{
     reduce_fast as excel_bycol, reduce_naive as excel_bycol_naive, ColOp as BycolOp,
