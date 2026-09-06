@@ -1,8 +1,9 @@
 //! Before/after microbench for Excel `ROUND`.
 //!
-//! Compares the textbook two-`powi` baseline with the specialized production
-//! kernel (digit-0 / ±1 / ±2 / ±3 fast paths + table scale) across signed
-//! values, negative `num_digits`, and IEEE leftover snaps.
+//! Compares the first-draft `excel_round_15` + two-`powi` baseline with the
+//! specialized production kernel (digit-0 / ±1 / ±2 / ±3 fast paths + cheap
+//! snap-to-half) across signed values, negative `num_digits`, and IEEE leftover
+//! snaps.
 //!
 //! ```text
 //! cargo bench -p xlsx-engine-core --bench excel_round
@@ -109,7 +110,7 @@ fn fold_fast(values: &[f64], digits: &[i32]) -> f64 {
 }
 
 fn main() {
-    println!("ROUND kernel bench (two-powi baseline vs specialized)");
+    println!("ROUND kernel bench (15-digit snap-then-powi vs specialized)");
     println!(
         "{:<42} {:>12} {:>12} {:>8}",
         "case", "naive", "optimized", "speedup"

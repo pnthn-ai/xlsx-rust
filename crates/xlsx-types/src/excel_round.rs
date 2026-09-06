@@ -18,8 +18,12 @@
 //! and otherwise uses a table of exact `10^e` (e ≤ 22). Negative
 //! `num_digits` divide by the integer `10^|d|` (never multiply by inexact
 //! `0.1`). A 15-significant-digit snap-to-half keeps `ROUND(2.15, 1)` at
-//! `2.2` and `ROUND(1.1, 2)` at `1.1`. The naive path issues two `powi`
-//! calls and has no specialised digits so benches can print a before/after.
+//! `2.2` and `ROUND(1.1, 2)` at `1.1`. The naive path always runs
+//! `excel_round_15` (`log10` / `powi`) on the scaled magnitude plus two
+//! more `powi` calls and has no specialised digits so benches can print
+//! a before/after.
+
+use crate::value::excel_round_15;
 
 /// Exact `10^e` for `e` in `0..=22` (all representable as f64 integers).
 const POW10: [f64; 23] = [
@@ -63,8 +67,9 @@ pub fn excel_round(n: f64, digits: i32) -> f64 {
     }
 }
 
-/// Textbook baseline used by the hill-climb bench: two `powi` calls, no
-/// specialised digit paths. Same 15-digit snap as production so results match.
+/// First-draft kernel: two `powi` calls and a full `excel_round_15` on the
+/// scaled magnitude (`log10` / `powi` / `round`). Same Excel results on
+/// the documented cases; much heavier than the cheap snap + table path.
 #[inline]
 pub fn excel_round_naive(n: f64, digits: i32) -> f64 {
     if !n.is_finite() {
@@ -79,7 +84,7 @@ pub fn excel_round_naive(n: f64, digits: i32) -> f64 {
     let sign = if n < 0.0 { -1.0 } else { 1.0 };
     let mag = n.abs();
     let scaled = if digits >= 0 { mag * p } else { mag / p };
-    let rounded = half_away_mag(scaled);
+    let rounded = (excel_round_15(scaled) + 0.5).floor();
     if digits >= 0 {
         sign * rounded / unscale
     } else {
