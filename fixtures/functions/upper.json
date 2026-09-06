@@ -1,0 +1,360 @@
+[
+  {
+    "id": "fn.upper-microsoft-total",
+    "description": "Microsoft example: UPPER(\"total\") is \"TOTAL\"",
+    "tags": ["text", "upper"],
+    "formula": "=UPPER(\"total\")",
+    "expected": { "text": "TOTAL" }
+  },
+  {
+    "id": "fn.upper-microsoft-mixed",
+    "description": "Microsoft example: UPPER(\"Total\") is \"TOTAL\"",
+    "tags": ["text", "upper"],
+    "formula": "=UPPER(\"Total\")",
+    "expected": { "text": "TOTAL" }
+  },
+  {
+    "id": "fn.upper-empty",
+    "description": "UPPER(\"\") is empty text",
+    "tags": ["text", "upper"],
+    "formula": "=UPPER(\"\")",
+    "expected": { "text": "" }
+  },
+  {
+    "id": "fn.upper-already",
+    "description": "Already-uppercase ASCII is unchanged (identity)",
+    "tags": ["text", "upper"],
+    "formula": "=UPPER(\"ABC\")",
+    "expected": { "text": "ABC" }
+  },
+  {
+    "id": "fn.upper-all-lower",
+    "description": "All-lowercase ASCII becomes uppercase",
+    "tags": ["text", "upper"],
+    "formula": "=UPPER(\"hello\")",
+    "expected": { "text": "HELLO" }
+  },
+  {
+    "id": "fn.upper-single-a",
+    "description": "UPPER(\"a\") is \"A\"",
+    "tags": ["text", "upper"],
+    "formula": "=UPPER(\"a\")",
+    "expected": { "text": "A" }
+  },
+  {
+    "id": "fn.upper-single-z",
+    "description": "UPPER(\"z\") is \"Z\"",
+    "tags": ["text", "upper"],
+    "formula": "=UPPER(\"z\")",
+    "expected": { "text": "Z" }
+  },
+  {
+    "id": "fn.upper-spaces-kept",
+    "description": "Leading/trailing/internal spaces are kept (TRIM is separate)",
+    "tags": ["text", "upper"],
+    "formula": "=UPPER(\"  abc  def  \")",
+    "expected": { "text": "  ABC  DEF  " }
+  },
+  {
+    "id": "fn.upper-punctuation",
+    "description": "Digits and punctuation are unchanged",
+    "tags": ["text", "upper"],
+    "formula": "=UPPER(\"e-mail #1!\")",
+    "expected": { "text": "E-MAIL #1!" }
+  },
+  {
+    "id": "fn.upper-nested",
+    "description": "UPPER is idempotent: UPPER(UPPER(…)) matches UPPER",
+    "tags": ["text", "upper"],
+    "formula": "=UPPER(UPPER(\"AbC\"))",
+    "expected": { "text": "ABC" }
+  },
+  {
+    "id": "fn.upper-len",
+    "description": "LEN(UPPER(\"AbC\")) is 3",
+    "tags": ["text", "upper"],
+    "formula": "=LEN(UPPER(\"AbC\"))",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.upper-exact",
+    "description": "EXACT confirms UPPER result is uppercase",
+    "tags": ["text", "upper"],
+    "formula": "=EXACT(UPPER(\"AbC\"), \"ABC\")",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.upper-concat",
+    "description": "UPPER of concatenated mixed-case pieces",
+    "tags": ["text", "upper"],
+    "formula": "=UPPER(\"ab\"&\"Cd\")",
+    "expected": { "text": "ABCD" }
+  },
+  {
+    "id": "fn.upper-cell",
+    "description": "UPPER of a mixed-case cell",
+    "tags": ["text", "upper"],
+    "formula": "=UPPER(A1)",
+    "expected": { "text": "HELLO" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "Hello" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.upper-blank-cell",
+    "description": "Blank cell coerces like & to empty text",
+    "tags": ["text", "upper", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=UPPER(A1)",
+    "expected": { "text": "" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {}
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.upper-stored-empty",
+    "description": "Stored \"\" stays empty after UPPER",
+    "tags": ["text", "upper"],
+    "formula": "=UPPER(A1)",
+    "expected": { "text": "" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.upper-number",
+    "description": "UPPER(123) coerces to text \"123\"",
+    "tags": ["text", "upper", "coercion"],
+    "formula": "=UPPER(123)",
+    "expected": { "text": "123" }
+  },
+  {
+    "id": "fn.upper-number-decimal",
+    "description": "UPPER(1.5) coerces to \"1.5\"",
+    "tags": ["text", "upper", "coercion"],
+    "formula": "=UPPER(1.5)",
+    "expected": { "text": "1.5" }
+  },
+  {
+    "id": "fn.upper-number-neg",
+    "description": "UPPER(-2) coerces to \"-2\"",
+    "tags": ["text", "upper", "coercion"],
+    "formula": "=UPPER(-2)",
+    "expected": { "text": "-2" }
+  },
+  {
+    "id": "fn.upper-numeric-text",
+    "description": "UPPER of numeric text stays text \"42\"",
+    "tags": ["text", "upper"],
+    "formula": "=UPPER(\"42\")",
+    "expected": { "text": "42" }
+  },
+  {
+    "id": "fn.upper-true",
+    "description": "UPPER(TRUE) coerces to \"TRUE\"",
+    "tags": ["text", "upper", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=UPPER(TRUE)",
+    "expected": { "text": "TRUE" }
+  },
+  {
+    "id": "fn.upper-false",
+    "description": "UPPER(FALSE) coerces to \"FALSE\"",
+    "tags": ["text", "upper", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=UPPER(FALSE)",
+    "expected": { "text": "FALSE" }
+  },
+  {
+    "id": "fn.upper-tab-kept",
+    "description": "Tab is not a letter and is kept",
+    "tags": ["text", "upper"],
+    "formula": "=UPPER(A1)",
+    "expected": { "text": "\tA\t" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "\ta\t" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.upper-lf-kept",
+    "description": "Line feed is kept; surrounding letters uppercased",
+    "tags": ["text", "upper"],
+    "formula": "=UPPER(A1)",
+    "expected": { "text": "A\nB" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "a\nb" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.upper-unicode-cafe",
+    "description": "Precomposed é uppercases to É (Unicode default, en-US Excel)",
+    "tags": ["text", "upper"],
+    "formula": "=UPPER(\"café\")",
+    "expected": { "text": "CAFÉ" }
+  },
+  {
+    "id": "fn.upper-unicode-nino",
+    "description": "ñ uppercases to Ñ",
+    "tags": ["text", "upper"],
+    "formula": "=UPPER(\"niño\")",
+    "expected": { "text": "NIÑO" }
+  },
+  {
+    "id": "fn.upper-unicode-uber",
+    "description": "ü uppercases to Ü",
+    "tags": ["text", "upper"],
+    "formula": "=UPPER(\"über\")",
+    "expected": { "text": "ÜBER" }
+  },
+  {
+    "id": "fn.upper-unicode-already",
+    "description": "Already-uppercase accented Latin is identity",
+    "tags": ["text", "upper"],
+    "formula": "=UPPER(\"CAFÉ\")",
+    "expected": { "text": "CAFÉ" }
+  },
+  {
+    "id": "fn.upper-sharp-s",
+    "description": "Microsoft: UPPER does not convert ß to SS",
+    "tags": ["text", "upper"],
+    "formula": "=UPPER(\"ß\")",
+    "expected": { "text": "ß" }
+  },
+  {
+    "id": "fn.upper-strasse",
+    "description": "straße → STRAßE (ASCII letters only; ß kept)",
+    "tags": ["text", "upper"],
+    "formula": "=UPPER(\"straße\")",
+    "expected": { "text": "STRAßE" }
+  },
+  {
+    "id": "fn.upper-cjk",
+    "description": "Uncased CJK scalars are unchanged",
+    "tags": ["text", "upper"],
+    "formula": "=UPPER(\"日本語\")",
+    "expected": { "text": "日本語" }
+  },
+  {
+    "id": "fn.upper-emoji",
+    "description": "Emoji scalars stay; ASCII letters uppercased",
+    "tags": ["text", "upper"],
+    "formula": "=UPPER(A1)",
+    "expected": { "text": "😀ABC🎉" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "😀abc🎉" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.upper-greek",
+    "description": "Greek lowercase follows Unicode default uppercase",
+    "tags": ["text", "upper"],
+    "formula": "=UPPER(\"αβγ\")",
+    "expected": { "text": "ΑΒΓ" }
+  },
+  {
+    "id": "fn.upper-implicit-intersect",
+    "description": "UPPER(A1:A3) from host B1 uses implicit intersection (same row → A1)",
+    "tags": ["text", "upper"],
+    "quirks": ["implicit-intersection"],
+    "at": "Sheet1!B1",
+    "formula": "=UPPER(A1:A3)",
+    "expected": { "text": "ONE" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "one" },
+            "A2": { "text": "two" },
+            "A3": { "text": "three" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.upper-err-div0",
+    "description": "Error argument propagates #DIV/0!",
+    "tags": ["text", "upper", "errors"],
+    "formula": "=UPPER(1/0)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.upper-err-na",
+    "description": "NA() propagates #N/A",
+    "tags": ["text", "upper", "errors"],
+    "formula": "=UPPER(NA())",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.upper-err-cell",
+    "description": "Error in the referenced cell propagates",
+    "tags": ["text", "upper", "errors"],
+    "formula": "=UPPER(A1)",
+    "expected": { "error": "#VALUE!" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "error": "#VALUE!" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.upper-arity-zero",
+    "description": "UPPER() with no arguments is #VALUE!",
+    "tags": ["text", "upper", "errors"],
+    "formula": "=UPPER()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.upper-arity-two",
+    "description": "UPPER with two arguments is #VALUE!",
+    "tags": ["text", "upper", "errors"],
+    "formula": "=UPPER(\"a\",\"b\")",
+    "expected": { "error": "#VALUE!" }
+  }
+]

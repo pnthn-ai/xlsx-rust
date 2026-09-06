@@ -1346,7 +1346,7 @@ fn fn_case(
         Ok(s) => Ok(ExcelValue::Text(if lower {
             s.to_ascii_lowercase()
         } else {
-            s.to_ascii_uppercase()
+            super::upper::upper(&s)
         })),
         Err(e) => Ok(ExcelValue::Error(e)),
     }
