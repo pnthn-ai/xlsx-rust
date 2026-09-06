@@ -368,3 +368,7 @@ harness = false
 name = "left"
 harness = false
 
+[[bench]]
+name = "right"
+harness = false
+

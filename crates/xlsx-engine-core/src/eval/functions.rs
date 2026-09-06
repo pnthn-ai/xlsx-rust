@@ -144,7 +144,7 @@ pub(crate) fn dispatch(
         "DAYS360" => fn_days360(ev, args, ctx),
         "YEARFRAC" => fn_yearfrac(ev, args, ctx),
         "LEFT" => super::left::fn_left(ev, args, ctx),
-        "RIGHT" => fn_left_right(ev, args, ctx, false),
+        "RIGHT" => super::right::fn_right(ev, args, ctx),
         "MID" => fn_mid(ev, args, ctx),
         "LEN" => super::len::fn_len(ev, args, ctx),
         "UNICODE" => super::unicode::fn_unicode(ev, args, ctx),
