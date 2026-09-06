@@ -65,6 +65,10 @@ name = "roundup_rounddown"
 harness = false
 
 [[bench]]
+name = "roundup"
+harness = false
+
+[[bench]]
 name = "concat"
 harness = false
 

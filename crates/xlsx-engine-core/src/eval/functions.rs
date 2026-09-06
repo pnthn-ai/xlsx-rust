@@ -89,8 +89,8 @@ pub(crate) fn dispatch(
         "INT" => fn_unary_num(ev, args, ctx, |n| ExcelValue::Number(excel_int(n))),
         "TRUNC" => fn_trunc(ev, args, ctx),
         "ROUND" => fn_round(ev, args, ctx),
-        "ROUNDUP" => fn_round_dir(ev, args, ctx, RoundDir::Up),
-        "ROUNDDOWN" => fn_round_dir(ev, args, ctx, RoundDir::Down),
+        "ROUNDUP" => super::roundup::fn_roundup(ev, args, ctx),
+        "ROUNDDOWN" => fn_round_dir(ev, args, ctx),
         "FLOOR" => fn_floor_ceil(ev, args, ctx, FloorCeil::Floor),
         "CEILING" => fn_floor_ceil(ev, args, ctx, FloorCeil::Ceiling),
         "FLOOR.MATH" => fn_floor_ceil_math(ev, args, ctx, FloorCeil::Floor),
@@ -789,18 +789,7 @@ fn fn_round(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelVal
     Ok(ExcelValue::Number(excel_round(n, digits)))
 }
 
-#[derive(Clone, Copy)]
-enum RoundDir {
-    Up,
-    Down,
-}
-
-fn fn_round_dir(
-    ev: &Evaluator,
-    args: &[Expr],
-    ctx: &mut Ctx<'_>,
-    dir: RoundDir,
-) -> Result<ExcelValue, EvalError> {
+fn fn_round_dir(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
     if args.len() != 2 {
         return Ok(ExcelValue::Error(ExcelError::Value));
     }
@@ -812,11 +801,7 @@ fn fn_round_dir(
         Ok(d) => d.trunc() as i32,
         Err(e) => return Ok(ExcelValue::Error(e)),
     };
-    let out = match dir {
-        RoundDir::Up => super::round::roundup(n, digits),
-        RoundDir::Down => super::round::rounddown(n, digits),
-    };
-    Ok(ExcelValue::Number(out))
+    Ok(ExcelValue::Number(super::round::rounddown(n, digits)))
 }
 
 fn fn_mod(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
