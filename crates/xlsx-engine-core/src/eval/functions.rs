@@ -160,6 +160,7 @@ pub(crate) fn dispatch(
         "TEXTBEFORE" => fn_textbefore(ev, args, ctx),
         "CONCAT" => super::concat::fn_concat(ev, args, ctx),
         "REPT" => super::rept::fn_rept(ev, args, ctx),
+        "UNICHAR" | "_XLFN.UNICHAR" => super::unichar::fn_unichar(ev, args, ctx),
         "NPV" => super::npv::eval(ev, args, ctx),
         "UNIQUE" => super::unique::eval(ev, args, ctx),
         "TOCOL" => super::tocol::eval(ev, args, ctx),

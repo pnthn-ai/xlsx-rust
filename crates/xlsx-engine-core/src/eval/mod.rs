@@ -55,6 +55,7 @@ pub mod textsplit;
 pub mod tocol;
 pub mod torow;
 pub mod trim;
+pub mod unichar;
 pub mod unique;
 pub mod upper;
 pub mod vstack;

@@ -464,6 +464,7 @@ impl Interpreter {
             "TEXTJOIN" => self.fn_textjoin(args, ctx),
             "CONCAT" => self.fn_concat(args, ctx),
             "REPT" => self.fn_rept(args, ctx),
+            "UNICHAR" | "_XLFN.UNICHAR" => self.fn_unichar(args, ctx),
             "NPV" => self.fn_npv(args, ctx),
             "UNIQUE" => self.fn_unique(args, ctx),
             "IRR" => self.fn_irr(args, ctx),
@@ -2030,6 +2031,19 @@ impl Interpreter {
         };
         match xlsx_engine_core::excel_rept(&text, times) {
             Ok(s) => Ok(ExcelValue::Text(s)),
+            Err(e) => Ok(ExcelValue::Error(e)),
+        }
+    }
+
+    fn fn_unichar(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.len() != 1 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        match self.as_number(&self.eval_scalar(&args[0], ctx)?) {
+            Ok(n) => match xlsx_engine_core::excel_unichar(n) {
+                Ok(s) => Ok(ExcelValue::Text(s)),
+                Err(e) => Ok(ExcelValue::Error(e)),
+            },
             Err(e) => Ok(ExcelValue::Error(e)),
         }
     }

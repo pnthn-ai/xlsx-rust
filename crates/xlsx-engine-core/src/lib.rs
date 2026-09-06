@@ -174,6 +174,7 @@ pub use eval::torow::{
     parse_ignore as parse_torow_ignore, TorowIgnore,
 };
 pub use eval::trim::{trim as excel_trim, trim_naive as excel_trim_naive};
+pub use eval::unichar::{unichar as excel_unichar, unichar_naive as excel_unichar_naive};
 pub use eval::unique::{unique_apply, unique_apply_naive, unique_eq};
 pub use eval::upper::{upper as excel_upper, upper_naive as excel_upper_naive};
 pub use eval::vstack::{
