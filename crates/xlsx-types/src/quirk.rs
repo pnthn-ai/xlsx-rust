@@ -58,6 +58,8 @@ pub enum QuirkCategory {
     /// `FILTER` / `CHOOSEROWS` return an array value; worksheet spill / `#SPILL!` is not modeled.
     /// `FILTER` / `UNIQUE` / `TEXTSPLIT` return an array value; worksheet
     /// spill / `#SPILL!` is not modeled. TEXTSPLIT pad cells are `#N/A`.
+    /// `MAP` returns an array value; worksheet spill / `#SPILL!` is not
+    /// modeled. Unequal MAP arrays union-pad with `#N/A` (no broadcast).
     ArrayEvalMode,
     /// Volatile functions (`NOW`, `RAND`, `RANDARRAY`, `INDIRECT`, …).
     Volatile,

@@ -695,4 +695,24 @@ mod tests {
             other => panic!("{other:?}"),
         }
     }
+
+    #[test]
+    fn parse_map_lambda() {
+        match parse("=MAP({1,2},LAMBDA(x,x*2))").unwrap() {
+            Expr::Call { name, args } => {
+                assert!(name.eq_ignore_ascii_case("MAP"));
+                assert_eq!(args.len(), 2);
+                assert!(matches!(&args[0], Expr::Array(_)));
+                match &args[1] {
+                    Expr::Call { name, args } => {
+                        assert!(name.eq_ignore_ascii_case("LAMBDA"));
+                        assert_eq!(args.len(), 2);
+                        assert!(matches!(&args[0], Expr::Name(n) if n == "x"));
+                    }
+                    other => panic!("{other:?}"),
+                }
+            }
+            other => panic!("{other:?}"),
+        }
+    }
 }

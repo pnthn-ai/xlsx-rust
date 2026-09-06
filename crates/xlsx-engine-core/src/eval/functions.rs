@@ -64,6 +64,7 @@ pub(crate) fn dispatch(
         "DROP" => super::drop::eval(ev, args, ctx),
         "CHOOSEROWS" => fn_chooserows(ev, args, ctx),
         "MAKEARRAY" | "_XLFN.MAKEARRAY" => fn_makearray(ev, args, ctx),
+        "MAP" | "_XLFN.MAP" => super::map::eval(ev, args, ctx),
         "LAMBDA" | "_XLFN.LAMBDA" => Ok(ExcelValue::Error(ExcelError::Calc)),
         "INDEX" => fn_index(ev, args, ctx),
         "MATCH" => fn_match(ev, args, ctx),
@@ -453,6 +454,8 @@ fn fn_hlookup(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelV
 ///
 /// Third argument is inspected as a LAMBDA (inline or defined name), not
 /// evaluated as a worksheet value. See [`super::makearray`].
+///
+/// Excel `MAP(array1, [array2, …], LAMBDA(…))` lives in [`super::map`].
 fn fn_makearray(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
     if args.len() != 3 {
         return Ok(ExcelValue::Error(ExcelError::Value));

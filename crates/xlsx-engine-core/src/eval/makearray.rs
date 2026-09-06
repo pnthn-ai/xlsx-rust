@@ -25,8 +25,8 @@
 //!
 //! - The engine returns an [`ExcelValue::Array`]; it does **not** write a
 //!   spill range. Occupied neighbors never produce `#SPILL!`.
-//! - Bare `LAMBDA(...)` (not consumed by `MAKEARRAY`) is `#CALC!` — this
-//!   engine has no first-class function value.
+//! - Bare `LAMBDA(...)` (not consumed by `MAKEARRAY` / `MAP`) is `#CALC!` —
+//!   this engine has no first-class function value.
 //! - Immediately-invoked `LAMBDA(...)(args)` is not parsed.
 //! - Parameter names that tokenize as A1 refs (`A1`, `R1C1`-looking cells)
 //!   are not supported.
@@ -131,19 +131,34 @@ pub(crate) fn resolve_lambda(
     expr: &Expr,
     ctx: &Ctx<'_>,
 ) -> Result<(String, String, Expr), ExcelError> {
-    resolve_lambda_depth(expr, ctx, 0)
+    let (params, body) = resolve_lambda_any(expr, ctx)?;
+    match params.as_slice() {
+        [row, col] => Ok((row.clone(), col.clone(), body)),
+        _ => Err(ExcelError::Value),
+    }
 }
 
-fn resolve_lambda_depth(
+/// Extract `LAMBDA(p1, …, pN, body)` (N ≥ 0) from an inline call or name.
+///
+/// Shared by MAKEARRAY (exactly two parameters) and MAP (one parameter per
+/// array). A missing body, a non-name parameter, or a non-LAMBDA is `#VALUE!`.
+pub(crate) fn resolve_lambda_any(
+    expr: &Expr,
+    ctx: &Ctx<'_>,
+) -> Result<(Vec<String>, Expr), ExcelError> {
+    resolve_lambda_any_depth(expr, ctx, 0)
+}
+
+fn resolve_lambda_any_depth(
     expr: &Expr,
     ctx: &Ctx<'_>,
     depth: usize,
-) -> Result<(String, String, Expr), ExcelError> {
+) -> Result<(Vec<String>, Expr), ExcelError> {
     if depth > 16 {
         return Err(ExcelError::Value);
     }
     match expr {
-        Expr::Call { name, args } if is_lambda_name(name) => lambda_params(args),
+        Expr::Call { name, args } if is_lambda_name(name) => split_lambda(args),
         Expr::Name(n) => {
             let def = ctx
                 .spec
@@ -151,19 +166,21 @@ fn resolve_lambda_depth(
                 .defined_name(n)
                 .map_err(|_| ExcelError::Value)?;
             let ast = parse(&def.refers_to).map_err(|_| ExcelError::Value)?;
-            resolve_lambda_depth(&ast, ctx, depth + 1)
+            resolve_lambda_any_depth(&ast, ctx, depth + 1)
         }
         _ => Err(ExcelError::Value),
     }
 }
 
-fn lambda_params(args: &[Expr]) -> Result<(String, String, Expr), ExcelError> {
-    if args.len() != 3 {
+fn split_lambda(args: &[Expr]) -> Result<(Vec<String>, Expr), ExcelError> {
+    if args.is_empty() {
         return Err(ExcelError::Value);
     }
-    let row = param_name(&args[0]).ok_or(ExcelError::Value)?;
-    let col = param_name(&args[1]).ok_or(ExcelError::Value)?;
-    Ok((row, col, args[2].clone()))
+    let mut params = Vec::with_capacity(args.len() - 1);
+    for p in &args[..args.len() - 1] {
+        params.push(param_name(p).ok_or(ExcelError::Value)?);
+    }
+    Ok((params, args[args.len() - 1].clone()))
 }
 
 fn param_name(expr: &Expr) -> Option<String> {
