@@ -446,6 +446,7 @@ impl Interpreter {
             "LOWER" => self.fn_case(args, ctx, true),
             "UPPER" => self.fn_case(args, ctx, false),
             "TRIM" => self.fn_trim(args, ctx),
+            "CLEAN" => self.fn_clean(args, ctx),
             "EXACT" => self.fn_exact(args, ctx),
             "FIND" => self.fn_find(args, ctx),
             "SEARCH" => self.fn_search(args, ctx),
@@ -1918,6 +1919,16 @@ impl Interpreter {
                 }
                 Ok(ExcelValue::Text(out))
             }
+            Err(e) => Ok(ExcelValue::Error(e)),
+        }
+    }
+
+    fn fn_clean(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.len() != 1 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        match self.as_text(&self.eval_scalar(&args[0], ctx)?) {
+            Ok(s) => Ok(ExcelValue::Text(xlsx_engine_core::excel_clean(&s))),
             Err(e) => Ok(ExcelValue::Error(e)),
         }
     }

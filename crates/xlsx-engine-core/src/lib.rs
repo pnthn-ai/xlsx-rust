@@ -7,8 +7,9 @@
 //! - [`eval::functions`] — worksheet functions used by the expanded corpus
 //! - [`eval::textbefore`] — Excel `TEXTBEFORE` (nth delimiter, match_end / if_not_found)
 //! - [`text_format`] — Excel `TEXT` for a documented number/date format subset
-//! - [`eval::functions`] also dispatches `SUMIF` / `COUNTIF` / `COUNTIFS` / `SUMPRODUCT` / `SUBSTITUTE`
+//! - [`eval::functions`] also dispatches `SUMIF` / `COUNTIF` / `COUNTIFS` / `SUMPRODUCT` / `SUBSTITUTE` / `CLEAN`
 //! - [`eval::concat`] — Excel `CONCAT` (range/array flatten + 32767 cap)
+//! - [`eval::clean`] — Excel `CLEAN` (strip ASCII C0 `0..=31`)
 //! - [`dates::weekday`] — O(1) Excel `WEEKDAY` on the date serial
 //! - [`dates::yearfrac`] — Excel `YEARFRAC` day-count bases 0–4
 //! - [`dates::workday_serial_intl`] — O(1) Excel `WORKDAY.INTL` weekend mask
@@ -64,6 +65,7 @@ pub use dates::{
 };
 pub use eval::choosecols::{select as excel_choosecols, select_naive as excel_choosecols_naive};
 pub use eval::chooserows::{select as excel_chooserows, select_naive as excel_chooserows_naive};
+pub use eval::clean::{clean as excel_clean, clean_naive as excel_clean_naive};
 pub use eval::concat::{concat_naive_join, eval_concat_formula, ConcatBuilder, CONCAT_MAX_CHARS};
 pub use eval::drop::{apply as excel_drop, apply_naive as excel_drop_naive};
 pub use eval::expand::{

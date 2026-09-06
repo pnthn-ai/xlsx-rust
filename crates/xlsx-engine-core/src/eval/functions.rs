@@ -138,6 +138,7 @@ pub(crate) fn dispatch(
         "LOWER" => fn_case(ev, args, ctx, true),
         "UPPER" => fn_case(ev, args, ctx, false),
         "TRIM" => fn_trim(ev, args, ctx),
+        "CLEAN" => fn_clean(ev, args, ctx),
         "EXACT" => fn_exact(ev, args, ctx),
         "FIND" => fn_find(ev, args, ctx),
         "SEARCH" => fn_search(ev, args, ctx),
@@ -1373,6 +1374,16 @@ fn fn_trim(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValu
             }
             Ok(ExcelValue::Text(out))
         }
+        Err(e) => Ok(ExcelValue::Error(e)),
+    }
+}
+
+fn fn_clean(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    if args.len() != 1 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    match coerce::to_text(&ev.eval_scalar(&args[0], ctx)?) {
+        Ok(s) => Ok(ExcelValue::Text(super::clean::clean_owned(s))),
         Err(e) => Ok(ExcelValue::Error(e)),
     }
 }
