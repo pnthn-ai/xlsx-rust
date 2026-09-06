@@ -1,0 +1,440 @@
+[
+  {
+    "id": "fn.rounddown-help-3.2",
+    "description": "Microsoft: ROUNDDOWN(3.2, 0) is 3",
+    "tags": ["math", "rounddown"],
+    "formula": "=ROUNDDOWN(3.2, 0)",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.rounddown-help-76.9",
+    "description": "Microsoft: ROUNDDOWN(76.9, 0) is 76",
+    "tags": ["math", "rounddown"],
+    "formula": "=ROUNDDOWN(76.9, 0)",
+    "expected": { "number": 76 }
+  },
+  {
+    "id": "fn.rounddown-help-pi-3",
+    "description": "Microsoft: ROUNDDOWN(3.14159, 3) is 3.141",
+    "tags": ["math", "rounddown"],
+    "formula": "=ROUNDDOWN(3.14159, 3)",
+    "expected": { "number": 3.141 }
+  },
+  {
+    "id": "fn.rounddown-help-neg-pi",
+    "description": "Microsoft: ROUNDDOWN(-3.14159, 1) is -3.1 (toward zero)",
+    "tags": ["math", "rounddown"],
+    "formula": "=ROUNDDOWN(-3.14159, 1)",
+    "expected": { "number": -3.1 }
+  },
+  {
+    "id": "fn.rounddown-help-neg-digits",
+    "description": "Microsoft: ROUNDDOWN(31415.92654, -2) is 31400",
+    "tags": ["math", "rounddown"],
+    "formula": "=ROUNDDOWN(31415.92654, -2)",
+    "expected": { "number": 31400 }
+  },
+  {
+    "id": "fn.rounddown-omitted-pos",
+    "description": "Omitted num_digits defaults to 0: ROUNDDOWN(3.2) is 3",
+    "tags": ["math", "rounddown"],
+    "formula": "=ROUNDDOWN(3.2)",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.rounddown-omitted-neg",
+    "description": "Omitted num_digits: ROUNDDOWN(-3.2) is -3 (toward zero)",
+    "tags": ["math", "rounddown"],
+    "formula": "=ROUNDDOWN(-3.2)",
+    "expected": { "number": -3 }
+  },
+  {
+    "id": "fn.rounddown-omitted-eq-zero",
+    "description": "ROUNDDOWN(76.9) equals ROUNDDOWN(76.9, 0)",
+    "tags": ["math", "rounddown"],
+    "formula": "=ROUNDDOWN(76.9)=ROUNDDOWN(76.9, 0)",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.rounddown-omitted-eq-trunc",
+    "description": "ROUNDDOWN(n) matches TRUNC(n) when num_digits is omitted",
+    "tags": ["math", "rounddown"],
+    "formula": "=ROUNDDOWN(-3.2)=TRUNC(-3.2)",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.rounddown-trailing-comma",
+    "description": "Trailing-comma omitted slot is 0: ROUNDDOWN(-3.2,) is -3",
+    "tags": ["math", "rounddown"],
+    "formula": "=ROUNDDOWN(-3.2,)",
+    "expected": { "number": -3 }
+  },
+  {
+    "id": "fn.rounddown-toward-neg-half",
+    "description": "ROUNDDOWN(-0.5, 0) is 0 — toward zero, not INT (−1)",
+    "tags": ["math", "rounddown"],
+    "formula": "=ROUNDDOWN(-0.5, 0)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.rounddown-vs-int-neg",
+    "description": "ROUNDDOWN(-8.9, 0) is -8 while INT(-8.9) is -9",
+    "tags": ["math", "rounddown"],
+    "formula": "=ROUNDDOWN(-8.9, 0)-INT(-8.9)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.rounddown-pos-below-one",
+    "description": "ROUNDDOWN(0.99, 0) is 0",
+    "tags": ["math", "rounddown"],
+    "formula": "=ROUNDDOWN(0.99, 0)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.rounddown-neg-below-one",
+    "description": "ROUNDDOWN(-0.99, 0) is 0 (toward zero)",
+    "tags": ["math", "rounddown"],
+    "formula": "=ROUNDDOWN(-0.99, 0)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.rounddown-already-int",
+    "description": "ROUNDDOWN(8, 0) is 8 — already an integer, identity",
+    "tags": ["math", "rounddown"],
+    "formula": "=ROUNDDOWN(8, 0)",
+    "expected": { "number": 8 }
+  },
+  {
+    "id": "fn.rounddown-already-neg-int",
+    "description": "ROUNDDOWN(-3, 0) is -3",
+    "tags": ["math", "rounddown"],
+    "formula": "=ROUNDDOWN(-3, 0)",
+    "expected": { "number": -3 }
+  },
+  {
+    "id": "fn.rounddown-cents",
+    "description": "ROUNDDOWN(1.239, 2) is 1.23",
+    "tags": ["math", "rounddown"],
+    "formula": "=ROUNDDOWN(1.239, 2)",
+    "expected": { "number": 1.23 }
+  },
+  {
+    "id": "fn.rounddown-neg-cents",
+    "description": "ROUNDDOWN(-1.239, 2) is -1.23",
+    "tags": ["math", "rounddown"],
+    "formula": "=ROUNDDOWN(-1.239, 2)",
+    "expected": { "number": -1.23 }
+  },
+  {
+    "id": "fn.rounddown-thousands",
+    "description": "ROUNDDOWN(2785.2, -3) is 2000",
+    "tags": ["math", "rounddown"],
+    "formula": "=ROUNDDOWN(2785.2, -3)",
+    "expected": { "number": 2000 }
+  },
+  {
+    "id": "fn.rounddown-neg-thousands",
+    "description": "ROUNDDOWN(-2785.2, -3) is -2000",
+    "tags": ["math", "rounddown"],
+    "formula": "=ROUNDDOWN(-2785.2, -3)",
+    "expected": { "number": -2000 }
+  },
+  {
+    "id": "fn.rounddown-help-889",
+    "description": "Microsoft significant-digit example: ROUNDDOWN(-889, -1) is -880",
+    "tags": ["math", "rounddown"],
+    "formula": "=ROUNDDOWN(-889, -1)",
+    "expected": { "number": -880 }
+  },
+  {
+    "id": "fn.rounddown-help-2345678",
+    "description": "Microsoft: ROUNDDOWN(2345678, -4) is 2340000",
+    "tags": ["math", "rounddown"],
+    "formula": "=ROUNDDOWN(2345678, -4)",
+    "expected": { "number": 2340000 }
+  },
+  {
+    "id": "fn.rounddown-ieee-1.15",
+    "description": "ROUNDDOWN(1.15, 2) stays 1.15 — binary 114.999… must not drop",
+    "tags": ["math", "rounddown"],
+    "quirks": ["ieee-vs-excel-precision"],
+    "formula": "=ROUNDDOWN(1.15, 2)",
+    "expected": { "number": 1.15 }
+  },
+  {
+    "id": "fn.rounddown-ieee-1.1",
+    "description": "ROUNDDOWN(1.1, 2) stays 1.1 — binary leftover must not drop",
+    "tags": ["math", "rounddown"],
+    "quirks": ["ieee-vs-excel-precision"],
+    "formula": "=ROUNDDOWN(1.1, 2)",
+    "expected": { "number": 1.1 }
+  },
+  {
+    "id": "fn.rounddown-ieee-15digit-int",
+    "description": "ROUNDDOWN(7-1E-15, 0) stays 7 — Excel 15-digit leftover is not a fraction",
+    "tags": ["math", "rounddown"],
+    "quirks": ["ieee-vs-excel-precision"],
+    "formula": "=ROUNDDOWN(7-1E-15, 0)",
+    "expected": { "number": 7 }
+  },
+  {
+    "id": "fn.rounddown-digits-frac",
+    "description": "num_digits 2.9 truncates toward zero to 2",
+    "tags": ["math", "rounddown"],
+    "formula": "=ROUNDDOWN(3.14159, 2.9)",
+    "expected": { "number": 3.14 }
+  },
+  {
+    "id": "fn.rounddown-digits-neg-frac",
+    "description": "num_digits -1.9 truncates toward zero to -1",
+    "tags": ["math", "rounddown"],
+    "formula": "=ROUNDDOWN(123, -1.9)",
+    "expected": { "number": 120 }
+  },
+  {
+    "id": "fn.rounddown-text-pos",
+    "description": "Numeric text is coerced: ROUNDDOWN(\"76.9\", 0) is 76",
+    "tags": ["math", "rounddown", "coercion"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=ROUNDDOWN(\"76.9\", 0)",
+    "expected": { "number": 76 }
+  },
+  {
+    "id": "fn.rounddown-text-neg",
+    "description": "ROUNDDOWN(\"-3.2\", 0) is -3",
+    "tags": ["math", "rounddown", "coercion"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=ROUNDDOWN(\"-3.2\", 0)",
+    "expected": { "number": -3 }
+  },
+  {
+    "id": "fn.rounddown-text-ws",
+    "description": "ROUNDDOWN trims numeric text: ROUNDDOWN(\"  76.9  \", 0) is 76",
+    "tags": ["math", "rounddown", "coercion"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=ROUNDDOWN(\"  76.9  \", 0)",
+    "expected": { "number": 76 }
+  },
+  {
+    "id": "fn.rounddown-text-bad",
+    "description": "Non-numeric text is #VALUE!",
+    "tags": ["math", "rounddown", "errors"],
+    "formula": "=ROUNDDOWN(\"x\", 0)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.rounddown-empty-string",
+    "description": "ROUNDDOWN(\"\", 0) is #VALUE! — empty text is not numeric",
+    "tags": ["math", "rounddown", "errors"],
+    "formula": "=ROUNDDOWN(\"\", 0)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.rounddown-true",
+    "description": "TRUE coerces to 1; ROUNDDOWN(TRUE, -1) is 0",
+    "tags": ["math", "rounddown", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=ROUNDDOWN(TRUE, -1)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.rounddown-false",
+    "description": "FALSE coerces to 0",
+    "tags": ["math", "rounddown", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=ROUNDDOWN(FALSE, 2)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.rounddown-percent-pos",
+    "description": "ROUNDDOWN(150%, 0) is ROUNDDOWN(1.5, 0) = 1",
+    "tags": ["math", "rounddown"],
+    "quirks": ["percent-unary"],
+    "formula": "=ROUNDDOWN(150%, 0)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.rounddown-percent-neg",
+    "description": "ROUNDDOWN(-150%, 0) is -1 (toward zero)",
+    "tags": ["math", "rounddown"],
+    "quirks": ["percent-unary"],
+    "formula": "=ROUNDDOWN(-150%, 0)",
+    "expected": { "number": -1 }
+  },
+  {
+    "id": "fn.rounddown-blank-number",
+    "description": "Blank number cell coerces to 0",
+    "tags": ["math", "rounddown", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=ROUNDDOWN(A1, 2)",
+    "expected": { "number": 0 },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.rounddown-blank-digits-omitted",
+    "description": "Blank num_digits cell coerces to 0 — same as omitted",
+    "tags": ["math", "rounddown", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=ROUNDDOWN(3.2, A1)",
+    "expected": { "number": 3 },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.rounddown-arity-zero",
+    "description": "ROUNDDOWN() is #VALUE!",
+    "tags": ["math", "rounddown", "errors"],
+    "formula": "=ROUNDDOWN()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.rounddown-arity-three",
+    "description": "Three arguments is #VALUE!",
+    "tags": ["math", "rounddown", "errors"],
+    "formula": "=ROUNDDOWN(3.2, 0, 1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.rounddown-err-number",
+    "description": "Error in number propagates",
+    "tags": ["math", "rounddown", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=ROUNDDOWN(1/0, 0)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.rounddown-err-digits-na",
+    "description": "Error in num_digits propagates",
+    "tags": ["math", "rounddown", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=ROUNDDOWN(3.2, NA())",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.rounddown-err-left-wins",
+    "description": "Left-to-right: number error beats a later #N/A",
+    "tags": ["math", "rounddown", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=ROUNDDOWN(#DIV/0!, #N/A)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.rounddown-err-right-only",
+    "description": "Left-to-right: clean number, digits error is #N/A",
+    "tags": ["math", "rounddown", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=ROUNDDOWN(3.2, #N/A)",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.rounddown-eq-trunc-digits",
+    "description": "ROUNDDOWN(n, d) matches TRUNC(n, d)",
+    "tags": ["math", "rounddown"],
+    "formula": "=ROUNDDOWN(-3.14159, 2)=TRUNC(-3.14159, 2)",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.rounddown-cell-frac",
+    "description": "ROUNDDOWN of a cell holding 76.9 is 76",
+    "tags": ["math", "rounddown"],
+    "formula": "=ROUNDDOWN(A1, 0)",
+    "expected": { "number": 76 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "number": 76.9 }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.rounddown-cell-neg",
+    "description": "ROUNDDOWN of a cell holding -3.14159 to 1 digit is -3.1",
+    "tags": ["math", "rounddown"],
+    "formula": "=ROUNDDOWN(A1, 1)",
+    "expected": { "number": -3.1 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "number": -3.14159 }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.rounddown-named",
+    "description": "ROUNDDOWN of a defined name holding 3.14159 to 3 digits is 3.141",
+    "tags": ["math", "rounddown"],
+    "formula": "=ROUNDDOWN(Amt, 3)",
+    "expected": { "number": 3.141 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "number": 3.14159 }
+          }
+        }
+      ],
+      "names": [{ "name": "Amt", "refers_to": "Sheet1!A1" }]
+    }
+  },
+  {
+    "id": "fn.rounddown-implicit-intersect",
+    "description": "ROUNDDOWN(A1:A3, 0) from host B2 uses implicit intersection (A2 = -3.2 → -3)",
+    "tags": ["math", "rounddown"],
+    "quirks": ["implicit-intersection"],
+    "at": "Sheet1!B2",
+    "formula": "=ROUNDDOWN(A1:A3, 0)",
+    "expected": { "number": -3 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "number": 3.2 },
+            "A2": { "number": -3.2 },
+            "A3": { "number": 76.9 }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.rounddown-array-literal",
+    "description": "Scalar ROUNDDOWN takes the top-left of an array literal: ROUNDDOWN({3.2,-3.2}, 0) is 3",
+    "tags": ["math", "rounddown"],
+    "formula": "=ROUNDDOWN({3.2,-3.2}, 0)",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.rounddown-datetime",
+    "description": "ROUNDDOWN of a date+time serial keeps the civil day (2012-01-01 = 40909)",
+    "tags": ["math", "rounddown", "dates"],
+    "formula": "=ROUNDDOWN(DATE(2012,1,1)+0.75, 0)",
+    "expected": { "number": 40909 }
+  },
+  {
+    "id": "fn.rounddown-zero-neg-digits",
+    "description": "ROUNDDOWN(0, -2) is 0",
+    "tags": ["math", "rounddown"],
+    "formula": "=ROUNDDOWN(0, -2)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.rounddown-sci",
+    "description": "ROUNDDOWN(1.239E+3, -2) is 1200",
+    "tags": ["math", "rounddown"],
+    "formula": "=ROUNDDOWN(1.239E+3, -2)",
+    "expected": { "number": 1200 }
+  }
+]
