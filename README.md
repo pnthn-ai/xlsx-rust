@@ -285,7 +285,7 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 | [`eval/coerce.rs`](crates/xlsx-engine-core/src/eval/coerce.rs) | Arithmetic / `&` / `IF` coercion (`"2"+1` = 3, TRUE → 1, empty → 0) |
 | [`eval/compare.rs`](crates/xlsx-engine-core/src/eval/compare.rs) | 15-digit `=`, case-insensitive text, `TRUE=1`, type ranking (`FALSE>100`) |
 | [`eval/empty.rs`](crates/xlsx-engine-core/src/eval/empty.rs) | Blank ≠ 0 ≠ `""`, but `A1=0` and `A1=""` when `A1` is blank |
-| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Dispatch: aggregators (`SUM`/`SUMIF`/`SUMIFS`/`AVERAGEIF`/`COUNTIF`/`SUMPRODUCT`), logicals (`IF`/`IFS`/`SWITCH`), lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`/`FILTER`/`UNIQUE`), dates (`DATE`/`EOMONTH`/`NETWORKDAYS`/`WEEKDAY`/`WORKDAY`), math (`ROUND`/`ROUNDUP`/`ROUNDDOWN`/`FLOOR`/`CEILING`), text (`LEFT`/`SUBSTITUTE`/`REPLACE`/`FIND`/`SEARCH`/`TEXT`/`TEXTJOIN`/`CONCAT`), financial (`NPV`/`PMT`/`IRR`), `TYPE` / `IS*` |
+| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Dispatch: aggregators (`SUM`/`SUMIF`/`SUMIFS`/`AVERAGEIF`/`COUNTIF`/`SUMPRODUCT`), logicals (`IF`/`IFS`/`SWITCH`), lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`/`FILTER`/`UNIQUE`), dates (`DATE`/`EOMONTH`/`NETWORKDAYS`/`WEEKDAY`/`WORKDAY`), math (`ROUND`/`ROUNDUP`/`ROUNDDOWN`/`FLOOR`/`CEILING`), text (`LEFT`/`SUBSTITUTE`/`REPLACE`/`FIND`/`SEARCH`/`TEXT`/`TEXTJOIN`/`TEXTBEFORE`/`CONCAT`), financial (`NPV`/`PMT`/`IRR`), `TYPE` / `IS*` |
 | [`eval/sumif.rs`](crates/xlsx-engine-core/src/eval/sumif.rs) | Excel `SUMIF` kernel (criteria walk, reshape `sum_range`, no array literals) |
 | [`eval/sumifs.rs`](crates/xlsx-engine-core/src/eval/sumifs.rs) | Excel `SUMIFS`: multi-criteria AND, same-shape ranges |
 | [`eval/averageif.rs`](crates/xlsx-engine-core/src/eval/averageif.rs) | Excel `AVERAGEIF` kernel (reshape `average_range`, `#DIV/0!` when empty) |
@@ -294,6 +294,7 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 | [`eval/replace.rs`](crates/xlsx-engine-core/src/eval/replace.rs) | Excel `REPLACE` kernel (1-based span, Unicode scalars / Compat v2) |
 | [`eval/find.rs`](crates/xlsx-engine-core/src/eval/find.rs) | Excel `FIND` kernel (case-sensitive, `start_num`, empty `find_text`) |
 | [`eval/search.rs`](crates/xlsx-engine-core/src/eval/search.rs) | Excel `SEARCH` kernel (case-insensitive, `*`/`?`/`~` wildcards, `start_num`) |
+| [`eval/textbefore.rs`](crates/xlsx-engine-core/src/eval/textbefore.rs) | Excel `TEXTBEFORE` (nth delimiter, `match_mode` / `match_end` / `if_not_found`) |
 | [`eval/textjoin.rs`](crates/xlsx-engine-core/src/eval/textjoin.rs) | `TEXTJOIN` with cycling delimiters and `ignore_empty` |
 | [`eval/concat.rs`](crates/xlsx-engine-core/src/eval/concat.rs) | Excel `CONCAT`: row-major flatten, blanks/`""` add nothing, 32,767 UTF-16 cap |
 | [`eval/round.rs`](crates/xlsx-engine-core/src/eval/round.rs) | Excel `ROUNDUP` / `ROUNDDOWN` (away / toward zero, negative `num_digits`) |
@@ -341,6 +342,14 @@ as one or the other. Documented quirk categories:
   `FALSE=0` is `TRUE` but `FALSE>0` / `FALSE<=0` use ranking (`TRUE` / `FALSE`)
 - Equality vs arithmetic coercion (`"2"=2` is false, `"2"+1` is `3`, `--"2"=2`)
 - Case-insensitive text equality (`"A"="a"`) vs case-sensitive `EXACT` / `FIND`; `SEARCH` is case-insensitive
+- `TEXTBEFORE(text, delimiter, [instance_num], [match_mode], [match_end], [if_not_found])`:
+  Nth non-overlapping delimiter (negative counts from the end); `match_mode`
+  0/1; `match_end` 1 treats the unmatched end (or start, when counting
+  backward) as one extra delimiter; empty delimiter matches immediately
+  (`""` from the front, the whole text from the end); miss is `#N/A` /
+  `if_not_found`; `|instance_num| > LEN(text)` or `instance_num = 0` is
+  `#VALUE!`. Array delimiters take the leftmost / longest match. `TEXTAFTER`
+  / `TEXTSPLIT` are later workstreams.
 - Classic `FLOOR` / `CEILING`: same-sign multiples; positive number + negative significance is `#NUM!`; significance `0` is `#DIV/0!` except `(0, 0)` → `0`. Negative number + positive significance is allowed (Excel 2010+). `FLOOR.MATH` / `CEILING.MATH` ignore significance sign, treat significance `0` as `0`, and take an optional mode.
 - `TRUE=1` / `FALSE=0` in `=` and in arithmetic; `ISNUMBER(TRUE)` is still false
 - `SUM` / `AVERAGE` / `COUNT` / `PRODUCT` / `MIN` / `MAX`: skip logicals/text

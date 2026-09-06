@@ -4,6 +4,9 @@
 //! `FILTER` lives with the other lookups here; the mask/select kernel is
 //! [`super::filter`].
 //!
+//! `TEXTBEFORE` lives with the other text functions here; the delimiter
+//! kernel is [`super::textbefore`].
+//!
 //! Unknown names return `#NAME?` (an Excel value, not [`EvalError`]).
 //! Financial TVM starts with `PMT` (`xlsx_types::excel_pmt`); `PV`/`FV`/`NPER`
 //! are later workstreams.
@@ -130,6 +133,7 @@ pub(crate) fn dispatch(
         "TEXT" => fn_text(ev, args, ctx),
         "REPLACE" => fn_replace(ev, args, ctx),
         "TEXTJOIN" => super::textjoin::fn_textjoin(ev, args, ctx),
+        "TEXTBEFORE" => fn_textbefore(ev, args, ctx),
         "CONCAT" => super::concat::fn_concat(ev, args, ctx),
         "NPV" => super::npv::eval(ev, args, ctx),
         "UNIQUE" => super::unique::eval(ev, args, ctx),
@@ -1283,6 +1287,112 @@ fn fn_text(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValu
     match text_format::apply(&value, &fmt, ctx.spec.options.date_system) {
         Ok(s) => Ok(ExcelValue::Text(s)),
         Err(e) => Ok(ExcelValue::Error(e)),
+    }
+}
+
+/// Excel `TEXTBEFORE(text, delimiter, [instance_num], [match_mode], [match_end], [if_not_found])`.
+///
+/// Arity 2–6. Arguments evaluate left-to-right. `if_not_found` is returned
+/// as-is on a miss (`#N/A` when omitted). `match_end` is applied inside the
+/// kernel and wins over `if_not_found` when it supplies the virtual delimiter.
+fn fn_textbefore(
+    ev: &Evaluator,
+    args: &[Expr],
+    ctx: &mut Ctx<'_>,
+) -> Result<ExcelValue, EvalError> {
+    if args.len() < 2 || args.len() > 6 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let text = match coerce::to_text(&ev.eval_scalar(&args[0], ctx)?) {
+        Ok(s) => s,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let delim_v = ev.eval_expr(&args[1], ctx)?;
+    let mut delims = Vec::new();
+    if let Err(e) = flatten_text_args(&delim_v, &mut delims) {
+        return Ok(ExcelValue::Error(e));
+    }
+    let instance_num = if args.len() >= 3 {
+        match coerce::to_number(&ev.eval_scalar(&args[2], ctx)?) {
+            Ok(n) => {
+                if !n.is_finite() {
+                    return Ok(ExcelValue::Error(ExcelError::Value));
+                }
+                n.trunc() as i64
+            }
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        }
+    } else {
+        1
+    };
+    let match_mode = if args.len() >= 4 {
+        match coerce::to_number(&ev.eval_scalar(&args[3], ctx)?) {
+            Ok(n) => {
+                if !n.is_finite() {
+                    return Ok(ExcelValue::Error(ExcelError::Value));
+                }
+                let t = n.trunc();
+                if t != 0.0 && t != 1.0 {
+                    return Ok(ExcelValue::Error(ExcelError::Value));
+                }
+                t as i64
+            }
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        }
+    } else {
+        0
+    };
+    let match_end = if args.len() >= 5 {
+        match coerce::to_number(&ev.eval_scalar(&args[4], ctx)?) {
+            Ok(n) => {
+                if !n.is_finite() {
+                    return Ok(ExcelValue::Error(ExcelError::Value));
+                }
+                let t = n.trunc();
+                if t != 0.0 && t != 1.0 {
+                    return Ok(ExcelValue::Error(ExcelError::Value));
+                }
+                t as i64
+            }
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        }
+    } else {
+        0
+    };
+    let if_not_found = if args.len() >= 6 {
+        Some(ev.eval_expr(&args[5], ctx)?)
+    } else {
+        None
+    };
+    let delim_refs: Vec<&str> = delims.iter().map(String::as_str).collect();
+    match super::textbefore::textbefore(
+        &text,
+        &delim_refs,
+        instance_num,
+        match_mode == 1,
+        match_end == 1,
+    ) {
+        Ok(s) => Ok(ExcelValue::Text(s)),
+        Err(ExcelError::Na) => Ok(if_not_found.unwrap_or(ExcelValue::Error(ExcelError::Na))),
+        Err(e) => Ok(ExcelValue::Error(e)),
+    }
+}
+
+fn flatten_text_args(v: &ExcelValue, out: &mut Vec<String>) -> Result<(), ExcelError> {
+    match v {
+        ExcelValue::Error(e) => Err(*e),
+        ExcelValue::Array(rows) => {
+            for row in rows {
+                for cell in row {
+                    flatten_text_args(cell, out)?;
+                }
+            }
+            Ok(())
+        }
+        other => {
+            out.push(coerce::to_text(other)?);
+            Ok(())
+        }
     }
 }
 
