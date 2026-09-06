@@ -13,6 +13,7 @@
 //! - [`eval::clean`] — Excel `CLEAN` (strip ASCII C0 `0..=31`)
 //! - [`eval::code`] — Excel `CODE` (Windows-1252 first-character code)
 //! - [`eval::abs`] — Excel `ABS` (sign-bit-clear absolute value)
+//! - [`eval::dollar`] — Excel `DOLLAR` (en-US `$` currency text; parens)
 //! - [`eval::excel_char`] — Excel `CHAR` (Windows-1252, 1..=255)
 //! - [`eval::left`] — Excel `LEFT` (Unicode scalars / Compat v2)
 //! - [`eval::rept`] — Excel `REPT` (repeat + 32767 UTF-16 cap)
@@ -119,6 +120,11 @@ pub use eval::code::{
 pub use eval::concat::{
     concat_feed_value, concat_naive_join, eval_concat_formula, ConcatBuilder, ConcatWalk,
     CONCAT_MAX_CHARS,
+};
+pub use eval::dollar::{
+    dollar as excel_dollar, dollar_naive as excel_dollar_naive, dollar_slice as excel_dollar_slice,
+    dollar_slice_naive as excel_dollar_slice_naive, dollar_value as excel_dollar_value,
+    dollar_value_naive as excel_dollar_value_naive,
 };
 pub use eval::drop::{apply as excel_drop, apply_naive as excel_drop_naive};
 pub use eval::exact::{exact as excel_exact, exact_naive as excel_exact_naive};

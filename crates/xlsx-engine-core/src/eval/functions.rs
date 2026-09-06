@@ -161,6 +161,7 @@ pub(crate) fn dispatch(
         "VALUE" => super::value::eval(ev, args, ctx),
         "SUBSTITUTE" => fn_substitute(ev, args, ctx),
         "TEXT" => fn_text(ev, args, ctx),
+        "DOLLAR" => super::dollar::fn_dollar(ev, args, ctx),
         "REPLACE" => super::replace::fn_replace(ev, args, ctx),
         "TEXTJOIN" => super::textjoin::fn_textjoin(ev, args, ctx),
         "TEXTSPLIT" => super::textsplit::fn_textsplit(ev, args, ctx),

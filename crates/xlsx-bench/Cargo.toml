@@ -24,6 +24,10 @@ name = "fn_abs"
 harness = false
 
 [[bench]]
+name = "fn_dollar"
+harness = false
+
+[[bench]]
 name = "fn_sum"
 harness = false
 
