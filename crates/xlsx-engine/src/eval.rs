@@ -473,6 +473,7 @@ impl Interpreter {
             "CHOOSEROWS" => self.fn_chooserows(args, ctx),
             "MAKEARRAY" | "_XLFN.MAKEARRAY" => self.fn_makearray(args, ctx),
             "LAMBDA" | "_XLFN.LAMBDA" => Ok(ExcelValue::Error(ExcelError::Calc)),
+            "LET" | "_XLFN.LET" => self.fn_let(args, ctx),
             "CHOOSECOLS" => self.fn_choosecols(args, ctx),
             "NETWORKDAYS.INTL" => self.fn_networkdays_intl(args, ctx),
             "WORKDAY.INTL" => self.fn_workday_intl(args, ctx),
@@ -725,9 +726,13 @@ impl Interpreter {
     ) -> Result<ExcelValue, EvalError> {
         let mut acc = AggAcc::new(kind);
         for arg in args {
-            // Cell / range / name references are "range-like": aggregators skip
-            // logicals and text. Literals (`TRUE`, `"2"`) are coerced.
-            let from_range = matches!(arg, Expr::Range(_) | Expr::Cell(_) | Expr::Name(_));
+            // Cell / range / defined-name references are "range-like".
+            // LET / LAMBDA locals are values: SUM(TRUE) is 1.
+            let from_range = match arg {
+                Expr::Range(_) | Expr::Cell(_) => true,
+                Expr::Name(n) => !xlsx_engine_core::eval::excel_let::is_bound(&ctx.locals, n),
+                _ => false,
+            };
             let v = self.eval_expr(arg, ctx)?;
             if let Some(err) = acc.fold(&v, from_range, self.semantics) {
                 return Ok(ExcelValue::Error(err));
@@ -3714,6 +3719,41 @@ impl Interpreter {
             vals[4].as_ref(),
             &mut ctx.rng,
         ))
+    }
+
+    fn fn_let(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if !xlsx_engine_core::eval::excel_let::arity_ok(args.len()) {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        let base = ctx.locals.len();
+        let mut i = 0;
+        while i + 1 < args.len() {
+            let name = match &args[i] {
+                Expr::Name(n) => match xlsx_engine_core::eval::excel_let::bind_name_str(n) {
+                    Ok(n) => n,
+                    Err(e) => {
+                        ctx.locals.truncate(base);
+                        return Ok(ExcelValue::Error(e));
+                    }
+                },
+                _ => {
+                    ctx.locals.truncate(base);
+                    return Ok(ExcelValue::Error(ExcelError::Name));
+                }
+            };
+            let value = match self.eval_expr(&args[i + 1], ctx) {
+                Ok(v) => v,
+                Err(e) => {
+                    ctx.locals.truncate(base);
+                    return Err(e);
+                }
+            };
+            ctx.locals.push((name, value));
+            i += 2;
+        }
+        let out = self.eval_expr(&args[i], ctx);
+        ctx.locals.truncate(base);
+        out
     }
 
     fn fn_makearray(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {

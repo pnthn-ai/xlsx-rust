@@ -302,7 +302,7 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 | [`eval/coerce.rs`](crates/xlsx-engine-core/src/eval/coerce.rs) | Arithmetic / `&` / `IF` coercion (`"2"+1` = 3, TRUE → 1, empty → 0) |
 | [`eval/compare.rs`](crates/xlsx-engine-core/src/eval/compare.rs) | 15-digit `=`, case-insensitive text, `TRUE=1`, type ranking (`FALSE>100`) |
 | [`eval/empty.rs`](crates/xlsx-engine-core/src/eval/empty.rs) | Blank ≠ 0 ≠ `""`, but `A1=0` and `A1=""` when `A1` is blank |
-| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Dispatch: aggregators (`SUM`/`SUMIF`/`SUMIFS`/`AVERAGEIF`/`AVERAGEIFS`/`COUNTIF`/`COUNTIFS`/`SUMPRODUCT`), logicals (`IF`/`IFS`/`SWITCH`), lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`/`FILTER`/`UNIQUE`/`SORT`/`SORTBY`/`TOCOL`/`TOROW`/`SEQUENCE`/`VSTACK`/`HSTACK`/`WRAPCOLS`/`WRAPROWS`/`TAKE`/`DROP`/`EXPAND`/`CHOOSECOLS`/`CHOOSEROWS`/`MAKEARRAY`), dates (`DATE`/`EOMONTH`/`NETWORKDAYS`/`NETWORKDAYS.INTL`/`WEEKDAY`/`WORKDAY`/`WORKDAY.INTL`/`YEARFRAC`), math (`ROUND`/`ROUNDUP`/`ROUNDDOWN`/`FLOOR`/`CEILING`/`RANDARRAY`), text (`LEFT`/`SUBSTITUTE`/`REPLACE`/`FIND`/`SEARCH`/`TEXT`/`TEXTJOIN`/`TEXTSPLIT`/`TEXTAFTER`/`TEXTBEFORE`/`CONCAT`), financial (`NPV`/`XNPV`/`PMT`/`FV`/`PV`/`NPER`/`RATE`/`IPMT`/`PPMT`/`CUMPRINC`/`CUMIPMT`/`IRR`/`XIRR`/`MIRR`/`EFFECT`/`NOMINAL`/`PDURATION`/`RRI`), `TYPE` / `IS*` |
+| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Dispatch: aggregators (`SUM`/`SUMIF`/`SUMIFS`/`AVERAGEIF`/`AVERAGEIFS`/`COUNTIF`/`COUNTIFS`/`SUMPRODUCT`), logicals (`IF`/`IFS`/`SWITCH`/`LET`), lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`/`FILTER`/`UNIQUE`/`SORT`/`SORTBY`/`TOCOL`/`TOROW`/`SEQUENCE`/`VSTACK`/`HSTACK`/`WRAPCOLS`/`WRAPROWS`/`TAKE`/`DROP`/`EXPAND`/`CHOOSECOLS`/`CHOOSEROWS`/`MAKEARRAY`), dates (`DATE`/`EOMONTH`/`NETWORKDAYS`/`NETWORKDAYS.INTL`/`WEEKDAY`/`WORKDAY`/`WORKDAY.INTL`/`YEARFRAC`), math (`ROUND`/`ROUNDUP`/`ROUNDDOWN`/`FLOOR`/`CEILING`/`RANDARRAY`), text (`LEFT`/`SUBSTITUTE`/`REPLACE`/`FIND`/`SEARCH`/`TEXT`/`TEXTJOIN`/`TEXTSPLIT`/`TEXTAFTER`/`TEXTBEFORE`/`CONCAT`), financial (`NPV`/`XNPV`/`PMT`/`FV`/`PV`/`NPER`/`RATE`/`IPMT`/`PPMT`/`CUMPRINC`/`CUMIPMT`/`IRR`/`XIRR`/`MIRR`/`EFFECT`/`NOMINAL`/`PDURATION`/`RRI`), `TYPE` / `IS*` |
 | [`eval/sumif.rs`](crates/xlsx-engine-core/src/eval/sumif.rs) | Excel `SUMIF` kernel (criteria walk, reshape `sum_range`, no array literals) |
 | [`eval/sumifs.rs`](crates/xlsx-engine-core/src/eval/sumifs.rs) | Excel `SUMIFS`: multi-criteria AND, same-shape ranges |
 | [`eval/countifs.rs`](crates/xlsx-engine-core/src/eval/countifs.rs) | Excel `COUNTIFS`: multi-criteria AND, same-shape ranges, COUNTIF matcher |
@@ -340,6 +340,7 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 | [`eval/chooserows.rs`](crates/xlsx-engine-core/src/eval/chooserows.rs) | `CHOOSEROWS(array, row_num1, …)` pick kernel (negative index / `#VALUE!`) |
 | [`eval/randarray.rs`](crates/xlsx-engine-core/src/eval/randarray.rs) | `RANDARRAY([rows],[columns],[min],[max],[integer])` fill (xorshift64*; not Excel's RNG) |
 | [`eval/makearray.rs`](crates/xlsx-engine-core/src/eval/makearray.rs) | `MAKEARRAY(rows, cols, LAMBDA(r, c, body))` index kernel (`r*c` / `r+c` specialized) |
+| [`eval/excel_let.rs`](crates/xlsx-engine-core/src/eval/excel_let.rs) | `LET(name1, value1, …, calculation)` name-binding (shared locals stack; bind-once kernel) |
 | [`eval/npv.rs`](crates/xlsx-engine-core/src/eval/npv.rs) | Excel `NPV` kernel (period-1 discount, range skip of blanks/text/logicals) |
 | [`eval/irr.rs`](crates/xlsx-engine-core/src/eval/irr.rs) | Excel `IRR` Newton / secant kernel (20 tries, `1e-7` rate, `#NUM!` on failure) |
 | [`eval/xnpv.rs`](crates/xlsx-engine-core/src/eval/xnpv.rs) | Excel `XNPV` kernel (365-day year, serial day counts, blank date → 0) |
@@ -544,6 +545,16 @@ as one or the other. Documented quirk categories:
   one). A body error stays in that cell. A body that returns an array is
   `#CALC!` in that cell. Bare `LAMBDA(...)` (not consumed by `MAKEARRAY`) is
   `#CALC!` — this engine has no first-class function value.
+- `LET(name1, value1, [name2, value2, …], calculation)`: odd arity ≥ 3,
+  at most 126 pairs. Name arguments are identifiers (not evaluated).
+  Invalid names (`R`/`C`, A1-looking tokens, `TRUE`/`FALSE`, a computed
+  value) are `#NAME?`. Values evaluate left-to-right and bind onto the
+  same locals stack as LAMBDA / MAKEARRAY parameters (case-insensitive,
+  `_xlpm.` prefix stripped). Later pairs and nested `LET` last-win.
+  Unused values still run; a bound error is a value (`IFERROR` can catch
+  it). `LET` names are values, not worksheet refs (`SUM(TRUE)` via a name
+  is 1). Arithmetic calculations over bound names use the bind-once
+  kernel.
 - **Spill limitation:** `evaluate` returns that array. The engine does **not**
   write spilled values into neighboring cells, so occupied destinations never
   yield `#SPILL!`. Scalar operators (`UNIQUE(...)+1`, `SORT(...)+1`) take the
@@ -782,13 +793,22 @@ as one or the other. Documented quirk categories:
 - `pad_with` is a scalar (top-left of an array). An error used as pad is
   a pad **value**; it does not fail the call.
 
+**`LET` limits** (honest, not hidden behind a broken case):
+
+- Name arguments that tokenize as A1 refs (`A1`, `X1`) cannot be bound.
+- There is no first-class function value. `LET(f, LAMBDA(...), f)` binds
+  `#CALC!`. Immediately-invoked `LAMBDA(...)(args)` is not parsed.
+- Array results are values; occupied neighbors never yield `#SPILL!`.
+
 **`MAKEARRAY` / `LAMBDA` limits** (honest, not hidden behind a broken case):
 
 - MAKEARRAY returns an array **value**. The snippet workbook has no spill
   grid, so a blocked cell below/right of the host never yields `#SPILL!`.
 - Immediately-invoked `LAMBDA(...)(args)` is not parsed. Optional LAMBDA
-  parameters and `LET` helpers are out of scope. Parameter names that
-  tokenize as A1 refs are `#VALUE!`.
+  parameters are out of scope. Worksheet `LET` is a separate function and
+  shares the locals stack; MAKEARRAY does not expand `LET` inside a
+  LAMBDA parameter list. Parameter names that tokenize as A1 refs are
+  `#VALUE!`.
 - Excel's worksheet array-size cap is enforced (`1,048,576` rows /
   `16,384` columns); larger dimensions are `#NUM!`.
 

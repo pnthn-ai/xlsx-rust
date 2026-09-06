@@ -13,6 +13,7 @@ pub mod compare;
 pub mod concat;
 pub mod drop;
 pub mod empty;
+pub mod excel_let;
 pub mod expand;
 pub mod filter;
 pub mod find;
@@ -67,7 +68,7 @@ pub(crate) struct Ctx<'a> {
     visiting: HashSet<String>,
     host: CellAddr,
     pub(crate) rng: randarray::XorShift64,
-    /// LAMBDA parameter bindings (MAKEARRAY / nested LAMBDA). Innermost last.
+    /// LAMBDA / LET name bindings. Innermost last (MAKEARRAY params, LET pairs).
     pub(crate) locals: Vec<(String, ExcelValue)>,
 }
 
@@ -1951,6 +1952,27 @@ mod tests {
         assert_eq!(
             eval_formula_in(&wb, "=PDURATION()").unwrap(),
             ExcelValue::Error(ExcelError::Value)
+        );
+    }
+
+    #[test]
+    fn let_bind_once_and_nested() {
+        let wb = Workbook::default();
+        assert_eq!(
+            eval_formula_in(&wb, "=LET(x, 2, y, x*3, y+1)").unwrap(),
+            ExcelValue::Number(7.0)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=LET(x, 1, LET(x, 2, x)+x)").unwrap(),
+            ExcelValue::Number(3.0)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=LET()").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=LET(c, 1, c)").unwrap(),
+            ExcelValue::Error(ExcelError::Name)
         );
     }
 
