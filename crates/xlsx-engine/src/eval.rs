@@ -2016,8 +2016,8 @@ impl Interpreter {
         if args.len() != 1 {
             return Ok(ExcelValue::Error(ExcelError::Value));
         }
-        match self.as_text(&self.eval_scalar(&args[0], ctx)?) {
-            Ok(s) => Ok(ExcelValue::Number(s.chars().count() as f64)),
+        match xlsx_engine_core::excel_len_value(&self.eval_scalar(&args[0], ctx)?) {
+            Ok(n) => Ok(ExcelValue::Number(n)),
             Err(e) => Ok(ExcelValue::Error(e)),
         }
     }

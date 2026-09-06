@@ -329,6 +329,10 @@ name = "unicode"
 harness = false
 
 [[bench]]
+name = "len"
+harness = false
+
+[[bench]]
 name = "exact"
 harness = false
 
