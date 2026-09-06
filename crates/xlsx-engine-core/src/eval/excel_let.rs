@@ -385,7 +385,10 @@ mod tests {
         let values = vec![n(3.0), n(4.0)];
         let calc = classify(&parse("x*y+x").unwrap(), &names).unwrap();
         assert_eq!(eval_fast(&calc, &values), n(15.0));
-        assert_eq!(eval_fast(&calc, &values), eval_naive(&calc, &names, &values));
+        assert_eq!(
+            eval_fast(&calc, &values),
+            eval_naive(&calc, &names, &values)
+        );
     }
 
     #[test]
@@ -497,16 +500,11 @@ mod tests {
     fn makearray_composition() {
         let wb = Workbook::default();
         assert_eq!(
-            eval_formula_in(&wb, "=LET(n, 2, INDEX(MAKEARRAY(n,n,LAMBDA(r,c,r*c)),2,2))")
-                .unwrap(),
+            eval_formula_in(&wb, "=LET(n, 2, INDEX(MAKEARRAY(n,n,LAMBDA(r,c,r*c)),2,2))").unwrap(),
             n(4.0)
         );
         assert_eq!(
-            eval_formula_in(
-                &wb,
-                "=INDEX(MAKEARRAY(2,2,LAMBDA(r,c,LET(x,r*c,x+1))),1,2)"
-            )
-            .unwrap(),
+            eval_formula_in(&wb, "=INDEX(MAKEARRAY(2,2,LAMBDA(r,c,LET(x,r*c,x+1))),1,2)").unwrap(),
             n(3.0)
         );
     }
