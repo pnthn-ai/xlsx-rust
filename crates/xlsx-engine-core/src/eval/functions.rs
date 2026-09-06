@@ -143,7 +143,7 @@ pub(crate) fn dispatch(
         "ISOWEEKNUM" => fn_isoweeknum(ev, args, ctx),
         "DAYS360" => fn_days360(ev, args, ctx),
         "YEARFRAC" => fn_yearfrac(ev, args, ctx),
-        "LEFT" => fn_left_right(ev, args, ctx, true),
+        "LEFT" => super::left::fn_left(ev, args, ctx),
         "RIGHT" => fn_left_right(ev, args, ctx, false),
         "MID" => fn_mid(ev, args, ctx),
         "LEN" => super::len::fn_len(ev, args, ctx),

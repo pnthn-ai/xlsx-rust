@@ -449,7 +449,7 @@ impl Interpreter {
             "WEEKNUM" => self.fn_weeknum(args, ctx),
             "ISOWEEKNUM" => self.fn_isoweeknum(args, ctx),
             "DAYS360" => self.fn_days360(args, ctx),
-            "LEFT" => self.fn_left_right(args, ctx, true),
+            "LEFT" => self.fn_left(args, ctx),
             "RIGHT" => self.fn_left_right(args, ctx, false),
             "MID" => self.fn_mid(args, ctx),
             "LEN" => self.fn_len(args, ctx),
@@ -1944,6 +1944,31 @@ impl Interpreter {
             })),
             Err(e) => Ok(ExcelValue::Error(e)),
         }
+    }
+
+    fn fn_left(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.is_empty() || args.len() > 2 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        let s = match self.as_text(&self.eval_scalar(&args[0], ctx)?) {
+            Ok(s) => s,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        let n = if args.len() >= 2 {
+            match &args[1] {
+                Expr::Missing => 1,
+                other => match self.as_number(&self.eval_scalar(other, ctx)?) {
+                    Ok(n) => match xlsx_engine_core::left_trunc_num_chars(n) {
+                        Ok(n) => n,
+                        Err(e) => return Ok(ExcelValue::Error(e)),
+                    },
+                    Err(e) => return Ok(ExcelValue::Error(e)),
+                },
+            }
+        } else {
+            1
+        };
+        Ok(ExcelValue::Text(xlsx_engine_core::excel_left_owned(s, n)))
     }
 
     fn fn_left_right(

@@ -13,6 +13,7 @@
 //! - [`eval::clean`] — Excel `CLEAN` (strip ASCII C0 `0..=31`)
 //! - [`eval::code`] — Excel `CODE` (Windows-1252 first-character code)
 //! - [`eval::excel_char`] — Excel `CHAR` (Windows-1252, 1..=255)
+//! - [`eval::left`] — Excel `LEFT` (Unicode scalars / Compat v2)
 //! - [`eval::rept`] — Excel `REPT` (repeat + 32767 UTF-16 cap)
 //! - [`dates::edate_serial`] — Excel `EDATE` (same-day month shift + clip)
 //! - [`dates::weekday`] — O(1) Excel `WEEKDAY` on the date serial
@@ -125,6 +126,10 @@ pub use eval::ifs::{select as excel_ifs, select_naive as excel_ifs_naive};
 pub use eval::irr::{irr as excel_irr, irr_naive as excel_irr_naive, MAX_ITERS as IRR_MAX_ITERS};
 pub use eval::isomitted::{
     is_omitted as excel_isomitted, is_omitted_naive as excel_isomitted_naive,
+};
+pub use eval::left::{
+    left as excel_left, left_naive as excel_left_naive, left_owned as excel_left_owned,
+    trunc_num_chars as left_trunc_num_chars,
 };
 pub use eval::len::{
     len as excel_len, len_naive as excel_len_naive, len_value as excel_len_value,
