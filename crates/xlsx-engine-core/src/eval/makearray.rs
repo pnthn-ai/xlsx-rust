@@ -131,39 +131,55 @@ pub(crate) fn resolve_lambda(
     expr: &Expr,
     ctx: &Ctx<'_>,
 ) -> Result<(String, String, Expr), ExcelError> {
-    resolve_lambda_depth(expr, ctx, 0)
+    let (params, body) = resolve_lambda_n(expr, ctx, 2)?;
+    Ok((params[0].clone(), params[1].clone(), body))
 }
 
-fn resolve_lambda_depth(
+/// Extract `LAMBDA(p1, …, pn, body)` with exactly `n` name parameters.
+///
+/// Used by MAKEARRAY (`n = 2`) and BYCOL (`n = 1`). A defined name may
+/// refer to a LAMBDA (one hop at a time, depth-capped).
+pub(crate) fn resolve_lambda_n(
     expr: &Expr,
     ctx: &Ctx<'_>,
+    n: usize,
+) -> Result<(Vec<String>, Expr), ExcelError> {
+    resolve_lambda_n_depth(expr, ctx, n, 0)
+}
+
+fn resolve_lambda_n_depth(
+    expr: &Expr,
+    ctx: &Ctx<'_>,
+    n: usize,
     depth: usize,
-) -> Result<(String, String, Expr), ExcelError> {
+) -> Result<(Vec<String>, Expr), ExcelError> {
     if depth > 16 {
         return Err(ExcelError::Value);
     }
     match expr {
-        Expr::Call { name, args } if is_lambda_name(name) => lambda_params(args),
-        Expr::Name(n) => {
+        Expr::Call { name, args } if is_lambda_name(name) => lambda_params_n(args, n),
+        Expr::Name(name) => {
             let def = ctx
                 .spec
                 .workbook
-                .defined_name(n)
+                .defined_name(name)
                 .map_err(|_| ExcelError::Value)?;
             let ast = parse(&def.refers_to).map_err(|_| ExcelError::Value)?;
-            resolve_lambda_depth(&ast, ctx, depth + 1)
+            resolve_lambda_n_depth(&ast, ctx, n, depth + 1)
         }
         _ => Err(ExcelError::Value),
     }
 }
 
-fn lambda_params(args: &[Expr]) -> Result<(String, String, Expr), ExcelError> {
-    if args.len() != 3 {
+fn lambda_params_n(args: &[Expr], n: usize) -> Result<(Vec<String>, Expr), ExcelError> {
+    if n == 0 || args.len() != n + 1 {
         return Err(ExcelError::Value);
     }
-    let row = param_name(&args[0]).ok_or(ExcelError::Value)?;
-    let col = param_name(&args[1]).ok_or(ExcelError::Value)?;
-    Ok((row, col, args[2].clone()))
+    let mut params = Vec::with_capacity(n);
+    for arg in args.iter().take(n) {
+        params.push(param_name(arg).ok_or(ExcelError::Value)?);
+    }
+    Ok((params, args[n].clone()))
 }
 
 fn param_name(expr: &Expr) -> Option<String> {

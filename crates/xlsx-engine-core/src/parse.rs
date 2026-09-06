@@ -677,6 +677,25 @@ mod tests {
     }
 
     #[test]
+    fn parse_bycol_lambda() {
+        match parse("=BYCOL({1,2;3,4},LAMBDA(c,SUM(c)))").unwrap() {
+            Expr::Call { name, args } => {
+                assert!(name.eq_ignore_ascii_case("BYCOL"));
+                assert_eq!(args.len(), 2);
+                match &args[1] {
+                    Expr::Call { name, args } => {
+                        assert!(name.eq_ignore_ascii_case("LAMBDA"));
+                        assert_eq!(args.len(), 2);
+                        assert!(matches!(&args[0], Expr::Name(n) if n == "c"));
+                    }
+                    other => panic!("{other:?}"),
+                }
+            }
+            other => panic!("{other:?}"),
+        }
+    }
+
+    #[test]
     fn parse_makearray_lambda() {
         match parse("=MAKEARRAY(3,3,LAMBDA(r,c,r*c))").unwrap() {
             Expr::Call { name, args } => {

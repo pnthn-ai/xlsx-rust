@@ -34,6 +34,7 @@
 //! - [`eval::chooserows`] — `CHOOSEROWS` pick kernel (negative index / `#VALUE!`)
 //! - [`eval::randarray`] — `RANDARRAY` dynamic-array kernel (xorshift64*; not Excel's RNG)
 //! - [`eval::makearray`] — `MAKEARRAY(rows, cols, LAMBDA(r, c, body))`
+//! - [`eval::bycol`] — `BYCOL(array, LAMBDA(col, body))` column-reduce kernel
 //! - [`eval::textsplit`] — `TEXTSPLIT` col/row split kernel (pad / `#CALC!`)
 //! - [`eval::textafter`] — Excel `TEXTAFTER` kernel (nth delimiter, `match_end`)
 //! - [`eval::irr`] — Excel `IRR` Newton / secant kernel
@@ -79,6 +80,9 @@ pub use eval::irr::{irr as excel_irr, irr_naive as excel_irr_naive, MAX_ITERS as
 pub use eval::mirr::{mirr as excel_mirr, mirr_naive as excel_mirr_naive};
 pub use eval::makearray::{
     fill_fast as excel_makearray, fill_naive as excel_makearray_naive, FastBody, FastOp,
+};
+pub use eval::bycol::{
+    reduce_fast as excel_bycol, reduce_naive as excel_bycol_naive, ColOp as BycolOp,
 };
 pub use eval::npv::{npv as excel_npv, npv_naive as excel_npv_naive};
 pub use eval::randarray::{

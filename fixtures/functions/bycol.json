@@ -1,0 +1,434 @@
+[
+  {
+    "id": "fn.bycol.sum-2x3",
+    "description": "BYCOL sums each column of a 2×3 array via LAMBDA(c,SUM(c))",
+    "tags": ["bycol", "lambda", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=BYCOL({1,2,3;4,5,6},LAMBDA(c,SUM(c)))",
+    "expected": {
+      "array": [[{ "number": 5 }, { "number": 7 }, { "number": 9 }]]
+    }
+  },
+  {
+    "id": "fn.bycol.average-2x2",
+    "description": "BYCOL AVERAGE of each column",
+    "tags": ["bycol", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=BYCOL({2,4;6,8},LAMBDA(c,AVERAGE(c)))",
+    "expected": {
+      "array": [[{ "number": 4 }, { "number": 6 }]]
+    }
+  },
+  {
+    "id": "fn.bycol.min-max",
+    "description": "MIN and MAX per column",
+    "tags": ["bycol", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=BYCOL({1,9;8,2},LAMBDA(c,MIN(c)))",
+    "expected": {
+      "array": [[{ "number": 1 }, { "number": 2 }]]
+    }
+  },
+  {
+    "id": "fn.bycol.max",
+    "description": "MAX per column",
+    "tags": ["bycol", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=BYCOL({1,9;8,2},LAMBDA(c,MAX(c)))",
+    "expected": {
+      "array": [[{ "number": 8 }, { "number": 9 }]]
+    }
+  },
+  {
+    "id": "fn.bycol.counta",
+    "description": "COUNTA counts numbers and text in a column; blanks are skipped",
+    "tags": ["bycol", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=BYCOL(A1:C2,LAMBDA(c,COUNTA(c)))",
+    "expected": {
+      "array": [[{ "number": 2 }, { "number": 1 }, { "number": 2 }]]
+    },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "number": 1 },
+            "A2": { "text": "x" },
+            "B1": { "number": 2 },
+            "C1": { "number": 3 },
+            "C2": { "bool": true }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.bycol.count",
+    "description": "COUNT counts only numbers in a multi-row column (range skip of text)",
+    "tags": ["bycol", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=BYCOL(A1:B2,LAMBDA(c,COUNT(c)))",
+    "expected": {
+      "array": [[{ "number": 2 }, { "number": 1 }]]
+    },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "number": 1 },
+            "A2": { "number": 2 },
+            "B1": { "number": 3 },
+            "B2": { "text": "x" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.bycol.const",
+    "description": "Body ignores the column and returns a constant",
+    "tags": ["bycol", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=BYCOL({1,2,3},LAMBDA(c,7))",
+    "expected": {
+      "array": [[{ "number": 7 }, { "number": 7 }, { "number": 7 }]]
+    }
+  },
+  {
+    "id": "fn.bycol.one-row-identity",
+    "description": "A 1-row source binds each column as a scalar; identity returns the row",
+    "tags": ["bycol", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=BYCOL({1,2,3},LAMBDA(c,c))",
+    "expected": {
+      "array": [[{ "number": 1 }, { "number": 2 }, { "number": 3 }]]
+    }
+  },
+  {
+    "id": "fn.bycol.one-row-scale",
+    "description": "Scalar column times 2 on a 1-row array",
+    "tags": ["bycol", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=BYCOL({1,2,3},LAMBDA(c,c*2))",
+    "expected": {
+      "array": [[{ "number": 2 }, { "number": 4 }, { "number": 6 }]]
+    }
+  },
+  {
+    "id": "fn.bycol.one-col",
+    "description": "A single column still spills as a 1-row array",
+    "tags": ["bycol", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=BYCOL({1;2;3},LAMBDA(c,SUM(c)))",
+    "expected": { "array": [[{ "number": 6 }]] }
+  },
+  {
+    "id": "fn.bycol.scalar",
+    "description": "A scalar first argument is a 1×1 array (one column)",
+    "tags": ["bycol", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=BYCOL(5,LAMBDA(c,c+1))",
+    "expected": { "array": [[{ "number": 6 }]] }
+  },
+  {
+    "id": "fn.bycol.named-lambda",
+    "description": "Defined name referring to LAMBDA(c,SUM(c))",
+    "tags": ["bycol", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=BYCOL({1,2;3,4},ColSum)",
+    "expected": {
+      "array": [[{ "number": 4 }, { "number": 6 }]]
+    },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1" }],
+      "names": [{ "name": "ColSum", "refers_to": "=LAMBDA(c,SUM(c))" }]
+    }
+  },
+  {
+    "id": "fn.bycol.eta-sum",
+    "description": "Eta-reduced BYCOL(array, SUM) matches LAMBDA(c,SUM(c))",
+    "tags": ["bycol", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=BYCOL({1,2,3;4,5,6},SUM)",
+    "expected": {
+      "array": [[{ "number": 5 }, { "number": 7 }, { "number": 9 }]]
+    }
+  },
+  {
+    "id": "fn.bycol.eta-average",
+    "description": "Eta-reduced AVERAGE",
+    "tags": ["bycol"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=BYCOL({2,4;6,8},AVERAGE)",
+    "expected": {
+      "array": [[{ "number": 4 }, { "number": 6 }]]
+    }
+  },
+  {
+    "id": "fn.bycol.sheet-range",
+    "description": "BYCOL of a worksheet range walks columns without a spill write",
+    "tags": ["bycol", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=BYCOL(A1:C2,LAMBDA(c,SUM(c)))",
+    "expected": {
+      "array": [[{ "number": 5 }, { "number": 7 }, { "number": 9 }]]
+    },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "number": 1 },
+            "B1": { "number": 2 },
+            "C1": { "number": 3 },
+            "A2": { "number": 4 },
+            "B2": { "number": 5 },
+            "C2": { "number": 6 }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.bycol.if-body",
+    "description": "LAMBDA body may call other worksheet functions",
+    "tags": ["bycol", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=BYCOL({1,2;3,4},LAMBDA(c,IF(SUM(c)>4,1,0)))",
+    "expected": {
+      "array": [[{ "number": 0 }, { "number": 1 }]]
+    }
+  },
+  {
+    "id": "fn.bycol.index-col",
+    "description": "INDEX picks a row of the bound column vector",
+    "tags": ["bycol", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=BYCOL({1,2;3,4},LAMBDA(c,INDEX(c,2)))",
+    "expected": {
+      "array": [[{ "number": 3 }, { "number": 4 }]]
+    }
+  },
+  {
+    "id": "fn.bycol.index-result",
+    "description": "INDEX picks a BYCOL cell without a spill write",
+    "tags": ["bycol"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=INDEX(BYCOL({1,2,3;4,5,6},LAMBDA(c,SUM(c))),1,2)",
+    "expected": { "number": 7 }
+  },
+  {
+    "id": "fn.bycol.sum-of-result",
+    "description": "SUM of a BYCOL result row",
+    "tags": ["bycol"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SUM(BYCOL({1,2,3;4,5,6},LAMBDA(c,SUM(c))))",
+    "expected": { "number": 21 }
+  },
+  {
+    "id": "fn.bycol.counta-result",
+    "description": "COUNTA of BYCOL counts every result cell",
+    "tags": ["bycol"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=COUNTA(BYCOL({1,2,3},LAMBDA(c,c)))",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.bycol.type",
+    "description": "TYPE of BYCOL is 64 (array)",
+    "tags": ["bycol"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TYPE(BYCOL({1},LAMBDA(c,c)))",
+    "expected": { "number": 64 }
+  },
+  {
+    "id": "fn.bycol.xlfn",
+    "description": "Excel-stored _xlfn.BYCOL / _xlfn.LAMBDA names",
+    "tags": ["bycol", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=_xlfn.BYCOL({1,2},_xlfn.LAMBDA(c,c*10))",
+    "expected": {
+      "array": [[{ "number": 10 }, { "number": 20 }]]
+    }
+  },
+  {
+    "id": "fn.bycol.param-name",
+    "description": "Parameter name is not required to be c",
+    "tags": ["bycol", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=BYCOL({1,2;3,4},LAMBDA(col,SUM(col)))",
+    "expected": {
+      "array": [[{ "number": 4 }, { "number": 6 }]]
+    }
+  },
+  {
+    "id": "fn.bycol.bool-text",
+    "description": "Result may be text or logical",
+    "tags": ["bycol", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=BYCOL({1,2,3},LAMBDA(c,c>1))",
+    "expected": {
+      "array": [[{ "bool": false }, { "bool": true }, { "bool": true }]]
+    }
+  },
+  {
+    "id": "fn.bycol.concat",
+    "description": "Text join of a 1-row column",
+    "tags": ["bycol", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=BYCOL({\"a\",\"b\"},LAMBDA(c,c&\"!\"))",
+    "expected": {
+      "array": [[{ "text": "a!" }, { "text": "b!" }]]
+    }
+  },
+  {
+    "id": "fn.bycol.body-error",
+    "description": "A body error stays in that result cell",
+    "tags": ["bycol", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=BYCOL({1,0,2},LAMBDA(c,1/c))",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "error": "#DIV/0!" }, { "number": 0.5 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.bycol.array-return",
+    "description": "LAMBDA must return a single value; a multi-cell array body cell is #CALC!",
+    "tags": ["bycol", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=BYCOL({1,2},LAMBDA(c,{1,2}))",
+    "expected": {
+      "array": [[{ "error": "#CALC!" }, { "error": "#CALC!" }]]
+    },
+    "notes": "Excel 365 often surfaces one #CALC! (nested arrays) for the whole spill. This engine places #CALC! in each result cell so other columns still compute."
+  },
+  {
+    "id": "fn.bycol.identity-multirow",
+    "description": "Returning the whole multi-row column is a nested array → #CALC! per column",
+    "tags": ["bycol", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=BYCOL({1,2;3,4},LAMBDA(c,c))",
+    "expected": {
+      "array": [[{ "error": "#CALC!" }, { "error": "#CALC!" }]]
+    }
+  },
+  {
+    "id": "fn.bycol.product",
+    "description": "PRODUCT of each column",
+    "tags": ["bycol", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=BYCOL({2,3;4,5},LAMBDA(c,PRODUCT(c)))",
+    "expected": {
+      "array": [[{ "number": 8 }, { "number": 15 }]]
+    }
+  },
+  {
+    "id": "fn.bycol.blanks-in-sum",
+    "description": "SUM of a column skips blanks",
+    "tags": ["bycol", "lambda", "empty"],
+    "quirks": ["array-eval-mode", "empty-cell-duality"],
+    "formula": "=BYCOL(A1:B2,LAMBDA(c,SUM(c)))",
+    "expected": {
+      "array": [[{ "number": 1 }, { "number": 5 }]]
+    },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "number": 1 },
+            "B1": { "number": 2 },
+            "B2": { "number": 3 }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.bycol.true-scalar-sum",
+    "description": "SUM(c) treats the bound column as a range: TRUE is skipped, not 1",
+    "tags": ["bycol", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "notes": "SUM(TRUE) as a literal is 1. SUM(c) when c is the LAMBDA parameter is range-like, so a logical cell does not add.",
+    "formula": "=BYCOL({TRUE,1},LAMBDA(c,SUM(c)))",
+    "expected": {
+      "array": [[{ "number": 0 }, { "number": 1 }]]
+    }
+  },
+  {
+    "id": "fn.bycol.missing-lambda",
+    "description": "Missing LAMBDA argument is #VALUE!",
+    "tags": ["bycol"],
+    "formula": "=BYCOL({1,2})",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.bycol.zero-param-lambda",
+    "description": "LAMBDA must take exactly one parameter",
+    "tags": ["bycol", "lambda"],
+    "formula": "=BYCOL({1},LAMBDA(1))",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.bycol.two-param-lambda",
+    "description": "Two-parameter LAMBDA is #VALUE! for BYCOL",
+    "tags": ["bycol", "lambda"],
+    "formula": "=BYCOL({1},LAMBDA(r,c,r))",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.bycol.not-lambda",
+    "description": "A number is not a LAMBDA",
+    "tags": ["bycol"],
+    "formula": "=BYCOL({1},1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.bycol.unknown-name",
+    "description": "Unknown name as the LAMBDA argument is #VALUE!",
+    "tags": ["bycol"],
+    "formula": "=BYCOL({1},Nope)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.bycol.array-error",
+    "description": "An error as the array argument wins",
+    "tags": ["bycol"],
+    "formula": "=BYCOL(1/0,LAMBDA(c,1))",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.bycol.extra-arg",
+    "description": "A third argument is #VALUE!",
+    "tags": ["bycol"],
+    "formula": "=BYCOL({1},LAMBDA(c,c),1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.bycol.no-args",
+    "description": "BYCOL() is #VALUE!",
+    "tags": ["bycol"],
+    "formula": "=BYCOL()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.bycol.spill-not-modeled",
+    "description": "Occupied neighbor #SPILL! is not modeled",
+    "tags": ["bycol"],
+    "formula": "=BYCOL({1,2},LAMBDA(c,c))",
+    "expected": { "error": "#SPILL!" },
+    "ignore": "Workbook snippets have no spill grid. BYCOL returns an array value; #SPILL! from occupied cells to the right of the host is not modeled."
+  },
+  {
+    "id": "fn.bycol.iife-not-parsed",
+    "description": "Immediately-invoked LAMBDA(...)(args) is not parsed",
+    "tags": ["bycol", "lambda"],
+    "formula": "=BYCOL({1},LAMBDA(x,x)(1))",
+    "expected": { "error": "#VALUE!" },
+    "ignore": "Immediately-invoked LAMBDA(...)(args) is not in the parser. BYCOL requires an inline LAMBDA(col,body), a defined name that refers to one, or an eta-reduced aggregator name (SUM, AVERAGE, …)."
+  }
+]
