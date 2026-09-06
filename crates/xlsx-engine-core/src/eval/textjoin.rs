@@ -705,8 +705,9 @@ mod tests {
         for v in eval_all(&wb, "=TEXTJOIN(\",\",TRUE,A1:B10)") {
             assert_eq!(v, ExcelValue::Text("a,b,c,d,e,f".into()));
         }
-        // ignore FALSE must keep the 14 blank cells as empty pieces.
-        let keep = "a,b,c,d,,,,,,,,,,,,,,e,f";
+        // ignore FALSE keeps 14 blanks: 14 commas for those pieces plus
+        // the comma before e → 15 commas between d and e.
+        let keep = "a,b,c,d,,,,,,,,,,,,,,,e,f";
         for v in eval_all(&wb, "=TEXTJOIN(\",\",FALSE,A1:B10)") {
             assert_eq!(v, ExcelValue::Text(keep.into()));
         }

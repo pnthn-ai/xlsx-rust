@@ -1799,7 +1799,7 @@
     ],
     "formula": "=TEXTJOIN(\",\", FALSE, A1:B10)",
     "expected": {
-      "text": "a,b,c,d,,,,,,,,,,,,,,e,f"
+      "text": "a,b,c,d,,,,,,,,,,,,,,,e,f"
     },
     "workbook": {
       "sheets": [
@@ -1828,7 +1828,7 @@
         }
       ]
     },
-    "notes": "Excel golden: 4 filled + 14 blanks + 2 filled → 14 commas between d and e."
+    "notes": "Excel golden: 4 filled + 14 blanks + 2 filled → 15 commas between d and e (14 empty pieces plus the comma before e)."
   },
   {
     "id": "fn.textjoin-reversed-range",
