@@ -317,7 +317,7 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 | [`eval/search.rs`](crates/xlsx-engine-core/src/eval/search.rs) | Excel `SEARCH` kernel (case-insensitive, `*`/`?`/`~` wildcards, `start_num`, Compat v2) |
 | [`eval/textafter.rs`](crates/xlsx-engine-core/src/eval/textafter.rs) | Excel `TEXTAFTER` kernel (nth delimiter, `match_mode` / `match_end` / `if_not_found`) |
 | [`eval/textbefore.rs`](crates/xlsx-engine-core/src/eval/textbefore.rs) | Excel `TEXTBEFORE` (nth delimiter, `match_mode` / `match_end` / `if_not_found`) |
-| [`eval/textjoin.rs`](crates/xlsx-engine-core/src/eval/textjoin.rs) | `TEXTJOIN` with cycling delimiters and `ignore_empty` |
+| [`eval/textjoin.rs`](crates/xlsx-engine-core/src/eval/textjoin.rs) | Excel `TEXTJOIN`: cycling delimiters, `ignore_empty`, occupied sparse walk, 32,767 UTF-16 cap (not Compat-v2 `LEN`) |
 | [`eval/textsplit.rs`](crates/xlsx-engine-core/src/eval/textsplit.rs) | `TEXTSPLIT` col/row split, `ignore_empty`, `match_mode`, `pad_with` |
 | [`eval/concat.rs`](crates/xlsx-engine-core/src/eval/concat.rs) | Excel `CONCAT`: row-major flatten, occupied sparse walk, 32,767 UTF-16 cap (not Compat-v2 `LEN`) |
 | [`eval/round.rs`](crates/xlsx-engine-core/src/eval/round.rs) | Shared `ROUNDUP` / `ROUNDDOWN` table kernel (combined bench) |
