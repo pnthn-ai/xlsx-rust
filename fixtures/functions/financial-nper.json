@@ -1,0 +1,295 @@
+[
+  {
+    "id": "fn.nper.ms-begin",
+    "description": "Microsoft NPER example: 12%/12, pmt=-100, pv=-1000, fv=10000, type=1",
+    "tags": ["nper", "financial"],
+    "notes": "support.microsoft.com NPER: 59.6738657. Golden is the OpenFormula 6.12.29 identity.",
+    "formula": "=NPER(12%/12, -100, -1000, 10000, 1)",
+    "expected": { "number": 59.67386567429462 }
+  },
+  {
+    "id": "fn.nper.ms-end",
+    "description": "Microsoft NPER example: same terms, type omitted (end of period)",
+    "tags": ["nper", "financial"],
+    "notes": "support.microsoft.com NPER: 60.0821229.",
+    "formula": "=NPER(12%/12, -100, -1000, 10000)",
+    "expected": { "number": 60.08212285376172 }
+  },
+  {
+    "id": "fn.nper.ms-fv0",
+    "description": "Microsoft NPER example: omitted fv defaults to 0 (negative periods)",
+    "tags": ["nper", "financial"],
+    "notes": "support.microsoft.com NPER: -9.57859404.",
+    "formula": "=NPER(12%/12, -100, -1000)",
+    "expected": { "number": -9.578594039813167 }
+  },
+  {
+    "id": "fn.nper.ms-cells",
+    "description": "Same Microsoft begin-of-period case via cell refs",
+    "tags": ["nper", "financial"],
+    "formula": "=NPER(A2/12, A3, A4, A5, A6)",
+    "expected": { "number": 59.67386567429462 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A2": { "number": 0.12 },
+          "A3": { "number": -100 },
+          "A4": { "number": -1000 },
+          "A5": { "number": 10000 },
+          "A6": { "number": 1 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.nper.invert-zero-rate",
+    "description": "Zero-rate NPER inverts zero-rate PMT",
+    "tags": ["nper", "financial"],
+    "formula": "=NPER(0, PMT(0, 10, 1000, 500), 1000, 500)",
+    "expected": { "number": 10 }
+  },
+  {
+    "id": "fn.nper.loan",
+    "description": "Periods to pay $1000 at 10% with $200 payments",
+    "tags": ["nper", "financial"],
+    "formula": "=NPER(0.1, -200, 1000)",
+    "expected": { "number": 7.272540897341718 }
+  },
+  {
+    "id": "fn.nper.loan-annual",
+    "description": "Periods to pay $10000 at 8% with $1500 payments",
+    "tags": ["nper", "financial"],
+    "formula": "=NPER(0.08, -1500, 10000)",
+    "expected": { "number": 9.902933234736611 }
+  },
+  {
+    "id": "fn.nper.car",
+    "description": "Monthly 12% loan of $5000 with $250 payments",
+    "tags": ["nper", "financial"],
+    "formula": "=NPER(12%/12, -250, 5000)",
+    "expected": { "number": 22.42574187803646 }
+  },
+  {
+    "id": "fn.nper.car-begin",
+    "description": "Same car loan with type=1",
+    "tags": ["nper", "financial"],
+    "formula": "=NPER(12%/12, -250, 5000, 0, 1)",
+    "expected": { "number": 22.17728891884647 }
+  },
+  {
+    "id": "fn.nper.zero-rate",
+    "description": "rate=0 is straight-line: -(pv+fv)/pmt",
+    "tags": ["nper", "financial"],
+    "formula": "=NPER(0, -100, 1000)",
+    "expected": { "number": 10 }
+  },
+  {
+    "id": "fn.nper.zero-rate-fv",
+    "description": "rate=0 with a balloon fv",
+    "tags": ["nper", "financial"],
+    "formula": "=NPER(0, -150, 1000, 500)",
+    "expected": { "number": 10 }
+  },
+  {
+    "id": "fn.nper.pmt-zero-growth",
+    "description": "pmt=0 compounds pv to an opposite-sign fv",
+    "tags": ["nper", "financial"],
+    "formula": "=NPER(0.1, 0, -1000, 2000)",
+    "expected": { "number": 7.272540897341718 }
+  },
+  {
+    "id": "fn.nper.neg-rate",
+    "description": "Negative rate (deflation) is allowed when 1+rate > 0",
+    "tags": ["nper", "financial"],
+    "formula": "=NPER(-0.05, -80, 1000)",
+    "expected": { "number": 9.465327224128133 }
+  },
+  {
+    "id": "fn.nper.already-there",
+    "description": "fv = -pv means the target is already met → 0 periods",
+    "tags": ["nper", "financial"],
+    "formula": "=NPER(0.1, -50, 1000, -1000)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.nper.savings",
+    "description": "Months to reach $50,000 saving $200/month at 6%",
+    "tags": ["nper", "financial"],
+    "formula": "=NPER(6%/12, -200, 0, 50000)",
+    "expected": { "number": 162.5911713058373 }
+  },
+  {
+    "id": "fn.nper.savings-begin",
+    "description": "Same sinking fund with type=1",
+    "tags": ["nper", "financial"],
+    "formula": "=NPER(6%/12, -200, 0, 50000, 1)",
+    "expected": { "number": 162.0362316092754 }
+  },
+  {
+    "id": "fn.nper.tiny-rate",
+    "description": "Tiny rate uses ln1p so ln(ratio)/ln(1+r) does not cancel",
+    "tags": ["nper", "financial", "perf"],
+    "quirks": ["ieee-vs-excel-precision"],
+    "formula": "=NPER(0.00000001, -300, 100000)",
+    "expected": { "number": 333.3338905567928 }
+  },
+  {
+    "id": "fn.nper.percent-unary",
+    "description": "Rate written with postfix % (12%/12)",
+    "tags": ["nper", "financial"],
+    "quirks": ["percent-unary"],
+    "formula": "=NPER(12%/12, -100, -1000, 10000, 1)",
+    "expected": { "number": 59.67386567429462 }
+  },
+  {
+    "id": "fn.nper.text-number",
+    "description": "Numeric text coerces like arithmetic",
+    "tags": ["nper", "financial", "coercion"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=NPER(\"0.1\", \"-200\", \"1000\")",
+    "expected": { "number": 7.272540897341718 }
+  },
+  {
+    "id": "fn.nper.true-type",
+    "description": "TRUE coerces to type=1",
+    "tags": ["nper", "financial", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=NPER(0.1, -200, 1000, 0, TRUE)",
+    "expected": { "number": 6.359612423507473 }
+  },
+  {
+    "id": "fn.nper.false-type",
+    "description": "FALSE coerces to type=0 (end of period)",
+    "tags": ["nper", "financial", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=NPER(0.1, -200, 1000, 0, FALSE)",
+    "expected": { "number": 7.272540897341718 }
+  },
+  {
+    "id": "fn.nper.empty-optional",
+    "description": "Blank fv/type cells coerce to 0",
+    "tags": ["nper", "financial", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=NPER(A1, A2, A3, A4, A5)",
+    "expected": { "number": 7.272540897341718 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 0.1 },
+          "A2": { "number": -200 },
+          "A3": { "number": 1000 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.nper.named",
+    "description": "NPER via defined names for rate / pmt / pv",
+    "tags": ["nper", "financial", "named"],
+    "formula": "=NPER(Rate, Pmt, Pv)",
+    "expected": { "number": 7.272540897341718 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 0.1 },
+          "A2": { "number": -200 },
+          "A3": { "number": 1000 }
+        }
+      }],
+      "names": [
+        { "name": "Rate", "refers_to": "Sheet1!A1" },
+        { "name": "Pmt", "refers_to": "Sheet1!A2" },
+        { "name": "Pv", "refers_to": "Sheet1!A3" }
+      ]
+    }
+  },
+  {
+    "id": "fn.nper.rate-zero-pmt-zero",
+    "description": "rate=0 and pmt=0 is #DIV/0! (straight-line path divides by pmt)",
+    "tags": ["nper", "financial", "errors"],
+    "formula": "=NPER(0, 0, 1000)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.nper.interest-only",
+    "description": "Payment equals interest: never reaches fv → #NUM!",
+    "tags": ["nper", "financial", "errors"],
+    "formula": "=NPER(0.1, -10, 100)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.nper.payment-too-small",
+    "description": "Payment smaller than interest never reaches fv → #NUM!",
+    "tags": ["nper", "financial", "errors"],
+    "formula": "=NPER(0.1, -50, 10000)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.nper.rate-minus-one",
+    "description": "rate=-1 makes ln(1+rate) undefined → #NUM!",
+    "tags": ["nper", "financial", "errors"],
+    "formula": "=NPER(-1, -100, 1000)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.nper.rate-below-minus-one",
+    "description": "rate < -1 is #NUM! (log of a negative)",
+    "tags": ["nper", "financial", "errors"],
+    "formula": "=NPER(-2, -100, 1000)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.nper.pmt-zero-same-sign",
+    "description": "pmt=0 cannot grow toward an fv with the same sign",
+    "tags": ["nper", "financial", "errors"],
+    "formula": "=NPER(0.1, 0, 1000, 2000)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.nper.too-few-args",
+    "description": "NPER requires rate, pmt, pv",
+    "tags": ["nper", "financial", "errors"],
+    "formula": "=NPER(0.1, -100)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.nper.no-args",
+    "description": "NPER() is #VALUE!",
+    "tags": ["nper", "financial", "errors"],
+    "formula": "=NPER()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.nper.too-many-args",
+    "description": "More than five arguments is #VALUE!",
+    "tags": ["nper", "financial", "errors"],
+    "formula": "=NPER(0.1, -100, 1000, 0, 0, 0)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.nper.text-rate",
+    "description": "Non-numeric text rate is #VALUE!",
+    "tags": ["nper", "financial", "errors"],
+    "formula": "=NPER(\"x\", -100, 1000)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.nper.error-left",
+    "description": "Left-to-right error precedence: first arg error wins",
+    "tags": ["nper", "financial", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=NPER(#DIV/0!, #VALUE!, 1)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.nper.error-second",
+    "description": "Second-arg error surfaces when rate is fine",
+    "tags": ["nper", "financial", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=NPER(0.1, #NAME?, #N/A)",
+    "expected": { "error": "#NAME?" }
+  }
+]

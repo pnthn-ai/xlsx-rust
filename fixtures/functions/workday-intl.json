@@ -1,0 +1,382 @@
+[
+  {
+    "id": "fn.workday-intl.ms-zero-weekend",
+    "description": "Microsoft example: weekend 0 is #NUM!",
+    "tags": ["workday-intl", "dates"],
+    "formula": "=WORKDAY.INTL(DATE(2012,1,1),30,0)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.workday-intl.ms-sunday-only",
+    "description": "Microsoft example: 90 workdays from 1-Jan-12 with Sunday-only weekend is serial 41013",
+    "tags": ["workday-intl", "dates"],
+    "formula": "=WORKDAY.INTL(DATE(2012,1,1),90,11)",
+    "expected": { "number": 41013 }
+  },
+  {
+    "id": "fn.workday-intl.ms-saturday-only",
+    "description": "Microsoft example: 30 workdays from 1-Jan-12 with Saturday-only weekend is serial 40944",
+    "tags": ["workday-intl", "dates"],
+    "formula": "=WORKDAY.INTL(DATE(2012,1,1),30,17)",
+    "expected": { "number": 40944 }
+  },
+  {
+    "id": "fn.workday-intl.omitted-matches-workday",
+    "description": "Omitted weekend is Sat/Sun, same as WORKDAY(1-Oct-08, 151)",
+    "tags": ["workday-intl", "workday", "dates"],
+    "formula": "=WORKDAY.INTL(DATE(2008,10,1),151)",
+    "expected": { "number": 39933 }
+  },
+  {
+    "id": "fn.workday-intl.code-1-matches-workday",
+    "description": "Weekend code 1 is Sat/Sun, same as WORKDAY",
+    "tags": ["workday-intl", "workday", "dates"],
+    "formula": "=WORKDAY.INTL(DATE(2008,10,1),151,1)",
+    "expected": { "number": 39933 }
+  },
+  {
+    "id": "fn.workday-intl.string-sat-sun",
+    "description": "String 0000011 is Saturday+Sunday, same as code 1",
+    "tags": ["workday-intl", "dates"],
+    "formula": "=WORKDAY.INTL(DATE(2008,10,1),151,\"0000011\")",
+    "expected": { "number": 39933 }
+  },
+  {
+    "id": "fn.workday-intl.string-sun-mon",
+    "description": "String 1000001 matches weekend code 2 (Sun+Mon)",
+    "tags": ["workday-intl", "dates"],
+    "formula": "=WORKDAY.INTL(DATE(2012,1,1),30,\"1000001\")",
+    "expected": { "number": 40950 }
+  },
+  {
+    "id": "fn.workday-intl.code-2",
+    "description": "Weekend code 2 (Sun+Mon): 30 workdays from 1-Jan-12 is 40950",
+    "tags": ["workday-intl", "dates"],
+    "formula": "=WORKDAY.INTL(DATE(2012,1,1),30,2)",
+    "expected": { "number": 40950 }
+  },
+  {
+    "id": "fn.workday-intl.code-3",
+    "description": "Weekend code 3 (Mon+Tue): 30 workdays from 1-Jan-12 is 40951",
+    "tags": ["workday-intl", "dates"],
+    "formula": "=WORKDAY.INTL(DATE(2012,1,1),30,3)",
+    "expected": { "number": 40951 }
+  },
+  {
+    "id": "fn.workday-intl.default-plus-30",
+    "description": "Default Sat/Sun: 30 workdays from Sunday 1-Jan-12 is 40949",
+    "tags": ["workday-intl", "dates"],
+    "formula": "=WORKDAY.INTL(DATE(2012,1,1),30)",
+    "expected": { "number": 40949 }
+  },
+  {
+    "id": "fn.workday-intl.sunday-plus-three",
+    "description": "Sunday 1-Jan-12 + 3 workdays (Sat/Sun) is Wednesday 4-Jan-12",
+    "tags": ["workday-intl", "dates"],
+    "formula": "=WORKDAY.INTL(DATE(2012,1,1),3)",
+    "expected": { "number": 40912 }
+  },
+  {
+    "id": "fn.workday-intl.sunday-plus-three-holiday",
+    "description": "Same span skips Monday 2-Jan-12 and lands on Thursday 5-Jan-12",
+    "tags": ["workday-intl", "dates"],
+    "formula": "=WORKDAY.INTL(DATE(2012,1,1),3,1,DATE(2012,1,2))",
+    "expected": { "number": 40913 }
+  },
+  {
+    "id": "fn.workday-intl.ms-holidays",
+    "description": "151 workdays skipping three holidays with default weekend is 5-May-09",
+    "tags": ["workday-intl", "dates"],
+    "formula": "=WORKDAY.INTL(A1,A2,1,B1:B3)",
+    "expected": { "number": 39938 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "number": 39722 },
+            "A2": { "number": 151 },
+            "B1": { "number": 39778 },
+            "B2": { "number": 39786 },
+            "B3": { "number": 39834 }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.workday-intl.fri-plus-one-default",
+    "description": "Friday + 1 with Sat/Sun weekend is Monday",
+    "tags": ["workday-intl", "dates"],
+    "formula": "=WORKDAY.INTL(DATE(2024,1,5),1)",
+    "expected": { "number": 45299 }
+  },
+  {
+    "id": "fn.workday-intl.fri-plus-one-fri-sat",
+    "description": "Friday + 1 with Fri+Sat weekend (code 7) is Sunday",
+    "tags": ["workday-intl", "dates"],
+    "formula": "=WORKDAY.INTL(DATE(2024,1,5),1,7)",
+    "expected": { "number": 45298 }
+  },
+  {
+    "id": "fn.workday-intl.fri-plus-one-no-weekend",
+    "description": "Friday + 1 with no weekend days is Saturday",
+    "tags": ["workday-intl", "dates"],
+    "formula": "=WORKDAY.INTL(DATE(2024,1,5),1,\"0000000\")",
+    "expected": { "number": 45297 }
+  },
+  {
+    "id": "fn.workday-intl.fri-plus-one-sunday-only",
+    "description": "Friday + 1 with Sunday-only weekend is Saturday",
+    "tags": ["workday-intl", "dates"],
+    "formula": "=WORKDAY.INTL(DATE(2024,1,5),1,11)",
+    "expected": { "number": 45297 }
+  },
+  {
+    "id": "fn.workday-intl.sat-plus-one-sat-only",
+    "description": "Saturday + 1 with Saturday-only weekend is Sunday",
+    "tags": ["workday-intl", "dates"],
+    "formula": "=WORKDAY.INTL(DATE(2024,1,6),1,17)",
+    "expected": { "number": 45298 }
+  },
+  {
+    "id": "fn.workday-intl.mon-minus-one-sunday-only",
+    "description": "Monday − 1 with Sunday-only weekend is Saturday",
+    "tags": ["workday-intl", "dates"],
+    "formula": "=WORKDAY.INTL(DATE(2024,1,8),-1,11)",
+    "expected": { "number": 45297 }
+  },
+  {
+    "id": "fn.workday-intl.zero-weekend-start",
+    "description": "days=0 returns Saturday start unchanged",
+    "tags": ["workday-intl", "dates"],
+    "formula": "=WORKDAY.INTL(DATE(2024,1,6),0)",
+    "expected": { "number": 45297 }
+  },
+  {
+    "id": "fn.workday-intl.zero-holiday",
+    "description": "days=0 returns a weekday holiday start unchanged",
+    "tags": ["workday-intl", "dates"],
+    "formula": "=WORKDAY.INTL(DATE(2024,1,1),0,1,DATE(2024,1,1))",
+    "expected": { "number": 45292 }
+  },
+  {
+    "id": "fn.workday-intl.serial-60-zero",
+    "description": "Serial 60 (leap-bug Wednesday) is a workday under Sat/Sun",
+    "tags": ["workday-intl", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=WORKDAY.INTL(60,0)",
+    "expected": { "number": 60 }
+  },
+  {
+    "id": "fn.workday-intl.serial-59-plus-one",
+    "description": "Tue 28-Feb-1900 + 1 lands on the leap-bug Wednesday",
+    "tags": ["workday-intl", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=WORKDAY.INTL(59,1)",
+    "expected": { "number": 60 }
+  },
+  {
+    "id": "fn.workday-intl.serial-60-wednesday-weekend",
+    "description": "Wednesday-only weekend (code 14) skips serial 60",
+    "tags": ["workday-intl", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=WORKDAY.INTL(59,1,14)",
+    "expected": { "number": 61 }
+  },
+  {
+    "id": "fn.workday-intl.serial-60-zero-wednesday-weekend",
+    "description": "days=0 keeps serial 60 even when Wednesday is the weekend",
+    "tags": ["workday-intl", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=WORKDAY.INTL(60,0,14)",
+    "expected": { "number": 60 }
+  },
+  {
+    "id": "fn.workday-intl.holiday-weekend",
+    "description": "A Saturday holiday does not add an extra skip under Sat/Sun",
+    "tags": ["workday-intl", "dates"],
+    "formula": "=WORKDAY.INTL(DATE(2024,1,4),1,1,DATE(2024,1,6))",
+    "expected": { "number": 45296 }
+  },
+  {
+    "id": "fn.workday-intl.holiday-duplicates",
+    "description": "Duplicate Friday holidays still skip only once (to Monday)",
+    "tags": ["workday-intl", "dates"],
+    "formula": "=WORKDAY.INTL(DATE(2024,1,4),1,1,{45296,45296})",
+    "expected": { "number": 45299 }
+  },
+  {
+    "id": "fn.workday-intl.holiday-range-blanks",
+    "description": "Blank cells in a holiday range are ignored",
+    "tags": ["workday-intl", "dates"],
+    "formula": "=WORKDAY.INTL(A1,1,1,B1:B3)",
+    "expected": { "number": 45299 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "number": 45295 },
+            "B1": { "number": 45296 },
+            "B3": { "number": 45296 }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.workday-intl.trunc-fractions",
+    "description": "Fractional start, days, and weekend code truncate toward zero",
+    "tags": ["workday-intl", "dates"],
+    "formula": "=WORKDAY.INTL(DATE(2024,1,4)+0.9,1.9,1.9)",
+    "expected": { "number": 45296 }
+  },
+  {
+    "id": "fn.workday-intl.trunc-negative-days",
+    "description": "Negative fractional days truncate toward zero (−1.9 → −1)",
+    "tags": ["workday-intl", "dates"],
+    "formula": "=WORKDAY.INTL(DATE(2024,1,8)+0.9,-1.9)",
+    "expected": { "number": 45296 }
+  },
+  {
+    "id": "fn.workday-intl.num-before-epoch",
+    "description": "Stepping before serial 0 is #NUM!",
+    "tags": ["workday-intl", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=WORKDAY.INTL(2,-1)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.workday-intl.num-past-9999",
+    "description": "Friday 9999-12-31 + 1 workday is past the calendar",
+    "tags": ["workday-intl", "dates"],
+    "formula": "=WORKDAY.INTL(DATE(9999,12,31),1)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.workday-intl.num-weekend-8",
+    "description": "Weekend code 8 is #NUM!",
+    "tags": ["workday-intl"],
+    "formula": "=WORKDAY.INTL(1,1,8)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.workday-intl.num-weekend-10",
+    "description": "Weekend code 10 is #NUM!",
+    "tags": ["workday-intl"],
+    "formula": "=WORKDAY.INTL(1,1,10)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.workday-intl.num-weekend-18",
+    "description": "Weekend code 18 is #NUM!",
+    "tags": ["workday-intl"],
+    "formula": "=WORKDAY.INTL(1,1,18)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.workday-intl.value-arity",
+    "description": "Wrong arity is #VALUE!",
+    "tags": ["workday-intl"],
+    "formula": "=WORKDAY.INTL(1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.workday-intl.value-bad-text",
+    "description": "Non-numeric start text is #VALUE!",
+    "tags": ["workday-intl"],
+    "formula": "=WORKDAY.INTL(\"x\",1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.workday-intl.value-string-short",
+    "description": "Weekend string of the wrong length is #VALUE!",
+    "tags": ["workday-intl"],
+    "formula": "=WORKDAY.INTL(1,1,\"000001\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.workday-intl.value-string-numeric-text",
+    "description": "Text \"1\" is an invalid weekend string, not code 1",
+    "tags": ["workday-intl"],
+    "formula": "=WORKDAY.INTL(1,1,\"1\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.workday-intl.value-string-bad-char",
+    "description": "Weekend string with a non-0/1 character is #VALUE!",
+    "tags": ["workday-intl"],
+    "formula": "=WORKDAY.INTL(1,1,\"0000012\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.workday-intl.value-all-weekend",
+    "description": "Weekend string 1111111 (no workdays) is #VALUE!",
+    "tags": ["workday-intl"],
+    "formula": "=WORKDAY.INTL(1,1,\"1111111\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.workday-intl.blank-weekend-cell",
+    "description": "Blank weekend cell coerces to 0 and is #NUM!",
+    "tags": ["workday-intl", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=WORKDAY.INTL(1,1,A1)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.workday-intl.true-weekend",
+    "description": "TRUE weekend coerces to code 1 (Sat/Sun); Friday 6 + 1 is Monday 9",
+    "tags": ["workday-intl", "dates"],
+    "formula": "=WORKDAY.INTL(6,1,TRUE)",
+    "expected": { "number": 9 }
+  },
+  {
+    "id": "fn.workday-intl.false-weekend",
+    "description": "FALSE weekend coerces to 0 and is #NUM!",
+    "tags": ["workday-intl"],
+    "formula": "=WORKDAY.INTL(1,1,FALSE)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.workday-intl.system-1904",
+    "description": "1904 epoch Friday + 1 workday is Monday serial 3",
+    "tags": ["workday-intl", "dates"],
+    "quirks": ["date-system"],
+    "formula": "=WORKDAY.INTL(0,1)",
+    "expected": { "number": 3 },
+    "options": { "date_system": "excel1904" }
+  },
+  {
+    "id": "fn.workday-intl.blank-start",
+    "description": "Blank start coerces to 0 (Saturday); +1 is Monday serial 2",
+    "tags": ["workday-intl", "dates", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=WORKDAY.INTL(A1,1)",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.workday-intl.numeric-text",
+    "description": "Numeric text start \"6\" (Friday) + 1 is Monday serial 9",
+    "tags": ["workday-intl", "dates"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=WORKDAY.INTL(\"6\",1)",
+    "expected": { "number": 9 }
+  },
+  {
+    "id": "fn.workday-intl.serial-zero-plus-one",
+    "description": "Serial 0 (fictitious Sat 1900-01-00) + 1 is Monday serial 2",
+    "tags": ["workday-intl", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=WORKDAY.INTL(0,1)",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.workday-intl.three-day-weekend-string",
+    "description": "Custom Fri–Sun weekend string 0000111: Thursday + 1 is Monday",
+    "tags": ["workday-intl", "dates"],
+    "formula": "=WORKDAY.INTL(DATE(2024,1,4),1,\"0000111\")",
+    "expected": { "number": 45299 }
+  }
+]

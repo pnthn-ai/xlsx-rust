@@ -1,0 +1,243 @@
+[
+  {
+    "id": "fn.pduration.ms-years",
+    "description": "Microsoft PDURATION example: 2.5% to grow $2,000 to $2,200",
+    "tags": ["pduration", "financial"],
+    "notes": "support.microsoft.com PDURATION(2.5%, 2000, 2200) prints 3.86. Golden is the OpenFormula 6.12.32 identity log(fv/pv)/log(1+rate) in IEEE.",
+    "formula": "=PDURATION(2.5%, 2000, 2200)",
+    "expected": { "number": 3.859866162622648 }
+  },
+  {
+    "id": "fn.pduration.ms-months",
+    "description": "Microsoft PDURATION example: monthly 2.5% annual to grow $1,000 to $1,200",
+    "tags": ["pduration", "financial"],
+    "notes": "support.microsoft.com PDURATION(0.025/12, 1000, 1200) prints 87.6.",
+    "formula": "=PDURATION(0.025/12, 1000, 1200)",
+    "expected": { "number": 87.60547641937562 }
+  },
+  {
+    "id": "fn.pduration.ms-cells",
+    "description": "Same Microsoft yearly example via cell refs",
+    "tags": ["pduration", "financial"],
+    "formula": "=PDURATION(A2, A3, A4)",
+    "expected": { "number": 3.859866162622648 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A2": { "number": 0.025 },
+          "A3": { "number": 2000 },
+          "A4": { "number": 2200 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.pduration.percent",
+    "description": "Postfix % on the rate: PDURATION(2.5%, 2000, 2200)",
+    "tags": ["pduration", "financial"],
+    "quirks": ["percent-unary"],
+    "formula": "=PDURATION(2.5%, 2000, 2200)",
+    "expected": { "number": 3.859866162622648 }
+  },
+  {
+    "id": "fn.pduration.one-period",
+    "description": "fv = pv*(1+rate) is exactly 1 period",
+    "tags": ["pduration", "financial"],
+    "formula": "=PDURATION(0.1, 100, 110)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.pduration.two-period",
+    "description": "fv = pv*(1+rate)^2 is 2 periods",
+    "tags": ["pduration", "financial"],
+    "formula": "=PDURATION(0.1, 100, 121)",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.pduration.power-identity",
+    "description": "PDURATION(r, pv, pv*(1+r)^n) recovers n",
+    "tags": ["pduration", "financial"],
+    "formula": "=PDURATION(0.05, 1000, 1000*1.05^10)",
+    "expected": { "number": 10 }
+  },
+  {
+    "id": "fn.pduration.same",
+    "description": "pv = fv is 0 periods (already there)",
+    "tags": ["pduration", "financial"],
+    "formula": "=PDURATION(0.08, 1000, 1000)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.pduration.double-annual",
+    "description": "Years to double at 5% annual: ln(2)/ln(1.05)",
+    "tags": ["pduration", "financial"],
+    "formula": "=PDURATION(0.05, 100, 200)",
+    "expected": { "number": 14.206699082890472 }
+  },
+  {
+    "id": "fn.pduration.double-monthly",
+    "description": "Months to double $5,000 at 5% compounded monthly",
+    "tags": ["pduration", "financial"],
+    "formula": "=PDURATION(0.05/12, 5000, 10000)",
+    "expected": { "number": 166.70165674865177 }
+  },
+  {
+    "id": "fn.pduration.yearly-8",
+    "description": "8% annual to grow $10,000 to $20,000",
+    "tags": ["pduration", "financial"],
+    "formula": "=PDURATION(0.08, 10000, 20000)",
+    "expected": { "number": 9.006468342000595 }
+  },
+  {
+    "id": "fn.pduration.quarterly",
+    "description": "6% annual compounded quarterly to grow $1,000 to $1,500",
+    "tags": ["pduration", "financial"],
+    "formula": "=PDURATION(0.06/4, 1000, 1500)",
+    "expected": { "number": 27.233236695384093 }
+  },
+  {
+    "id": "fn.pduration.shrink",
+    "description": "fv < pv yields a signed (negative) period count",
+    "tags": ["pduration", "financial"],
+    "formula": "=PDURATION(0.05, 2000, 1000)",
+    "expected": { "number": -14.206699082890472 }
+  },
+  {
+    "id": "fn.pduration.near-equal",
+    "description": "fv just above pv uses ln1p so the numerator does not cancel",
+    "tags": ["pduration", "financial", "perf"],
+    "quirks": ["ieee-vs-excel-precision"],
+    "formula": "=PDURATION(0.05, 1000, 1001)",
+    "expected": { "number": 0.020485693173988944 }
+  },
+  {
+    "id": "fn.pduration.tiny-rate",
+    "description": "Tiny rate uses ln1p so log(1+r) does not cancel",
+    "tags": ["pduration", "financial", "perf"],
+    "quirks": ["ieee-vs-excel-precision"],
+    "formula": "=PDURATION(0.00000001, 100000, 100001)",
+    "expected": { "number": 999.9950050333081 }
+  },
+  {
+    "id": "fn.pduration.numeric-text",
+    "description": "Numeric text coerces like other scalar financial args",
+    "tags": ["pduration", "financial"],
+    "formula": "=PDURATION(\"0.025\", \"2000\", \"2200\")",
+    "expected": { "number": 3.859866162622648 }
+  },
+  {
+    "id": "fn.pduration.bool-rate-true",
+    "description": "TRUE rate coerces to 1; PDURATION(1, 1, 2) is 1",
+    "tags": ["pduration", "financial"],
+    "formula": "=PDURATION(TRUE, 1, 2)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.pduration.bool-rate-false",
+    "description": "FALSE rate coerces to 0 → #NUM!",
+    "tags": ["pduration", "financial"],
+    "formula": "=PDURATION(FALSE, 1000, 2000)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.pduration.blank-rate",
+    "description": "Blank rate coerces to 0 → #NUM!",
+    "tags": ["pduration", "financial"],
+    "formula": "=PDURATION(A1, 1000, 2000)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.pduration.blank-pv",
+    "description": "Blank pv coerces to 0 → #NUM!",
+    "tags": ["pduration", "financial"],
+    "formula": "=PDURATION(0.05, A1, 2000)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.pduration.zero-rate",
+    "description": "rate ≤ 0 is #NUM!",
+    "tags": ["pduration", "financial"],
+    "formula": "=PDURATION(0, 1000, 2000)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.pduration.neg-rate",
+    "description": "Negative rate is #NUM!",
+    "tags": ["pduration", "financial"],
+    "formula": "=PDURATION(-0.05, 1000, 2000)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.pduration.zero-pv",
+    "description": "pv ≤ 0 is #NUM!",
+    "tags": ["pduration", "financial"],
+    "formula": "=PDURATION(0.05, 0, 2000)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.pduration.neg-pv",
+    "description": "Negative pv is #NUM!",
+    "tags": ["pduration", "financial"],
+    "formula": "=PDURATION(0.05, -1000, 2000)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.pduration.zero-fv",
+    "description": "fv ≤ 0 is #NUM!",
+    "tags": ["pduration", "financial"],
+    "formula": "=PDURATION(0.05, 1000, 0)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.pduration.neg-fv",
+    "description": "Negative fv is #NUM!",
+    "tags": ["pduration", "financial"],
+    "formula": "=PDURATION(0.05, 1000, -2000)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.pduration.too-few-args",
+    "description": "PDURATION requires rate, pv, fv",
+    "tags": ["pduration", "financial", "errors"],
+    "formula": "=PDURATION(0.05, 1000)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.pduration.no-args",
+    "description": "PDURATION() is #VALUE!",
+    "tags": ["pduration", "financial", "errors"],
+    "formula": "=PDURATION()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.pduration.too-many-args",
+    "description": "More than three arguments is #VALUE!",
+    "tags": ["pduration", "financial", "errors"],
+    "formula": "=PDURATION(0.05, 1000, 2000, 1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.pduration.text-rate",
+    "description": "Non-numeric text rate is #VALUE!",
+    "tags": ["pduration", "financial", "errors"],
+    "formula": "=PDURATION(\"x\", 1000, 2000)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.pduration.error-left",
+    "description": "Left-to-right error precedence: first arg error wins",
+    "tags": ["pduration", "financial", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=PDURATION(#DIV/0!, #VALUE!, 1)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.pduration.error-second",
+    "description": "Second-arg error surfaces when rate is fine",
+    "tags": ["pduration", "financial", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=PDURATION(0.05, #NAME?, #N/A)",
+    "expected": { "error": "#NAME?" }
+  }
+]

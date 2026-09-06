@@ -70,6 +70,13 @@ pub struct EvalOptions {
     pub date_system: DateSystem,
     #[serde(default)]
     pub array_mode: ArrayMode,
+    /// Test / bench hook for volatile RNG (`RANDARRAY`). **Not an Excel
+    /// argument** — desktop Excel does not expose a seed, and this value is
+    /// never a sixth `RANDARRAY` parameter. `None` (default) draws a fresh
+    /// entropy seed per `evaluate` call. `Some(seed)` makes the stream
+    /// repeatable so tests can assert ranges without inventing Excel goldens.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub rng_seed: Option<u64>,
 }
 
 /// One evaluation request produced from a fixture (or a live oracle call).

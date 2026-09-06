@@ -1,0 +1,537 @@
+[
+  {
+    "id": "fn.xnpv-ms-example",
+    "description": "Microsoft example: XNPV(0.09, A2:A6, B2:B6) on the 2008–2009 schedule",
+    "tags": ["xnpv", "financial"],
+    "formula": "=XNPV(0.09,A2:A6,B2:B6)",
+    "expected": { "number": 2086.647602031535 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A2": { "number": -10000 },
+          "A3": { "number": 2750 },
+          "A4": { "number": 4250 },
+          "A5": { "number": 3250 },
+          "A6": { "number": 2750 },
+          "B2": { "formula": "=DATE(2008,1,1)" },
+          "B3": { "formula": "=DATE(2008,3,1)" },
+          "B4": { "formula": "=DATE(2008,10,30)" },
+          "B5": { "formula": "=DATE(2009,2,15)" },
+          "B6": { "formula": "=DATE(2009,4,1)" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xnpv-ms-example-date-literals",
+    "description": "Same Microsoft schedule via DATE() array literals",
+    "tags": ["xnpv", "financial"],
+    "formula": "=XNPV(0.09,{-10000,2750,4250,3250,2750},{DATE(2008,1,1),DATE(2008,3,1),DATE(2008,10,30),DATE(2009,2,15),DATE(2009,4,1)})",
+    "expected": { "number": 2086.647602031535 }
+  },
+  {
+    "id": "fn.xnpv-ms-example-serials",
+    "description": "Microsoft dates as stored 1900 serials (1-Jan-2008 = 39448)",
+    "tags": ["xnpv", "financial"],
+    "formula": "=XNPV(0.09,A2:A6,B2:B6)",
+    "expected": { "number": 2086.647602031535 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A2": { "number": -10000 },
+          "A3": { "number": 2750 },
+          "A4": { "number": 4250 },
+          "A5": { "number": 3250 },
+          "A6": { "number": 2750 },
+          "B2": { "number": 39448 },
+          "B3": { "number": 39508 },
+          "B4": { "number": 39751 },
+          "B5": { "number": 39859 },
+          "B6": { "number": 39904 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xnpv-later-dates-unsorted",
+    "description": "Later dates may be in any order as long as none precede the first",
+    "tags": ["xnpv", "financial"],
+    "formula": "=XNPV(0.09,{-10000,4250,2750,2750,3250},{DATE(2008,1,1),DATE(2008,10,30),DATE(2008,3,1),DATE(2009,4,1),DATE(2009,2,15)})",
+    "expected": { "number": 2086.647602031535 }
+  },
+  {
+    "id": "fn.xnpv-single-undiscounted",
+    "description": "A single cash flow is undiscounted (exponent 0)",
+    "tags": ["xnpv", "financial"],
+    "formula": "=XNPV(0.1,100,DATE(2008,1,1))",
+    "expected": { "number": 100 }
+  },
+  {
+    "id": "fn.xnpv-same-day",
+    "description": "Several flows on the origin date sum without discounting",
+    "tags": ["xnpv", "financial"],
+    "formula": "=XNPV(0.1,{-100,40,60},{DATE(2008,1,1),DATE(2008,1,1),DATE(2008,1,1)})",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.xnpv-rate-zero",
+    "description": "rate 0 sums the cash flows regardless of dates",
+    "tags": ["xnpv", "financial"],
+    "formula": "=XNPV(0,{-10000,2750,4250,3250,2750},{DATE(2008,1,1),DATE(2008,3,1),DATE(2008,10,30),DATE(2009,2,15),DATE(2009,4,1)})",
+    "expected": { "number": 3000 }
+  },
+  {
+    "id": "fn.xnpv-one-year-ten-percent",
+    "description": "XNPV(0.1, {-100, 110}, {d, d+365}) is 0",
+    "tags": ["xnpv", "financial"],
+    "formula": "=XNPV(0.1,{-100,110},{DATE(2008,1,1),DATE(2008,1,1)+365})",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.xnpv-leap-year-366-days",
+    "description": "2008-01-01 to 2009-01-01 is 366 serial days; year basis is still 365",
+    "tags": ["xnpv", "financial"],
+    "formula": "=XNPV(0.1,{-100,110},{DATE(2008,1,1),DATE(2009,1,1)})",
+    "expected": { "number": -0.026108969043875163 }
+  },
+  {
+    "id": "fn.xnpv-all-positive",
+    "description": "Mixed signs are not required (unlike XIRR)",
+    "tags": ["xnpv", "financial"],
+    "formula": "=XNPV(0.1,{100,200},{DATE(2008,1,1),DATE(2008,1,1)+365})",
+    "expected": { "number": 281.8181818181818 }
+  },
+  {
+    "id": "fn.xnpv-stored-zero-is-a-flow",
+    "description": "A stored 0 occupies a date slot (not skipped like NPV)",
+    "tags": ["xnpv", "financial"],
+    "formula": "=XNPV(0.1,A1:A3,B1:B3)",
+    "expected": { "number": 0 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": -100 },
+          "A2": { "number": 0 },
+          "A3": { "number": 121 },
+          "B1": { "number": 39448 },
+          "B2": { "number": 39813 },
+          "B3": { "number": 40178 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xnpv-blank-value-is-zero",
+    "description": "A blank value cell is a 0 cash flow, not a skip",
+    "tags": ["xnpv", "financial", "empty"],
+    "formula": "=XNPV(0.09,A2:A6,B2:B6)",
+    "expected": { "number": -624.6699953630969 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A2": { "number": -10000 },
+          "A4": { "number": 4250 },
+          "A5": { "number": 3250 },
+          "A6": { "number": 2750 },
+          "B2": { "number": 39448 },
+          "B3": { "number": 39508 },
+          "B4": { "number": 39751 },
+          "B5": { "number": 39859 },
+          "B6": { "number": 39904 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xnpv-blank-date-precedes",
+    "description": "A blank date is serial 0 and precedes a 2008 origin → #NUM!",
+    "tags": ["xnpv", "financial", "empty"],
+    "formula": "=XNPV(0.09,A2:A3,B2:B3)",
+    "expected": { "error": "#NUM!" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A2": { "number": -10000 },
+          "A3": { "number": 2750 },
+          "B2": { "number": 39448 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xnpv-blank-first-date-is-serial-zero",
+    "description": "A blank first date is serial 0 (1900-01-00); later serial 1 does not precede",
+    "tags": ["xnpv", "financial", "empty"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=XNPV(0.1,A1:A2,B1:B2)",
+    "expected": { "number": 209.9712801340517 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 100 },
+          "A2": { "number": 110 },
+          "B2": { "number": 1 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xnpv-range-text-value",
+    "description": "Text in a values range is nonnumeric → #VALUE!",
+    "tags": ["xnpv", "financial"],
+    "formula": "=XNPV(0.1,A1:A2,B1:B2)",
+    "expected": { "error": "#VALUE!" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": -100 },
+          "A2": { "text": "x" },
+          "B1": { "number": 39448 },
+          "B2": { "number": 39813 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xnpv-range-bool-value",
+    "description": "A logical in a values range is nonnumeric → #VALUE!",
+    "tags": ["xnpv", "financial"],
+    "formula": "=XNPV(0.1,A1:A2,B1:B2)",
+    "expected": { "error": "#VALUE!" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": -100 },
+          "A2": { "bool": true },
+          "B1": { "number": 39448 },
+          "B2": { "number": 39813 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xnpv-range-text-date",
+    "description": "Text in a dates range is not a valid date → #VALUE!",
+    "tags": ["xnpv", "financial"],
+    "formula": "=XNPV(0.1,A1:A2,B1:B2)",
+    "expected": { "error": "#VALUE!" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": -100 },
+          "A2": { "number": 110 },
+          "B1": { "number": 39448 },
+          "B2": { "text": "1/1/2009" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xnpv-scalar-bool-value",
+    "description": "Scalar TRUE coerces to 1 (undiscounted)",
+    "tags": ["xnpv", "financial"],
+    "formula": "=XNPV(0.1,TRUE,DATE(2008,1,1))",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.xnpv-scalar-text-num",
+    "description": "Scalar numeric text in values coerces",
+    "tags": ["xnpv", "financial"],
+    "formula": "=XNPV(0.1,\"100\",DATE(2008,1,1))",
+    "expected": { "number": 100 }
+  },
+  {
+    "id": "fn.xnpv-scalar-text-bad",
+    "description": "Non-numeric scalar text is #VALUE!",
+    "tags": ["xnpv", "financial"],
+    "formula": "=XNPV(0.1,\"x\",DATE(2008,1,1))",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.xnpv-rate-true",
+    "description": "rate TRUE coerces to 1",
+    "tags": ["xnpv", "financial"],
+    "formula": "=XNPV(TRUE,100,DATE(2008,1,1))",
+    "expected": { "number": 100 }
+  },
+  {
+    "id": "fn.xnpv-rate-percent",
+    "description": "9% is 0.09",
+    "tags": ["xnpv", "financial"],
+    "formula": "=XNPV(9%,{-10000,2750,4250,3250,2750},{39448,39508,39751,39859,39904})",
+    "expected": { "number": 2086.647602031535 }
+  },
+  {
+    "id": "fn.xnpv-rate-text",
+    "description": "Numeric text rate coerces",
+    "tags": ["xnpv", "financial"],
+    "formula": "=XNPV(\"0.09\",{-10000,2750,4250,3250,2750},{39448,39508,39751,39859,39904})",
+    "expected": { "number": 2086.647602031535 }
+  },
+  {
+    "id": "fn.xnpv-rate-text-bad",
+    "description": "Non-numeric rate is #VALUE!",
+    "tags": ["xnpv", "financial"],
+    "formula": "=XNPV(\"x\",{-100,110},{39448,39813})",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.xnpv-rate-blank-cell",
+    "description": "A blank rate cell is 0 (sum of flows)",
+    "tags": ["xnpv", "financial"],
+    "formula": "=XNPV(A1,{-100,40,60},{1,1,1})",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.xnpv-date-fraction-truncated",
+    "description": "Fractional dates truncate toward zero (time of day is ignored)",
+    "tags": ["xnpv", "financial"],
+    "formula": "=XNPV(0.09,A2:A6,B2:B6)",
+    "expected": { "number": 2086.647602031535 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A2": { "number": -10000 },
+          "A3": { "number": 2750 },
+          "A4": { "number": 4250 },
+          "A5": { "number": 3250 },
+          "A6": { "number": 2750 },
+          "B2": { "number": 39448.9 },
+          "B3": { "number": 39508.1 },
+          "B4": { "number": 39751.5 },
+          "B5": { "number": 39859.99 },
+          "B6": { "number": 39904.01 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xnpv-date-precedes",
+    "description": "A date before the first date is #NUM!",
+    "tags": ["xnpv", "financial"],
+    "formula": "=XNPV(0.09,{-10000,2750},{DATE(2008,3,1),DATE(2008,1,1)})",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.xnpv-length-mismatch",
+    "description": "Different numbers of values and dates is #NUM!",
+    "tags": ["xnpv", "financial"],
+    "formula": "=XNPV(0.09,A1:A3,B1:B2)",
+    "expected": { "error": "#NUM!" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": -100 },
+          "A2": { "number": 50 },
+          "A3": { "number": 60 },
+          "B1": { "number": 39448 },
+          "B2": { "number": 39508 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xnpv-empty-arrays",
+    "description": "Empty series has no origin date → #NUM!",
+    "tags": ["xnpv", "financial"],
+    "formula": "=XNPV(0.1,{},{})",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.xnpv-invalid-date-negative",
+    "description": "A negative date serial is not a valid date → #VALUE!",
+    "tags": ["xnpv", "financial"],
+    "formula": "=XNPV(0.1,{-100,110},{-1,39448})",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.xnpv-invalid-date-past-max",
+    "description": "A serial past 9999-12-31 is not a valid date → #VALUE!",
+    "tags": ["xnpv", "financial"],
+    "formula": "=XNPV(0.1,{1,1},{1,2958466})",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.xnpv-serial-60-leap-bug",
+    "description": "Serial 60 (1900-02-29) is a valid origin; 59→61 is 2 Excel days",
+    "tags": ["xnpv", "financial"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=XNPV(1,{100,100},{59,61})",
+    "expected": { "number": 199.62091367899785 }
+  },
+  {
+    "id": "fn.xnpv-serial-60-same-day",
+    "description": "DATE(1900,2,29) is serial 60 and is a valid XNPV date",
+    "tags": ["xnpv", "financial"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=XNPV(0.1,{50,50},{DATE(1900,2,29),DATE(1900,2,29)})",
+    "expected": { "number": 100 }
+  },
+  {
+    "id": "fn.xnpv-system-1904",
+    "description": "1904 system: same civil dates yield the same XNPV (day deltas match)",
+    "tags": ["xnpv", "financial"],
+    "quirks": ["date-system"],
+    "formula": "=XNPV(0.09,{-10000,2750,4250,3250,2750},{DATE(2008,1,1),DATE(2008,3,1),DATE(2008,10,30),DATE(2009,2,15),DATE(2009,4,1)})",
+    "expected": { "number": 2086.647602031535 },
+    "options": { "date_system": "excel1904" }
+  },
+  {
+    "id": "fn.xnpv-2d-row-major",
+    "description": "2-D values/dates flatten row-major and pair by position",
+    "tags": ["xnpv", "financial"],
+    "formula": "=XNPV(0.1,A1:B2,C1:D2)",
+    "expected": { "number": 0 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": -100 },
+          "B1": { "number": 40 },
+          "A2": { "number": 30 },
+          "B2": { "number": 30 },
+          "C1": { "number": 1000 },
+          "D1": { "number": 1000 },
+          "C2": { "number": 1000 },
+          "D2": { "number": 1000 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xnpv-named-ranges",
+    "description": "XNPV of defined names for values and dates",
+    "tags": ["xnpv", "financial"],
+    "formula": "=XNPV(0.09,Flows,PayDates)",
+    "expected": { "number": 2086.647602031535 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A2": { "number": -10000 },
+          "A3": { "number": 2750 },
+          "A4": { "number": 4250 },
+          "A5": { "number": 3250 },
+          "A6": { "number": 2750 },
+          "B2": { "number": 39448 },
+          "B3": { "number": 39508 },
+          "B4": { "number": 39751 },
+          "B5": { "number": 39859 },
+          "B6": { "number": 39904 }
+        }
+      }],
+      "names": [
+        { "name": "Flows", "refers_to": "Sheet1!A2:A6" },
+        { "name": "PayDates", "refers_to": "Sheet1!B2:B6" }
+      ]
+    }
+  },
+  {
+    "id": "fn.xnpv-rate-neg-one-later",
+    "description": "rate = -1 with a later cash flow is #DIV/0!",
+    "tags": ["xnpv", "financial"],
+    "formula": "=XNPV(-1,{-10000,2750},{39448,39508})",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.xnpv-rate-neg-one-same-day",
+    "description": "rate = -1 with every flow on the origin date just sums",
+    "tags": ["xnpv", "financial"],
+    "formula": "=XNPV(-1,{-100,40,60},{10,10,10})",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.xnpv-rate-lt-neg-one-integer-year",
+    "description": "rate = -2 over an exact 365-day year:  -100 + 110/(-1) = -210",
+    "tags": ["xnpv", "financial"],
+    "formula": "=XNPV(-2,{-100,110},{39448,39813})",
+    "expected": { "number": -210 }
+  },
+  {
+    "id": "fn.xnpv-rate-lt-neg-one-fractional",
+    "description": "rate < -1 with a non-integer year fraction is #NUM!",
+    "tags": ["xnpv", "financial"],
+    "formula": "=XNPV(-2,{-100,110},{39448,39449})",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.xnpv-arity-none",
+    "description": "XNPV() is #VALUE!",
+    "tags": ["xnpv", "financial"],
+    "formula": "=XNPV()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.xnpv-arity-one",
+    "description": "XNPV(rate) is #VALUE!",
+    "tags": ["xnpv", "financial"],
+    "formula": "=XNPV(0.1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.xnpv-arity-two",
+    "description": "XNPV(rate, values) without dates is #VALUE!",
+    "tags": ["xnpv", "financial"],
+    "formula": "=XNPV(0.1,{-100,110})",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.xnpv-arity-four",
+    "description": "Four arguments is #VALUE!",
+    "tags": ["xnpv", "financial"],
+    "formula": "=XNPV(0.1,{-100,110},{1,2},0)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.xnpv-err-rate",
+    "description": "Error in rate wins",
+    "tags": ["xnpv", "financial"],
+    "formula": "=XNPV(1/0,{-100,110},{39448,39813})",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.xnpv-err-values",
+    "description": "Error in values wins over dates",
+    "tags": ["xnpv", "financial"],
+    "formula": "=XNPV(0.1,#N/A,39448)",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.xnpv-err-ltr",
+    "description": "Left-to-right: rate #DIV/0! beats values #N/A",
+    "tags": ["xnpv", "financial"],
+    "formula": "=XNPV(#DIV/0!,#N/A,39448)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.xnpv-err-in-range",
+    "description": "An error cell in the values range propagates",
+    "tags": ["xnpv", "financial"],
+    "formula": "=XNPV(0.1,A1:A3,B1:B3)",
+    "expected": { "error": "#DIV/0!" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": -100 },
+          "A2": { "error": "#DIV/0!" },
+          "A3": { "number": 110 },
+          "B1": { "number": 39448 },
+          "B2": { "number": 39508 },
+          "B3": { "number": 39813 }
+        }
+      }]
+    }
+  }
+]

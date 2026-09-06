@@ -1,0 +1,531 @@
+[
+  {
+    "id": "fn.chooserows.col-basic",
+    "description": "CHOOSEROWS of a column returns the listed row as a 1×1 array",
+    "tags": ["chooserows", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=CHOOSEROWS({1;2;3}, 2)",
+    "expected": { "array": [[{ "number": 2 }]] }
+  },
+  {
+    "id": "fn.chooserows.col-multi",
+    "description": "Several row_num arguments keep listed order",
+    "tags": ["chooserows", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=CHOOSEROWS({1;2;3}, 1, 3)",
+    "expected": { "array": [[{ "number": 1 }], [{ "number": 3 }]] }
+  },
+  {
+    "id": "fn.chooserows.reorder",
+    "description": "Rows can be returned in any order",
+    "tags": ["chooserows"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=CHOOSEROWS({1;2;3}, 3, 1, 2)",
+    "expected": { "array": [[{ "number": 3 }], [{ "number": 1 }], [{ "number": 2 }]] }
+  },
+  {
+    "id": "fn.chooserows.repeat",
+    "description": "Duplicate row_num values are kept (row 1 twice)",
+    "tags": ["chooserows"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=CHOOSEROWS({1;2;3}, 1, 1)",
+    "expected": { "array": [[{ "number": 1 }], [{ "number": 1 }]] }
+  },
+  {
+    "id": "fn.chooserows.matrix",
+    "description": "2-D CHOOSEROWS keeps every column of the picked rows",
+    "tags": ["chooserows"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=CHOOSEROWS({1,2;3,4;5,6}, 1, 3)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 2 }],
+        [{ "number": 5 }, { "number": 6 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.chooserows.row-vector",
+    "description": "A single-row array has only row 1 (and -1)",
+    "tags": ["chooserows"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=CHOOSEROWS({1,2,3}, 1)",
+    "expected": { "array": [[{ "number": 1 }, { "number": 2 }, { "number": 3 }]] }
+  },
+  {
+    "id": "fn.chooserows.neg-last",
+    "description": "Negative index -1 is the last row (not INDEX #REF!)",
+    "tags": ["chooserows", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=CHOOSEROWS({1;2;3}, -1)",
+    "expected": { "array": [[{ "number": 3 }]] },
+    "notes": "CHOOSEROWS(-1) counts from the bottom. INDEX(..., -1) is #REF! in this engine."
+  },
+  {
+    "id": "fn.chooserows.neg-two",
+    "description": "CHOOSEROWS(..., -1, -2) is last then second-to-last",
+    "tags": ["chooserows"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=CHOOSEROWS({1;2;3;4}, -1, -2)",
+    "expected": { "array": [[{ "number": 4 }], [{ "number": 3 }]] }
+  },
+  {
+    "id": "fn.chooserows.neg-last-two-in-order",
+    "description": "Last two rows in natural order: -2, -1",
+    "tags": ["chooserows"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=CHOOSEROWS({1;2;3;4}, -2, -1)",
+    "expected": { "array": [[{ "number": 3 }], [{ "number": 4 }]] }
+  },
+  {
+    "id": "fn.chooserows.neg-reverse",
+    "description": "Explicit negatives reverse a column (SEQUENCE is not required)",
+    "tags": ["chooserows"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=CHOOSEROWS({1;2;3}, -1, -2, -3)",
+    "expected": { "array": [[{ "number": 3 }], [{ "number": 2 }], [{ "number": 1 }]] }
+  },
+  {
+    "id": "fn.chooserows.mix-pos-neg",
+    "description": "First and last row via 1 and -1",
+    "tags": ["chooserows"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=CHOOSEROWS({1;2;3}, 1, -1)",
+    "expected": { "array": [[{ "number": 1 }], [{ "number": 3 }]] }
+  },
+  {
+    "id": "fn.chooserows.zero-value",
+    "description": "row_num 0 is #VALUE! (Microsoft: abs zero)",
+    "tags": ["chooserows", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=CHOOSEROWS({1;2}, 0)",
+    "expected": { "error": "#VALUE!" },
+    "notes": "Not #REF!. INDEX(..., 0) is #REF! in this engine; CHOOSEROWS(0) is #VALUE!."
+  },
+  {
+    "id": "fn.chooserows.pos-oob-value",
+    "description": "Positive row_num past the height is #VALUE!, not INDEX #REF!",
+    "tags": ["chooserows", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=CHOOSEROWS({1;2}, 3)",
+    "expected": { "error": "#VALUE!" },
+    "notes": "INDEX({1;2;3}, 4) is #REF! (fixtures/functions/lookup.json). CHOOSEROWS out-of-range is #VALUE!."
+  },
+  {
+    "id": "fn.chooserows.neg-oob-value",
+    "description": "Negative abs exceeding height is #VALUE!",
+    "tags": ["chooserows", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=CHOOSEROWS({1;2}, -3)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.chooserows.false-is-zero",
+    "description": "FALSE coerces to 0 → #VALUE!",
+    "tags": ["chooserows", "errors"],
+    "quirks": ["array-eval-mode", "bool-number-equality"],
+    "formula": "=CHOOSEROWS({1;2}, FALSE)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.chooserows.true-is-one",
+    "description": "TRUE coerces to 1 (first row)",
+    "tags": ["chooserows"],
+    "quirks": ["array-eval-mode", "bool-number-equality"],
+    "formula": "=CHOOSEROWS({1;2;3}, TRUE)",
+    "expected": { "array": [[{ "number": 1 }]] }
+  },
+  {
+    "id": "fn.chooserows.blank-row-num",
+    "description": "Blank row_num coerces to 0 → #VALUE!",
+    "tags": ["chooserows", "errors", "empty"],
+    "quirks": ["array-eval-mode", "empty-cell-duality"],
+    "formula": "=CHOOSEROWS({1;2}, A1)",
+    "expected": { "error": "#VALUE!" },
+    "workbook": { "sheets": [{ "name": "Sheet1", "cells": {} }] }
+  },
+  {
+    "id": "fn.chooserows.text-row-num",
+    "description": "Non-numeric text row_num is #VALUE!",
+    "tags": ["chooserows", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=CHOOSEROWS({1;2}, \"x\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.chooserows.text-number",
+    "description": "Numeric text row_num coerces (\"2\" → row 2)",
+    "tags": ["chooserows"],
+    "quirks": ["array-eval-mode", "equality-vs-arithmetic-coercion"],
+    "formula": "=CHOOSEROWS({1;2;3}, \"2\")",
+    "expected": { "array": [[{ "number": 2 }]] }
+  },
+  {
+    "id": "fn.chooserows.arity-one",
+    "description": "CHOOSEROWS(array) without a row_num is #VALUE!",
+    "tags": ["chooserows", "errors"],
+    "formula": "=CHOOSEROWS({1;2})",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.chooserows.arity-zero",
+    "description": "CHOOSEROWS() is #VALUE!",
+    "tags": ["chooserows", "errors"],
+    "formula": "=CHOOSEROWS()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.chooserows.trunc-pos",
+    "description": "Positive fractional row_num truncates toward zero (1.9 → 1)",
+    "tags": ["chooserows"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=CHOOSEROWS({1;2;3}, 1.9)",
+    "expected": { "array": [[{ "number": 1 }]] },
+    "notes": "Modeled as TRUNC (toward zero), same as CHOOSE/INDEX in this engine. Live Excel is not in CI."
+  },
+  {
+    "id": "fn.chooserows.trunc-neg",
+    "description": "Negative fractional row_num truncates toward zero (-1.9 → -1, last row)",
+    "tags": ["chooserows"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=CHOOSEROWS({1;2;3}, -1.9)",
+    "expected": { "array": [[{ "number": 3 }]] },
+    "notes": "Toward-zero TRUNC, not INT/floor: -1.9 → -1, not -2. Documented model; live Excel not in CI."
+  },
+  {
+    "id": "fn.chooserows.frac-under-one-value",
+    "description": "0.9 truncates to 0 → #VALUE!",
+    "tags": ["chooserows", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=CHOOSEROWS({1;2}, 0.9)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.chooserows.array-const-row",
+    "description": "A row-vector row_num constant lists several rows",
+    "tags": ["chooserows"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=CHOOSEROWS({1;2;3;4}, {1,3})",
+    "expected": { "array": [[{ "number": 1 }], [{ "number": 3 }]] }
+  },
+  {
+    "id": "fn.chooserows.array-const-col",
+    "description": "A column-vector row_num constant lists several rows",
+    "tags": ["chooserows"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=CHOOSEROWS({1;2;3;4}, {1;3})",
+    "expected": { "array": [[{ "number": 1 }], [{ "number": 3 }]] }
+  },
+  {
+    "id": "fn.chooserows.array-then-scalar",
+    "description": "Microsoft mixed form: array constant plus extra scalars",
+    "tags": ["chooserows"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=CHOOSEROWS({1;2;3;4;5;6}, {1,3}, 5, 1)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "number": 3 }],
+        [{ "number": 5 }],
+        [{ "number": 1 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.chooserows.row-num-range",
+    "description": "row_num can be a worksheet range of indices",
+    "tags": ["chooserows"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=CHOOSEROWS({10;20;30}, A1:A2)",
+    "expected": { "array": [[{ "number": 20 }], [{ "number": 10 }]] },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 2 },
+          "A2": { "number": 1 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.chooserows.error-in-array-kept",
+    "description": "An error cell in a picked source row is returned as-is",
+    "tags": ["chooserows", "errors"],
+    "quirks": ["array-eval-mode", "error-precedence"],
+    "formula": "=CHOOSEROWS({#DIV/0!;2;3}, 1)",
+    "expected": { "array": [[{ "error": "#DIV/0!" }]] }
+  },
+  {
+    "id": "fn.chooserows.error-in-row-num",
+    "description": "An error row_num wins (no partial pick)",
+    "tags": ["chooserows", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=CHOOSEROWS({1;2}, #N/A)",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.chooserows.error-in-row-num-array",
+    "description": "First error inside a row_num array wins",
+    "tags": ["chooserows", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=CHOOSEROWS({1;2;3}, {1, #DIV/0!})",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.chooserows.array-error-wins",
+    "description": "A scalar error array argument is that error",
+    "tags": ["chooserows", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=CHOOSEROWS(#VALUE!, 1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.chooserows.text-rows",
+    "description": "CHOOSEROWS preserves text cells",
+    "tags": ["chooserows"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=CHOOSEROWS({\"a\";\"b\";\"c\"}, 1, 3)",
+    "expected": { "array": [[{ "text": "a" }], [{ "text": "c" }]] }
+  },
+  {
+    "id": "fn.chooserows.bool-rows",
+    "description": "CHOOSEROWS preserves logicals",
+    "tags": ["chooserows"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=CHOOSEROWS({TRUE;FALSE}, 2, 1)",
+    "expected": { "array": [[{ "bool": false }], [{ "bool": true }]] }
+  },
+  {
+    "id": "fn.chooserows.empty-cell-kept",
+    "description": "A blank cell in a picked row stays empty",
+    "tags": ["chooserows", "empty"],
+    "quirks": ["array-eval-mode", "empty-cell-duality"],
+    "formula": "=CHOOSEROWS(A1:A3, 2)",
+    "expected": { "array": [[{ "empty": null }]] },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A3": { "number": 3 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.chooserows.scalar",
+    "description": "A scalar first argument is a 1×1 array; row 1 (or -1) is that value",
+    "tags": ["chooserows"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=CHOOSEROWS(5, 1)",
+    "expected": { "array": [[{ "number": 5 }]] }
+  },
+  {
+    "id": "fn.chooserows.scalar-neg",
+    "description": "CHOOSEROWS(5, -1) is the same 1×1",
+    "tags": ["chooserows"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=CHOOSEROWS(5, -1)",
+    "expected": { "array": [[{ "number": 5 }]] }
+  },
+  {
+    "id": "fn.chooserows.scalar-oob",
+    "description": "CHOOSEROWS(5, 2) is #VALUE!",
+    "tags": ["chooserows", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=CHOOSEROWS(5, 2)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.chooserows.2d-range",
+    "description": "CHOOSEROWS of a 2-column sheet range",
+    "tags": ["chooserows"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=CHOOSEROWS(A1:B4, 2, 4)",
+    "expected": {
+      "array": [
+        [{ "text": "b" }, { "number": 2 }],
+        [{ "text": "d" }, { "number": 4 }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "a" }, "B1": { "number": 1 },
+          "A2": { "text": "b" }, "B2": { "number": 2 },
+          "A3": { "text": "c" }, "B3": { "number": 3 },
+          "A4": { "text": "d" }, "B4": { "number": 4 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.chooserows.ms-example-pos",
+    "description": "Microsoft example: rows 1, 3, 5, 1 of a 6×2 range",
+    "tags": ["chooserows"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=CHOOSEROWS(A2:B7, 1, 3, 5, 1)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 2 }],
+        [{ "number": 5 }, { "number": 6 }],
+        [{ "number": 9 }, { "number": 10 }],
+        [{ "number": 1 }, { "number": 2 }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A2": { "number": 1 }, "B2": { "number": 2 },
+          "A3": { "number": 3 }, "B3": { "number": 4 },
+          "A4": { "number": 5 }, "B4": { "number": 6 },
+          "A5": { "number": 7 }, "B5": { "number": 8 },
+          "A6": { "number": 9 }, "B6": { "number": 10 },
+          "A7": { "number": 11 }, "B7": { "number": 12 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.chooserows.ms-example-neg",
+    "description": "Microsoft example: last two rows as -1, -2",
+    "tags": ["chooserows"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=CHOOSEROWS(A2:B7, -1, -2)",
+    "expected": {
+      "array": [
+        [{ "number": 11 }, { "number": 12 }],
+        [{ "number": 9 }, { "number": 10 }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A2": { "number": 1 }, "B2": { "number": 2 },
+          "A3": { "number": 3 }, "B3": { "number": 4 },
+          "A4": { "number": 5 }, "B4": { "number": 6 },
+          "A5": { "number": 7 }, "B5": { "number": 8 },
+          "A6": { "number": 9 }, "B6": { "number": 10 },
+          "A7": { "number": 11 }, "B7": { "number": 12 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.chooserows.index-nth",
+    "description": "INDEX picks a CHOOSEROWS cell without writing a spill range",
+    "tags": ["chooserows", "index"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=INDEX(CHOOSEROWS({1;2;3;4}, 2, 4), 2)",
+    "expected": { "number": 4 }
+  },
+  {
+    "id": "fn.chooserows.sum",
+    "description": "SUM consumes the CHOOSEROWS array",
+    "tags": ["chooserows", "sum"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SUM(CHOOSEROWS({1;2;3;4}, 1, 4))",
+    "expected": { "number": 5 }
+  },
+  {
+    "id": "fn.chooserows.counta",
+    "description": "COUNTA of CHOOSEROWS counts picked non-blanks",
+    "tags": ["chooserows", "counta"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=COUNTA(CHOOSEROWS(A1:A4, 1, 3, 4))",
+    "expected": { "number": 2 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "a" },
+          "A3": { "text": "b" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.chooserows.nested",
+    "description": "Nested CHOOSEROWS picks from an already-picked array",
+    "tags": ["chooserows"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=CHOOSEROWS(CHOOSEROWS({1;2;3;4}, 2, 4, 1), -1)",
+    "expected": { "array": [[{ "number": 1 }]] }
+  },
+  {
+    "id": "fn.chooserows.dynamic-array-mode",
+    "description": "array_mode=dynamic-array still returns the CHOOSEROWS array (no grid write)",
+    "tags": ["chooserows", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=CHOOSEROWS(A1:A3, 3, 1)",
+    "options": { "array_mode": "dynamic-array" },
+    "expected": { "array": [[{ "number": 30 }], [{ "number": 10 }]] },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 10 },
+          "A2": { "number": 20 },
+          "A3": { "number": 30 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.chooserows.no-grid-write",
+    "description": "Occupied cells in the Excel spill zone do not produce #SPILL! — CHOOSEROWS returns the array",
+    "notes": "Excel would #SPILL! if CHOOSEROWS at B1 needed B2. This model never writes a spill range; neighbors are irrelevant. Pick individual results with INDEX/SUM.",
+    "tags": ["chooserows", "spill"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=CHOOSEROWS(A1:A3, 1, 3)",
+    "at": "Sheet1!B1",
+    "expected": { "array": [[{ "number": 1 }], [{ "number": 3 }]] },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 2 },
+          "A3": { "number": 3 },
+          "B2": { "text": "blocker" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.chooserows.scalar-plus-top-left",
+    "description": "CHOOSEROWS+n in a scalar operator takes the top-left pick (not host-aware spill intersection)",
+    "notes": "The engine scalarizes arrays to the first element. It does not intersect a written spill with the host cell.",
+    "tags": ["chooserows", "arithmetic"],
+    "quirks": ["array-eval-mode", "implicit-intersection"],
+    "formula": "=CHOOSEROWS({10;20;30}, 2, 3)+1",
+    "expected": { "number": 21 }
+  },
+  {
+    "id": "fn.chooserows.iserror-value",
+    "description": "ISERROR of CHOOSEROWS #VALUE! is TRUE",
+    "tags": ["chooserows", "information"],
+    "formula": "=ISERROR(CHOOSEROWS({1}, 0))",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.chooserows.isna-value",
+    "description": "ISNA of CHOOSEROWS #VALUE! is FALSE",
+    "tags": ["chooserows", "information"],
+    "formula": "=ISNA(CHOOSEROWS({1}, 0))",
+    "expected": { "bool": false }
+  },
+  {
+    "id": "fn.chooserows.sequence-reverse-not-modeled",
+    "description": "CHOOSEROWS(a, SEQUENCE(...)) needs SEQUENCE; reverse with explicit negatives instead",
+    "tags": ["chooserows"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=CHOOSEROWS({1;2;3}, SEQUENCE(3,1,3,-1))",
+    "expected": { "array": [[{ "number": 3 }], [{ "number": 2 }], [{ "number": 1 }]] },
+    "ignore": "SEQUENCE is not implemented. Reverse with CHOOSEROWS({1;2;3}, -1, -2, -3). This ignore documents a model limit, not a broken CHOOSEROWS."
+  }
+]

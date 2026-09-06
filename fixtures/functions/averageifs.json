@@ -1,0 +1,796 @@
+[
+  {
+    "id": "fn.averageifs.one-pair",
+    "description": "Three-arg AVERAGEIFS is AVERAGEIF with reversed range order",
+    "tags": ["averageifs", "functions"],
+    "formula": "=AVERAGEIFS(B1:B3, A1:A3, \">2\")",
+    "expected": { "number": 25 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "number": 10 },
+          "A2": { "number": 6 }, "B2": { "number": 20 },
+          "A3": { "number": 3 }, "B3": { "number": 30 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.averageifs.and-two",
+    "description": "Two criteria pairs are AND: both must match",
+    "tags": ["averageifs"],
+    "formula": "=AVERAGEIFS(C1:C3, A1:A3, \">1\", B1:B3, \"x\")",
+    "expected": { "number": 20 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "text": "x" }, "C1": { "number": 10 },
+          "A2": { "number": 2 }, "B2": { "text": "x" }, "C2": { "number": 20 },
+          "A3": { "number": 3 }, "B3": { "text": "y" }, "C3": { "number": 30 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.averageifs.and-three",
+    "description": "Three criteria pairs AND together",
+    "tags": ["averageifs"],
+    "formula": "=AVERAGEIFS(D1:D4, A1:A4, 2, B1:B4, \"y\", C1:C4, 1)",
+    "expected": { "number": 30 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "text": "x" }, "C1": { "number": 1 }, "D1": { "number": 10 },
+          "A2": { "number": 2 }, "B2": { "text": "y" }, "C2": { "number": 1 }, "D2": { "number": 20 },
+          "A3": { "number": 3 }, "B3": { "text": "x" }, "C3": { "number": 1 }, "D3": { "number": 30 },
+          "A4": { "number": 2 }, "B4": { "text": "y" }, "C4": { "number": 1 }, "D4": { "number": 40 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.averageifs.and-same-range",
+    "description": "Two criteria on the same range AND together",
+    "tags": ["averageifs"],
+    "formula": "=AVERAGEIFS(B1:B4, A1:A4, \">1\", A1:A4, \"<4\")",
+    "expected": { "number": 25 },
+    "notes": "A=1,2,3,4. >1 AND <4 → rows 2 and 3 → (20+30)/2",
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "number": 10 },
+          "A2": { "number": 2 }, "B2": { "number": 20 },
+          "A3": { "number": 3 }, "B3": { "number": 30 },
+          "A4": { "number": 4 }, "B4": { "number": 40 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.averageifs.shape-mismatch-rows",
+    "description": "Criteria range with a different row count is #VALUE!",
+    "tags": ["averageifs", "errors"],
+    "formula": "=AVERAGEIFS(B1:B3, A1:A2, \">0\")",
+    "expected": { "error": "#VALUE!" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "number": 10 },
+          "A2": { "number": 2 }, "B2": { "number": 20 },
+          "A3": { "number": 3 }, "B3": { "number": 30 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.averageifs.shape-mismatch-orientation",
+    "description": "Same cell count but 3x1 vs 1x3 is #VALUE!",
+    "tags": ["averageifs", "errors"],
+    "formula": "=AVERAGEIFS(A1:A3, B1:D1, \">0\")",
+    "expected": { "error": "#VALUE!" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 10 }, "B1": { "number": 1 }, "C1": { "number": 2 }, "D1": { "number": 3 },
+          "A2": { "number": 20 },
+          "A3": { "number": 30 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.averageifs.no-reshape-from-origin",
+    "description": "Unlike AVERAGEIF, a 1x1 average_range does not extend to match criteria",
+    "tags": ["averageifs", "errors"],
+    "formula": "=AVERAGEIFS(B1, A1:A3, \">1\")",
+    "expected": { "error": "#VALUE!" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "number": 10 },
+          "A2": { "number": 2 }, "B2": { "number": 20 },
+          "A3": { "number": 3 }, "B3": { "number": 30 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.averageifs.wider-average-is-value",
+    "description": "Extra columns on average_range are a shape error, not ignored",
+    "tags": ["averageifs", "errors"],
+    "formula": "=AVERAGEIFS(B1:C2, A1:A2, \">0\")",
+    "expected": { "error": "#VALUE!" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "number": 10 }, "C1": { "number": 100 },
+          "A2": { "number": 2 }, "B2": { "number": 20 }, "C2": { "number": 200 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.averageifs.align-offset",
+    "description": "Same-shape ranges pair by offset, not by absolute address",
+    "tags": ["averageifs"],
+    "formula": "=AVERAGEIFS(C5:C7, A1:A3, \">1\")",
+    "expected": { "number": 25 },
+    "notes": "A2/A3 match → average C6/C7 (20+30)/2, not C2/C3",
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 2 },
+          "A3": { "number": 3 },
+          "C2": { "number": 99 },
+          "C5": { "number": 10 },
+          "C6": { "number": 20 },
+          "C7": { "number": 30 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.averageifs.shape-2d",
+    "description": "Matching 2-D windows walk row-major and AND by offset",
+    "tags": ["averageifs"],
+    "formula": "=AVERAGEIFS(C1:D2, A1:B2, \">2\")",
+    "expected": { "number": 35 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "number": 2 },
+          "A2": { "number": 3 }, "B2": { "number": 4 },
+          "C1": { "number": 10 }, "D1": { "number": 20 },
+          "C2": { "number": 30 }, "D2": { "number": 40 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.averageifs.eq-number",
+    "description": "Numeric criteria matches numbers only",
+    "tags": ["averageifs"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=AVERAGEIFS(B1:B3, A1:A3, 5)",
+    "expected": { "number": 10 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 5 }, "B1": { "number": 10 },
+          "A2": { "text": "5" }, "B2": { "number": 20 },
+          "A3": { "number": 1 }, "B3": { "number": 30 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.averageifs.text-num-dual",
+    "description": "Text criteria \"5\" matches number 5 and text 5",
+    "tags": ["averageifs"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=AVERAGEIFS(B1:B3, A1:A3, \"5\")",
+    "expected": { "number": 15 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 5 }, "B1": { "number": 10 },
+          "A2": { "text": "5" }, "B2": { "number": 20 },
+          "A3": { "number": 1 }, "B3": { "number": 30 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.averageifs.text-eq-casefold",
+    "description": "Text equality is case-insensitive",
+    "tags": ["averageifs"],
+    "quirks": ["case-insensitive-text"],
+    "formula": "=AVERAGEIFS(B1:B3, A1:A3, \"apple\")",
+    "expected": { "number": 2.5 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "Apple" }, "B1": { "number": 1 },
+          "A2": { "text": "banana" }, "B2": { "number": 2 },
+          "A3": { "text": "APPLE" }, "B3": { "number": 4 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.averageifs.wildcard-star",
+    "description": "* wildcard matches text containing a substring",
+    "tags": ["averageifs"],
+    "quirks": ["wildcards"],
+    "formula": "=AVERAGEIFS(B1:B3, A1:A3, \"*at*\")",
+    "expected": { "number": 1.5 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "cat" }, "B1": { "number": 1 },
+          "A2": { "text": "catch" }, "B2": { "number": 2 },
+          "A3": { "text": "dog" }, "B3": { "number": 4 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.averageifs.wildcard-qmark",
+    "description": "? wildcard matches exactly one character",
+    "tags": ["averageifs"],
+    "quirks": ["wildcards"],
+    "formula": "=AVERAGEIFS(B1:B3, A1:A3, \"a?\")",
+    "expected": { "number": 2 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "a" }, "B1": { "number": 1 },
+          "A2": { "text": "ab" }, "B2": { "number": 2 },
+          "A3": { "text": "abc" }, "B3": { "number": 4 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.averageifs.wildcard-escape",
+    "description": "~* matches a literal asterisk",
+    "tags": ["averageifs"],
+    "quirks": ["wildcards"],
+    "formula": "=AVERAGEIFS(B1:B3, A1:A3, \"a~*\")",
+    "expected": { "number": 1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "a*" }, "B1": { "number": 1 },
+          "A2": { "text": "ab" }, "B2": { "number": 2 },
+          "A3": { "text": "aX" }, "B3": { "number": 4 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.averageifs.wildcard-star-skips-numbers",
+    "description": "* matches text only, not numbers or blanks",
+    "tags": ["averageifs"],
+    "quirks": ["wildcards"],
+    "formula": "=AVERAGEIFS(B1:B3, A1:A3, \"*\")",
+    "expected": { "number": 20 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 5 }, "B1": { "number": 10 },
+          "A2": { "text": "x" }, "B2": { "number": 20 },
+          "A3": { "number": 1 }, "B3": { "number": 30 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.averageifs.and-wildcard",
+    "description": "Numeric inequality AND a text wildcard",
+    "tags": ["averageifs"],
+    "quirks": ["wildcards"],
+    "formula": "=AVERAGEIFS(C1:C4, A1:A4, \">1\", B1:B4, \"*a*\")",
+    "expected": { "number": 30 },
+    "notes": "rows: (1,cat,10) miss >1; (2,catch,20); (3,dog,30) miss *a*; (4,apple,40)",
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "text": "cat" }, "C1": { "number": 10 },
+          "A2": { "number": 2 }, "B2": { "text": "catch" }, "C2": { "number": 20 },
+          "A3": { "number": 3 }, "B3": { "text": "dog" }, "C3": { "number": 30 },
+          "A4": { "number": 4 }, "B4": { "text": "apple" }, "C4": { "number": 40 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.averageifs.blank-empty-string",
+    "description": "\"\" matches blank cells, not zero",
+    "tags": ["averageifs"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=AVERAGEIFS(B1:B3, A1:A3, \"\")",
+    "expected": { "number": 20 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "number": 10 },
+          "B2": { "number": 20 },
+          "A3": { "number": 2 }, "B3": { "number": 30 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.averageifs.blank-equals-op",
+    "description": "\"=\" matches blanks the same as \"\"",
+    "tags": ["averageifs"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=AVERAGEIFS(B1:B3, A1:A3, \"=\")",
+    "expected": { "number": 20 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "number": 10 },
+          "B2": { "number": 20 },
+          "A3": { "number": 2 }, "B3": { "number": 30 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.averageifs.not-blank",
+    "description": "\"<>\" matches non-blank cells",
+    "tags": ["averageifs"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=AVERAGEIFS(B1:B3, A1:A3, \"<>\")",
+    "expected": { "number": 20 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "number": 10 },
+          "B2": { "number": 20 },
+          "A3": { "number": 2 }, "B3": { "number": 30 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.averageifs.blank-not-zero",
+    "description": "Blank does not match numeric 0",
+    "tags": ["averageifs"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=AVERAGEIFS(B1:B3, A1:A3, 0)",
+    "expected": { "number": 10 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 0 }, "B1": { "number": 10 },
+          "B2": { "number": 20 },
+          "A3": { "number": 1 }, "B3": { "number": 30 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.averageifs.blank-and-gt",
+    "description": "Blank criteria-range cells miss >0; AND with a second pair",
+    "tags": ["averageifs"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=AVERAGEIFS(C1:C3, A1:A3, \">0\", B1:B3, \"x\")",
+    "expected": { "number": 20 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "B1": { "text": "x" }, "C1": { "number": 10 },
+          "A2": { "number": 2 }, "B2": { "text": "x" }, "C2": { "number": 20 },
+          "A3": { "number": 3 }, "B3": { "text": "y" }, "C3": { "number": 30 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.averageifs.empty-criteria-matches-blank",
+    "description": "An empty criteria cell matches blanks (Criterion::compile), not 0",
+    "tags": ["averageifs"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=AVERAGEIFS(B1:B3, A1:A3, C1)",
+    "expected": { "number": 20 },
+    "notes": "Unlike AVERAGEIF, AVERAGEIFS does not rewrite an empty criteria cell to 0",
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 0 }, "B1": { "number": 10 },
+          "B2": { "number": 20 },
+          "A3": { "number": 1 }, "B3": { "number": 30 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.averageifs.bool-not-gt",
+    "description": "TRUE is not a number for >0",
+    "tags": ["averageifs"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=AVERAGEIFS(B1:B2, A1:A2, \">0\")",
+    "expected": { "number": 20 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "bool": true }, "B1": { "number": 10 },
+          "A2": { "number": 2 }, "B2": { "number": 20 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.averageifs.bool-eq",
+    "description": "Boolean criteria matches only that logical",
+    "tags": ["averageifs"],
+    "formula": "=AVERAGEIFS(B1:B2, A1:A2, TRUE)",
+    "expected": { "number": 10 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "bool": true }, "B1": { "number": 10 },
+          "A2": { "number": 2 }, "B2": { "number": 20 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.averageifs.text-true-not-bool",
+    "description": "Text \"TRUE\" does not match boolean TRUE → #DIV/0!",
+    "tags": ["averageifs", "errors"],
+    "formula": "=AVERAGEIFS(B1:B2, A1:A2, \"TRUE\")",
+    "expected": { "error": "#DIV/0!" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "bool": true }, "B1": { "number": 10 },
+          "A2": { "number": 2 }, "B2": { "number": 20 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.averageifs.text-num-not-gt",
+    "description": "Numeric text is not coerced for > comparisons",
+    "tags": ["averageifs"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=AVERAGEIFS(B1:B2, A1:A2, \">5\")",
+    "expected": { "number": 2 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "10" }, "B1": { "number": 1 },
+          "A2": { "number": 10 }, "B2": { "number": 2 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.averageifs.avg-skips-text",
+    "description": "Matched average cells that are text are skipped (like AVERAGE)",
+    "tags": ["averageifs"],
+    "quirks": ["sum-arg-vs-range"],
+    "formula": "=AVERAGEIFS(B1:B2, A1:A2, 1)",
+    "expected": { "number": 5 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "text": "x" },
+          "A2": { "number": 1 }, "B2": { "number": 5 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.averageifs.avg-skips-logical",
+    "description": "Matched average cells that are logicals are skipped",
+    "tags": ["averageifs"],
+    "quirks": ["sum-arg-vs-range"],
+    "formula": "=AVERAGEIFS(B1:B2, A1:A2, 1)",
+    "expected": { "number": 8 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "bool": true },
+          "A2": { "number": 1 }, "B2": { "number": 8 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.averageifs.includes-zero",
+    "description": "Zero is a number and is included in the average",
+    "tags": ["averageifs"],
+    "formula": "=AVERAGEIFS(A1:A3, A1:A3, \">=-1\")",
+    "expected": { "number": 2 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 0 },
+          "A2": { "number": 2 },
+          "A3": { "number": 4 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.averageifs.no-matches-div0",
+    "description": "No matches is #DIV/0!, not 0 (unlike SUMIFS)",
+    "tags": ["averageifs", "errors"],
+    "formula": "=AVERAGEIFS(B1:B3, A1:A3, \">100\")",
+    "expected": { "error": "#DIV/0!" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "number": 10 },
+          "A2": { "number": 2 }, "B2": { "number": 20 },
+          "A3": { "number": 3 }, "B3": { "number": 30 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.averageifs.empty-range-div0",
+    "description": "A blank range is #DIV/0!",
+    "tags": ["averageifs", "empty", "errors"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=AVERAGEIFS(B1:B3, A1:A3, \">0\")",
+    "expected": { "error": "#DIV/0!" },
+    "workbook": { "sheets": [{ "name": "Sheet1", "cells": {} }] }
+  },
+  {
+    "id": "fn.averageifs.matches-but-avg-blank-div0",
+    "description": "Criteria match but every average_range cell is empty → #DIV/0!",
+    "tags": ["averageifs", "empty", "errors"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=AVERAGEIFS(B1:B2, A1:A2, \">0\")",
+    "expected": { "error": "#DIV/0!" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 2 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.averageifs.error-in-avg",
+    "description": "Error in a matched average cell propagates",
+    "tags": ["averageifs", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=AVERAGEIFS(B1:B2, A1:A2, 1)",
+    "expected": { "error": "#DIV/0!" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "error": "#DIV/0!" },
+          "A2": { "number": 2 }, "B2": { "number": 5 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.averageifs.error-in-range-skip",
+    "description": "Error in a criteria range does not match >0 and is skipped",
+    "tags": ["averageifs", "errors"],
+    "formula": "=AVERAGEIFS(B1:B2, A1:A2, \">0\")",
+    "expected": { "number": 20 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "error": "#N/A" }, "B1": { "number": 10 },
+          "A2": { "number": 2 }, "B2": { "number": 20 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.averageifs.error-criteria-propagates",
+    "description": "An error criteria value is returned immediately",
+    "tags": ["averageifs", "errors"],
+    "formula": "=AVERAGEIFS(B1:B1, A1:A1, #N/A)",
+    "expected": { "error": "#N/A" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "number": 10 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.averageifs.error-text-matches",
+    "description": "Text \"#N/A\" matches an #N/A cell in the criteria range",
+    "tags": ["averageifs", "errors"],
+    "formula": "=AVERAGEIFS(B1:B2, A1:A2, \"#N/A\")",
+    "expected": { "number": 10 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "error": "#N/A" }, "B1": { "number": 10 },
+          "A2": { "number": 2 }, "B2": { "number": 20 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.averageifs.array-is-value",
+    "description": "AVERAGEIFS requires ranges; array literals are #VALUE!",
+    "tags": ["averageifs", "errors"],
+    "formula": "=AVERAGEIFS({1,2,3}, A1:A3, \">1\")",
+    "expected": { "error": "#VALUE!" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": { "A1": { "number": 1 }, "A2": { "number": 2 }, "A3": { "number": 3 } }
+      }]
+    }
+  },
+  {
+    "id": "fn.averageifs.arity-too-few",
+    "description": "AVERAGEIFS with fewer than three arguments is #VALUE!",
+    "tags": ["averageifs", "errors"],
+    "formula": "=AVERAGEIFS(A1:A2)",
+    "expected": { "error": "#VALUE!" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": { "A1": { "number": 1 } }
+      }]
+    }
+  },
+  {
+    "id": "fn.averageifs.arity-incomplete-pair",
+    "description": "A dangling criteria_range without criteria is #VALUE!",
+    "tags": ["averageifs", "errors"],
+    "formula": "=AVERAGEIFS(B1:B2, A1:A2)",
+    "expected": { "error": "#VALUE!" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "number": 10 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.averageifs.named-range",
+    "description": "Defined names that refer to ranges are accepted",
+    "tags": ["averageifs", "named"],
+    "formula": "=AVERAGEIFS(Amt, Vals, \">1\", Kind, \"x\")",
+    "expected": { "number": 20 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "text": "x" }, "C1": { "number": 10 },
+          "A2": { "number": 2 }, "B2": { "text": "x" }, "C2": { "number": 20 },
+          "A3": { "number": 3 }, "B3": { "text": "y" }, "C3": { "number": 30 }
+        }
+      }],
+      "names": [
+        { "name": "Vals", "refers_to": "Sheet1!A1:A3" },
+        { "name": "Kind", "refers_to": "Sheet1!B1:B3" },
+        { "name": "Amt", "refers_to": "Sheet1!C1:C3" }
+      ]
+    }
+  },
+  {
+    "id": "fn.averageifs.concat-criteria",
+    "description": "Criteria can be built with & (e.g. \">\"&1)",
+    "tags": ["averageifs"],
+    "formula": "=AVERAGEIFS(C1:C3, A1:A3, \">\"&1, B1:B3, \"x\")",
+    "expected": { "number": 20 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "text": "x" }, "C1": { "number": 10 },
+          "A2": { "number": 2 }, "B2": { "text": "x" }, "C2": { "number": 20 },
+          "A3": { "number": 3 }, "B3": { "text": "y" }, "C3": { "number": 30 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.averageifs.cell-criteria",
+    "description": "Criteria taken from cells",
+    "tags": ["averageifs"],
+    "formula": "=AVERAGEIFS(C1:C3, A1:A3, D1, B1:B3, E1)",
+    "expected": { "number": 20 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "text": "x" }, "C1": { "number": 10 },
+          "A2": { "number": 2 }, "B2": { "text": "x" }, "C2": { "number": 20 },
+          "A3": { "number": 3 }, "B3": { "text": "y" }, "C3": { "number": 30 },
+          "D1": { "text": ">1" },
+          "E1": { "text": "x" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.averageifs.formula-cells",
+    "description": "Criteria and average windows evaluate stored formulas",
+    "tags": ["averageifs"],
+    "formula": "=AVERAGEIFS(C1:C3, A1:A3, \">1\", B1:B3, \"x\")",
+    "expected": { "number": 20 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "formula": "=1", "value": { "number": 1 } },
+          "A2": { "formula": "=1+1", "value": { "number": 2 } },
+          "A3": { "formula": "=3", "value": { "number": 3 } },
+          "B1": { "text": "x" }, "C1": { "number": 10 },
+          "B2": { "text": "x" }, "C2": { "formula": "=10+10", "value": { "number": 20 } },
+          "B3": { "text": "y" }, "C3": { "number": 30 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.averageifs.ge",
+    "description": ">= numeric operator with a second AND pair",
+    "tags": ["averageifs"],
+    "formula": "=AVERAGEIFS(C1:C4, A1:A4, \">=3\", B1:B4, \"x\")",
+    "expected": { "number": 30 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "text": "x" }, "C1": { "number": 10 },
+          "A2": { "number": 2 }, "B2": { "text": "x" }, "C2": { "number": 20 },
+          "A3": { "number": 3 }, "B3": { "text": "x" }, "C3": { "number": 30 },
+          "A4": { "number": 4 }, "B4": { "text": "y" }, "C4": { "number": 40 }
+        }
+      }]
+    }
+  }
+]

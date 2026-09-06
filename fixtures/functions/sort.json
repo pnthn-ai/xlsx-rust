@@ -1,0 +1,763 @@
+[
+  {
+    "id": "fn.sort.col-asc-default",
+    "description": "SORT of a column is ascending by the first (only) column",
+    "tags": ["sort", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SORT({3;1;2})",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "number": 2 }],
+        [{ "number": 3 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.sort.col-desc",
+    "description": "sort_order -1 is descending",
+    "tags": ["sort", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SORT({3;1;2}, 1, -1)",
+    "expected": {
+      "array": [
+        [{ "number": 3 }],
+        [{ "number": 2 }],
+        [{ "number": 1 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.sort.already-sorted",
+    "description": "An already-ascending column is unchanged",
+    "tags": ["sort", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SORT({1;2;3})",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "number": 2 }],
+        [{ "number": 3 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.sort.row-default-is-one-row",
+    "description": "A single row sorted by rows (by_col omitted) is already one item",
+    "tags": ["sort", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SORT({3,1,2})",
+    "expected": {
+      "array": [[{ "number": 3 }, { "number": 1 }, { "number": 2 }]]
+    }
+  },
+  {
+    "id": "fn.sort.row-by-col",
+    "description": "by_col=TRUE sorts a row left-to-right",
+    "tags": ["sort", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SORT({3,1,2}, 1, 1, TRUE)",
+    "expected": {
+      "array": [[{ "number": 1 }, { "number": 2 }, { "number": 3 }]]
+    }
+  },
+  {
+    "id": "fn.sort.2d-index-2",
+    "description": "sort_index 2 sorts rows by the second column",
+    "tags": ["sort", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SORT({1,30;2,10;3,20}, 2)",
+    "expected": {
+      "array": [
+        [{ "number": 2 }, { "number": 10 }],
+        [{ "number": 3 }, { "number": 20 }],
+        [{ "number": 1 }, { "number": 30 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.sort.2d-desc-index-2",
+    "description": "Descending sort by column 2",
+    "tags": ["sort", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SORT({1,30;2,10;3,20}, 2, -1)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 30 }],
+        [{ "number": 3 }, { "number": 20 }],
+        [{ "number": 2 }, { "number": 10 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.sort.2d-by-col",
+    "description": "by_col=TRUE with sort_index 1 reorders columns by the first row",
+    "tags": ["sort", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SORT({3,1,2;\"c\",\"a\",\"b\"}, 1, 1, TRUE)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 2 }, { "number": 3 }],
+        [{ "text": "a" }, { "text": "b" }, { "text": "c" }]
+      ]
+    }
+  },
+  {
+    "id": "fn.sort.casefold-stable",
+    "description": "Text sort is case-insensitive and stable (first spelling kept in place among ties)",
+    "tags": ["sort", "functions", "array"],
+    "quirks": ["array-eval-mode", "case-insensitive-text"],
+    "formula": "=SORT({\"b\";\"A\";\"a\"})",
+    "expected": {
+      "array": [
+        [{ "text": "A" }],
+        [{ "text": "a" }],
+        [{ "text": "b" }]
+      ]
+    }
+  },
+  {
+    "id": "fn.sort.number-vs-text",
+    "description": "Number 1 sorts before text \"1\" (type groups, not equality)",
+    "tags": ["sort", "functions", "array"],
+    "quirks": ["array-eval-mode", "equality-vs-arithmetic-coercion"],
+    "formula": "=SORT({2;\"1\";10})",
+    "expected": {
+      "array": [
+        [{ "number": 2 }],
+        [{ "number": 10 }],
+        [{ "text": "1" }]
+      ]
+    }
+  },
+  {
+    "id": "fn.sort.bool-vs-number",
+    "description": "Numbers sort before logicals; FALSE before TRUE",
+    "tags": ["sort", "functions", "array"],
+    "quirks": ["array-eval-mode", "bool-number-equality", "type-comparison-ranking"],
+    "formula": "=SORT({TRUE;1;FALSE;0})",
+    "expected": {
+      "array": [
+        [{ "number": 0 }],
+        [{ "number": 1 }],
+        [{ "bool": false }],
+        [{ "bool": true }]
+      ]
+    }
+  },
+  {
+    "id": "fn.sort.mixed-types-asc",
+    "description": "Ascending type groups: numbers, text, FALSE/TRUE, errors; blanks last",
+    "tags": ["sort", "functions", "array"],
+    "quirks": ["array-eval-mode", "type-comparison-ranking", "empty-cell-duality"],
+    "formula": "=SORT(A1:A8)",
+    "expected": {
+      "array": [
+        [{ "number": 2 }],
+        [{ "number": 10 }],
+        [{ "text": "a" }],
+        [{ "text": "b" }],
+        [{ "bool": false }],
+        [{ "bool": true }],
+        [{ "error": "#N/A" }],
+        [{ "empty": null }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "bool": true },
+          "A2": { "text": "b" },
+          "A3": { "number": 2 },
+          "A5": { "text": "a" },
+          "A6": { "error": "#N/A" },
+          "A7": { "bool": false },
+          "A8": { "number": 10 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.sort.mixed-types-desc",
+    "description": "Descending reverses groups except blanks stay last",
+    "tags": ["sort", "functions", "array"],
+    "quirks": ["array-eval-mode", "type-comparison-ranking", "empty-cell-duality"],
+    "formula": "=SORT(A1:A8, 1, -1)",
+    "expected": {
+      "array": [
+        [{ "error": "#N/A" }],
+        [{ "bool": true }],
+        [{ "bool": false }],
+        [{ "text": "b" }],
+        [{ "text": "a" }],
+        [{ "number": 10 }],
+        [{ "number": 2 }],
+        [{ "empty": null }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "bool": true },
+          "A2": { "text": "b" },
+          "A3": { "number": 2 },
+          "A5": { "text": "a" },
+          "A6": { "error": "#N/A" },
+          "A7": { "bool": false },
+          "A8": { "number": 10 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.sort.blanks-last-asc",
+    "description": "Blanks sort last in ascending order",
+    "tags": ["sort", "empty"],
+    "quirks": ["array-eval-mode", "empty-cell-duality"],
+    "formula": "=SORT(A1:A4)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "number": 2 }],
+        [{ "number": 5 }],
+        [{ "empty": null }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 2 },
+          "A3": { "number": 5 },
+          "A4": { "number": 1 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.sort.blanks-last-desc",
+    "description": "Blanks stay last when descending (not first)",
+    "tags": ["sort", "empty"],
+    "quirks": ["array-eval-mode", "empty-cell-duality"],
+    "formula": "=SORT(A1:A4, 1, -1)",
+    "expected": {
+      "array": [
+        [{ "number": 5 }],
+        [{ "number": 2 }],
+        [{ "number": 1 }],
+        [{ "empty": null }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 2 },
+          "A3": { "number": 5 },
+          "A4": { "number": 1 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.sort.empty-string-vs-blank",
+    "description": "Stored \"\" is text (sorts with text); a blank cell is last",
+    "tags": ["sort", "empty"],
+    "quirks": ["array-eval-mode", "empty-cell-duality"],
+    "formula": "=SORT(A1:A3)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "text": "" }],
+        [{ "empty": null }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "text": "" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.sort.all-blanks",
+    "description": "SORT of a blank range is the same blank column",
+    "tags": ["sort", "empty"],
+    "quirks": ["array-eval-mode", "empty-cell-duality"],
+    "formula": "=SORT(A1:A3)",
+    "expected": {
+      "array": [
+        [{ "empty": null }],
+        [{ "empty": null }],
+        [{ "empty": null }]
+      ]
+    },
+    "workbook": { "sheets": [{ "name": "Sheet1", "cells": {} }] }
+  },
+  {
+    "id": "fn.sort.scalar",
+    "description": "SORT of a scalar is a 1×1 array",
+    "tags": ["sort", "functions"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SORT(5)",
+    "expected": {
+      "array": [[{ "number": 5 }]]
+    }
+  },
+  {
+    "id": "fn.sort.one-by-one-literal",
+    "description": "SORT of a 1×1 literal is a 1×1 array",
+    "tags": ["sort", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SORT({7})",
+    "expected": {
+      "array": [[{ "number": 7 }]]
+    }
+  },
+  {
+    "id": "fn.sort.range",
+    "description": "SORT of a worksheet column",
+    "tags": ["sort", "functions"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SORT(A1:A4)",
+    "expected": {
+      "array": [
+        [{ "text": "blue" }],
+        [{ "text": "green" }],
+        [{ "text": "red" }],
+        [{ "text": "RED" }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "red" },
+          "A2": { "text": "blue" },
+          "A3": { "text": "RED" },
+          "A4": { "text": "green" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.sort.2d-range",
+    "description": "SORT of a 2-column sheet range by column 1, stable on ties",
+    "tags": ["sort", "functions"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SORT(A1:B4)",
+    "expected": {
+      "array": [
+        [{ "text": "a" }, { "number": 1 }],
+        [{ "text": "a" }, { "number": 2 }],
+        [{ "text": "b" }, { "number": 2 }],
+        [{ "text": "c" }, { "number": 0 }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "b" }, "B1": { "number": 2 },
+          "A2": { "text": "a" }, "B2": { "number": 1 },
+          "A3": { "text": "c" }, "B3": { "number": 0 },
+          "A4": { "text": "a" }, "B4": { "number": 2 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.sort.errors-in-array",
+    "description": "Error values participate as the error group (after logicals)",
+    "tags": ["sort", "errors", "array"],
+    "quirks": ["array-eval-mode", "error-precedence"],
+    "formula": "=SORT({2;#N/A;1;#DIV/0!})",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "number": 2 }],
+        [{ "error": "#N/A" }],
+        [{ "error": "#DIV/0!" }]
+      ]
+    }
+  },
+  {
+    "id": "fn.sort.error-arg",
+    "description": "A scalar error array argument surfaces",
+    "tags": ["sort", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=SORT(#DIV/0!)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.sort.error-ltr-array-first",
+    "description": "Array is evaluated before sort_index: #N/A beats a later #DIV/0!",
+    "tags": ["sort", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=SORT(#N/A, #DIV/0!)",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.sort.sort-index-error",
+    "description": "Error in sort_index surfaces after a valid array",
+    "tags": ["sort", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=SORT({1;2}, #DIV/0!)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.sort.sort-order-error",
+    "description": "Error in sort_order surfaces",
+    "tags": ["sort", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=SORT({1;2}, 1, #N/A)",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.sort.sort-index-oob",
+    "description": "sort_index past the last column is #VALUE!",
+    "tags": ["sort", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SORT({1;2}, 2)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.sort.sort-index-zero",
+    "description": "sort_index 0 is #VALUE!",
+    "tags": ["sort", "errors"],
+    "formula": "=SORT({1;2}, 0)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.sort.sort-index-trunc",
+    "description": "sort_index 1.9 truncates toward zero to 1",
+    "tags": ["sort", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SORT({2,20;1,10}, 1.9)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 10 }],
+        [{ "number": 2 }, { "number": 20 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.sort.sort-index-true",
+    "description": "TRUE as sort_index coerces to 1",
+    "tags": ["sort", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SORT({3;1;2}, TRUE)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "number": 2 }],
+        [{ "number": 3 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.sort.sort-order-zero",
+    "description": "sort_order 0 is #VALUE! (only 1 or -1)",
+    "tags": ["sort", "errors"],
+    "formula": "=SORT({1;2}, 1, 0)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.sort.sort-order-two",
+    "description": "sort_order 2 is #VALUE!",
+    "tags": ["sort", "errors"],
+    "formula": "=SORT({1;2}, 1, 2)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.sort.sort-order-true",
+    "description": "TRUE as sort_order coerces to 1 (ascending)",
+    "tags": ["sort", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SORT({3;1;2}, 1, TRUE)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "number": 2 }],
+        [{ "number": 3 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.sort.by-col-text",
+    "description": "Text by_col is #VALUE!",
+    "tags": ["sort", "errors"],
+    "formula": "=SORT({1;2}, 1, 1, \"x\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.sort.by-col-numeric",
+    "description": "Nonzero numeric by_col is TRUE",
+    "tags": ["sort", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SORT({3,1,2}, 1, 1, 1)",
+    "expected": {
+      "array": [[{ "number": 1 }, { "number": 2 }, { "number": 3 }]]
+    }
+  },
+  {
+    "id": "fn.sort.arity-zero",
+    "description": "SORT() is #VALUE!",
+    "tags": ["sort", "errors"],
+    "formula": "=SORT()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.sort.arity-five",
+    "description": "Five arguments are #VALUE!",
+    "tags": ["sort", "errors"],
+    "formula": "=SORT({1}, 1, 1, FALSE, TRUE)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.sort.ieee-15-digit",
+    "description": "0.1+0.2 and 0.3 are equal SORT keys (stable: original order among the tie)",
+    "tags": ["sort", "functions"],
+    "quirks": ["ieee-vs-excel-precision"],
+    "formula": "=SORT(A1:A3)",
+    "expected": {
+      "array": [
+        [{ "number": 0.2 }],
+        [{ "number": 0.3 }],
+        [{ "number": 0.3 }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "formula": "=0.1+0.2" },
+          "A2": { "number": 0.3 },
+          "A3": { "number": 0.2 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.sort.stable-ties",
+    "description": "Equal keys keep first-occurrence order (stable sort)",
+    "tags": ["sort", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SORT({2,\"first\";1,\"mid\";2,\"second\"})",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "text": "mid" }],
+        [{ "number": 2 }, { "text": "first" }],
+        [{ "number": 2 }, { "text": "second" }]
+      ]
+    }
+  },
+  {
+    "id": "fn.sort.negatives",
+    "description": "Negative numbers sort before zero and positives",
+    "tags": ["sort", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SORT({1;-2;0;-0.5})",
+    "expected": {
+      "array": [
+        [{ "number": -2 }],
+        [{ "number": -0.5 }],
+        [{ "number": 0 }],
+        [{ "number": 1 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.sort.date-serials",
+    "description": "DATE values sort as serial numbers (earlier date first)",
+    "tags": ["sort", "dates"],
+    "quirks": ["array-eval-mode", "date-1900-leap-year"],
+    "formula": "=SORT({DATE(2024,3,15);DATE(2024,1,2);DATE(2024,1,1)})",
+    "expected": {
+      "array": [
+        [{ "number": 45292 }],
+        [{ "number": 45293 }],
+        [{ "number": 45366 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.sort.index-nth",
+    "description": "INDEX picks a SORT row without writing a spill range",
+    "tags": ["sort", "index"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=INDEX(SORT({3;1;2}), 2)",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.sort.sum",
+    "description": "SUM consumes the SORT array (1+2+3)",
+    "tags": ["sort", "sum"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SUM(SORT({3;1;2}))",
+    "expected": { "number": 6 }
+  },
+  {
+    "id": "fn.sort.counta",
+    "description": "COUNTA of SORT counts non-blanks in original order-independent result",
+    "tags": ["sort", "counta"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=COUNTA(SORT(A1:A4))",
+    "expected": { "number": 3 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "b" },
+          "A2": { "text": "a" },
+          "A4": { "text": "c" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.sort.nested",
+    "description": "SORT of SORT is idempotent on a total order",
+    "tags": ["sort", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SORT(SORT({3;1;2}, 1, -1))",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "number": 2 }],
+        [{ "number": 3 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.sort.filter-then-sort",
+    "description": "SORT of a FILTER result",
+    "tags": ["sort", "filter"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SORT(FILTER({3;1;4;2}, {TRUE;TRUE;FALSE;TRUE}))",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "number": 2 }],
+        [{ "number": 3 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.sort.unique-then-sort",
+    "description": "SORT of a UNIQUE result",
+    "tags": ["sort", "unique"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SORT(UNIQUE({3;1;3;2}))",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "number": 2 }],
+        [{ "number": 3 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.sort.type-array",
+    "description": "TYPE of a SORT result is 64 (array)",
+    "tags": ["sort", "information"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TYPE(SORT({2;1}))",
+    "expected": { "number": 64 }
+  },
+  {
+    "id": "fn.sort.dynamic-array-mode",
+    "description": "array_mode=dynamic-array still returns the SORT array (no grid write)",
+    "tags": ["sort", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SORT(A1:A3)",
+    "options": { "array_mode": "dynamic-array" },
+    "expected": {
+      "array": [
+        [{ "number": 10 }],
+        [{ "number": 20 }],
+        [{ "number": 30 }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 30 },
+          "A2": { "number": 10 },
+          "A3": { "number": 20 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.sort.no-grid-write",
+    "description": "Occupied cells in the Excel spill zone do not produce #SPILL! — SORT returns the array",
+    "notes": "Excel would #SPILL! if SORT at B1 needed B2. This model never writes a spill range; neighbors are irrelevant. Pick individual results with INDEX/SUM.",
+    "tags": ["sort", "spill"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SORT(A1:A3)",
+    "at": "Sheet1!B1",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "number": 2 }],
+        [{ "number": 3 }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 3 },
+          "A2": { "number": 1 },
+          "A3": { "number": 2 },
+          "B2": { "text": "blocker" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.sort.scalar-plus-top-left",
+    "description": "SORT+n in a scalar operator takes the top-left sorted value (not host-aware spill intersection)",
+    "notes": "The engine scalarizes arrays to the first element. It does not intersect a written spill with the host cell.",
+    "tags": ["sort", "arithmetic"],
+    "quirks": ["array-eval-mode", "implicit-intersection"],
+    "formula": "=SORT({10;20;5})+1",
+    "expected": { "number": 6 }
+  },
+  {
+    "id": "fn.sort.explicit-defaults",
+    "description": "Explicit 1,1,FALSE matches omitted optional args",
+    "tags": ["sort", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SORT({3;1;2}, 1, 1, FALSE)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "number": 2 }],
+        [{ "number": 3 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.sort.spill-occupancy-not-modeled",
+    "description": "#SPILL! from a blocked spill range is not produced",
+    "tags": ["sort"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SORT({3;1;2})",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "number": 2 }],
+        [{ "number": 3 }]
+      ]
+    },
+    "ignore": "Workbook snippets have no spill grid. SORT returns an array value; #SPILL! from occupied cells below/right of the host is not modeled."
+  }
+]

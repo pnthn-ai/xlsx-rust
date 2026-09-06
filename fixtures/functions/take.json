@@ -1,0 +1,692 @@
+[
+  {
+    "id": "fn.take.col-first",
+    "description": "TAKE of a column keeps the first N rows",
+    "tags": ["take", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TAKE({1;2;3}, 2)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "number": 2 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.take.col-last",
+    "description": "Negative rows takes from the bottom",
+    "tags": ["take", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TAKE({1;2;3}, -2)",
+    "expected": {
+      "array": [
+        [{ "number": 2 }],
+        [{ "number": 3 }]
+      ]
+    },
+    "notes": "Negative count is from the end, not a drop of |n| from the start. TAKE(a,-2) of 3 rows is the last two, not the first one."
+  },
+  {
+    "id": "fn.take.col-one",
+    "description": "A single taken row is still a 1×1 array",
+    "tags": ["take", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TAKE({1;2;3}, 1)",
+    "expected": {
+      "array": [[{ "number": 1 }]]
+    }
+  },
+  {
+    "id": "fn.take.col-last-one",
+    "description": "TAKE(..., -1) is the last row as a 1×1 array",
+    "tags": ["take", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TAKE({1;2;3}, -1)",
+    "expected": {
+      "array": [[{ "number": 3 }]]
+    }
+  },
+  {
+    "id": "fn.take.row-first-cols",
+    "description": "Omitted rows + cols keeps the row and slices columns from the left",
+    "tags": ["take", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TAKE({1,2,3}, 1, 2)",
+    "expected": {
+      "array": [[{ "number": 1 }, { "number": 2 }]]
+    },
+    "notes": "Parser cannot express TAKE(a,,2). A 1-row array with rows=1 is the honest equivalent of omitted rows."
+  },
+  {
+    "id": "fn.take.row-last-cols",
+    "description": "Negative cols takes from the right",
+    "tags": ["take", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TAKE({1,2,3}, 1, -2)",
+    "expected": {
+      "array": [[{ "number": 2 }, { "number": 3 }]]
+    }
+  },
+  {
+    "id": "fn.take.matrix-first-first",
+    "description": "TAKE(matrix, 2, 2) is the top-left window",
+    "tags": ["take", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TAKE({1,2,3;4,5,6;7,8,9}, 2, 2)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 2 }],
+        [{ "number": 4 }, { "number": 5 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.take.matrix-last-last",
+    "description": "Both-negative TAKE is the bottom-right window",
+    "tags": ["take", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TAKE({1,2,3;4,5,6;7,8,9}, -2, -2)",
+    "expected": {
+      "array": [
+        [{ "number": 5 }, { "number": 6 }],
+        [{ "number": 8 }, { "number": 9 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.take.matrix-first-last-col",
+    "description": "Positive rows and negative cols: first row, last column",
+    "tags": ["take", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TAKE({1,2,3;4,5,6;7,8,9}, 1, -1)",
+    "expected": {
+      "array": [[{ "number": 3 }]]
+    }
+  },
+  {
+    "id": "fn.take.matrix-last-first-col",
+    "description": "Negative rows and positive cols: last row, first column",
+    "tags": ["take", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TAKE({1,2,3;4,5,6;7,8,9}, -1, 1)",
+    "expected": {
+      "array": [[{ "number": 7 }]]
+    }
+  },
+  {
+    "id": "fn.take.matrix-rows-only",
+    "description": "Omitted cols keeps every column of the taken rows",
+    "tags": ["take", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TAKE({1,2,3;4,5,6;7,8,9}, 2)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 2 }, { "number": 3 }],
+        [{ "number": 4 }, { "number": 5 }, { "number": 6 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.take.oversize-rows",
+    "description": "Asking for more rows than exist returns the whole column",
+    "tags": ["take", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TAKE({1;2;3}, 10)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "number": 2 }],
+        [{ "number": 3 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.take.oversize-rows-neg",
+    "description": "Negative oversize also returns the whole column (no pad)",
+    "tags": ["take", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TAKE({1;2;3}, -10)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "number": 2 }],
+        [{ "number": 3 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.take.oversize-cols",
+    "description": "Asking for more columns than exist returns every column",
+    "tags": ["take", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TAKE({1,2,3}, 1, 10)",
+    "expected": {
+      "array": [[{ "number": 1 }, { "number": 2 }, { "number": 3 }]]
+    }
+  },
+  {
+    "id": "fn.take.zero-rows-calc",
+    "description": "rows=0 is #CALC! (Excel cannot return an empty array)",
+    "tags": ["take", "errors", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TAKE({1;2;3}, 0)",
+    "expected": { "error": "#CALC!" },
+    "notes": "Microsoft documents #CALC! for a zero count, not #VALUE!."
+  },
+  {
+    "id": "fn.take.zero-cols-calc",
+    "description": "cols=0 is #CALC! even when rows is valid",
+    "tags": ["take", "errors", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TAKE({1,2,3}, 1, 0)",
+    "expected": { "error": "#CALC!" }
+  },
+  {
+    "id": "fn.take.neg-zero",
+    "description": "-0 truncates to 0 and is #CALC!",
+    "tags": ["take", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TAKE({1;2}, -0)",
+    "expected": { "error": "#CALC!" }
+  },
+  {
+    "id": "fn.take.fract-pos",
+    "description": "1.9 truncates toward zero to 1",
+    "tags": ["take", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TAKE({1;2;3}, 1.9)",
+    "expected": {
+      "array": [[{ "number": 1 }]]
+    }
+  },
+  {
+    "id": "fn.take.fract-neg",
+    "description": "-1.9 truncates toward zero to -1 (last row), not INT-style -2",
+    "tags": ["take", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TAKE({1;2;3}, -1.9)",
+    "expected": {
+      "array": [[{ "number": 3 }]]
+    },
+    "notes": "Toward-zero truncate, not INT. INT(-1.9) is -2 and would take the last two rows."
+  },
+  {
+    "id": "fn.take.fract-lt-one-calc",
+    "description": "0.9 truncates to 0 → #CALC!",
+    "tags": ["take", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TAKE({1;2;3}, 0.9)",
+    "expected": { "error": "#CALC!" }
+  },
+  {
+    "id": "fn.take.fract-neg-lt-one-calc",
+    "description": "-0.9 truncates to 0 → #CALC!",
+    "tags": ["take", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TAKE({1;2;3}, -0.9)",
+    "expected": { "error": "#CALC!" }
+  },
+  {
+    "id": "fn.take.true-is-one",
+    "description": "TRUE coerces to 1 row",
+    "tags": ["take", "functions", "array"],
+    "quirks": ["array-eval-mode", "bool-number-equality"],
+    "formula": "=TAKE({1;2;3}, TRUE)",
+    "expected": {
+      "array": [[{ "number": 1 }]]
+    }
+  },
+  {
+    "id": "fn.take.false-is-calc",
+    "description": "FALSE coerces to 0 → #CALC!",
+    "tags": ["take", "errors"],
+    "quirks": ["array-eval-mode", "bool-number-equality"],
+    "formula": "=TAKE({1;2;3}, FALSE)",
+    "expected": { "error": "#CALC!" }
+  },
+  {
+    "id": "fn.take.empty-count-calc",
+    "description": "A blank count cell coerces to 0 → #CALC! (not 'omit / take all')",
+    "tags": ["take", "empty", "errors"],
+    "quirks": ["array-eval-mode", "empty-cell-duality"],
+    "formula": "=TAKE(A1:A3, B1)",
+    "expected": { "error": "#CALC!" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 2 },
+          "A3": { "number": 3 }
+        }
+      }]
+    },
+    "notes": "Empty ≠ omitted. TAKE(array,,2) would keep all rows in Excel; TAKE(array, blank) is 0."
+  },
+  {
+    "id": "fn.take.text-number-count",
+    "description": "Numeric text \"2\" coerces to 2 rows",
+    "tags": ["take", "functions", "array"],
+    "quirks": ["array-eval-mode", "equality-vs-arithmetic-coercion"],
+    "formula": "=TAKE({1;2;3}, \"2\")",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "number": 2 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.take.text-count-value",
+    "description": "Non-numeric text count is #VALUE!",
+    "tags": ["take", "errors"],
+    "formula": "=TAKE({1;2}, \"x\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.take.arity-zero",
+    "description": "TAKE() is #VALUE!",
+    "tags": ["take", "errors"],
+    "formula": "=TAKE()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.take.arity-one",
+    "description": "TAKE(array) without a count is #VALUE!",
+    "tags": ["take", "errors"],
+    "formula": "=TAKE({1;2;3})",
+    "expected": { "error": "#VALUE!" },
+    "notes": "At least one of rows or cols is required."
+  },
+  {
+    "id": "fn.take.arity-four",
+    "description": "Four arguments are #VALUE!",
+    "tags": ["take", "errors"],
+    "formula": "=TAKE({1}, 1, 1, 1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.take.scalar",
+    "description": "TAKE of a scalar is a 1×1 array",
+    "tags": ["take", "functions"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TAKE(5, 1)",
+    "expected": {
+      "array": [[{ "number": 5 }]]
+    }
+  },
+  {
+    "id": "fn.take.scalar-oversize",
+    "description": "Oversize TAKE of a scalar still returns the 1×1",
+    "tags": ["take", "functions"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TAKE(5, 3, 3)",
+    "expected": {
+      "array": [[{ "number": 5 }]]
+    }
+  },
+  {
+    "id": "fn.take.range",
+    "description": "TAKE of a worksheet column",
+    "tags": ["take", "functions"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TAKE(A1:A5, 3)",
+    "expected": {
+      "array": [
+        [{ "text": "red" }],
+        [{ "text": "blue" }],
+        [{ "text": "green" }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "red" },
+          "A2": { "text": "blue" },
+          "A3": { "text": "green" },
+          "A4": { "text": "yellow" },
+          "A5": { "text": "pink" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.take.range-neg",
+    "description": "Negative TAKE of a worksheet column is the tail",
+    "tags": ["take", "functions"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TAKE(A1:A5, -2)",
+    "expected": {
+      "array": [
+        [{ "text": "yellow" }],
+        [{ "text": "pink" }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "red" },
+          "A2": { "text": "blue" },
+          "A3": { "text": "green" },
+          "A4": { "text": "yellow" },
+          "A5": { "text": "pink" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.take.2d-range",
+    "description": "TAKE of a 2-column sheet range",
+    "tags": ["take", "functions"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TAKE(A1:B4, -2, 1)",
+    "expected": {
+      "array": [
+        [{ "text": "c" }],
+        [{ "text": "d" }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "a" }, "B1": { "number": 1 },
+          "A2": { "text": "b" }, "B2": { "number": 2 },
+          "A3": { "text": "c" }, "B3": { "number": 3 },
+          "A4": { "text": "d" }, "B4": { "number": 4 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.take.blanks-kept",
+    "description": "Blank cells in the window stay empty",
+    "tags": ["take", "empty"],
+    "quirks": ["array-eval-mode", "empty-cell-duality"],
+    "formula": "=TAKE(A1:A3, 2)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "empty": null }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A3": { "number": 3 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.take.empty-string-kept",
+    "description": "Stored \"\" in the window is text, not blank",
+    "tags": ["take", "empty"],
+    "quirks": ["array-eval-mode", "empty-cell-duality"],
+    "formula": "=TAKE(A1:A2, 1)",
+    "expected": {
+      "array": [[{ "text": "" }]]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "" },
+          "A2": { "number": 1 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.take.errors-in-array",
+    "description": "Error values in the slice are kept",
+    "tags": ["take", "errors", "array"],
+    "quirks": ["array-eval-mode", "error-precedence"],
+    "formula": "=TAKE({1;#N/A;3}, 2)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "error": "#N/A" }]
+      ]
+    }
+  },
+  {
+    "id": "fn.take.error-arg",
+    "description": "A scalar error array argument surfaces",
+    "tags": ["take", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=TAKE(#DIV/0!, 1)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.take.error-ltr-array-first",
+    "description": "Array is evaluated first: #N/A beats a later #DIV/0!",
+    "tags": ["take", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=TAKE(#N/A, #DIV/0!)",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.take.rows-error",
+    "description": "Error in rows surfaces after a valid array",
+    "tags": ["take", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=TAKE({1;2}, #DIV/0!)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.take.cols-error",
+    "description": "Error in cols surfaces after a valid array and rows",
+    "tags": ["take", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=TAKE({1,2}, 1, #N/A)",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.take.bool-kept",
+    "description": "TAKE preserves logicals in the array",
+    "tags": ["take", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TAKE({TRUE;FALSE;TRUE}, 2)",
+    "expected": {
+      "array": [[{ "bool": true }], [{ "bool": false }]]
+    }
+  },
+  {
+    "id": "fn.take.text-rows",
+    "description": "TAKE keeps text rows",
+    "tags": ["take", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TAKE({\"a\";\"b\";\"c\"}, -2)",
+    "expected": {
+      "array": [[{ "text": "b" }], [{ "text": "c" }]]
+    }
+  },
+  {
+    "id": "fn.take.index-nth",
+    "description": "INDEX picks a TAKE row without writing a spill range",
+    "tags": ["take", "index"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=INDEX(TAKE({10;20;30}, 2), 2)",
+    "expected": { "number": 20 }
+  },
+  {
+    "id": "fn.take.sum",
+    "description": "SUM consumes the TAKE array (1+2)",
+    "tags": ["take", "sum"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SUM(TAKE({1;2;3}, 2))",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.take.counta",
+    "description": "COUNTA of TAKE counts non-blanks in the window",
+    "tags": ["take", "counta"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=COUNTA(TAKE(A1:A4, 3))",
+    "expected": { "number": 2 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "a" },
+          "A2": { "text": "b" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.take.type-array",
+    "description": "TYPE of TAKE is 64 (array)",
+    "tags": ["take", "information"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TYPE(TAKE({1;2;3}, 2))",
+    "expected": { "number": 64 }
+  },
+  {
+    "id": "fn.take.nested",
+    "description": "TAKE of TAKE is the inner window then the outer",
+    "tags": ["take", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TAKE(TAKE({1;2;3;4}, 3), -2)",
+    "expected": {
+      "array": [
+        [{ "number": 2 }],
+        [{ "number": 3 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.take.of-unique",
+    "description": "TAKE of UNIQUE keeps the first distinct values",
+    "tags": ["take", "unique", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TAKE(UNIQUE({1;2;2;3}), 2)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "number": 2 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.take.of-filter",
+    "description": "TAKE of FILTER slices the filtered rows",
+    "tags": ["take", "filter", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TAKE(FILTER({1;2;3;4}, {TRUE;FALSE;TRUE;TRUE}), 2)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "number": 3 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.take.iserror-calc",
+    "description": "ISERROR of TAKE #CALC! is TRUE",
+    "tags": ["take", "information"],
+    "formula": "=ISERROR(TAKE({1}, 0))",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.take.isna-calc",
+    "description": "ISNA of TAKE #CALC! is FALSE (#CALC! is not #N/A)",
+    "tags": ["take", "information"],
+    "formula": "=ISNA(TAKE({1}, 0))",
+    "expected": { "bool": false }
+  },
+  {
+    "id": "fn.take.dynamic-array-mode",
+    "description": "array_mode=dynamic-array still returns the TAKE array (no grid write)",
+    "tags": ["take", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TAKE(A1:A4, 2)",
+    "options": { "array_mode": "dynamic-array" },
+    "expected": {
+      "array": [
+        [{ "number": 10 }],
+        [{ "number": 20 }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 10 },
+          "A2": { "number": 20 },
+          "A3": { "number": 30 },
+          "A4": { "number": 40 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.take.no-grid-write",
+    "description": "Occupied cells in the Excel spill zone do not produce #SPILL! — TAKE returns the array",
+    "notes": "Excel would #SPILL! if TAKE at B1 needed B2. This model never writes a spill range; neighbors are irrelevant. Pick individual results with INDEX/SUM.",
+    "tags": ["take", "spill"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TAKE(A1:A3, 2)",
+    "at": "Sheet1!B1",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "number": 2 }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 2 },
+          "A3": { "number": 3 },
+          "B2": { "text": "blocker" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.take.scalar-plus-top-left",
+    "description": "TAKE+n in a scalar operator takes the top-left (not host-aware spill intersection)",
+    "notes": "The engine scalarizes arrays to the first element. It does not intersect a written spill with the host cell.",
+    "tags": ["take", "arithmetic"],
+    "quirks": ["array-eval-mode", "implicit-intersection"],
+    "formula": "=TAKE({10;20;30}, 2)+1",
+    "expected": { "number": 11 }
+  },
+  {
+    "id": "fn.take.omitted-middle-not-parsed",
+    "description": "TAKE(array,,cols) is Excel-legal (all rows, N cols) but this parser rejects omitted middle args",
+    "tags": ["take"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TAKE({1,2,3;4,5,6},,2)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 2 }],
+        [{ "number": 4 }, { "number": 5 }]
+      ]
+    },
+    "ignore": "Parser does not accept omitted middle arguments (TAKE(a,,2)). Excel would keep all rows and the first two columns. Use TAKE(a, rows, 2) with an oversize rows count instead. Not used to hide a broken TAKE kernel."
+  },
+  {
+    "id": "fn.take.spill-occupancy-not-modeled",
+    "description": "#SPILL! from a blocked spill range is not produced",
+    "tags": ["take"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TAKE({1;2;3}, 3)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "number": 2 }],
+        [{ "number": 3 }]
+      ]
+    },
+    "ignore": "Workbook snippets have no spill grid. TAKE returns an array value; #SPILL! from occupied cells below/right of the host is not modeled."
+  }
+]

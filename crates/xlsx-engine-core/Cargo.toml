@@ -41,7 +41,15 @@ name = "sumifs"
 harness = false
 
 [[bench]]
+name = "countifs"
+harness = false
+
+[[bench]]
 name = "averageif"
+harness = false
+
+[[bench]]
+name = "averageifs"
 harness = false
 
 [[bench]]
@@ -73,6 +81,10 @@ name = "networkdays"
 harness = false
 
 [[bench]]
+name = "networkdays_intl"
+harness = false
+
+[[bench]]
 name = "weekday"
 harness = false
 
@@ -97,9 +109,158 @@ name = "workday"
 harness = false
 
 [[bench]]
+name = "workday_intl"
+harness = false
+
+[[bench]]
 name = "filter"
+harness = false
+
+[[bench]]
+name = "sequence"
+harness = false
+
+[[bench]]
+name = "take"
+harness = false
+
+[[bench]]
+name = "choosecols"
 harness = false
 
 [[bench]]
 name = "irr"
 harness = false
+
+[[bench]]
+name = "fv"
+harness = false
+
+[[bench]]
+name = "pv"
+harness = false
+
+[[bench]]
+name = "nper"
+harness = false
+
+[[bench]]
+name = "rate"
+harness = false
+
+[[bench]]
+name = "ipmt"
+harness = false
+
+[[bench]]
+name = "xnpv"
+harness = false
+
+[[bench]]
+name = "ppmt"
+harness = false
+
+[[bench]]
+name = "cumprinc"
+harness = false
+
+[[bench]]
+name = "cumipmt"
+harness = false
+
+[[bench]]
+name = "xirr"
+harness = false
+
+[[bench]]
+name = "mirr"
+harness = false
+
+[[bench]]
+name = "effect"
+harness = false
+
+[[bench]]
+name = "nominal"
+harness = false
+
+[[bench]]
+name = "pduration"
+harness = false
+
+[[bench]]
+name = "rri"
+harness = false
+
+[[bench]]
+name = "yearfrac"
+harness = false
+
+[[bench]]
+name = "sort"
+harness = false
+
+[[bench]]
+name = "xlookup"
+harness = false
+
+[[bench]]
+name = "sortby"
+harness = false
+
+[[bench]]
+name = "tocol"
+harness = false
+
+[[bench]]
+name = "torow"
+harness = false
+
+[[bench]]
+name = "vstack"
+harness = false
+
+[[bench]]
+name = "wrapcols"
+harness = false
+
+[[bench]]
+name = "wraprows"
+harness = false
+
+[[bench]]
+name = "hstack"
+harness = false
+
+[[bench]]
+name = "drop"
+harness = false
+
+[[bench]]
+name = "expand"
+harness = false
+
+[[bench]]
+name = "chooserows"
+harness = false
+
+[[bench]]
+name = "randarray"
+harness = false
+
+[[bench]]
+name = "makearray"
+harness = false
+
+[[bench]]
+name = "textsplit"
+harness = false
+
+[[bench]]
+name = "textafter"
+harness = false
+
+[[bench]]
+name = "textbefore"
+harness = false
+

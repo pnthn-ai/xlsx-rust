@@ -1,0 +1,500 @@
+[
+  {
+    "id": "fn.mirr-simple",
+    "description": "MIRR({-100, 110}, 10%, 10%) is 10%",
+    "tags": ["mirr", "financial"],
+    "formula": "=MIRR({-100, 110}, 0.1, 0.1)",
+    "expected": { "number": 0.1 }
+  },
+  {
+    "id": "fn.mirr-simple-range",
+    "description": "MIRR of a two-cell column range",
+    "tags": ["mirr", "financial"],
+    "formula": "=MIRR(A1:A2, 0, 0)",
+    "expected": { "number": 0.1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": -100 },
+          "A2": { "number": 110 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.mirr-ms-five-year",
+    "description": "Microsoft example: MIRR after five years at 10%/12% is ~12.61%",
+    "notes": "support.microsoft.com MIRR: displayed 13%. Golden is the published NPV closed form.",
+    "tags": ["mirr", "financial"],
+    "formula": "=MIRR(A2:A7, A8, A9)",
+    "expected": { "number": 0.1260941303659051 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A2": { "number": -120000 },
+          "A3": { "number": 39000 },
+          "A4": { "number": 30000 },
+          "A5": { "number": 21000 },
+          "A6": { "number": 37000 },
+          "A7": { "number": 46000 },
+          "A8": { "number": 0.1 },
+          "A9": { "number": 0.12 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.mirr-ms-three-year",
+    "description": "Microsoft example: MIRR after three years at 10%/12% is ~-4.80%",
+    "notes": "support.microsoft.com MIRR: displayed -5%.",
+    "tags": ["mirr", "financial"],
+    "formula": "=MIRR(A2:A5, A8, A9)",
+    "expected": { "number": -0.0480446552499808 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A2": { "number": -120000 },
+          "A3": { "number": 39000 },
+          "A4": { "number": 30000 },
+          "A5": { "number": 21000 },
+          "A8": { "number": 0.1 },
+          "A9": { "number": 0.12 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.mirr-ms-five-year-14",
+    "description": "Microsoft example: five-year MIRR with reinvest_rate 14% is ~13.48%",
+    "notes": "support.microsoft.com MIRR: displayed 13%.",
+    "tags": ["mirr", "financial"],
+    "formula": "=MIRR(A2:A7, A8, 14%)",
+    "expected": { "number": 0.1347591108283148 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A2": { "number": -120000 },
+          "A3": { "number": 39000 },
+          "A4": { "number": 30000 },
+          "A5": { "number": 21000 },
+          "A6": { "number": 37000 },
+          "A7": { "number": 46000 },
+          "A8": { "number": 0.1 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.mirr-zero-rates",
+    "description": "Zero finance and reinvest rates: MIRR is FV/PV growth",
+    "tags": ["mirr", "financial"],
+    "formula": "=MIRR({-100, 110}, 0, 0)",
+    "expected": { "number": 0.1 }
+  },
+  {
+    "id": "fn.mirr-zero-period",
+    "description": "A stored 0 is a period: MIRR({-100, 0, 121}, 0, 0) is 10%",
+    "tags": ["mirr", "financial"],
+    "formula": "=MIRR({-100, 0, 121}, 0, 0)",
+    "expected": { "number": 0.1 }
+  },
+  {
+    "id": "fn.mirr-zero-in-range-is-period",
+    "description": "Stored 0 in a range occupies a period; blank does not",
+    "tags": ["mirr", "financial", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=MIRR(A1:A3, 0, 0)",
+    "expected": { "number": 0.1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": -100 },
+          "A2": { "number": 0 },
+          "A3": { "number": 121 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.mirr-blank-in-range-skipped",
+    "description": "Empty cells in a range are ignored and do not occupy a period",
+    "tags": ["mirr", "financial", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=MIRR(A1:A3, 0, 0)",
+    "expected": { "number": 0.1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": -100 },
+          "A3": { "number": 110 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.mirr-bool-in-range-skipped",
+    "description": "Logicals in a range are ignored",
+    "tags": ["mirr", "financial"],
+    "quirks": ["sum-arg-vs-range"],
+    "formula": "=MIRR(A1:A3, 0, 0)",
+    "expected": { "number": 0.1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": -100 },
+          "A2": { "bool": true },
+          "A3": { "number": 110 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.mirr-numeric-text-in-range-skipped",
+    "description": "Numeric text in a range is still text and is ignored",
+    "tags": ["mirr", "financial"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=MIRR(A1:A3, 0, 0)",
+    "expected": { "number": 0.1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": -100 },
+          "A2": { "text": "50" },
+          "A3": { "number": 110 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.mirr-array-text-skipped",
+    "description": "Text in an array literal is ignored",
+    "tags": ["mirr", "financial"],
+    "formula": "=MIRR({-100, \"x\", 110}, 0, 0)",
+    "expected": { "number": 0.1 }
+  },
+  {
+    "id": "fn.mirr-row-range",
+    "description": "A row range is collected left-to-right",
+    "tags": ["mirr", "financial"],
+    "formula": "=MIRR(A1:B1, 0, 0)",
+    "expected": { "number": 0.1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": -100 },
+          "B1": { "number": 110 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.mirr-2d-row-major",
+    "description": "A 2D range is collected row-major: A1, B1, A2, B2",
+    "tags": ["mirr", "financial"],
+    "formula": "=MIRR(A1:B2, 0, 0)",
+    "expected": { "number": 0.1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": -100 },
+          "B1": { "number": 0 },
+          "A2": { "number": 0 },
+          "B2": { "number": 133.1 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.mirr-two-outflows",
+    "description": "Two outflows are discounted at finance_rate; inflows compound at reinvest_rate",
+    "tags": ["mirr", "financial"],
+    "formula": "=MIRR({-50, -50, 121}, 0.1, 0.12)",
+    "expected": { "number": 0.1258858945821497 }
+  },
+  {
+    "id": "fn.mirr-mid-outflow",
+    "description": "A later outflow is still a financing cash flow",
+    "tags": ["mirr", "financial"],
+    "formula": "=MIRR({-100, 50, -20, 80}, 0.08, 0.1)",
+    "expected": { "number": 0.0624667001980932 }
+  },
+  {
+    "id": "fn.mirr-negative",
+    "description": "A losing project can have a negative MIRR",
+    "tags": ["mirr", "financial"],
+    "formula": "=MIRR({-100, 10, 10, 10}, 0.1, 0.12)",
+    "expected": { "number": -0.3038029359706866 }
+  },
+  {
+    "id": "fn.mirr-finance-zero",
+    "description": "finance_rate 0 present-values outflows without discount",
+    "tags": ["mirr", "financial"],
+    "formula": "=MIRR({-100, 50, 80}, 0, 0.12)",
+    "expected": { "number": 0.1661903789690602 }
+  },
+  {
+    "id": "fn.mirr-reinvest-zero",
+    "description": "reinvest_rate 0 future-values inflows without compounding",
+    "tags": ["mirr", "financial"],
+    "formula": "=MIRR({-100, 50, 80}, 0.1, 0)",
+    "expected": { "number": 0.140175425099138 }
+  },
+  {
+    "id": "fn.mirr-finance-neg-two",
+    "description": "finance_rate < -1 uses a negative discount factor",
+    "tags": ["mirr", "financial"],
+    "formula": "=MIRR({-100, 200}, -2, 0)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.mirr-all-positive-div0",
+    "description": "No outflow → #DIV/0!",
+    "tags": ["mirr", "financial", "errors"],
+    "formula": "=MIRR({10, 20, 30}, 0.1, 0.12)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.mirr-all-negative-div0",
+    "description": "No inflow → #DIV/0!",
+    "tags": ["mirr", "financial", "errors"],
+    "formula": "=MIRR({-10, -20}, 0.1, 0.12)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.mirr-single-value-div0",
+    "description": "A single cash flow cannot have both signs → #DIV/0!",
+    "tags": ["mirr", "financial", "errors"],
+    "formula": "=MIRR({-100}, 0.1, 0.12)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.mirr-zeros-div0",
+    "description": "Zeros are neither inflow nor outflow → #DIV/0!",
+    "tags": ["mirr", "financial", "errors"],
+    "formula": "=MIRR({0, 0, 0}, 0.1, 0.12)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.mirr-finance-minus-one-div0",
+    "description": "finance_rate -1 makes Excel NPV of outflows #DIV/0!",
+    "tags": ["mirr", "financial", "errors"],
+    "formula": "=MIRR({-100, 110}, -1, 0.12)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.mirr-reinvest-minus-one-div0",
+    "description": "reinvest_rate -1 makes Excel NPV of inflows #DIV/0!",
+    "tags": ["mirr", "financial", "errors"],
+    "formula": "=MIRR({-100, 110}, 0.1, -1)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.mirr-finance-true",
+    "description": "TRUE finance_rate coerces to 1",
+    "tags": ["mirr", "financial", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=MIRR({-100, 300}, TRUE, 0)",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.mirr-reinvest-false",
+    "description": "FALSE reinvest_rate coerces to 0",
+    "tags": ["mirr", "financial", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=MIRR({-100, 110}, 0, FALSE)",
+    "expected": { "number": 0.1 }
+  },
+  {
+    "id": "fn.mirr-rate-blank",
+    "description": "Blank rate cells coerce to 0",
+    "tags": ["mirr", "financial", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=MIRR({-100, 110}, B1, C1)",
+    "expected": { "number": 0.1 },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.mirr-rate-text-num",
+    "description": "Numeric text rates are coerced",
+    "tags": ["mirr", "financial", "coercion"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=MIRR({-100, 110}, \"0\", \"0\")",
+    "expected": { "number": 0.1 }
+  },
+  {
+    "id": "fn.mirr-finance-text-bad",
+    "description": "Non-numeric finance_rate is #VALUE!",
+    "tags": ["mirr", "financial", "errors"],
+    "formula": "=MIRR({-100, 110}, \"x\", 0.1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.mirr-reinvest-text-bad",
+    "description": "Non-numeric reinvest_rate is #VALUE!",
+    "tags": ["mirr", "financial", "errors"],
+    "formula": "=MIRR({-100, 110}, 0.1, \"x\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.mirr-percent",
+    "description": "Percent literals are rates (10% is 0.1)",
+    "tags": ["mirr", "financial"],
+    "quirks": ["percent-unary"],
+    "formula": "=MIRR({-100, 110}, 10%, 10%)",
+    "expected": { "number": 0.1 }
+  },
+  {
+    "id": "fn.mirr-scalar-true-div0",
+    "description": "Scalar TRUE coerces to 1 (one value, no outflow) → #DIV/0!",
+    "tags": ["mirr", "financial", "errors"],
+    "quirks": ["sum-arg-vs-range"],
+    "formula": "=MIRR(TRUE, 0.1, 0.12)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.mirr-cell-true-skipped-div0",
+    "description": "TRUE in a cell reference is ignored (range semantics) → #DIV/0!",
+    "tags": ["mirr", "financial", "errors"],
+    "quirks": ["sum-arg-vs-range"],
+    "formula": "=MIRR(A1, 0.1, 0.12)",
+    "expected": { "error": "#DIV/0!" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": { "A1": { "bool": true } }
+      }]
+    }
+  },
+  {
+    "id": "fn.mirr-named-range",
+    "description": "MIRR of a defined name that refers to a cash-flow range",
+    "tags": ["mirr", "financial", "named"],
+    "formula": "=MIRR(Cash, 0, 0)",
+    "expected": { "number": 0.1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": -100 },
+          "A2": { "number": 110 }
+        }
+      }],
+      "names": [{ "name": "Cash", "refers_to": "Sheet1!A1:A2" }]
+    }
+  },
+  {
+    "id": "fn.mirr-arity-0",
+    "description": "MIRR() is #VALUE!",
+    "tags": ["mirr", "financial", "errors"],
+    "formula": "=MIRR()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.mirr-arity-1",
+    "description": "MIRR(values) without rates is #VALUE!",
+    "tags": ["mirr", "financial", "errors"],
+    "formula": "=MIRR({-100, 110})",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.mirr-arity-2",
+    "description": "MIRR(values, finance_rate) without reinvest_rate is #VALUE!",
+    "tags": ["mirr", "financial", "errors"],
+    "formula": "=MIRR({-100, 110}, 0.1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.mirr-arity-4",
+    "description": "Four arguments is #VALUE!",
+    "tags": ["mirr", "financial", "errors"],
+    "formula": "=MIRR({-100, 110}, 0.1, 0.12, 1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.mirr-err-values",
+    "description": "Error in values propagates",
+    "tags": ["mirr", "financial", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=MIRR(1/0, 0.1, 0.12)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.mirr-err-in-range",
+    "description": "First error in the cash-flow range wins",
+    "tags": ["mirr", "financial", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=MIRR(A1:A3, 0.1, 0.12)",
+    "expected": { "error": "#N/A" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": -100 },
+          "A2": { "error": "#N/A" },
+          "A3": { "number": 110 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.mirr-err-finance",
+    "description": "Error in finance_rate propagates",
+    "tags": ["mirr", "financial", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=MIRR({-100, 110}, 1/0, 0.12)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.mirr-err-reinvest",
+    "description": "Error in reinvest_rate propagates",
+    "tags": ["mirr", "financial", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=MIRR({-100, 110}, 0.1, 1/0)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.mirr-err-left-wins",
+    "description": "Left-to-right: values error beats later rate errors",
+    "tags": ["mirr", "financial", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=MIRR(#DIV/0!, #N/A, #NAME?)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.mirr-err-finance-after-ok-values",
+    "description": "Rates are evaluated even when values have no sign change",
+    "tags": ["mirr", "financial", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=MIRR({1, 2}, 1/0, 0.12)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.mirr-leading-trailing-empty",
+    "description": "Leading and trailing blanks around a valid series are ignored",
+    "tags": ["mirr", "financial", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=MIRR(A1:A5, 0, 0)",
+    "expected": { "number": 0.1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A2": { "number": -100 },
+          "A3": { "number": 110 }
+        }
+      }]
+    }
+  }
+]
