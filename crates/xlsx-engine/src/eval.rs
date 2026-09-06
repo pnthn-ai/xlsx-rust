@@ -4111,6 +4111,10 @@ impl Interpreter {
         }
         if let Ok((params, body)) = resolve_seed_lambda_n(&args[1], ctx, 1, 0) {
             let param = params.into_iter().next().unwrap();
+            if let Some(op) = seed_bycol_lambda_op(&body, &param) {
+                let array = self.eval_expr(&args[0], ctx)?;
+                return Ok(apply_seed_bycol_fast(&array, &op));
+            }
             let array = self.eval_expr(&args[0], ctx)?;
             if let ExcelValue::Error(e) = array {
                 return Ok(ExcelValue::Error(e));
@@ -5629,6 +5633,21 @@ fn resolve_seed_lambda_arity(
 fn seed_bycol_eta(expr: &Expr) -> Option<xlsx_engine_core::BycolOp> {
     match expr {
         Expr::Name(n) => xlsx_engine_core::eval::bycol::eta_op(n),
+        _ => None,
+    }
+}
+
+/// `LAMBDA(c, SUM(c))` — same range-like fold as calc-core `classify`.
+fn seed_bycol_lambda_op(body: &Expr, param: &str) -> Option<xlsx_engine_core::BycolOp> {
+    match body {
+        Expr::Call { name, args } if args.len() == 1 => {
+            if let Expr::Name(n) = &args[0] {
+                if xlsx_engine_core::eval::makearray::names_eq(n, param) {
+                    return xlsx_engine_core::eval::bycol::eta_op(name);
+                }
+            }
+            None
+        }
         _ => None,
     }
 }
