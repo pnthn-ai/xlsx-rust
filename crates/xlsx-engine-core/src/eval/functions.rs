@@ -2,8 +2,9 @@
 //!
 //! Unknown names return `#NAME?` (an Excel value, not [`EvalError`]).
 //! Dedicated kernels live in sibling modules (`ifs`, `filter`, `sort`,
-//! `xlookup`, `textsplit`, `xnpv`, `map`, `isomitted`, `len`, `unicode`, …). Financial TVM
-//! kernels live in [`xlsx_types`] (`excel_pmt` / `excel_fv` / `excel_pv` / …).
+//! `xlookup`, `textsplit`, `xnpv`, `map`, `isomitted`, `len`, `unicode`,
+//! `trunc`, …). Financial TVM kernels live in [`xlsx_types`] (`excel_pmt` /
+//! `excel_fv` / `excel_pv` / …).
 
 use super::{coerce, compare, excel_pow, Ctx, Evaluator};
 use crate::ast::Expr;
@@ -87,7 +88,7 @@ pub(crate) fn dispatch(
             })
         }),
         "INT" => fn_unary_num(ev, args, ctx, |n| ExcelValue::Number(excel_int(n))),
-        "TRUNC" => fn_trunc(ev, args, ctx),
+        "TRUNC" => super::trunc::fn_trunc(ev, args, ctx),
         "ROUND" => fn_round(ev, args, ctx),
         "ROUNDUP" => super::roundup::fn_roundup(ev, args, ctx),
         "ROUNDDOWN" => super::rounddown::fn_rounddown(ev, args, ctx),
@@ -674,25 +675,6 @@ fn fn_unary_num(
         Ok(n) => Ok(f(n)),
         Err(e) => Ok(ExcelValue::Error(e)),
     }
-}
-
-fn fn_trunc(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
-    if args.is_empty() {
-        return Ok(ExcelValue::Error(ExcelError::Value));
-    }
-    let n = match coerce::to_number(&ev.eval_scalar(&args[0], ctx)?) {
-        Ok(n) => n,
-        Err(e) => return Ok(ExcelValue::Error(e)),
-    };
-    let digits = if args.len() >= 2 {
-        match coerce::to_number(&ev.eval_scalar(&args[1], ctx)?) {
-            Ok(d) => d.trunc() as i32,
-            Err(e) => return Ok(ExcelValue::Error(e)),
-        }
-    } else {
-        0
-    };
-    Ok(ExcelValue::Number(excel_trunc(n, digits)))
 }
 
 #[derive(Clone, Copy)]
@@ -2496,9 +2478,4 @@ fn flatten_vector(v: ExcelValue) -> Vec<ExcelValue> {
         }
         other => vec![other],
     }
-}
-
-fn excel_trunc(n: f64, digits: i32) -> f64 {
-    let factor = 10f64.powi(digits);
-    (n * factor).trunc() / factor
 }
