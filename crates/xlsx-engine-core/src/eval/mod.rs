@@ -16,6 +16,7 @@ pub mod coerce;
 pub mod compare;
 pub mod concat;
 pub mod countifs;
+pub mod dollar;
 pub mod drop;
 pub mod empty;
 pub mod exact;
@@ -988,6 +989,22 @@ mod tests {
     #[test]
     fn text_number_and_date_subset() {
         let wb = Workbook::default();
+        assert_eq!(
+            eval_formula_in(&wb, "=DOLLAR(1234.567, 2)").unwrap(),
+            ExcelValue::Text("$1,234.57".into())
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=DOLLAR(-1234.567)").unwrap(),
+            ExcelValue::Text("($1,234.57)".into())
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=DOLLAR(1234.567, -2)").unwrap(),
+            ExcelValue::Text("$1,200".into())
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=DOLLAR()").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
+        );
         assert_eq!(
             eval_formula_in(&wb, "=TEXT(1234.567,\"0.00\")").unwrap(),
             ExcelValue::Text("1234.57".into())

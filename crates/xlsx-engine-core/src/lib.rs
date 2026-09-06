@@ -61,6 +61,7 @@
 //! - [`eval::unicode`] — Excel `UNICODE` (first Unicode scalar / code point)
 //! - [`eval::exact`] — Excel `EXACT` (case-sensitive text compare)
 //! - [`eval::value`] — Excel `VALUE` (en-US number / date / time text)
+//! - [`eval::dollar`] — Excel `DOLLAR` (en-US `$` currency text; parentheses)
 //! - [`eval::textsplit`] — `TEXTSPLIT` col/row split kernel (pad / `#CALC!`)
 //! - [`eval::textafter`] — Excel `TEXTAFTER` kernel (nth delimiter, `match_end`)
 //! - [`eval::irr`] — Excel `IRR` Newton / secant kernel
@@ -119,6 +120,11 @@ pub use eval::code::{
 pub use eval::concat::{
     concat_feed_value, concat_naive_join, eval_concat_formula, ConcatBuilder, ConcatWalk,
     CONCAT_MAX_CHARS,
+};
+pub use eval::dollar::{
+    dollar as excel_dollar, dollar_naive as excel_dollar_naive, dollar_slice as excel_dollar_slice,
+    dollar_slice_naive as excel_dollar_slice_naive, dollar_value as excel_dollar_value,
+    dollar_value_naive as excel_dollar_value_naive,
 };
 pub use eval::drop::{apply as excel_drop, apply_naive as excel_drop_naive};
 pub use eval::exact::{exact as excel_exact, exact_naive as excel_exact_naive};

@@ -1,0 +1,576 @@
+[
+  {
+    "id": "fn.dollar-ms-2",
+    "description": "Microsoft: DOLLAR(1234.567, 2) is $1,234.57",
+    "tags": ["text", "dollar"],
+    "formula": "=DOLLAR(1234.567, 2)",
+    "expected": { "text": "$1,234.57" }
+  },
+  {
+    "id": "fn.dollar-ms-neg2",
+    "description": "Microsoft: DOLLAR(1234.567, -2) rounds left of the decimal to $1,200",
+    "tags": ["text", "dollar"],
+    "formula": "=DOLLAR(1234.567, -2)",
+    "expected": { "text": "$1,200" }
+  },
+  {
+    "id": "fn.dollar-ms-neg-neg2",
+    "description": "Microsoft: DOLLAR(-1234.567, -2) is ($1,200) — parentheses, not a leading minus",
+    "tags": ["text", "dollar"],
+    "formula": "=DOLLAR(-1234.567, -2)",
+    "expected": { "text": "($1,200)" }
+  },
+  {
+    "id": "fn.dollar-ms-neg-frac4",
+    "description": "Microsoft: DOLLAR(-0.123, 4) is ($0.1230) with padded decimals",
+    "tags": ["text", "dollar"],
+    "formula": "=DOLLAR(-0.123, 4)",
+    "expected": { "text": "($0.1230)" }
+  },
+  {
+    "id": "fn.dollar-ms-omitted",
+    "description": "Microsoft: DOLLAR(99.888) defaults to 2 decimals — $99.89",
+    "tags": ["text", "dollar"],
+    "formula": "=DOLLAR(99.888)",
+    "expected": { "text": "$99.89" }
+  },
+  {
+    "id": "fn.dollar-default-two",
+    "description": "Omitted decimals is 2",
+    "tags": ["text", "dollar"],
+    "formula": "=DOLLAR(1234.567)",
+    "expected": { "text": "$1,234.57" }
+  },
+  {
+    "id": "fn.dollar-trailing-comma",
+    "description": "DOLLAR(99.888,) omitted slot is the same default of 2",
+    "tags": ["text", "dollar"],
+    "formula": "=DOLLAR(99.888,)",
+    "expected": { "text": "$99.89" }
+  },
+  {
+    "id": "fn.dollar-zero-decimals",
+    "description": "DOLLAR(1234.567, 0) is $1,235 (ROUND half away)",
+    "tags": ["text", "dollar"],
+    "formula": "=DOLLAR(1234.567, 0)",
+    "expected": { "text": "$1,235" }
+  },
+  {
+    "id": "fn.dollar-one-decimal",
+    "description": "DOLLAR(1234.567, 1) is $1,234.6",
+    "tags": ["text", "dollar"],
+    "formula": "=DOLLAR(1234.567, 1)",
+    "expected": { "text": "$1,234.6" }
+  },
+  {
+    "id": "fn.dollar-three-decimals",
+    "description": "DOLLAR(1234.567, 3) keeps the third place",
+    "tags": ["text", "dollar"],
+    "formula": "=DOLLAR(1234.567, 3)",
+    "expected": { "text": "$1,234.567" }
+  },
+  {
+    "id": "fn.dollar-pad-zeros",
+    "description": "Positive decimals pad trailing zeros",
+    "tags": ["text", "dollar"],
+    "formula": "=DOLLAR(12.34, 4)",
+    "expected": { "text": "$12.3400" }
+  },
+  {
+    "id": "fn.dollar-neg1",
+    "description": "decimals = -1 rounds to tens",
+    "tags": ["text", "dollar"],
+    "formula": "=DOLLAR(1234.567, -1)",
+    "expected": { "text": "$1,230" }
+  },
+  {
+    "id": "fn.dollar-neg3",
+    "description": "decimals = -3 rounds to thousands",
+    "tags": ["text", "dollar"],
+    "formula": "=DOLLAR(2563112, -3)",
+    "expected": { "text": "$2,563,000" }
+  },
+  {
+    "id": "fn.dollar-neg2-to-zero",
+    "description": "DOLLAR(11.24, -2) rounds to $0 when |decimals| exceeds integer digits",
+    "tags": ["text", "dollar"],
+    "formula": "=DOLLAR(11.24, -2)",
+    "expected": { "text": "$0" }
+  },
+  {
+    "id": "fn.dollar-half-away-pos",
+    "description": "DOLLAR(2.5, 0) is $3 — ROUND half away from zero, not banker",
+    "tags": ["text", "dollar"],
+    "formula": "=DOLLAR(2.5, 0)",
+    "expected": { "text": "$3" }
+  },
+  {
+    "id": "fn.dollar-half-away-neg",
+    "description": "DOLLAR(-2.5, 0) is ($3) — signed half away, then parentheses",
+    "tags": ["text", "dollar"],
+    "formula": "=DOLLAR(-2.5, 0)",
+    "expected": { "text": "($3)" }
+  },
+  {
+    "id": "fn.dollar-ieee-2.15",
+    "description": "DOLLAR(2.15, 1) is $2.2 — same 15-digit leftover as ROUND(2.15, 1)",
+    "tags": ["text", "dollar"],
+    "quirks": ["ieee-vs-excel-precision"],
+    "formula": "=DOLLAR(2.15, 1)",
+    "expected": { "text": "$2.2" }
+  },
+  {
+    "id": "fn.dollar-carry-cents",
+    "description": "DOLLAR(1.995, 2) carries to $2.00",
+    "tags": ["text", "dollar"],
+    "formula": "=DOLLAR(1.995, 2)",
+    "expected": { "text": "$2.00" }
+  },
+  {
+    "id": "fn.dollar-neg-paren",
+    "description": "DOLLAR(-1234.567) is ($1,234.57) — $ stays inside the parens",
+    "tags": ["text", "dollar"],
+    "formula": "=DOLLAR(-1234.567)",
+    "expected": { "text": "($1,234.57)" }
+  },
+  {
+    "id": "fn.dollar-vs-text-pos",
+    "description": "Positive DOLLAR matches TEXT with $#,##0.00",
+    "tags": ["text", "dollar"],
+    "formula": "=EXACT(DOLLAR(1234.567), TEXT(1234.567, \"$#,##0.00\"))",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.dollar-vs-text-neg",
+    "description": "Negative DOLLAR uses parentheses; TEXT(…,\"$#,##0.00\") uses a leading minus",
+    "tags": ["text", "dollar"],
+    "formula": "=EXACT(DOLLAR(-1234.567), TEXT(-1234.567, \"$#,##0.00\"))",
+    "expected": { "bool": false }
+  },
+  {
+    "id": "fn.dollar-text-neg-minus",
+    "description": "TEXT(-1234.567, \"$#,##0.00\") is -$1,234.57 — contrast with DOLLAR parens",
+    "tags": ["text", "dollar"],
+    "formula": "=TEXT(-1234.567, \"$#,##0.00\")",
+    "expected": { "text": "-$1,234.57" }
+  },
+  {
+    "id": "fn.dollar-round-zero-drops-paren",
+    "description": "Sign is taken from the rounded value: DOLLAR(-0.001, 2) is $0.00",
+    "tags": ["text", "dollar"],
+    "formula": "=DOLLAR(-0.001, 2)",
+    "expected": { "text": "$0.00" }
+  },
+  {
+    "id": "fn.dollar-neg-cent",
+    "description": "DOLLAR(-0.006, 2) rounds away to ($0.01)",
+    "tags": ["text", "dollar"],
+    "formula": "=DOLLAR(-0.006, 2)",
+    "expected": { "text": "($0.01)" }
+  },
+  {
+    "id": "fn.dollar-zero",
+    "description": "DOLLAR(0) is $0.00 — not a dash and not parentheses",
+    "tags": ["text", "dollar"],
+    "formula": "=DOLLAR(0)",
+    "expected": { "text": "$0.00" }
+  },
+  {
+    "id": "fn.dollar-zero-places",
+    "description": "DOLLAR(0, 0) is $0",
+    "tags": ["text", "dollar"],
+    "formula": "=DOLLAR(0, 0)",
+    "expected": { "text": "$0" }
+  },
+  {
+    "id": "fn.dollar-blank",
+    "description": "Blank cell coerces to 0 → $0.00",
+    "tags": ["text", "dollar", "coercion"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=DOLLAR(A1)",
+    "expected": { "text": "$0.00" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {}
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.dollar-true",
+    "description": "TRUE coerces to 1 → $1.00",
+    "tags": ["text", "dollar", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=DOLLAR(TRUE)",
+    "expected": { "text": "$1.00" }
+  },
+  {
+    "id": "fn.dollar-false",
+    "description": "FALSE coerces to 0 → $0.00",
+    "tags": ["text", "dollar", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=DOLLAR(FALSE)",
+    "expected": { "text": "$0.00" }
+  },
+  {
+    "id": "fn.dollar-numeric-text",
+    "description": "Numeric text is parsed (arithmetic coerce)",
+    "tags": ["text", "dollar", "coercion"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=DOLLAR(\"1234.5\")",
+    "expected": { "text": "$1,234.50" }
+  },
+  {
+    "id": "fn.dollar-text-trim",
+    "description": "Leading/trailing ASCII spaces are trimmed before parse",
+    "tags": ["text", "dollar", "coercion"],
+    "formula": "=DOLLAR(\"  12.3  \")",
+    "expected": { "text": "$12.30" }
+  },
+  {
+    "id": "fn.dollar-scientific-text",
+    "description": "\"1E3\" parses as 1000",
+    "tags": ["text", "dollar", "coercion"],
+    "formula": "=DOLLAR(\"1E3\")",
+    "expected": { "text": "$1,000.00" }
+  },
+  {
+    "id": "fn.dollar-percent",
+    "description": "50% is 0.5 → $0.50",
+    "tags": ["text", "dollar", "coercion"],
+    "quirks": ["percent-unary"],
+    "formula": "=DOLLAR(50%)",
+    "expected": { "text": "$0.50" }
+  },
+  {
+    "id": "fn.dollar-reject-plain-text",
+    "description": "Non-numeric text is #VALUE!",
+    "tags": ["text", "dollar", "coercion"],
+    "formula": "=DOLLAR(\"x\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.dollar-reject-empty-text",
+    "description": "Stored \"\" is text, not a blank — #VALUE!",
+    "tags": ["text", "dollar", "coercion"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=DOLLAR(A1)",
+    "expected": { "error": "#VALUE!" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": { "A1": { "text": "" } }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.dollar-reject-currency-text",
+    "description": "\"$5\" is not VALUE-style parse — #VALUE!",
+    "tags": ["text", "dollar", "coercion"],
+    "formula": "=DOLLAR(\"$5\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.dollar-reject-thousands-text",
+    "description": "\"1,000\" is not arithmetic-numeric — #VALUE!",
+    "tags": ["text", "dollar", "coercion"],
+    "formula": "=DOLLAR(\"1,000\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.dollar-decimals-trunc-pos",
+    "description": "Fractional decimals truncate toward zero: 2.9 → 2",
+    "tags": ["text", "dollar"],
+    "formula": "=DOLLAR(1234.567, 2.9)",
+    "expected": { "text": "$1,234.57" }
+  },
+  {
+    "id": "fn.dollar-decimals-trunc-neg",
+    "description": "Fractional negative decimals truncate toward zero: -2.9 → -2",
+    "tags": ["text", "dollar"],
+    "formula": "=DOLLAR(1234.567, -2.9)",
+    "expected": { "text": "$1,200" }
+  },
+  {
+    "id": "fn.dollar-decimals-true",
+    "description": "TRUE decimals coerces to 1",
+    "tags": ["text", "dollar", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=DOLLAR(1234.567, TRUE)",
+    "expected": { "text": "$1,234.6" }
+  },
+  {
+    "id": "fn.dollar-decimals-false",
+    "description": "FALSE decimals coerces to 0",
+    "tags": ["text", "dollar", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=DOLLAR(1234.567, FALSE)",
+    "expected": { "text": "$1,235" }
+  },
+  {
+    "id": "fn.dollar-decimals-blank",
+    "description": "Blank decimals cell coerces to 0",
+    "tags": ["text", "dollar", "coercion"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=DOLLAR(1234.567, A1)",
+    "expected": { "text": "$1,235" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {}
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.dollar-error-div0",
+    "description": "Number error propagates",
+    "tags": ["text", "dollar", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=DOLLAR(#DIV/0!)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.dollar-error-ltr-first",
+    "description": "LTR: number error wins over a later decimals error",
+    "tags": ["text", "dollar", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=DOLLAR(#DIV/0!, #N/A)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.dollar-error-ltr-second",
+    "description": "LTR: decimals error fires when number is fine",
+    "tags": ["text", "dollar", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=DOLLAR(1, #N/A)",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.dollar-error-na-then-div0",
+    "description": "LTR: #N/A in number wins over #DIV/0! in decimals",
+    "tags": ["text", "dollar", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=DOLLAR(#N/A, #DIV/0!)",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.dollar-arity-none",
+    "description": "DOLLAR() is #VALUE!",
+    "tags": ["text", "dollar"],
+    "formula": "=DOLLAR()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.dollar-arity-three",
+    "description": "Three arguments is #VALUE!",
+    "tags": ["text", "dollar"],
+    "formula": "=DOLLAR(1, 2, 3)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.dollar-unicode-fullwidth",
+    "description": "Fullwidth digits are not arithmetic-numeric — #VALUE!",
+    "tags": ["text", "dollar", "unicode"],
+    "formula": "=DOLLAR(\"１２３\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.dollar-unicode-euro",
+    "description": "Euro-prefixed text is #VALUE! (not VALUE-style currency)",
+    "tags": ["text", "dollar", "unicode"],
+    "formula": "=DOLLAR(\"€5\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.dollar-istext",
+    "description": "DOLLAR returns text",
+    "tags": ["text", "dollar"],
+    "formula": "=ISTEXT(DOLLAR(1))",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.dollar-type",
+    "description": "TYPE(DOLLAR(1)) is 2 (text)",
+    "tags": ["text", "dollar"],
+    "formula": "=TYPE(DOLLAR(1))",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.dollar-len-pos",
+    "description": "LEN(DOLLAR(1234.5)) is 9 for $1,234.50",
+    "tags": ["text", "dollar", "unicode"],
+    "formula": "=LEN(DOLLAR(1234.5))",
+    "expected": { "number": 9 }
+  },
+  {
+    "id": "fn.dollar-len-neg",
+    "description": "LEN(DOLLAR(-1234.5)) is 11 for ($1,234.50)",
+    "tags": ["text", "dollar", "unicode"],
+    "formula": "=LEN(DOLLAR(-1234.5))",
+    "expected": { "number": 11 }
+  },
+  {
+    "id": "fn.dollar-unicode-dollar-sign",
+    "description": "UNICODE of a positive DOLLAR result is 36 ($)",
+    "tags": ["text", "dollar", "unicode"],
+    "formula": "=UNICODE(DOLLAR(1))",
+    "expected": { "number": 36 }
+  },
+  {
+    "id": "fn.dollar-left-paren",
+    "description": "LEFT of a negative DOLLAR result is the opening parenthesis",
+    "tags": ["text", "dollar", "unicode"],
+    "formula": "=LEFT(DOLLAR(-1), 1)",
+    "expected": { "text": "(" }
+  },
+  {
+    "id": "fn.dollar-value-roundtrip",
+    "description": "VALUE parses DOLLAR output (currency + thousands)",
+    "tags": ["text", "dollar"],
+    "formula": "=VALUE(DOLLAR(1234.56))",
+    "expected": { "number": 1234.56 }
+  },
+  {
+    "id": "fn.dollar-value-roundtrip-neg",
+    "description": "VALUE parses accounting parentheses from DOLLAR",
+    "tags": ["text", "dollar"],
+    "formula": "=VALUE(DOLLAR(-1234.56))",
+    "expected": { "number": -1234.56 }
+  },
+  {
+    "id": "fn.dollar-concat",
+    "description": "DOLLAR result concatenates as text",
+    "tags": ["text", "dollar"],
+    "formula": "=\"Total \"&DOLLAR(10)",
+    "expected": { "text": "Total $10.00" }
+  },
+  {
+    "id": "fn.dollar-thousands",
+    "description": "Millions get grouping commas",
+    "tags": ["text", "dollar"],
+    "formula": "=DOLLAR(1234567.89)",
+    "expected": { "text": "$1,234,567.89" }
+  },
+  {
+    "id": "fn.dollar-cell",
+    "description": "DOLLAR of a number cell",
+    "tags": ["text", "dollar"],
+    "formula": "=DOLLAR(A1, 2)",
+    "expected": { "text": "$1,234.57" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": { "A1": { "number": 1234.567 } }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.dollar-cell-neg",
+    "description": "DOLLAR of a negative number cell uses parentheses",
+    "tags": ["text", "dollar"],
+    "formula": "=DOLLAR(A1)",
+    "expected": { "text": "($99.89)" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": { "A1": { "number": -99.888 } }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.dollar-named",
+    "description": "DOLLAR of a defined name",
+    "tags": ["text", "dollar", "named"],
+    "formula": "=DOLLAR(Amt)",
+    "expected": { "text": "$50.00" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": { "A1": { "number": 50 } }
+        }
+      ],
+      "names": [{ "name": "Amt", "refers_to": "Sheet1!A1" }]
+    }
+  },
+  {
+    "id": "fn.dollar-intersect",
+    "description": "DOLLAR of a column range implicit-intersects the host row",
+    "tags": ["text", "dollar"],
+    "quirks": ["implicit-intersection"],
+    "formula": "=DOLLAR(A1:A3, 0)",
+    "at": "Sheet1!B2",
+    "expected": { "text": "$20" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "number": 10 },
+            "A2": { "number": 20 },
+            "A3": { "number": 30 }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.dollar-array-topleft",
+    "description": "Array literal takes the top-left in scalar context",
+    "tags": ["text", "dollar"],
+    "formula": "=DOLLAR({1,2,3})",
+    "expected": { "text": "$1.00" }
+  },
+  {
+    "id": "fn.dollar-double-unary-text",
+    "description": "DOLLAR(--\"5\") coerces then formats",
+    "tags": ["text", "dollar", "coercion"],
+    "formula": "=DOLLAR(--\"5\")",
+    "expected": { "text": "$5.00" }
+  },
+  {
+    "id": "fn.dollar-iferror",
+    "description": "IFERROR(DOLLAR(\"x\"), \"bad\") is bad",
+    "tags": ["text", "dollar", "errors"],
+    "formula": "=IFERROR(DOLLAR(\"x\"), \"bad\")",
+    "expected": { "text": "bad" }
+  },
+  {
+    "id": "fn.dollar-nested-round",
+    "description": "DOLLAR of an already-rounded number is identity at 2 decimals",
+    "tags": ["text", "dollar"],
+    "formula": "=DOLLAR(ROUND(1234.567, 2))",
+    "expected": { "text": "$1,234.57" }
+  },
+  {
+    "id": "fn.dollar-date-serial",
+    "description": "DOLLAR of a date serial formats the serial as currency",
+    "tags": ["text", "dollar"],
+    "formula": "=DOLLAR(DATE(2020,1,1), 0)",
+    "expected": { "text": "$43,831" }
+  },
+  {
+    "id": "fn.dollar-exact-neg",
+    "description": "EXACT confirms accounting parentheses (no spaces)",
+    "tags": ["text", "dollar"],
+    "formula": "=EXACT(DOLLAR(-1), \"($1.00)\")",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.dollar-n-of-text",
+    "description": "N(DOLLAR(1)) is 0 — text is not a number",
+    "tags": ["text", "dollar"],
+    "formula": "=N(DOLLAR(1))",
+    "expected": { "number": 0 }
+  }
+]
