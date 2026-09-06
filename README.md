@@ -390,11 +390,17 @@ goldens): month names, current-year incomplete dates (`"1/2"`), non-en-US
 separators.
 
 **`TEXT` subset** (see [`text_format.rs`](crates/xlsx-engine-core/src/text_format.rs)):
-`0` / `#` / `.` / grouping `,` / `%` / `$` and other literals; dates
-`yyyy`/`yy`/`mm`/`m`/`dd`/`d`; `General`. Not implemented (no goldens;
-those codes return `#VALUE!`): scientific, fractions, sections `;`,
-colors/conditions, `*`/`_`/`?`, trailing-comma scaling, time (`h`/`s`),
-month/day names. Non-numeric text is returned unchanged.
+`0` / `#` / `.` / grouping `,` / `%` / `@` (text placeholder, not mixed
+with digits or dates) / `$` and other literals / quoted `"..."` / `\`;
+dates `yyyy`/`yy`/`mm`/`m`/`dd`/`d`; `General`. `#` omits a leading
+integer zero; the minus sign is taken from the **rounded** value.
+Unsupported tokens (scientific, fractions, sections `;`, colors,
+`*`/`_`/`?`, trailing-comma scaling, time, month/day names) are
+documented with `ignore` fixtures — the kernel fails closed (`#VALUE!`)
+so it never emits a fabricated Excel string. Non-numeric text is
+returned unchanged (except `@`, which echoes the original text).
+Unquoted `h`/`s` are reserved as time tokens (so `TEXT(123,"USD")` is
+not treated as the letters USD).
 
 **Deferred / in progress:** full function library, locale argument separators,
 live Excel oracle, and performance bakeoff. The fixture corpus is expanded

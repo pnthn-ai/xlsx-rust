@@ -119,3 +119,7 @@ harness = false
 name = "fn_char"
 harness = false
 
+[[bench]]
+name = "fn_text"
+harness = false
+

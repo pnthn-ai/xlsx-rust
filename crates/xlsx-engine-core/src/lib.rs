@@ -223,6 +223,9 @@ pub use eval::{
     eval_formula_in, eval_sumif_materialized, eval_sumifs_materialized, Evaluator,
 };
 pub use parse::parse;
+pub use text_format::{
+    apply as excel_text, apply_generic as excel_text_generic, apply_naive as excel_text_naive,
+};
 pub use xlsx_types::{
     excel_cumipmt, excel_cumipmt_naive, excel_cumprinc, excel_cumprinc_naive, excel_effect,
     excel_effect_naive, excel_fv, excel_fv_naive, excel_ipmt, excel_ipmt_naive, excel_nominal,

@@ -1009,6 +1009,22 @@ mod tests {
             eval_formula_in(&wb, "=TEXT(1)").unwrap(),
             ExcelValue::Error(ExcelError::Value)
         );
+        assert_eq!(
+            eval_formula_in(&wb, "=TEXT(0.5,\"#.#\")").unwrap(),
+            ExcelValue::Text(".5".into())
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=TEXT(-0.001,\"0.00\")").unwrap(),
+            ExcelValue::Text("0.00".into())
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=TEXT(1234.5,\"@\")").unwrap(),
+            ExcelValue::Text("1234.5".into())
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=TEXT(1234,\"\"\"USD \"\"#,##0\")").unwrap(),
+            ExcelValue::Text("USD 1,234".into())
+        );
     }
 
     #[test]
