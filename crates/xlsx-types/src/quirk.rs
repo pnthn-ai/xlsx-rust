@@ -36,7 +36,7 @@ pub enum QuirkCategory {
     /// Implicit intersection of a range in a scalar context.
     ImplicitIntersection,
     /// Dynamic array / CSE / scalar evaluation mode.
-    /// `FILTER` / `UNIQUE` / `SORT` return an array value; worksheet spill / `#SPILL!` is not modeled.
+    /// `FILTER` / `UNIQUE` / `SORT` / `BYROW` return an array value; worksheet spill / `#SPILL!` is not modeled.
     /// `FILTER` / `UNIQUE` / `SORTBY` return an array value; worksheet spill / `#SPILL!` is not modeled.
     /// `FILTER` / `UNIQUE` / `TOCOL` return an array value; worksheet spill /
     /// `FILTER` / `UNIQUE` / `TOROW` return an array value; worksheet spill /
@@ -58,6 +58,8 @@ pub enum QuirkCategory {
     /// `FILTER` / `CHOOSEROWS` return an array value; worksheet spill / `#SPILL!` is not modeled.
     /// `FILTER` / `UNIQUE` / `TEXTSPLIT` return an array value; worksheet
     /// spill / `#SPILL!` is not modeled. TEXTSPLIT pad cells are `#N/A`.
+    /// `MAP` returns an array value; worksheet spill / `#SPILL!` is not
+    /// modeled. Unequal MAP arrays union-pad with `#N/A` (no broadcast).
     ArrayEvalMode,
     /// Volatile functions (`NOW`, `RAND`, `RANDARRAY`, `INDIRECT`, …).
     Volatile,

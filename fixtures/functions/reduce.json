@@ -1,0 +1,368 @@
+[
+  {
+    "id": "fn.reduce.sum-literal",
+    "description": "REDUCE 0 + {1,2,3} via LAMBDA(a,b,a+b)",
+    "tags": ["reduce", "lambda", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=REDUCE(0,{1,2,3},LAMBDA(a,b,a+b))",
+    "expected": { "number": 6 }
+  },
+  {
+    "id": "fn.reduce.product",
+    "description": "REDUCE product with initial 1",
+    "tags": ["reduce", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=REDUCE(1,{2,3,4},LAMBDA(a,b,a*b))",
+    "expected": { "number": 24 }
+  },
+  {
+    "id": "fn.reduce.concat",
+    "description": "REDUCE concatenate from empty string",
+    "tags": ["reduce", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=REDUCE(\"\",{\"A\",\"B\",\"C\"},LAMBDA(a,b,a&b))",
+    "expected": { "text": "ABC" }
+  },
+  {
+    "id": "fn.reduce.omitted-initial-slot",
+    "description": "Empty first slot uses the first array element as acc",
+    "tags": ["reduce", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=REDUCE(,{10,3},LAMBDA(a,b,a-b))",
+    "expected": { "number": 7 },
+    "notes": "With initial 0 this would be 0-10-3 = -13. Omitted initial starts at 10."
+  },
+  {
+    "id": "fn.reduce.two-arg-omitted-initial",
+    "description": "2-arg REDUCE(array, LAMBDA) is omitted initial",
+    "tags": ["reduce", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=REDUCE({10,3},LAMBDA(a,b,a-b))",
+    "expected": { "number": 7 }
+  },
+  {
+    "id": "fn.reduce.omitted-vs-zero-initial",
+    "description": "Explicit 0 initial subtracts every element including the first",
+    "tags": ["reduce", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=REDUCE(0,{10,3},LAMBDA(a,b,a-b))",
+    "expected": { "number": -13 }
+  },
+  {
+    "id": "fn.reduce.single-omitted-skips-lambda",
+    "description": "One-element array with omitted initial returns that element; LAMBDA is not called",
+    "tags": ["reduce", "lambda", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=REDUCE(,{42},LAMBDA(a,b,1/0))",
+    "expected": { "number": 42 }
+  },
+  {
+    "id": "fn.reduce.single-with-initial-calls-lambda",
+    "description": "One-element array with initial calls the LAMBDA once",
+    "tags": ["reduce", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=REDUCE(1,{42},LAMBDA(a,b,a+b))",
+    "expected": { "number": 43 }
+  },
+  {
+    "id": "fn.reduce.scalar-array",
+    "description": "A scalar is a one-element array",
+    "tags": ["reduce", "lambda"],
+    "formula": "=REDUCE(0,5,LAMBDA(a,b,a+b))",
+    "expected": { "number": 5 }
+  },
+  {
+    "id": "fn.reduce.column-vector",
+    "description": "Column vector folds top to bottom",
+    "tags": ["reduce", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=REDUCE(0,{1;2;3},LAMBDA(a,b,a+b))",
+    "expected": { "number": 6 }
+  },
+  {
+    "id": "fn.reduce.row-major-2d",
+    "description": "2-D array is visited left-to-right, then down",
+    "tags": ["reduce", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=REDUCE(\"\",{1,2;3,4},LAMBDA(a,b,a&b))",
+    "expected": { "text": "1234" }
+  },
+  {
+    "id": "fn.reduce.matrix-sum",
+    "description": "Sum of a 2×2 multiplication table via MAKEARRAY",
+    "tags": ["reduce", "makearray", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=REDUCE(0,MAKEARRAY(2,2,LAMBDA(r,c,r*c)),LAMBDA(a,b,a+b))",
+    "expected": { "number": 9 }
+  },
+  {
+    "id": "fn.reduce.named-lambda",
+    "description": "Defined name referring to LAMBDA(a,b,a+b)",
+    "tags": ["reduce", "lambda", "named"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=REDUCE(0,{1,2,3},Add)",
+    "expected": { "number": 6 },
+    "workbook": {
+      "names": [{ "name": "Add", "refers_to": "=LAMBDA(a,b,a+b)" }]
+    }
+  },
+  {
+    "id": "fn.reduce.body-reads-sheet",
+    "description": "LAMBDA body may read sheet cells",
+    "tags": ["reduce", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=REDUCE(0,{1,2},LAMBDA(a,b,a+b+A1))",
+    "expected": { "number": 23 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": { "A1": { "number": 10 } }
+      }]
+    }
+  },
+  {
+    "id": "fn.reduce.if-body",
+    "description": "LAMBDA body may call IF; negatives are skipped",
+    "tags": ["reduce", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=REDUCE(0,{1,-2,3},LAMBDA(a,b,IF(b>0,a+b,a)))",
+    "expected": { "number": 4 }
+  },
+  {
+    "id": "fn.reduce.bool-coerce",
+    "description": "TRUE/FALSE coerce to 1/0 in addition",
+    "tags": ["reduce", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=REDUCE(0,{TRUE,FALSE,TRUE},LAMBDA(a,b,a+b))",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.reduce.blank-initial-is-empty",
+    "description": "A blank cell initial is Empty (0 in +), not omitted",
+    "tags": ["reduce", "lambda", "empty"],
+    "quirks": ["empty-cell-duality", "array-eval-mode"],
+    "formula": "=REDUCE(A1,{10,3},LAMBDA(a,b,a-b))",
+    "expected": { "number": -13 },
+    "notes": "Blank A1 is Empty, not a missing slot. Empty-10-3 = -13."
+  },
+  {
+    "id": "fn.reduce.range",
+    "description": "Worksheet range folds in row-major order",
+    "tags": ["reduce", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=REDUCE(0,A1:B2,LAMBDA(a,b,a+b))",
+    "expected": { "number": 10 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "B1": { "number": 2 },
+          "A2": { "number": 3 },
+          "B2": { "number": 4 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.reduce.blank-in-range",
+    "description": "Blank cells in the array coerce to 0 when added",
+    "tags": ["reduce", "lambda", "empty"],
+    "quirks": ["empty-cell-duality", "array-eval-mode"],
+    "formula": "=REDUCE(0,A1:A3,LAMBDA(a,b,a+b))",
+    "expected": { "number": 5 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 2 },
+          "A3": { "number": 3 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.reduce.type-number",
+    "description": "TYPE of a numeric REDUCE is 1",
+    "tags": ["reduce", "information"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TYPE(REDUCE(0,{1,2},LAMBDA(a,b,a+b)))",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.reduce.type-array-body",
+    "description": "A LAMBDA that returns an array keeps that array (not #CALC!)",
+    "tags": ["reduce", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TYPE(REDUCE(1,{2},LAMBDA(a,b,{a,b})))",
+    "expected": { "number": 64 }
+  },
+  {
+    "id": "fn.reduce.index-array-body",
+    "description": "INDEX picks a cell of an array accumulator",
+    "tags": ["reduce", "lambda", "lookup"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=INDEX(REDUCE(1,{2},LAMBDA(a,b,{a,b})),1,2)",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.reduce.hstack-acc",
+    "description": "HSTACK grows the accumulator; result is a row array",
+    "tags": ["reduce", "lambda", "hstack"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=REDUCE(1,{2,3},LAMBDA(a,b,HSTACK(a,b)))",
+    "expected": { "array": [[{ "number": 1 }, { "number": 2 }, { "number": 3 }]] }
+  },
+  {
+    "id": "fn.reduce.xlfn-prefix",
+    "description": "Excel-stored _xlfn.REDUCE / _xlfn.LAMBDA names",
+    "tags": ["reduce", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=_xlfn.REDUCE(0,{1,2},_xlfn.LAMBDA(a,b,a+b))",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.reduce.param-names",
+    "description": "Parameter names are caller-chosen (acc/val)",
+    "tags": ["reduce", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=REDUCE(0,{1,2,3},LAMBDA(acc,val,acc+val))",
+    "expected": { "number": 6 }
+  },
+  {
+    "id": "fn.reduce.array-from-cells",
+    "description": "Array argument may be a cell that holds a number",
+    "tags": ["reduce", "lambda"],
+    "formula": "=REDUCE(A1,B1,LAMBDA(a,b,a+b))",
+    "expected": { "number": 5 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 2 },
+          "B1": { "number": 3 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.reduce.body-error",
+    "description": "Division by zero in the body is #DIV/0!",
+    "tags": ["reduce", "lambda", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=REDUCE(1,{2,0},LAMBDA(a,b,a/b))",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.reduce.array-element-error",
+    "description": "An error cell used by the body surfaces as the result",
+    "tags": ["reduce", "lambda", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=REDUCE(0,{1,#DIV/0!,3},LAMBDA(a,b,a+b))",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.reduce.unused-array-error",
+    "description": "An error cell that the body does not use is ignored",
+    "tags": ["reduce", "lambda", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=REDUCE(0,{1,#DIV/0!,3},LAMBDA(a,b,a+1))",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.reduce.arity-0",
+    "description": "No arguments is #VALUE!",
+    "tags": ["reduce", "errors"],
+    "formula": "=REDUCE()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.reduce.arity-1",
+    "description": "One argument is #VALUE!",
+    "tags": ["reduce", "errors"],
+    "formula": "=REDUCE(0)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.reduce.missing-lambda-three-arg",
+    "description": "Three args with a missing LAMBDA slot is #VALUE!",
+    "tags": ["reduce", "errors"],
+    "formula": "=REDUCE(0,{1},)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.reduce.lambda-one-param",
+    "description": "LAMBDA must take exactly two parameters",
+    "tags": ["reduce", "lambda", "errors"],
+    "formula": "=REDUCE(0,{1},LAMBDA(x,1))",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.reduce.lambda-three-params",
+    "description": "Three-parameter LAMBDA is #VALUE! for REDUCE",
+    "tags": ["reduce", "lambda", "errors"],
+    "formula": "=REDUCE(0,{1},LAMBDA(a,b,c,a+b))",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.reduce.not-lambda",
+    "description": "A number is not a LAMBDA",
+    "tags": ["reduce", "errors"],
+    "formula": "=REDUCE(0,{1},1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.reduce.unknown-name",
+    "description": "Unknown name as the LAMBDA argument is #VALUE!",
+    "tags": ["reduce", "errors"],
+    "formula": "=REDUCE(0,{1},Nope)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.reduce.initial-div0",
+    "description": "Error in initial_value wins (left-to-right)",
+    "tags": ["reduce", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=REDUCE(1/0,{1},LAMBDA(a,b,a+b))",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.reduce.array-div0",
+    "description": "Error as the whole array argument surfaces after initial succeeds",
+    "tags": ["reduce", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=REDUCE(0,1/0,LAMBDA(a,b,a+b))",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.reduce.text-plus-is-value",
+    "description": "Non-numeric text in + is #VALUE!",
+    "tags": ["reduce", "lambda", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=REDUCE(0,{\"x\",1},LAMBDA(a,b,a+b))",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.reduce.sum-of-result",
+    "description": "SUM of a numeric REDUCE is the same number",
+    "tags": ["reduce", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SUM(REDUCE(0,{1,2,3},LAMBDA(a,b,a+b)))",
+    "expected": { "number": 6 }
+  },
+  {
+    "id": "fn.reduce.missing-sheet",
+    "description": "A missing sheet in the array range is #REF!",
+    "tags": ["reduce", "errors"],
+    "formula": "=REDUCE(0,Missing!A1:A3,LAMBDA(a,b,a+b))",
+    "expected": { "error": "#REF!" }
+  },
+  {
+    "id": "fn.reduce.iife-lambda-not-parsed",
+    "description": "Immediately-invoked LAMBDA(...)(args) is not parsed",
+    "tags": ["reduce", "lambda"],
+    "formula": "=REDUCE(0,{1},LAMBDA(a,b,a+b)(0,1))",
+    "expected": { "number": 1 },
+    "ignore": "Immediately-invoked LAMBDA(...)(args) is not in the parser. REDUCE requires an inline LAMBDA(acc,value,body) or a defined name that refers to one."
+  }
+]

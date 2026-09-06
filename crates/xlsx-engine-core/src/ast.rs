@@ -25,6 +25,12 @@ pub enum Expr {
         name: String,
         args: Vec<Expr>,
     },
+    /// Immediately-invoked `LAMBDA(...)(args)` (or any callee followed by
+    /// a call list). Used so `ISOMITTED` can see omitted LAMBDA parameters.
+    Apply {
+        callee: Box<Expr>,
+        args: Vec<Expr>,
+    },
     /// Row-major array literal (`{1,2;3,4}`).
     Array(Vec<Vec<Expr>>),
     /// Omitted function argument (`TEXTSPLIT(text,,row)`).

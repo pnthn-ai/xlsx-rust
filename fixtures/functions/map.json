@@ -1,0 +1,434 @@
+[
+  {
+    "id": "fn.map.times2-row",
+    "description": "MAP a 1×3 literal, doubling each element",
+    "tags": ["map", "lambda", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=MAP({1,2,3},LAMBDA(x,x*2))",
+    "expected": { "array": [[{ "number": 2 }, { "number": 4 }, { "number": 6 }]] }
+  },
+  {
+    "id": "fn.map.times2-col",
+    "description": "MAP a 3×1 literal",
+    "tags": ["map", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=MAP({1;2;3},LAMBDA(x,x*2))",
+    "expected": {
+      "array": [[{ "number": 2 }], [{ "number": 4 }], [{ "number": 6 }]]
+    }
+  },
+  {
+    "id": "fn.map.identity",
+    "description": "Identity LAMBDA still returns an array value",
+    "tags": ["map", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=MAP({1,2},LAMBDA(x,x))",
+    "expected": { "array": [[{ "number": 1 }, { "number": 2 }]] }
+  },
+  {
+    "id": "fn.map.const",
+    "description": "Body ignores the element and returns a constant",
+    "tags": ["map", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=MAP({1,2,3},LAMBDA(x,7))",
+    "expected": { "array": [[{ "number": 7 }, { "number": 7 }, { "number": 7 }]] }
+  },
+  {
+    "id": "fn.map.scalar-is-1x1",
+    "description": "A scalar argument is a 1×1 array",
+    "tags": ["map", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=MAP(5,LAMBDA(x,x*2))",
+    "expected": { "array": [[{ "number": 10 }]] }
+  },
+  {
+    "id": "fn.map.one-by-one",
+    "description": "1×1 literal is still an array value",
+    "tags": ["map", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=MAP({9},LAMBDA(x,x+1))",
+    "expected": { "array": [[{ "number": 10 }]] }
+  },
+  {
+    "id": "fn.map.grid-plus-one",
+    "description": "2×2 grid, add 1 to each cell",
+    "tags": ["map", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=MAP({1,2;3,4},LAMBDA(x,x+1))",
+    "expected": {
+      "array": [
+        [{ "number": 2 }, { "number": 3 }],
+        [{ "number": 4 }, { "number": 5 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.map.two-arrays-add",
+    "description": "Zip two same-shape rows with +",
+    "tags": ["map", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=MAP({1,2,3},{10,20,30},LAMBDA(a,b,a+b))",
+    "expected": { "array": [[{ "number": 11 }, { "number": 22 }, { "number": 33 }]] }
+  },
+  {
+    "id": "fn.map.two-arrays-mul",
+    "description": "Zip two columns with *",
+    "tags": ["map", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=MAP({2;3;4},{5;6;7},LAMBDA(a,b,a*b))",
+    "expected": {
+      "array": [[{ "number": 10 }], [{ "number": 18 }], [{ "number": 28 }]]
+    }
+  },
+  {
+    "id": "fn.map.three-arrays",
+    "description": "Three arrays, three LAMBDA parameters",
+    "tags": ["map", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=MAP({1,2},{3,4},{5,6},LAMBDA(a,b,c,a+b+c))",
+    "expected": { "array": [[{ "number": 9 }, { "number": 12 }]] }
+  },
+  {
+    "id": "fn.map.range",
+    "description": "MAP a sheet column (array context, no implicit intersect)",
+    "tags": ["map", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=MAP(A1:A3,LAMBDA(x,x*2))",
+    "expected": {
+      "array": [[{ "number": 2 }], [{ "number": 4 }], [{ "number": 6 }]]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 2 },
+          "A3": { "number": 3 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.map.two-ranges",
+    "description": "MAP two sheet columns qty*price",
+    "tags": ["map", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=MAP(A1:A3,B1:B3,LAMBDA(qty,price,qty*price))",
+    "expected": {
+      "array": [[{ "number": 10 }], [{ "number": 40 }], [{ "number": 90 }]]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 2 },
+          "A3": { "number": 3 },
+          "B1": { "number": 10 },
+          "B2": { "number": 20 },
+          "B3": { "number": 30 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.map.named-lambda",
+    "description": "Defined name referring to LAMBDA(x,x*2)",
+    "tags": ["map", "lambda", "named"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=MAP({1;2},Dbl)",
+    "expected": { "array": [[{ "number": 2 }], [{ "number": 4 }]] },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }],
+      "names": [{ "name": "Dbl", "refers_to": "=LAMBDA(x,x*2)" }]
+    }
+  },
+  {
+    "id": "fn.map.body-if",
+    "description": "Microsoft-style IF body: square values above 4",
+    "tags": ["map", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=MAP({1,5,3,9},LAMBDA(a,IF(a>4,a*a,a)))",
+    "expected": {
+      "array": [[{ "number": 1 }, { "number": 25 }, { "number": 3 }, { "number": 81 }]]
+    }
+  },
+  {
+    "id": "fn.map.body-cell-ref",
+    "description": "LAMBDA body may read sheet cells",
+    "tags": ["map", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=MAP({1,2},LAMBDA(x,x+A1))",
+    "expected": { "array": [[{ "number": 11 }, { "number": 12 }]] },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": { "A1": { "number": 10 } }
+      }]
+    }
+  },
+  {
+    "id": "fn.map.text-result",
+    "description": "Body may concatenate",
+    "tags": ["map", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=MAP({\"a\",\"b\"},LAMBDA(x,x&\"!\"))",
+    "expected": { "array": [[{ "text": "a!" }, { "text": "b!" }]] }
+  },
+  {
+    "id": "fn.map.bool-result",
+    "description": "Body may return a logical",
+    "tags": ["map", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=MAP({1,5},LAMBDA(x,x>3))",
+    "expected": { "array": [[{ "bool": false }, { "bool": true }]] }
+  },
+  {
+    "id": "fn.map.empty-plus",
+    "description": "Blank cell passed through; arithmetic treats empty as 0",
+    "tags": ["map", "lambda", "empty"],
+    "quirks": ["array-eval-mode", "empty-cell-duality"],
+    "formula": "=MAP(A1:A2,LAMBDA(x,x+1))",
+    "expected": { "array": [[{ "number": 2 }], [{ "number": 1 }]] },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": { "A1": { "number": 1 } }
+      }]
+    }
+  },
+  {
+    "id": "fn.map.body-div0-cell",
+    "description": "A body error stays in that cell; the array still returns",
+    "tags": ["map", "lambda", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=MAP({1,0},LAMBDA(x,1/x))",
+    "expected": { "array": [[{ "number": 1 }, { "error": "#DIV/0!" }]] }
+  },
+  {
+    "id": "fn.map.input-error-cell",
+    "description": "An error in the source is passed to the LAMBDA (identity keeps it)",
+    "tags": ["map", "lambda", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=MAP({1,#DIV/0!},LAMBDA(x,x))",
+    "expected": { "array": [[{ "number": 1 }, { "error": "#DIV/0!" }]] }
+  },
+  {
+    "id": "fn.map.body-array-is-calc",
+    "description": "LAMBDA must return a single value; an array body cell is #CALC!",
+    "tags": ["map", "lambda", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=MAP({1},LAMBDA(x,{1,2}))",
+    "expected": { "array": [[{ "error": "#CALC!" }]] }
+  },
+  {
+    "id": "fn.map.index",
+    "description": "INDEX picks a MAP cell without a spill write",
+    "tags": ["map", "lambda", "lookup"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=INDEX(MAP({1,2,3},LAMBDA(x,x*2)),1,3)",
+    "expected": { "number": 6 }
+  },
+  {
+    "id": "fn.map.sum",
+    "description": "SUM of a MAP result",
+    "tags": ["map", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SUM(MAP({1,2,3},LAMBDA(x,x*2)))",
+    "expected": { "number": 12 }
+  },
+  {
+    "id": "fn.map.counta",
+    "description": "COUNTA of MAP counts every filled cell",
+    "tags": ["map", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=COUNTA(MAP({1,2,3},LAMBDA(x,x)))",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.map.type-array",
+    "description": "TYPE of MAP is 64 (array)",
+    "tags": ["map", "information"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TYPE(MAP(1,LAMBDA(x,x)))",
+    "expected": { "number": 64 }
+  },
+  {
+    "id": "fn.map.xlfn-prefix",
+    "description": "Excel-stored _xlfn.MAP / _xlfn.LAMBDA names",
+    "tags": ["map", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=_xlfn.MAP({1,2},_xlfn.LAMBDA(x,x+1))",
+    "expected": { "array": [[{ "number": 2 }, { "number": 3 }]] }
+  },
+  {
+    "id": "fn.map.param-names",
+    "description": "Parameter names are caller-chosen",
+    "tags": ["map", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=MAP({3,4},LAMBDA(val,val-1))",
+    "expected": { "array": [[{ "number": 2 }, { "number": 3 }]] }
+  },
+  {
+    "id": "fn.map.perp-na-pad",
+    "description": "1×2 and 2×1 union-pad with #N/A; not an outer product",
+    "tags": ["map", "lambda", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=MAP({1,2},{1;2},LAMBDA(a,b,a+b))",
+    "expected": {
+      "array": [
+        [{ "number": 2 }, { "error": "#N/A" }],
+        [{ "error": "#N/A" }, { "error": "#N/A" }]
+      ]
+    },
+    "notes": "Observed Excel (perpendicular ranges B1:C1 and A2:A3) returns 2, #N/A; #N/A, #N/A — not the arithmetic broadcast 2,3; 3,4."
+  },
+  {
+    "id": "fn.map.length-mismatch-na",
+    "description": "Same orientation, different length: extra cells are #N/A",
+    "tags": ["map", "lambda", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=MAP({1;2;3},{10;20},LAMBDA(a,b,a+b))",
+    "expected": {
+      "array": [
+        [{ "number": 11 }],
+        [{ "number": 22 }],
+        [{ "error": "#N/A" }]
+      ]
+    }
+  },
+  {
+    "id": "fn.map.scalar-no-broadcast",
+    "description": "A 1×1 sibling does not broadcast across a vector",
+    "tags": ["map", "lambda", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=MAP({1,2,3},10,LAMBDA(a,b,a+b))",
+    "expected": {
+      "array": [[{ "number": 11 }, { "error": "#N/A" }, { "error": "#N/A" }]]
+    },
+    "notes": "Unlike FILTER include or A1:A3+10, MAP does not lift a scalar across the other array. Use EXPAND to repeat the scalar."
+  },
+  {
+    "id": "fn.map.two-scalars",
+    "description": "Two scalars lift as 1×1 arrays (same as {0}/{1} / cell refs)",
+    "tags": ["map", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=MAP(0,1,LAMBDA(x,y,x+y))",
+    "expected": { "array": [[{ "number": 1 }]] },
+    "notes": "Some Excel builds fail to auto-lift two bare scalars and return #VALUE!. This engine matches {0}/{1} and MAP(A1,A2,…)."
+  },
+  {
+    "id": "fn.map.ms-if-grid",
+    "description": "Microsoft example shape: square values above 4 on a 2×3 grid",
+    "tags": ["map", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=MAP(A1:C2,LAMBDA(a,IF(a>4,a*a,a)))",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 2 }, { "number": 25 }],
+        [{ "number": 4 }, { "number": 36 }, { "number": 36 }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "B1": { "number": 2 },
+          "C1": { "number": 5 },
+          "A2": { "number": 4 },
+          "B2": { "number": 6 },
+          "C2": { "number": 6 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.map.arity-1",
+    "description": "Missing LAMBDA argument is #VALUE!",
+    "tags": ["map", "errors"],
+    "formula": "=MAP({1,2})",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.map.arity-0",
+    "description": "MAP() is #VALUE!",
+    "tags": ["map", "errors"],
+    "formula": "=MAP()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.map.lambda-extra-param",
+    "description": "LAMBDA parameter count must match array count",
+    "tags": ["map", "lambda", "errors"],
+    "formula": "=MAP({1},LAMBDA(a,b,a+b))",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.map.lambda-missing-param",
+    "description": "Two arrays need a two-parameter LAMBDA",
+    "tags": ["map", "lambda", "errors"],
+    "formula": "=MAP({1,2},{3,4},LAMBDA(a,a*2))",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.map.not-lambda",
+    "description": "A number is not a LAMBDA",
+    "tags": ["map", "errors"],
+    "formula": "=MAP({1},1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.map.unknown-name",
+    "description": "Unknown name as the LAMBDA argument is #VALUE!",
+    "tags": ["map", "errors"],
+    "formula": "=MAP({1},Nope)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.map.array-div0",
+    "description": "Error in the first array argument wins (left-to-right)",
+    "tags": ["map", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=MAP(1/0,{1},LAMBDA(a,b,a+b))",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.map.second-array-div0",
+    "description": "Error in a later array surfaces after earlier arrays succeed",
+    "tags": ["map", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=MAP({1},1/0,LAMBDA(a,b,a+b))",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.map.makearray-source",
+    "description": "MAP may consume a MAKEARRAY result",
+    "tags": ["map", "makearray", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=MAP(MAKEARRAY(2,2,LAMBDA(r,c,r*c)),LAMBDA(x,x+1))",
+    "expected": {
+      "array": [
+        [{ "number": 2 }, { "number": 3 }],
+        [{ "number": 3 }, { "number": 5 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.map.spill-occupancy-not-modeled",
+    "description": "#SPILL! from a blocked spill range is not produced",
+    "tags": ["map"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=MAP({1;2},LAMBDA(x,x))",
+    "expected": { "array": [[{ "number": 1 }], [{ "number": 2 }]] },
+    "ignore": "Workbook snippets have no spill grid. MAP returns an array value; #SPILL! from occupied cells below/right of the host is not modeled."
+  },
+  {
+    "id": "fn.map.iife-lambda-not-parsed",
+    "description": "Immediately-invoked LAMBDA(...)(args) is not parsed",
+    "tags": ["map", "lambda"],
+    "formula": "=MAP({1},LAMBDA(x,x)(1))",
+    "expected": { "array": [[{ "number": 1 }]] },
+    "ignore": "Immediately-invoked LAMBDA(...)(args) is not in the parser. MAP requires an inline LAMBDA(p, body) or a defined name that refers to one."
+  }
+]

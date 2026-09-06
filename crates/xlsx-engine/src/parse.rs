@@ -268,6 +268,10 @@ pub enum Expr {
         name: String,
         args: Vec<Expr>,
     },
+    Apply {
+        callee: Box<Expr>,
+        args: Vec<Expr>,
+    },
     Array(Vec<Vec<Expr>>),
     /// Omitted function argument (`TEXTSPLIT(text,,row)`).
     Missing,
@@ -465,12 +469,25 @@ impl Parser {
 
     fn parse_postfix(&mut self) -> Result<Expr, EvalError> {
         let mut expr = self.parse_primary()?;
-        while matches!(self.peek(), Token::Percent) {
-            self.bump();
-            expr = Expr::Unary {
-                op: UnaryOp::Percent,
-                expr: Box::new(expr),
-            };
+        loop {
+            if matches!(self.peek(), Token::Percent) {
+                self.bump();
+                expr = Expr::Unary {
+                    op: UnaryOp::Percent,
+                    expr: Box::new(expr),
+                };
+                continue;
+            }
+            if matches!(self.peek(), Token::LParen) {
+                self.bump();
+                let args = self.parse_args()?;
+                expr = Expr::Apply {
+                    callee: Box::new(expr),
+                    args,
+                };
+                continue;
+            }
+            break;
         }
         Ok(expr)
     }

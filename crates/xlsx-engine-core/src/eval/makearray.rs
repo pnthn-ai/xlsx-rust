@@ -25,12 +25,15 @@
 //!
 //! - The engine returns an [`ExcelValue::Array`]; it does **not** write a
 //!   spill range. Occupied neighbors never produce `#SPILL!`.
-//! - Bare `LAMBDA(...)` (not consumed by `MAKEARRAY`) is `#CALC!` — this
-//!   engine has no first-class function value.
-//! - Immediately-invoked `LAMBDA(...)(args)` is not parsed.
+//! - Bare `LAMBDA(...)` (not consumed by `MAKEARRAY` or an IIFE apply) is
+//!   `#CALC!` — this engine has no first-class function value.
+//! - Immediately-invoked `LAMBDA(...)(args)` is parsed so `ISOMITTED` can
+//!   see omitted parameters (`LAMBDA(x,y,ISOMITTED(y))(1,)`).
 //! - Parameter names that tokenize as A1 refs (`A1`, `R1C1`-looking cells)
 //!   are not supported.
-//! - Optional LAMBDA parameters and `LET` helpers are out of scope.
+//! - Bracket optional-parameter syntax (`[y]`) and `LET` helpers are out
+//!   of scope. Trailing / middle omitted call slots (`(1,)` / `(1,,2)`)
+//!   are enough for `ISOMITTED`.
 //!
 //! [`fill_fast`] specializes index-only arithmetic (`r*c`, `r+c`, constants)
 //! so a multiplication table does not walk the AST per cell.
@@ -118,32 +121,172 @@ pub fn names_eq(a: &str, b: &str) -> bool {
     strip_xlpm(a).eq_ignore_ascii_case(strip_xlpm(b))
 }
 
-pub fn lookup_binding(locals: &[(String, ExcelValue)], name: &str) -> Option<ExcelValue> {
+/// One LAMBDA parameter binding. Omitted slots stay [`ExcelValue::Empty`]
+/// for ordinary evaluation; [`omitted`] is what [`super::isomitted`] reads.
+#[derive(Clone, Debug, PartialEq)]
+pub struct Local {
+    pub name: String,
+    pub value: ExcelValue,
+    pub omitted: bool,
+}
+
+impl Local {
+    pub fn provided(name: impl Into<String>, value: ExcelValue) -> Self {
+        Self {
+            name: name.into(),
+            value,
+            omitted: false,
+        }
+    }
+
+    pub fn missing(name: impl Into<String>) -> Self {
+        Self {
+            name: name.into(),
+            value: ExcelValue::Empty,
+            omitted: true,
+        }
+    }
+}
+
+pub fn lookup_binding(locals: &[Local], name: &str) -> Option<ExcelValue> {
     locals
         .iter()
         .rev()
-        .find(|(n, _)| names_eq(n, name))
-        .map(|(_, v)| v.clone())
+        .find(|l| names_eq(&l.name, name))
+        .map(|l| l.value.clone())
+}
+
+pub fn lookup_omitted(locals: &[Local], name: &str) -> Option<bool> {
+    locals
+        .iter()
+        .rev()
+        .find(|l| names_eq(&l.name, name))
+        .map(|l| l.omitted)
+}
+
+/// Why a LAMBDA could not be bound. `MAKEARRAY` maps both to `#VALUE!`;
+/// `BYROW` maps wrong arity to `#VALUE!` and a missing LAMBDA to `#CALC!`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum LambdaError {
+    WrongArity,
+    NotLambda,
+}
+
+/// Extract `LAMBDA(p1, …, pN, body)` with a required parameter count.
+///
+/// `lookup_refers_to` resolves a defined name to its `refers_to` formula so
+/// both calc-core and seed-compliant can share this walker.
+pub fn resolve_lambda_arity_with(
+    expr: &Expr,
+    arity: usize,
+    lookup_refers_to: &mut dyn FnMut(&str) -> Result<String, LambdaError>,
+) -> Result<(Vec<String>, Expr), LambdaError> {
+    resolve_lambda_arity_depth(expr, arity, 0, lookup_refers_to)
+}
+
+fn resolve_lambda_arity_depth(
+    expr: &Expr,
+    arity: usize,
+    depth: usize,
+    lookup_refers_to: &mut dyn FnMut(&str) -> Result<String, LambdaError>,
+) -> Result<(Vec<String>, Expr), LambdaError> {
+    if depth > 16 {
+        return Err(LambdaError::NotLambda);
+    }
+    match expr {
+        Expr::Call { name, args } if is_lambda_name(name) => lambda_params_n(args, arity),
+        Expr::Name(n) => {
+            let refers = lookup_refers_to(n)?;
+            let ast = parse(&refers).map_err(|_| LambdaError::NotLambda)?;
+            resolve_lambda_arity_depth(&ast, arity, depth + 1, lookup_refers_to)
+        }
+        _ => Err(LambdaError::NotLambda),
+    }
+}
+
+fn lambda_params_n(args: &[Expr], arity: usize) -> Result<(Vec<String>, Expr), LambdaError> {
+    if args.len() != arity + 1 {
+        return Err(LambdaError::WrongArity);
+    }
+    let mut params = Vec::with_capacity(arity);
+    for p in &args[..arity] {
+        params.push(param_name(p).ok_or(LambdaError::WrongArity)?);
+    }
+    Ok((params, args[arity].clone()))
+}
+
+fn workbook_lambda_lookup<'a>(
+    ctx: &'a Ctx<'_>,
+) -> impl FnMut(&str) -> Result<String, LambdaError> + 'a {
+    move |n| {
+        ctx.spec
+            .workbook
+            .defined_name(n)
+            .map(|d| d.refers_to.clone())
+            .map_err(|_| LambdaError::NotLambda)
+    }
+}
+
+/// Extract a LAMBDA with a caller-chosen arity (used by `BYROW`).
+pub(crate) fn resolve_lambda_arity(
+    expr: &Expr,
+    ctx: &Ctx<'_>,
+    arity: usize,
+) -> Result<(Vec<String>, Expr), LambdaError> {
+    resolve_lambda_arity_with(expr, arity, &mut workbook_lambda_lookup(ctx))
+}
+
+/// Extract `LAMBDA(p1, …, pn, body)` with exactly `n` name parameters.
+///
+/// Used by MAKEARRAY (`n = 2`), SCAN / REDUCE (`n = 2`), and BYCOL (`n = 1`).
+pub(crate) fn resolve_lambda_n(
+    expr: &Expr,
+    ctx: &Ctx<'_>,
+    n: usize,
+) -> Result<(Vec<String>, Expr), ExcelError> {
+    resolve_lambda_arity(expr, ctx, n).map_err(|_| ExcelError::Value)
 }
 
 /// Extract `LAMBDA(row, col, body)` from an inline call or a defined name.
+/// Shared by MAKEARRAY (`r`, `c`) and SCAN (`acc`, `value`).
 pub(crate) fn resolve_lambda(
     expr: &Expr,
     ctx: &Ctx<'_>,
 ) -> Result<(String, String, Expr), ExcelError> {
-    resolve_lambda_depth(expr, ctx, 0)
+    let (params, body) = resolve_lambda_n(expr, ctx, 2)?;
+    Ok((params[0].clone(), params[1].clone(), body))
 }
 
-fn resolve_lambda_depth(
+/// `LAMBDA(p1, p2, …, body)` — last argument is the body; the rest are names.
+pub(crate) fn lambda_signature(args: &[Expr]) -> Result<(Vec<String>, Expr), ExcelError> {
+    if args.is_empty() {
+        return Err(ExcelError::Value);
+    }
+    let body = args[args.len() - 1].clone();
+    let mut params = Vec::with_capacity(args.len() - 1);
+    for p in &args[..args.len() - 1] {
+        params.push(param_name(p).ok_or(ExcelError::Value)?);
+    }
+    Ok((params, body))
+}
+
+pub(crate) fn resolve_lambda_any(
+    expr: &Expr,
+    ctx: &Ctx<'_>,
+) -> Result<(Vec<String>, Expr), ExcelError> {
+    resolve_lambda_any_depth(expr, ctx, 0)
+}
+
+fn resolve_lambda_any_depth(
     expr: &Expr,
     ctx: &Ctx<'_>,
     depth: usize,
-) -> Result<(String, String, Expr), ExcelError> {
+) -> Result<(Vec<String>, Expr), ExcelError> {
     if depth > 16 {
         return Err(ExcelError::Value);
     }
     match expr {
-        Expr::Call { name, args } if is_lambda_name(name) => lambda_params(args),
+        Expr::Call { name, args } if is_lambda_name(name) => lambda_signature(args),
         Expr::Name(n) => {
             let def = ctx
                 .spec
@@ -151,19 +294,50 @@ fn resolve_lambda_depth(
                 .defined_name(n)
                 .map_err(|_| ExcelError::Value)?;
             let ast = parse(&def.refers_to).map_err(|_| ExcelError::Value)?;
-            resolve_lambda_depth(&ast, ctx, depth + 1)
+            resolve_lambda_any_depth(&ast, ctx, depth + 1)
         }
         _ => Err(ExcelError::Value),
     }
 }
 
-fn lambda_params(args: &[Expr]) -> Result<(String, String, Expr), ExcelError> {
-    if args.len() != 3 {
-        return Err(ExcelError::Value);
+/// Apply `LAMBDA(...)(args)` or a defined-name LAMBDA. Extra call arguments
+/// are `#VALUE!`. Missing / omitted slots bind as omitted empties so
+/// [`super::isomitted`] can distinguish them from a provided blank.
+pub(crate) fn apply_callee(
+    ev: &Evaluator,
+    callee: &Expr,
+    args: &[Expr],
+    ctx: &mut Ctx<'_>,
+) -> Result<ExcelValue, EvalError> {
+    let (params, body) = match resolve_lambda_any(callee, ctx) {
+        Ok(v) => v,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    apply_lambda(ev, ctx, &params, &body, args)
+}
+
+pub(crate) fn apply_lambda(
+    ev: &Evaluator,
+    ctx: &mut Ctx<'_>,
+    params: &[String],
+    body: &Expr,
+    args: &[Expr],
+) -> Result<ExcelValue, EvalError> {
+    if args.len() > params.len() {
+        return Ok(ExcelValue::Error(ExcelError::Value));
     }
-    let row = param_name(&args[0]).ok_or(ExcelError::Value)?;
-    let col = param_name(&args[1]).ok_or(ExcelError::Value)?;
-    Ok((row, col, args[2].clone()))
+    let base = ctx.locals.len();
+    for (i, name) in params.iter().enumerate() {
+        if i < args.len() && !args[i].is_omitted() {
+            let v = ev.eval_expr(&args[i], ctx)?;
+            ctx.locals.push(Local::provided(name.clone(), v));
+        } else {
+            ctx.locals.push(Local::missing(name.clone()));
+        }
+    }
+    let out = ev.eval_expr(body, ctx);
+    ctx.locals.truncate(base);
+    out
 }
 
 fn param_name(expr: &Expr) -> Option<String> {
@@ -414,15 +588,15 @@ fn apply_general(
 ) -> Result<ExcelValue, EvalError> {
     let base = ctx.locals.len();
     ctx.locals
-        .push((row_param.to_string(), ExcelValue::Number(1.0)));
+        .push(Local::provided(row_param, ExcelValue::Number(1.0)));
     ctx.locals
-        .push((col_param.to_string(), ExcelValue::Number(1.0)));
+        .push(Local::provided(col_param, ExcelValue::Number(1.0)));
     let mut grid = Vec::with_capacity(rows);
     for r in 1..=rows {
-        ctx.locals[base].1 = ExcelValue::Number(r as f64);
+        ctx.locals[base].value = ExcelValue::Number(r as f64);
         let mut row = Vec::with_capacity(cols);
         for c in 1..=cols {
-            ctx.locals[base + 1].1 = ExcelValue::Number(c as f64);
+            ctx.locals[base + 1].value = ExcelValue::Number(c as f64);
             row.push(scalar_cell(ev.eval_expr(body, ctx)?));
         }
         grid.push(row);

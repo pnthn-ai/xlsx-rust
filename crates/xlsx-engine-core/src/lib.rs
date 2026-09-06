@@ -6,9 +6,12 @@
 //! - [`eval::coerce`] / [`eval::compare`] / [`eval::empty`] — quirk modules
 //! - [`eval::functions`] — worksheet functions used by the expanded corpus
 //! - [`eval::textbefore`] — Excel `TEXTBEFORE` (nth delimiter, match_end / if_not_found)
+//! - [`eval::proper`] — Excel `PROPER` (ASCII title-case; apostrophe / digit breaks)
 //! - [`text_format`] — Excel `TEXT` for a documented number/date format subset
-//! - [`eval::functions`] also dispatches `SUMIF` / `COUNTIF` / `COUNTIFS` / `SUMPRODUCT` / `SUBSTITUTE`
+//! - [`eval::functions`] also dispatches `SUMIF` / `COUNTIF` / `COUNTIFS` / `SUMPRODUCT` / `SUBSTITUTE` / `CLEAN`
 //! - [`eval::concat`] — Excel `CONCAT` (range/array flatten + 32767 cap)
+//! - [`eval::clean`] — Excel `CLEAN` (strip ASCII C0 `0..=31`)
+//! - [`eval::rept`] — Excel `REPT` (repeat + 32767 UTF-16 cap)
 //! - [`dates::weekday`] — O(1) Excel `WEEKDAY` on the date serial
 //! - [`dates::yearfrac`] — Excel `YEARFRAC` day-count bases 0–4
 //! - [`dates::workday_serial_intl`] — O(1) Excel `WORKDAY.INTL` weekend mask
@@ -34,6 +37,17 @@
 //! - [`eval::chooserows`] — `CHOOSEROWS` pick kernel (negative index / `#VALUE!`)
 //! - [`eval::randarray`] — `RANDARRAY` dynamic-array kernel (xorshift64*; not Excel's RNG)
 //! - [`eval::makearray`] — `MAKEARRAY(rows, cols, LAMBDA(r, c, body))`
+//! - [`eval::map`] — `MAP(array1, [array2, …], LAMBDA(…))` zip kernel
+//! - [`eval::scan`] — `SCAN([initial], array, LAMBDA(acc, value, body))`
+//! - [`eval::byrow`] — `BYROW(array, LAMBDA(row, body))` row-apply kernel
+//! - [`eval::reduce`] — `REDUCE([initial], array, LAMBDA(acc, value, body))`
+//! - [`eval::bycol`] — `BYCOL(array, LAMBDA(col, body))` column-reduce kernel
+//! - [`eval::excel_let`] — Excel `LET(name1, value1, …, calculation)`
+//! - [`eval::isomitted`] — Excel `ISOMITTED` (omitted LAMBDA parameter)
+//! - [`eval::trim`] — Excel `TRIM` (ASCII-space collapse + end trim)
+//! - [`eval::upper`] — Excel `UPPER` (SWAR ASCII + Unicode; `ß` kept)
+//! - [`eval::lower`] — Excel `LOWER` (ASCII SWAR fold + Unicode default mapping)
+//! - [`eval::exact`] — Excel `EXACT` (case-sensitive text compare)
 //! - [`eval::textsplit`] — `TEXTSPLIT` col/row split kernel (pad / `#CALC!`)
 //! - [`eval::textafter`] — Excel `TEXTAFTER` kernel (nth delimiter, `match_end`)
 //! - [`eval::irr`] — Excel `IRR` Newton / secant kernel
@@ -62,42 +76,74 @@ pub use dates::{
     weekday as excel_weekday, weekday_naive as excel_weekday_naive, yearfrac as excel_yearfrac,
     yearfrac_naive as excel_yearfrac_naive,
 };
+pub use eval::bycol::{
+    reduce_fast as excel_bycol, reduce_naive as excel_bycol_naive, ColOp as BycolOp,
+};
+pub use eval::byrow::{
+    agg_row as excel_byrow_agg, apply_fast as excel_byrow, apply_naive as excel_byrow_naive,
+    eta_agg, RowAgg, RowPlan,
+};
 pub use eval::choosecols::{select as excel_choosecols, select_naive as excel_choosecols_naive};
 pub use eval::chooserows::{select as excel_chooserows, select_naive as excel_chooserows_naive};
+pub use eval::clean::{clean as excel_clean, clean_naive as excel_clean_naive};
 pub use eval::concat::{concat_naive_join, eval_concat_formula, ConcatBuilder, CONCAT_MAX_CHARS};
 pub use eval::drop::{apply as excel_drop, apply_naive as excel_drop_naive};
+pub use eval::exact::{exact as excel_exact, exact_naive as excel_exact_naive};
+pub use eval::excel_let::{
+    eval_fast as excel_let_eval_fast, eval_naive as excel_let_eval_naive, FastCalc,
+    FastOp as LetFastOp, MAX_PAIRS as LET_MAX_PAIRS,
+};
 pub use eval::expand::{
     dim_from_value as expand_dim_from_value, expand as excel_expand,
     expand_naive as excel_expand_naive, output_shape as expand_output_shape,
     resolve_dim as expand_resolve_dim, EXPAND_MAX_COLS, EXPAND_MAX_ROWS,
 };
 pub use eval::filter::{select as excel_filter, select_naive as excel_filter_naive};
-pub use eval::hstack::{hstack as excel_hstack, hstack_naive as excel_hstack_naive};
 pub use eval::find::{find as excel_find, find_naive as excel_find_naive};
+pub use eval::hstack::{hstack as excel_hstack, hstack_naive as excel_hstack_naive};
 pub use eval::ifs::{select as excel_ifs, select_naive as excel_ifs_naive};
 pub use eval::irr::{irr as excel_irr, irr_naive as excel_irr_naive, MAX_ITERS as IRR_MAX_ITERS};
-pub use eval::mirr::{mirr as excel_mirr, mirr_naive as excel_mirr_naive};
+pub use eval::isomitted::{
+    is_omitted as excel_isomitted, is_omitted_naive as excel_isomitted_naive,
+};
+pub use eval::lower::{
+    lower as excel_lower, lower_naive as excel_lower_naive, lower_owned as excel_lower_owned,
+};
 pub use eval::makearray::{
     fill_fast as excel_makearray, fill_naive as excel_makearray_naive, FastBody, FastOp,
+    LambdaError, Local,
 };
+pub use eval::map::{fill_fast as excel_map, fill_naive as excel_map_naive, MapFast, MapOp};
+pub use eval::mirr::{mirr as excel_mirr, mirr_naive as excel_mirr_naive};
 pub use eval::npv::{npv as excel_npv, npv_naive as excel_npv_naive};
+pub use eval::proper::{proper as excel_proper, proper_naive as excel_proper_naive};
 pub use eval::randarray::{
     apply as excel_randarray, apply_naive as excel_randarray_naive, fill as excel_randarray_fill,
     fill_naive as excel_randarray_fill_naive, XorShift64,
 };
+pub use eval::reduce::{
+    fold_fast as excel_reduce, fold_naive as excel_reduce_naive, ReduceOp, ReducePlan,
+};
 pub use eval::replace::{replace as excel_replace, replace_naive as excel_replace_naive};
+pub use eval::rept::{
+    rept as excel_rept, rept_naive as excel_rept_naive, trunc_times as rept_trunc_times,
+    REPT_MAX_CHARS,
+};
 pub use eval::round::{
     rounddown as excel_rounddown, rounddown_naive as excel_rounddown_naive,
     roundup as excel_roundup, roundup_naive as excel_roundup_naive,
 };
-pub use eval::search::{search as excel_search, search_naive as excel_search_naive};
-pub use eval::sort::{sort_apply as excel_sort, sort_apply_naive as excel_sort_naive};
-pub use eval::sortby::{
-    sortby_apply as excel_sortby, sortby_apply_naive as excel_sortby_naive, MAX_SORT_KEYS,
+pub use eval::scan::{
+    classify as classify_scan, scan_fast as excel_scan, scan_naive as excel_scan_naive, FastScan,
 };
+pub use eval::search::{search as excel_search, search_naive as excel_search_naive};
 pub use eval::sequence::{
     sequence as excel_sequence, sequence_naive as excel_sequence_naive,
     MAX_CELLS as SEQUENCE_MAX_CELLS,
+};
+pub use eval::sort::{sort_apply as excel_sort, sort_apply_naive as excel_sort_naive};
+pub use eval::sortby::{
+    sortby_apply as excel_sortby, sortby_apply_naive as excel_sortby_naive, MAX_SORT_KEYS,
 };
 pub use eval::substitute::{
     substitute as excel_substitute, substitute_naive as excel_substitute_naive,
@@ -115,6 +161,10 @@ pub use eval::textbefore::{
 pub use eval::textjoin::{
     eval_textjoin_formula, textjoin_naive_join, TextJoinBuilder, TEXTJOIN_MAX_CHARS,
 };
+pub use eval::textsplit::{
+    apply_values as excel_textsplit_apply, textsplit as excel_textsplit,
+    textsplit_naive as excel_textsplit_naive,
+};
 pub use eval::tocol::{
     parse_ignore as parse_tocol_ignore, tocol_apply, tocol_apply_limited, tocol_apply_naive,
     TOCOL_MAX_ROWS,
@@ -123,20 +173,9 @@ pub use eval::torow::{
     apply as excel_torow_apply, apply_naive as excel_torow_naive, excel_torow,
     parse_ignore as parse_torow_ignore, TorowIgnore,
 };
-pub use eval::textsplit::{
-    apply_values as excel_textsplit_apply, textsplit as excel_textsplit,
-    textsplit_naive as excel_textsplit_naive,
-};
+pub use eval::trim::{trim as excel_trim, trim_naive as excel_trim_naive};
 pub use eval::unique::{unique_apply, unique_apply_naive, unique_eq};
-pub use eval::xnpv::{
-    collect_series as collect_xnpv_series, date_serial_trunc as xnpv_date_serial_trunc,
-    xnpv as excel_xnpv, xnpv_naive as excel_xnpv_naive,
-};
-pub use eval::xirr::{
-    collect_series as collect_xirr_series, date_serial_trunc as xirr_date_serial_trunc,
-    xirr as excel_xirr, xirr_naive as excel_xirr_naive, MAX_ITERS as XIRR_MAX_ITERS,
-};
-pub use eval::xlookup::{xlookup as excel_xlookup, xlookup_naive as excel_xlookup_naive};
+pub use eval::upper::{upper as excel_upper, upper_naive as excel_upper_naive};
 pub use eval::vstack::{
     stack as excel_vstack, stack_naive as excel_vstack_naive, stack_owned as excel_vstack_owned,
 };
@@ -144,6 +183,15 @@ pub use eval::wrapcols::{wrapcols as excel_wrapcols, wrapcols_naive as excel_wra
 pub use eval::wraprows::{
     output_shape as wraprows_output_shape, parse_wrap_count, wraprows as excel_wraprows,
     wraprows_naive as excel_wraprows_naive, WRAPROWS_MAX_COLS, WRAPROWS_MAX_ROWS,
+};
+pub use eval::xirr::{
+    collect_series as collect_xirr_series, date_serial_trunc as xirr_date_serial_trunc,
+    xirr as excel_xirr, xirr_naive as excel_xirr_naive, MAX_ITERS as XIRR_MAX_ITERS,
+};
+pub use eval::xlookup::{xlookup as excel_xlookup, xlookup_naive as excel_xlookup_naive};
+pub use eval::xnpv::{
+    collect_series as collect_xnpv_series, date_serial_trunc as xnpv_date_serial_trunc,
+    xnpv as excel_xnpv, xnpv_naive as excel_xnpv_naive,
 };
 pub use eval::{
     eval_averageif_materialized, eval_averageifs_materialized, eval_countifs_materialized,
@@ -154,8 +202,8 @@ pub use xlsx_types::{
     excel_cumipmt, excel_cumipmt_naive, excel_cumprinc, excel_cumprinc_naive, excel_effect,
     excel_effect_naive, excel_fv, excel_fv_naive, excel_ipmt, excel_ipmt_naive, excel_nominal,
     excel_nominal_naive, excel_nper, excel_nper_naive, excel_pduration, excel_pduration_naive,
-    excel_pmt, excel_ppmt, excel_ppmt_naive, excel_pv, excel_pv_naive, excel_rate, excel_rate_naive,
-    excel_rri, excel_rri_naive,
+    excel_pmt, excel_ppmt, excel_ppmt_naive, excel_pv, excel_pv_naive, excel_rate,
+    excel_rate_naive, excel_rri, excel_rri_naive,
 };
 
 use xlsx_types::{Candidate, EvalError, EvalSpec, ExcelValue};
