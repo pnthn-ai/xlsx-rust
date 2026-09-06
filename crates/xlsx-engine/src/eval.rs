@@ -2289,10 +2289,12 @@ impl Interpreter {
             ExcelValue::Bool(true) => Ok(ExcelValue::Number(1.0)),
             ExcelValue::Bool(false) => Ok(ExcelValue::Number(0.0)),
             ExcelValue::Empty => Ok(ExcelValue::Number(0.0)),
-            ExcelValue::Text(s) => match parse_excel_number(&s) {
-                Ok(n) => Ok(ExcelValue::Number(n)),
-                Err(e) => Ok(ExcelValue::Error(e)),
-            },
+            ExcelValue::Text(s) => {
+                match xlsx_engine_core::excel_value(&s, ctx.spec.options.date_system) {
+                    Ok(n) => Ok(ExcelValue::Number(n)),
+                    Err(e) => Ok(ExcelValue::Error(e)),
+                }
+            }
             ExcelValue::Error(e) => Ok(ExcelValue::Error(e)),
             ExcelValue::Array(_) => Ok(ExcelValue::Error(ExcelError::Value)),
         }

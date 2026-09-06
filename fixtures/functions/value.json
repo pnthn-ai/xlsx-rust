@@ -1,0 +1,463 @@
+[
+  {
+    "id": "fn.value-microsoft-currency",
+    "description": "Microsoft example: VALUE(\"$1,000\") is 1000",
+    "tags": ["text", "value", "coercion"],
+    "formula": "=VALUE(\"$1,000\")",
+    "expected": { "number": 1000 }
+  },
+  {
+    "id": "fn.value-microsoft-time-diff",
+    "description": "Microsoft example: VALUE(\"16:48:00\")-VALUE(\"12:00:00\") is 0.2",
+    "tags": ["text", "value"],
+    "formula": "=VALUE(\"16:48:00\")-VALUE(\"12:00:00\")",
+    "expected": { "number": 0.2 }
+  },
+  {
+    "id": "fn.value-plain",
+    "description": "VALUE(\"123\") is 123",
+    "tags": ["text", "value"],
+    "formula": "=VALUE(\"123\")",
+    "expected": { "number": 123 }
+  },
+  {
+    "id": "fn.value-decimal",
+    "description": "VALUE(\"123.45\") is 123.45",
+    "tags": ["text", "value"],
+    "formula": "=VALUE(\"123.45\")",
+    "expected": { "number": 123.45 }
+  },
+  {
+    "id": "fn.value-leading-zeros",
+    "description": "VALUE(\"007\") drops leading zeros",
+    "tags": ["text", "value"],
+    "formula": "=VALUE(\"007\")",
+    "expected": { "number": 7 }
+  },
+  {
+    "id": "fn.value-leading-dot",
+    "description": "VALUE(\".5\") is 0.5",
+    "tags": ["text", "value"],
+    "formula": "=VALUE(\".5\")",
+    "expected": { "number": 0.5 }
+  },
+  {
+    "id": "fn.value-trailing-dot",
+    "description": "VALUE(\"5.\") is 5",
+    "tags": ["text", "value"],
+    "formula": "=VALUE(\"5.\")",
+    "expected": { "number": 5 }
+  },
+  {
+    "id": "fn.value-plus",
+    "description": "VALUE(\"+7\") is 7",
+    "tags": ["text", "value"],
+    "formula": "=VALUE(\"+7\")",
+    "expected": { "number": 7 }
+  },
+  {
+    "id": "fn.value-minus",
+    "description": "VALUE(\"-7\") is -7",
+    "tags": ["text", "value"],
+    "formula": "=VALUE(\"-7\")",
+    "expected": { "number": -7 }
+  },
+  {
+    "id": "fn.value-scientific",
+    "description": "VALUE(\"1E3\") is 1000",
+    "tags": ["text", "value"],
+    "formula": "=VALUE(\"1E3\")",
+    "expected": { "number": 1000 }
+  },
+  {
+    "id": "fn.value-scientific-neg-exp",
+    "description": "VALUE(\"1.5e-2\") is 0.015",
+    "tags": ["text", "value"],
+    "formula": "=VALUE(\"1.5e-2\")",
+    "expected": { "number": 0.015 }
+  },
+  {
+    "id": "fn.value-thousands",
+    "description": "en-US thousands commas: VALUE(\"1,234.56\")",
+    "tags": ["text", "value"],
+    "formula": "=VALUE(\"1,234.56\")",
+    "expected": { "number": 1234.56 }
+  },
+  {
+    "id": "fn.value-thousands-millions",
+    "description": "VALUE(\"1,234,567.89\")",
+    "tags": ["text", "value"],
+    "formula": "=VALUE(\"1,234,567.89\")",
+    "expected": { "number": 1234567.89 }
+  },
+  {
+    "id": "fn.value-bad-group-short",
+    "description": "Invalid grouping VALUE(\"1,23\") is #VALUE!",
+    "tags": ["text", "value", "errors"],
+    "formula": "=VALUE(\"1,23\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.value-bad-group-long",
+    "description": "Invalid grouping VALUE(\"1,2345\") is #VALUE!",
+    "tags": ["text", "value", "errors"],
+    "formula": "=VALUE(\"1,2345\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.value-currency",
+    "description": "VALUE(\"$100\") is 100",
+    "tags": ["text", "value"],
+    "formula": "=VALUE(\"$100\")",
+    "expected": { "number": 100 }
+  },
+  {
+    "id": "fn.value-currency-neg",
+    "description": "VALUE(\"-$100\") is -100",
+    "tags": ["text", "value"],
+    "formula": "=VALUE(\"-$100\")",
+    "expected": { "number": -100 }
+  },
+  {
+    "id": "fn.value-currency-sign-after",
+    "description": "VALUE(\"$-100\") is -100",
+    "tags": ["text", "value"],
+    "formula": "=VALUE(\"$-100\")",
+    "expected": { "number": -100 }
+  },
+  {
+    "id": "fn.value-percent",
+    "description": "VALUE(\"50%\") is 0.5",
+    "tags": ["text", "value"],
+    "quirks": ["percent-unary"],
+    "formula": "=VALUE(\"50%\")",
+    "expected": { "number": 0.5 }
+  },
+  {
+    "id": "fn.value-percent-double",
+    "description": "Each extra % divides by 100: VALUE(\"50%%\") is 0.005",
+    "tags": ["text", "value"],
+    "quirks": ["percent-unary"],
+    "formula": "=VALUE(\"50%%\")",
+    "expected": { "number": 0.005 }
+  },
+  {
+    "id": "fn.value-percent-grouped",
+    "description": "VALUE(\"1,000%\") is 10",
+    "tags": ["text", "value"],
+    "formula": "=VALUE(\"1,000%\")",
+    "expected": { "number": 10 }
+  },
+  {
+    "id": "fn.value-parens",
+    "description": "Accounting parentheses: VALUE(\"(123)\") is -123",
+    "tags": ["text", "value"],
+    "formula": "=VALUE(\"(123)\")",
+    "expected": { "number": -123 }
+  },
+  {
+    "id": "fn.value-parens-currency",
+    "description": "VALUE(\"($1,234.50)\") is -1234.5",
+    "tags": ["text", "value"],
+    "formula": "=VALUE(\"($1,234.50)\")",
+    "expected": { "number": -1234.5 }
+  },
+  {
+    "id": "fn.value-parens-percent",
+    "description": "VALUE(\"(50%)\") is -0.5",
+    "tags": ["text", "value"],
+    "formula": "=VALUE(\"(50%)\")",
+    "expected": { "number": -0.5 }
+  },
+  {
+    "id": "fn.value-just-dollar",
+    "description": "VALUE(\"$\") is #VALUE!",
+    "tags": ["text", "value", "errors"],
+    "formula": "=VALUE(\"$\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.value-empty",
+    "description": "VALUE(\"\") is #VALUE! (not 0)",
+    "tags": ["text", "value", "errors"],
+    "formula": "=VALUE(\"\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.value-spaces-only",
+    "description": "VALUE of spaces-only is #VALUE!",
+    "tags": ["text", "value", "errors"],
+    "formula": "=VALUE(\"   \")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.value-true-text",
+    "description": "VALUE(\"TRUE\") is #VALUE! (logical text is not a number format)",
+    "tags": ["text", "value", "errors"],
+    "formula": "=VALUE(\"TRUE\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.value-number-passthrough",
+    "description": "VALUE of an already-numeric value is identity",
+    "tags": ["text", "value"],
+    "formula": "=VALUE(42)",
+    "expected": { "number": 42 }
+  },
+  {
+    "id": "fn.value-true",
+    "description": "VALUE(TRUE) is 1",
+    "tags": ["text", "value"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=VALUE(TRUE)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.value-false",
+    "description": "VALUE(FALSE) is 0",
+    "tags": ["text", "value"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=VALUE(FALSE)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.value-nested",
+    "description": "VALUE(VALUE(\"$1,000\")) is 1000",
+    "tags": ["text", "value"],
+    "formula": "=VALUE(VALUE(\"$1,000\"))",
+    "expected": { "number": 1000 }
+  },
+  {
+    "id": "fn.value-plus-one",
+    "description": "VALUE(\"$1,000\")+1 is 1001 (unlike \"1,000\"+0)",
+    "tags": ["text", "value", "coercion"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=VALUE(\"$1,000\")+1",
+    "expected": { "number": 1001 }
+  },
+  {
+    "id": "fn.value-comma-not-arithmetic",
+    "description": "Bare arithmetic does not accept thousands commas (contrast VALUE)",
+    "tags": ["text", "value", "coercion"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=\"1,000\"+0",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.value-time-eq-timefn",
+    "description": "VALUE(\"16:48:00\") equals TIME(16,48,0)",
+    "tags": ["text", "value"],
+    "formula": "=VALUE(\"16:48:00\")=TIME(16,48,0)",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.value-noon",
+    "description": "VALUE(\"12:00\") is 0.5",
+    "tags": ["text", "value"],
+    "formula": "=VALUE(\"12:00\")",
+    "expected": { "number": 0.5 }
+  },
+  {
+    "id": "fn.value-midnight-am",
+    "description": "VALUE(\"12:00 AM\") is 0",
+    "tags": ["text", "value"],
+    "formula": "=VALUE(\"12:00 AM\")",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.value-noon-pm",
+    "description": "VALUE(\"12:00 PM\") is 0.5",
+    "tags": ["text", "value"],
+    "formula": "=VALUE(\"12:00 PM\")",
+    "expected": { "number": 0.5 }
+  },
+  {
+    "id": "fn.value-bad-minutes",
+    "description": "VALUE(\"1:60\") is #VALUE!",
+    "tags": ["text", "value", "errors"],
+    "formula": "=VALUE(\"1:60\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.value-date-eq-datefn",
+    "description": "VALUE(\"1/1/2020\") equals DATE(2020,1,1)",
+    "tags": ["text", "value"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=VALUE(\"1/1/2020\")=DATE(2020,1,1)",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.value-iso-date",
+    "description": "VALUE(\"2020-01-01\") equals DATE(2020,1,1)",
+    "tags": ["text", "value"],
+    "formula": "=VALUE(\"2020-01-01\")=DATE(2020,1,1)",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.value-two-digit-year",
+    "description": "VALUE(\"1/1/20\") uses the 00–29 → 2000 window",
+    "tags": ["text", "value"],
+    "formula": "=VALUE(\"1/1/20\")=DATE(2020,1,1)",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.value-leap-1900",
+    "description": "VALUE(\"2/29/1900\") is the Excel leap-bug serial 60",
+    "tags": ["text", "value"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=VALUE(\"2/29/1900\")",
+    "expected": { "number": 60 }
+  },
+  {
+    "id": "fn.value-invalid-day",
+    "description": "VALUE(\"2/30/2020\") is #VALUE! (no DATE overflow)",
+    "tags": ["text", "value", "errors"],
+    "formula": "=VALUE(\"2/30/2020\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.value-incomplete-date",
+    "description": "VALUE(\"1/2\") without a year is #VALUE! (current-year dates not implemented)",
+    "tags": ["text", "value", "errors"],
+    "formula": "=VALUE(\"1/2\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.value-datetime",
+    "description": "VALUE(\"1/1/2020 12:00:00\") is DATE plus noon",
+    "tags": ["text", "value"],
+    "formula": "=VALUE(\"1/1/2020 12:00:00\")=DATE(2020,1,1)+TIME(12,0,0)",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.value-mixed-fraction",
+    "description": "VALUE(\"1 1/2\") is 1.5",
+    "tags": ["text", "value"],
+    "formula": "=VALUE(\"1 1/2\")",
+    "expected": { "number": 1.5 }
+  },
+  {
+    "id": "fn.value-mixed-fraction-neg",
+    "description": "VALUE(\"-1 1/2\") is -1.5",
+    "tags": ["text", "value"],
+    "formula": "=VALUE(\"-1 1/2\")",
+    "expected": { "number": -1.5 }
+  },
+  {
+    "id": "fn.value-cell",
+    "description": "VALUE of a cell holding currency text",
+    "tags": ["text", "value"],
+    "formula": "=VALUE(A1)",
+    "expected": { "number": 1250 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "  $1,250  " }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.value-blank-cell",
+    "description": "VALUE of a blank cell is 0",
+    "tags": ["text", "value"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=VALUE(A1)",
+    "expected": { "number": 0 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {}
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.value-stored-empty",
+    "description": "VALUE of stored \"\" is #VALUE! (not a blank)",
+    "tags": ["text", "value", "errors"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=VALUE(A1)",
+    "expected": { "error": "#VALUE!" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.value-implicit-intersect",
+    "description": "VALUE(A1:A3) from host B1 uses implicit intersection (A1)",
+    "tags": ["text", "value"],
+    "quirks": ["implicit-intersection"],
+    "at": "Sheet1!B1",
+    "formula": "=VALUE(A1:A3)",
+    "expected": { "number": 10 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "  10  " },
+            "A2": { "text": "  20  " },
+            "A3": { "text": "  30  " }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.value-err-div0",
+    "description": "Error argument propagates #DIV/0!",
+    "tags": ["text", "value", "errors"],
+    "formula": "=VALUE(1/0)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.value-err-na",
+    "description": "NA() propagates #N/A",
+    "tags": ["text", "value", "errors"],
+    "formula": "=VALUE(NA())",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.value-err-cell",
+    "description": "Error in the referenced cell propagates",
+    "tags": ["text", "value", "errors"],
+    "formula": "=VALUE(A1)",
+    "expected": { "error": "#VALUE!" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "error": "#VALUE!" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.value-arity-zero",
+    "description": "VALUE() with no arguments is #VALUE!",
+    "tags": ["text", "value", "errors"],
+    "formula": "=VALUE()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.value-arity-two",
+    "description": "VALUE with two arguments is #VALUE!",
+    "tags": ["text", "value", "errors"],
+    "formula": "=VALUE(1,2)",
+    "expected": { "error": "#VALUE!" }
+  }
+]
