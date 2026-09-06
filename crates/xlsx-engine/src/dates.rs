@@ -529,6 +529,51 @@ pub fn weeknum(serial: f64, return_type: i32, system: DateSystem) -> Result<f64,
         rt => weeknum_system1(s1900, weeknum_week_start_type1(rt)?),
     }
 }
+/// ISO weekday Monday=1 … Sunday=7 from a 1900-system serial (Excel `WEEKDAY`).
+#[inline]
+fn excel_iso_dow(serial_1900: i32) -> i32 {
+    let type1 = type1_from_1900_serial(serial_1900);
+    if type1 == 1 {
+        7
+    } else {
+        type1 - 1
+    }
+}
+
+/// ISO 8601 weeks in `year` using Excel's weekday / 1900 leap-year calendar.
+fn iso_weeks_in_year(year: i32) -> i32 {
+    if year < 1900 {
+        return 52;
+    }
+    let Ok(jan1) = serial_of_year_start(year) else {
+        return 52;
+    };
+    let dow = excel_iso_dow(jan1);
+    if dow == 4 || (dow == 3 && is_excel_leap(year)) {
+        53
+    } else {
+        52
+    }
+}
+
+fn isoweeknum_from_ymd(year: i32, month: i32, day: i32, serial_1900: i32) -> i32 {
+    let doy = day_of_year(year, month, day);
+    let week = (doy - excel_iso_dow(serial_1900) + 10) / 7;
+    if week < 1 {
+        iso_weeks_in_year(year - 1)
+    } else if week > iso_weeks_in_year(year) {
+        1
+    } else {
+        week
+    }
+}
+
+/// Excel `ISOWEEKNUM(date)`: ISO 8601 week number on the date serial.
+pub fn isoweeknum(serial: f64, system: DateSystem) -> Result<f64, ExcelError> {
+    let s1900 = serial_as_1900_int(serial, system)?;
+    let (y, m, d) = serial_to_ymd(serial, system)?;
+    Ok(isoweeknum_from_ymd(y, m as i32, d as i32, s1900) as f64)
+}
 
 #[cfg(test)]
 mod tests {

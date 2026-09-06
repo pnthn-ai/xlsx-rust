@@ -762,6 +762,68 @@ pub fn weeknum_naive(serial: f64, return_type: i32, system: DateSystem) -> Resul
     }
     Ok(week as f64)
 }
+/// ISO weekday Monday=1 … Sunday=7 from a 1900-system serial (Excel `WEEKDAY`).
+#[inline]
+fn excel_iso_dow(serial_1900: i32) -> i32 {
+    let type1 = type1_from_1900_serial(serial_1900);
+    if type1 == 1 {
+        7
+    } else {
+        type1 - 1
+    }
+}
+
+/// ISO 8601 weeks in `year` using Excel's weekday / 1900 leap-year calendar.
+///
+/// 1899 is the only pre-epoch year `ISOWEEKNUM` can ask about (serials 0 and 1);
+/// it is not a 53-week year under Excel's Sunday-on-serial-1 weekday.
+fn iso_weeks_in_year(year: i32) -> i32 {
+    if year < 1900 {
+        return 52;
+    }
+    let Ok(jan1) = serial_of_year_start(year) else {
+        return 52;
+    };
+    let dow = excel_iso_dow(jan1);
+    if dow == 4 || (dow == 3 && is_excel_leap(year)) {
+        53
+    } else {
+        52
+    }
+}
+
+fn isoweeknum_from_ymd(year: i32, month: i32, day: i32, serial_1900: i32) -> i32 {
+    let doy = day_of_year(year, month, day);
+    let week = (doy - excel_iso_dow(serial_1900) + 10) / 7;
+    if week < 1 {
+        iso_weeks_in_year(year - 1)
+    } else if week > iso_weeks_in_year(year) {
+        1
+    } else {
+        week
+    }
+}
+
+/// Excel `ISOWEEKNUM(date)`: ISO 8601 week number on the date serial.
+///
+/// Weeks start Monday; week 1 contains the first Thursday. Day-of-week is the
+/// same O(1) Excel `serial % 7` as [`weekday`] (1900-01-01 is Sunday), so the
+/// 1900 leap-year bug is inherited — `ISOWEEKNUM(1)` is 52, not civil week 1.
+/// Serial 0 (1900-01-00 / blank) is also 52. Year / day-of-year come from the
+/// closed-form [`serial_to_ymd`] / [`serial_of_year_start`] helpers.
+pub fn isoweeknum(serial: f64, system: DateSystem) -> Result<f64, ExcelError> {
+    let s1900 = serial_as_1900_int(serial, system)?;
+    let (y, m, d) = serial_to_ymd(serial, system)?;
+    Ok(isoweeknum_from_ymd(y, m as i32, d as i32, s1900) as f64)
+}
+
+/// Year-walk `ISOWEEKNUM`: [`serial_to_ymd_walk`] then the same ISO map.
+/// Semantically identical; used as the bench baseline.
+pub fn isoweeknum_naive(serial: f64, system: DateSystem) -> Result<f64, ExcelError> {
+    let s1900 = serial_as_1900_int(serial, system)?;
+    let (y, m, d) = serial_to_ymd_walk(s1900)?;
+    Ok(isoweeknum_from_ymd(y, m, d, s1900) as f64)
+}
 
 #[cfg(test)]
 mod tests {
@@ -1329,6 +1391,77 @@ mod tests {
                 assert_eq!(a, b, "serial={s} return_type={rt} 1904");
             }
         }
+    }
+
+    #[test]
+    fn isoweeknum_ms_example() {
+        let s = d(2012, 3, 9);
+        assert_eq!(isoweeknum(s, DateSystem::Excel1900).unwrap(), 10.0);
+        assert_eq!(isoweeknum_naive(s, DateSystem::Excel1900).unwrap(), 10.0);
+    }
+
+    #[test]
+    fn isoweeknum_cfi_2009_jan1() {
+        // CFI: serial 39814 (2009-01-01, Thursday) is week 1.
+        assert_eq!(d(2009, 1, 1), 39814.0);
+        assert_eq!(isoweeknum(39814.0, DateSystem::Excel1900).unwrap(), 1.0);
+    }
+
+    #[test]
+    fn isoweeknum_1900_weekday_bug() {
+        // Excel 1900-01-01 is Sunday → previous ISO year (52), not civil week 1.
+        assert_eq!(isoweeknum(0.0, DateSystem::Excel1900).unwrap(), 52.0);
+        assert_eq!(isoweeknum(1.0, DateSystem::Excel1900).unwrap(), 52.0);
+        assert_eq!(isoweeknum(2.0, DateSystem::Excel1900).unwrap(), 1.0);
+        assert_eq!(isoweeknum(4.0, DateSystem::Excel1900).unwrap(), 1.0);
+        assert_eq!(isoweeknum(59.0, DateSystem::Excel1900).unwrap(), 9.0);
+        assert_eq!(isoweeknum(60.0, DateSystem::Excel1900).unwrap(), 9.0);
+        assert_eq!(isoweeknum(61.0, DateSystem::Excel1900).unwrap(), 9.0);
+    }
+
+    #[test]
+    fn isoweeknum_year_boundaries() {
+        let s = DateSystem::Excel1900;
+        assert_eq!(isoweeknum(d(2015, 1, 1), s).unwrap(), 1.0);
+        assert_eq!(isoweeknum(d(2015, 12, 31), s).unwrap(), 53.0);
+        assert_eq!(isoweeknum(d(2016, 1, 1), s).unwrap(), 53.0);
+        assert_eq!(isoweeknum(d(2010, 1, 1), s).unwrap(), 53.0);
+        assert_eq!(isoweeknum(d(2011, 1, 1), s).unwrap(), 52.0);
+        assert_eq!(isoweeknum(d(2012, 1, 1), s).unwrap(), 52.0);
+        assert_eq!(isoweeknum(d(2012, 12, 31), s).unwrap(), 1.0);
+        assert_eq!(isoweeknum(d(2004, 12, 31), s).unwrap(), 53.0);
+        assert_eq!(isoweeknum(d(2008, 12, 29), s).unwrap(), 1.0);
+        assert_eq!(isoweeknum(d(9999, 12, 31), s).unwrap(), 52.0);
+    }
+
+    #[test]
+    fn isoweeknum_1904_epoch() {
+        assert_eq!(isoweeknum(0.0, DateSystem::Excel1904).unwrap(), 53.0);
+        assert_eq!(
+            isoweeknum(d(1904, 1, 1), DateSystem::Excel1900).unwrap(),
+            53.0
+        );
+    }
+
+    #[test]
+    fn isoweeknum_matches_naive_across_range() {
+        for s in 0..=400 {
+            let a = isoweeknum(s as f64, DateSystem::Excel1900).unwrap();
+            let b = isoweeknum_naive(s as f64, DateSystem::Excel1900).unwrap();
+            assert_eq!(a, b, "serial={s}");
+        }
+        for s in [36526, 39448, 39814, 40909, 42369, EXCEL_MAX_SERIAL_1900] {
+            let a = isoweeknum(s as f64, DateSystem::Excel1900).unwrap();
+            let b = isoweeknum_naive(s as f64, DateSystem::Excel1900).unwrap();
+            assert_eq!(a, b, "serial={s}");
+        }
+    }
+
+    #[test]
+    fn isoweeknum_fraction_and_range() {
+        assert_eq!(isoweeknum(1.9, DateSystem::Excel1900).unwrap(), 52.0);
+        assert!(isoweeknum(-1.0, DateSystem::Excel1900).is_err());
+        assert!(isoweeknum((EXCEL_MAX_SERIAL_1900 + 1) as f64, DateSystem::Excel1900).is_err());
     }
 
     #[test]

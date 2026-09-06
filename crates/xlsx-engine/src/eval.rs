@@ -1,9 +1,9 @@
 //! Seed-scoped evaluator with Excel-like and intentionally naive semantics.
 
 use crate::dates::{
-    date_serial, days360, eomonth_serial, networkdays_count, networkdays_count_mask, serial_to_ymd,
-    time_fraction, weekday, weekend_mask_from_code, weekend_mask_from_string, weeknum,
-    workday_serial, yearfrac, WEEKEND_SAT_SUN,
+    date_serial, days360, eomonth_serial, isoweeknum, networkdays_count, networkdays_count_mask,
+    serial_to_ymd, time_fraction, weekday, weekend_mask_from_code, weekend_mask_from_string,
+    weeknum, workday_serial, yearfrac, WEEKEND_SAT_SUN,
 };
 use crate::parse::{parse, BinOp, Expr, UnaryOp};
 use std::collections::{HashMap, HashSet};
@@ -447,6 +447,7 @@ impl Interpreter {
             "DAY" => self.fn_ymd(args, ctx, YmdPart::Day),
             "WEEKDAY" => self.fn_weekday(args, ctx),
             "WEEKNUM" => self.fn_weeknum(args, ctx),
+            "ISOWEEKNUM" => self.fn_isoweeknum(args, ctx),
             "DAYS360" => self.fn_days360(args, ctx),
             "LEFT" => self.fn_left_right(args, ctx, true),
             "RIGHT" => self.fn_left_right(args, ctx, false),
@@ -1875,6 +1876,20 @@ impl Interpreter {
             1
         };
         match weeknum(serial, return_type, ctx.spec.options.date_system) {
+            Ok(n) => Ok(ExcelValue::Number(n)),
+            Err(e) => Ok(ExcelValue::Error(e)),
+        }
+    }
+
+    fn fn_isoweeknum(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.len() != 1 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        let serial = match self.as_number(&self.eval_scalar(&args[0], ctx)?) {
+            Ok(n) => n,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        match isoweeknum(serial, ctx.spec.options.date_system) {
             Ok(n) => Ok(ExcelValue::Number(n)),
             Err(e) => Ok(ExcelValue::Error(e)),
         }
