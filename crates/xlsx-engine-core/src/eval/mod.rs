@@ -49,6 +49,7 @@ pub mod wraprows;
 pub mod take;
 pub mod textafter;
 pub mod textbefore;
+pub mod lower;
 
 use crate::ast::{BinOp, Expr, UnaryOp};
 use crate::parse::parse;
