@@ -105,6 +105,10 @@ name = "excel_ceiling"
 harness = false
 
 [[bench]]
+name = "excel_mround"
+harness = false
+
+[[bench]]
 name = "search"
 harness = false
 

@@ -1,0 +1,520 @@
+[
+  {
+    "id": "fn.mround-help-ten-three",
+    "description": "Microsoft: MROUND(10, 3) is 9",
+    "tags": ["math", "mround"],
+    "formula": "=MROUND(10,3)",
+    "expected": { "number": 9 }
+  },
+  {
+    "id": "fn.mround-help-both-neg",
+    "description": "Microsoft: MROUND(-10, -3) is -9",
+    "tags": ["math", "mround"],
+    "formula": "=MROUND(-10,-3)",
+    "expected": { "number": -9 }
+  },
+  {
+    "id": "fn.mround-help-tenth-pair",
+    "description": "Microsoft: MROUND(1.3, 0.2) is 1.4",
+    "tags": ["math", "mround"],
+    "formula": "=MROUND(1.3,0.2)",
+    "expected": { "number": 1.4 }
+  },
+  {
+    "id": "fn.mround-help-pos-neg",
+    "description": "Microsoft: MROUND(5, -2) is #NUM! — opposite signs",
+    "tags": ["math", "mround", "errors"],
+    "formula": "=MROUND(5,-2)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.mround-neg-pos",
+    "description": "MROUND(-10, 3) is #NUM! — opposite signs",
+    "tags": ["math", "mround", "errors"],
+    "formula": "=MROUND(-10,3)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.mround-pos-neg-frac",
+    "description": "MROUND(1.3, -0.2) is #NUM!",
+    "tags": ["math", "mround", "errors"],
+    "formula": "=MROUND(1.3,-0.2)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.mround-zero-multiple-pos",
+    "description": "MROUND(10, 0) is 0 — zero multiple is not #DIV/0!",
+    "tags": ["math", "mround"],
+    "formula": "=MROUND(10,0)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.mround-zero-multiple-neg",
+    "description": "MROUND(-10, 0) is 0",
+    "tags": ["math", "mround"],
+    "formula": "=MROUND(-10,0)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.mround-zero-zero",
+    "description": "MROUND(0, 0) is 0",
+    "tags": ["math", "mround"],
+    "formula": "=MROUND(0,0)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.mround-zero-pos-mult",
+    "description": "MROUND(0, 3) is 0",
+    "tags": ["math", "mround"],
+    "formula": "=MROUND(0,3)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.mround-zero-neg-mult-ok",
+    "description": "MROUND(0, -3) is 0 — zero is not a sign clash",
+    "tags": ["math", "mround"],
+    "formula": "=MROUND(0,-3)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.mround-eleven-three",
+    "description": "MROUND(11, 3) is 12 — remainder above half",
+    "tags": ["math", "mround"],
+    "formula": "=MROUND(11,3)",
+    "expected": { "number": 12 }
+  },
+  {
+    "id": "fn.mround-neg-eleven-three",
+    "description": "MROUND(-11, -3) is -12",
+    "tags": ["math", "mround"],
+    "formula": "=MROUND(-11,-3)",
+    "expected": { "number": -12 }
+  },
+  {
+    "id": "fn.mround-half-int-pos",
+    "description": "MROUND(1.5, 1) is 2 — midpoint away from zero",
+    "tags": ["math", "mround"],
+    "formula": "=MROUND(1.5,1)",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.mround-half-int-two-five",
+    "description": "MROUND(2.5, 1) is 3 — not banker's rounding",
+    "tags": ["math", "mround"],
+    "formula": "=MROUND(2.5,1)",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.mround-half-int-neg",
+    "description": "MROUND(-2.5, -1) is -3 — midpoint away from zero",
+    "tags": ["math", "mround"],
+    "formula": "=MROUND(-2.5,-1)",
+    "expected": { "number": -3 }
+  },
+  {
+    "id": "fn.mround-half-of-three",
+    "description": "MROUND(1.5, 3) is 3 — remainder equals half of multiple",
+    "tags": ["math", "mround"],
+    "formula": "=MROUND(1.5,3)",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.mround-four-five-three",
+    "description": "MROUND(4.5, 3) is 6",
+    "tags": ["math", "mround"],
+    "formula": "=MROUND(4.5,3)",
+    "expected": { "number": 6 }
+  },
+  {
+    "id": "fn.mround-twenty-one-fourteen",
+    "description": "MROUND(21, 14) is 28 — 21/14 is exactly 1.5",
+    "tags": ["math", "mround"],
+    "formula": "=MROUND(21,14)",
+    "expected": { "number": 28 }
+  },
+  {
+    "id": "fn.mround-twenty-two-five-five",
+    "description": "MROUND(22.5, 5) is 25",
+    "tags": ["math", "mround"],
+    "formula": "=MROUND(22.5,5)",
+    "expected": { "number": 25 }
+  },
+  {
+    "id": "fn.mround-neg-twenty-two-five-five",
+    "description": "MROUND(-22.5, -5) is -25",
+    "tags": ["math", "mround"],
+    "formula": "=MROUND(-22.5,-5)",
+    "expected": { "number": -25 }
+  },
+  {
+    "id": "fn.mround-below-half",
+    "description": "MROUND(21, 5) is 20 — remainder 1 < 2.5",
+    "tags": ["math", "mround"],
+    "formula": "=MROUND(21,5)",
+    "expected": { "number": 20 }
+  },
+  {
+    "id": "fn.mround-above-half",
+    "description": "MROUND(23, 5) is 25",
+    "tags": ["math", "mround"],
+    "formula": "=MROUND(23,5)",
+    "expected": { "number": 25 }
+  },
+  {
+    "id": "fn.mround-nickel-up",
+    "description": "MROUND(1.23, 0.05) is 1.25",
+    "tags": ["math", "mround"],
+    "formula": "=MROUND(1.23,0.05)",
+    "expected": { "number": 1.25 }
+  },
+  {
+    "id": "fn.mround-nickel-down",
+    "description": "MROUND(1.22, 0.05) is 1.2",
+    "tags": ["math", "mround"],
+    "formula": "=MROUND(1.22,0.05)",
+    "expected": { "number": 1.2 }
+  },
+  {
+    "id": "fn.mround-already-int-multiple",
+    "description": "MROUND(9, 3) is 9 — already a multiple",
+    "tags": ["math", "mround"],
+    "formula": "=MROUND(9,3)",
+    "expected": { "number": 9 }
+  },
+  {
+    "id": "fn.mround-already-neg-multiple",
+    "description": "MROUND(-9, -3) is -9",
+    "tags": ["math", "mround"],
+    "formula": "=MROUND(-9,-3)",
+    "expected": { "number": -9 }
+  },
+  {
+    "id": "fn.mround-fp-already-multiple",
+    "description": "MROUND(1.2, 0.1) is 1.2 — 15-digit multiple, not IEEE drift",
+    "tags": ["math", "mround"],
+    "quirks": ["ieee-vs-excel-precision"],
+    "formula": "=MROUND(1.2,0.1)",
+    "expected": { "number": 1.2 }
+  },
+  {
+    "id": "fn.mround-fp-already-multiple-24",
+    "description": "MROUND(2.4, 0.2) is 2.4",
+    "tags": ["math", "mround"],
+    "quirks": ["ieee-vs-excel-precision"],
+    "formula": "=MROUND(2.4,0.2)",
+    "expected": { "number": 2.4 }
+  },
+  {
+    "id": "fn.mround-fp-already-multiple-03",
+    "description": "MROUND(0.3, 0.1) is 0.3",
+    "tags": ["math", "mround"],
+    "quirks": ["ieee-vs-excel-precision"],
+    "formula": "=MROUND(0.3,0.1)",
+    "expected": { "number": 0.3 }
+  },
+  {
+    "id": "fn.mround-ieee-nearly-half",
+    "description": "MROUND(1.25, 0.1) is 1.3 — IEEE 12.499… still ties away",
+    "tags": ["math", "mround"],
+    "quirks": ["ieee-vs-excel-precision"],
+    "formula": "=MROUND(1.25,0.1)",
+    "expected": { "number": 1.3 },
+    "notes": "1.25/0.1 is a clean 12.5 here; 15-digit model is still 1.3. Documented model; live Excel not in CI."
+  },
+  {
+    "id": "fn.mround-ieee-nearly-half-215",
+    "description": "MROUND(2.15, 0.1) is 2.2 — IEEE 21.499… still ties away",
+    "tags": ["math", "mround"],
+    "quirks": ["ieee-vs-excel-precision"],
+    "formula": "=MROUND(2.15,0.1)",
+    "expected": { "number": 2.2 },
+    "notes": "2.15/0.1 is 21.4999… in IEEE; 15-digit snap-to-half keeps Microsoft 2.2. Documented model; live Excel not in CI."
+  },
+  {
+    "id": "fn.mround-tenths-snap",
+    "description": "MROUND of ten 0.1 addends with multiple 1 is 1",
+    "tags": ["math", "mround"],
+    "quirks": ["ieee-vs-excel-precision"],
+    "formula": "=MROUND(0.1+0.1+0.1+0.1+0.1+0.1+0.1+0.1+0.1+0.1,1)",
+    "expected": { "number": 1 },
+    "notes": "Repeated IEEE +0.1 is 0.999…9; Excel leftover snap treats it as 1. Documented model; live Excel not in CI."
+  },
+  {
+    "id": "fn.mround-tenths-tenth-mult",
+    "description": "MROUND of ten 0.1 addends with multiple 0.1 is 1",
+    "tags": ["math", "mround"],
+    "quirks": ["ieee-vs-excel-precision"],
+    "formula": "=MROUND(0.1+0.1+0.1+0.1+0.1+0.1+0.1+0.1+0.1+0.1,0.1)",
+    "expected": { "number": 1 },
+    "notes": "IEEE sum sits just below 1; leftover snap keeps it on the 0.1 grid. Documented model; live Excel not in CI."
+  },
+  {
+    "id": "fn.mround-true",
+    "description": "MROUND(TRUE, 1) coerces TRUE → 1",
+    "tags": ["math", "mround", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=MROUND(TRUE,1)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.mround-false",
+    "description": "MROUND(FALSE, 1) coerces FALSE → 0",
+    "tags": ["math", "mround", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=MROUND(FALSE,1)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.mround-true-mult",
+    "description": "MROUND(3.7, TRUE) coerces multiple TRUE → 1 → 4",
+    "tags": ["math", "mround", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=MROUND(3.7,TRUE)",
+    "expected": { "number": 4 }
+  },
+  {
+    "id": "fn.mround-false-mult",
+    "description": "MROUND(10, FALSE) coerces multiple FALSE → 0 → 0",
+    "tags": ["math", "mround", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=MROUND(10,FALSE)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.mround-numeric-text-ws",
+    "description": "MROUND trims numeric text: MROUND(\"  10  \", 3) is 9",
+    "tags": ["math", "mround", "coercion"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=MROUND(\"  10  \",3)",
+    "expected": { "number": 9 }
+  },
+  {
+    "id": "fn.mround-numeric-text-mult",
+    "description": "MROUND(10, \"3\") coerces numeric-text multiple",
+    "tags": ["math", "mround", "coercion"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=MROUND(10,\"3\")",
+    "expected": { "number": 9 }
+  },
+  {
+    "id": "fn.mround-numeric-text-neg",
+    "description": "MROUND(\"-10\", -3) is -9",
+    "tags": ["math", "mround", "coercion"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=MROUND(\"-10\",-3)",
+    "expected": { "number": -9 }
+  },
+  {
+    "id": "fn.mround-empty-string",
+    "description": "MROUND(\"\", 1) is #VALUE! — empty text is not numeric",
+    "tags": ["math", "mround", "errors"],
+    "formula": "=MROUND(\"\",1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.mround-mult-text",
+    "description": "MROUND(1, \"x\") is #VALUE!",
+    "tags": ["math", "mround", "errors"],
+    "formula": "=MROUND(1,\"x\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.mround-percent-pos",
+    "description": "MROUND(1000%, 3) is MROUND(10, 3) = 9",
+    "tags": ["math", "mround"],
+    "quirks": ["percent-unary"],
+    "formula": "=MROUND(1000%,3)",
+    "expected": { "number": 9 }
+  },
+  {
+    "id": "fn.mround-percent-neg",
+    "description": "MROUND(-1000%, -3) is -9",
+    "tags": ["math", "mround"],
+    "quirks": ["percent-unary"],
+    "formula": "=MROUND(-1000%,-3)",
+    "expected": { "number": -9 }
+  },
+  {
+    "id": "fn.mround-arity-zero",
+    "description": "MROUND() is #VALUE!",
+    "tags": ["math", "mround", "errors"],
+    "formula": "=MROUND()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.mround-arity-one",
+    "description": "MROUND(10) is #VALUE! — exactly two arguments",
+    "tags": ["math", "mround", "errors"],
+    "formula": "=MROUND(10)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.mround-arity-three",
+    "description": "MROUND(1, 1, 1) is #VALUE!",
+    "tags": ["math", "mround", "errors"],
+    "formula": "=MROUND(1,1,1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.mround-trailing-comma-zero-mult",
+    "description": "MROUND(10,) treats omitted multiple as 0 → 0",
+    "tags": ["math", "mround", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=MROUND(10,)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.mround-omitted-number",
+    "description": "MROUND(,3) treats omitted number as 0 → 0",
+    "tags": ["math", "mround", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=MROUND(,3)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.mround-err-na-first",
+    "description": "MROUND(NA(), 1/0) keeps #N/A (left-to-right)",
+    "tags": ["math", "mround", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=MROUND(NA(),1/0)",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.mround-err-div0-first",
+    "description": "MROUND(1/0, NA()) keeps #DIV/0! (left-to-right)",
+    "tags": ["math", "mround", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=MROUND(1/0,NA())",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.mround-err-second",
+    "description": "MROUND(1, 1/0) propagates #DIV/0! from multiple",
+    "tags": ["math", "mround", "errors"],
+    "formula": "=MROUND(1,1/0)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.mround-err-value-before-na",
+    "description": "MROUND(\"x\", NA()) is #VALUE! — first arg fails coerce before second is used",
+    "tags": ["math", "mround", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=MROUND(\"x\",NA())",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.mround-blank-both",
+    "description": "MROUND of two blank cells is MROUND(0, 0) = 0",
+    "tags": ["math", "mround", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=MROUND(A1,B1)",
+    "expected": { "number": 0 },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.mround-blank-number",
+    "description": "MROUND of a blank number cell is 0",
+    "tags": ["math", "mround", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=MROUND(A1,3)",
+    "expected": { "number": 0 },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.mround-blank-mult",
+    "description": "MROUND of a blank multiple cell is 0",
+    "tags": ["math", "mround", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=MROUND(10,B1)",
+    "expected": { "number": 0 },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.mround-cell-pair",
+    "description": "MROUND of cells holding 10 and 3 is 9",
+    "tags": ["math", "mround"],
+    "formula": "=MROUND(A1,B1)",
+    "expected": { "number": 9 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "number": 10 },
+            "B1": { "number": 3 }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.mround-named",
+    "description": "MROUND of defined names holding 10 and 3 is 9",
+    "tags": ["math", "mround"],
+    "formula": "=MROUND(Amt,Step)",
+    "expected": { "number": 9 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "number": 10 },
+            "B1": { "number": 3 }
+          }
+        }
+      ],
+      "names": [
+        { "name": "Amt", "refers_to": "Sheet1!A1" },
+        { "name": "Step", "refers_to": "Sheet1!B1" }
+      ]
+    }
+  },
+  {
+    "id": "fn.mround-implicit-intersect",
+    "description": "MROUND(A1:A3, 3) from host B2 uses implicit intersection (A2 = 11 → 12)",
+    "tags": ["math", "mround"],
+    "quirks": ["implicit-intersection"],
+    "at": "Sheet1!B2",
+    "formula": "=MROUND(A1:A3,3)",
+    "expected": { "number": 12 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "number": 10 },
+            "A2": { "number": 11 },
+            "A3": { "number": 9 }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.mround-array-literal",
+    "description": "Scalar MROUND takes the top-left of an array literal: MROUND({10,11},3) is 9",
+    "tags": ["math", "mround"],
+    "formula": "=MROUND({10,11},3)",
+    "expected": { "number": 9 }
+  },
+  {
+    "id": "fn.mround-large-int",
+    "description": "MROUND of 2^53 with multiple 1 is identity",
+    "tags": ["math", "mround"],
+    "formula": "=MROUND(9007199254740992,1)",
+    "expected": { "number": 9007199254740992 }
+  },
+  {
+    "id": "fn.mround-eq-round-unit",
+    "description": "MROUND(2.5, 1) equals ROUND(2.5, 0)",
+    "tags": ["math", "mround"],
+    "formula": "=MROUND(2.5,1)=ROUND(2.5,0)",
+    "expected": { "bool": true }
+  }
+]
