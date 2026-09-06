@@ -1,0 +1,297 @@
+[
+  {
+    "id": "fn.rept-ms-star-dash",
+    "description": "Microsoft example: REPT(\"*-\", 3) is *-*-*-",
+    "tags": ["rept", "text"],
+    "formula": "=REPT(\"*-\", 3)",
+    "expected": { "text": "*-*-*-" }
+  },
+  {
+    "id": "fn.rept-ms-dash-10",
+    "description": "Microsoft example: REPT(\"-\", 10) is ten dashes",
+    "tags": ["rept", "text"],
+    "formula": "=REPT(\"-\", 10)",
+    "expected": { "text": "----------" }
+  },
+  {
+    "id": "fn.rept-once",
+    "description": "Repeating once returns the text unchanged",
+    "tags": ["rept", "text"],
+    "formula": "=REPT(\"abc\", 1)",
+    "expected": { "text": "abc" }
+  },
+  {
+    "id": "fn.rept-zero",
+    "description": "number_times 0 returns empty text",
+    "tags": ["rept", "text", "empty"],
+    "formula": "=REPT(\"abc\", 0)",
+    "expected": { "text": "" }
+  },
+  {
+    "id": "fn.rept-empty-text",
+    "description": "Empty text repeated is empty",
+    "tags": ["rept", "text", "empty"],
+    "formula": "=REPT(\"\", 5)",
+    "expected": { "text": "" }
+  },
+  {
+    "id": "fn.rept-empty-text-huge",
+    "description": "Empty text never overflows the 32767 cap (0 × n)",
+    "tags": ["rept", "text", "empty"],
+    "formula": "=REPT(\"\", 100000)",
+    "expected": { "text": "" }
+  },
+  {
+    "id": "fn.rept-trunc-frac",
+    "description": "number_times 3.9 truncates toward zero to 3",
+    "tags": ["rept", "text"],
+    "formula": "=REPT(\"x\", 3.9)",
+    "expected": { "text": "xxx" }
+  },
+  {
+    "id": "fn.rept-trunc-below-one",
+    "description": "number_times 0.9 truncates to 0 → empty text",
+    "tags": ["rept", "text", "empty"],
+    "formula": "=REPT(\"x\", 0.9)",
+    "expected": { "text": "" }
+  },
+  {
+    "id": "fn.rept-neg-frac-trunc-zero",
+    "description": "−0.9 truncates toward zero to 0 → empty (sign checked after TRUNC)",
+    "tags": ["rept", "text", "empty"],
+    "formula": "=REPT(\"x\", -0.9)",
+    "expected": { "text": "" }
+  },
+  {
+    "id": "fn.rept-negative",
+    "description": "Negative number_times is #VALUE!",
+    "tags": ["rept", "text", "errors"],
+    "formula": "=REPT(\"x\", -1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.rept-neg-frac",
+    "description": "−1.9 truncates to −1 → #VALUE!",
+    "tags": ["rept", "text", "errors"],
+    "formula": "=REPT(\"x\", -1.9)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.rept-non-numeric-times",
+    "description": "Non-numeric number_times is #VALUE!",
+    "tags": ["rept", "text", "errors", "coercion"],
+    "formula": "=REPT(\"x\", \"n\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.rept-numeric-text-times",
+    "description": "Numeric text number_times coerces",
+    "tags": ["rept", "text", "coercion"],
+    "formula": "=REPT(\"ab\", \"2\")",
+    "expected": { "text": "abab" }
+  },
+  {
+    "id": "fn.rept-true-times",
+    "description": "TRUE as number_times is 1",
+    "tags": ["rept", "text", "coercion"],
+    "formula": "=REPT(\"z\", TRUE)",
+    "expected": { "text": "z" }
+  },
+  {
+    "id": "fn.rept-false-times",
+    "description": "FALSE as number_times is 0 → empty",
+    "tags": ["rept", "text", "coercion", "empty"],
+    "formula": "=REPT(\"z\", FALSE)",
+    "expected": { "text": "" }
+  },
+  {
+    "id": "fn.rept-number-text",
+    "description": "Number text coerces like & (12 → \"12\")",
+    "tags": ["rept", "text", "coercion"],
+    "formula": "=REPT(12, 2)",
+    "expected": { "text": "1212" }
+  },
+  {
+    "id": "fn.rept-bool-text",
+    "description": "TRUE text coerces to \"TRUE\"",
+    "tags": ["rept", "text", "coercion"],
+    "formula": "=REPT(TRUE, 2)",
+    "expected": { "text": "TRUETRUE" }
+  },
+  {
+    "id": "fn.rept-blank-text",
+    "description": "Blank cell as text is empty (never overflows)",
+    "tags": ["rept", "text", "empty", "coercion"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=REPT(A1, 20)",
+    "expected": { "text": "" },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.rept-blank-times",
+    "description": "Blank cell as number_times is 0",
+    "tags": ["rept", "text", "empty", "coercion"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=REPT(\"hi\", A1)",
+    "expected": { "text": "" },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.rept-cell-text",
+    "description": "REPT of a stored text cell",
+    "tags": ["rept", "text"],
+    "formula": "=REPT(A1, 3)",
+    "expected": { "text": "ha ha ha " },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": { "A1": { "text": "ha " } }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.rept-space",
+    "description": "A space is not empty and is repeated",
+    "tags": ["rept", "text"],
+    "formula": "=REPT(\" \", 3)",
+    "expected": { "text": "   " }
+  },
+  {
+    "id": "fn.rept-case-kept",
+    "description": "REPT is case-preserving (not case-folded)",
+    "tags": ["rept", "text"],
+    "formula": "=REPT(\"Ab\", 2)",
+    "expected": { "text": "AbAb" }
+  },
+  {
+    "id": "fn.rept-arity-0",
+    "description": "Zero arguments is #VALUE!",
+    "tags": ["rept", "text", "errors"],
+    "formula": "=REPT()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.rept-arity-1",
+    "description": "One argument is #VALUE!",
+    "tags": ["rept", "text", "errors"],
+    "formula": "=REPT(\"x\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.rept-arity-3",
+    "description": "Three arguments is #VALUE!",
+    "tags": ["rept", "text", "errors"],
+    "formula": "=REPT(\"x\", 2, 1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.rept-error-text-wins",
+    "description": "Error in text wins (left-to-right) over error in times",
+    "tags": ["rept", "text", "errors"],
+    "formula": "=REPT(#DIV/0!, #VALUE!)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.rept-error-times",
+    "description": "Error in number_times propagates after text is ok",
+    "tags": ["rept", "text", "errors"],
+    "formula": "=REPT(\"a\", #N/A)",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.rept-nested",
+    "description": "Nested REPT composes",
+    "tags": ["rept", "text"],
+    "formula": "=REPT(REPT(\"a\", 2), 3)",
+    "expected": { "text": "aaaaaa" }
+  },
+  {
+    "id": "fn.rept-len-of-result",
+    "description": "LEN of REPT is the scalar count of the copies",
+    "tags": ["rept", "text"],
+    "formula": "=LEN(REPT(\"ab\", 4))",
+    "expected": { "number": 8 }
+  },
+  {
+    "id": "fn.rept-exact-cap-len",
+    "description": "LEN(REPT(\"a\", 32767)) is 32767 (exactly the UTF-16 cap for ASCII)",
+    "tags": ["rept", "text"],
+    "formula": "=LEN(REPT(\"a\", 32767))",
+    "expected": { "number": 32767 }
+  },
+  {
+    "id": "fn.rept-over-cap-one",
+    "description": "One extra ASCII copy past 32767 is #VALUE!",
+    "tags": ["rept", "text", "errors"],
+    "formula": "=REPT(\"a\", 32768)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.rept-over-cap-pair",
+    "description": "REPT(\"ab\", 16384) is 32768 UTF-16 units → #VALUE!",
+    "tags": ["rept", "text", "errors"],
+    "formula": "=REPT(\"ab\", 16384)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.rept-pair-under-cap-len",
+    "description": "REPT(\"ab\", 16383) is 32766 characters (under the cap)",
+    "tags": ["rept", "text"],
+    "formula": "=LEN(REPT(\"ab\", 16383))",
+    "expected": { "number": 32766 }
+  },
+  {
+    "id": "fn.rept-over-cap-huge-times",
+    "description": "Huge number_times is #VALUE! without allocating the product",
+    "tags": ["rept", "text", "errors"],
+    "formula": "=REPT(\"a\", 1E+20)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.rept-utf16-cap-emoji",
+    "description": "😀 is 2 UTF-16 units: 16384 copies exceed the 32767 cell cap (LEN would be 16384 scalars)",
+    "tags": ["rept", "text", "errors"],
+    "formula": "=REPT(\"😀\", 16384)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.rept-utf16-under-cap-emoji-len",
+    "description": "16383 copies of 😀 fit (32766 UTF-16 units); LEN counts scalars (Compat v2) = 16383",
+    "tags": ["rept", "text"],
+    "formula": "=LEN(REPT(\"😀\", 16383))",
+    "expected": { "number": 16383 }
+  },
+  {
+    "id": "fn.rept-precomposed",
+    "description": "Precomposed é is one Unicode scalar per copy",
+    "tags": ["rept", "text"],
+    "formula": "=LEN(REPT(\"café\", 2))",
+    "expected": { "number": 8 }
+  },
+  {
+    "id": "fn.rept-intersect-times",
+    "description": "Range number_times uses implicit intersection at the host row",
+    "tags": ["rept", "text"],
+    "formula": "=REPT(\"n\", B1:B3)",
+    "at": "Sheet1!C2",
+    "expected": { "text": "nn" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "B1": { "number": 1 },
+            "B2": { "number": 2 },
+            "B3": { "number": 3 }
+          }
+        }
+      ]
+    }
+  }
+]

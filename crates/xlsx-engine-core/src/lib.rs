@@ -9,6 +9,7 @@
 //! - [`text_format`] — Excel `TEXT` for a documented number/date format subset
 //! - [`eval::functions`] also dispatches `SUMIF` / `COUNTIF` / `COUNTIFS` / `SUMPRODUCT` / `SUBSTITUTE`
 //! - [`eval::concat`] — Excel `CONCAT` (range/array flatten + 32767 cap)
+//! - [`eval::rept`] — Excel `REPT` (repeat + 32767 UTF-16 cap)
 //! - [`dates::weekday`] — O(1) Excel `WEEKDAY` on the date serial
 //! - [`dates::yearfrac`] — Excel `YEARFRAC` day-count bases 0–4
 //! - [`dates::workday_serial_intl`] — O(1) Excel `WORKDAY.INTL` weekend mask
@@ -65,6 +66,10 @@ pub use dates::{
 pub use eval::choosecols::{select as excel_choosecols, select_naive as excel_choosecols_naive};
 pub use eval::chooserows::{select as excel_chooserows, select_naive as excel_chooserows_naive};
 pub use eval::concat::{concat_naive_join, eval_concat_formula, ConcatBuilder, CONCAT_MAX_CHARS};
+pub use eval::rept::{
+    rept as excel_rept, rept_naive as excel_rept_naive, trunc_times as rept_trunc_times,
+    REPT_MAX_CHARS,
+};
 pub use eval::drop::{apply as excel_drop, apply_naive as excel_drop_naive};
 pub use eval::expand::{
     dim_from_value as expand_dim_from_value, expand as excel_expand,

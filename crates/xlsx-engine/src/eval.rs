@@ -455,6 +455,7 @@ impl Interpreter {
             "REPLACE" => self.fn_replace(args, ctx),
             "TEXTJOIN" => self.fn_textjoin(args, ctx),
             "CONCAT" => self.fn_concat(args, ctx),
+            "REPT" => self.fn_rept(args, ctx),
             "NPV" => self.fn_npv(args, ctx),
             "UNIQUE" => self.fn_unique(args, ctx),
             "IRR" => self.fn_irr(args, ctx),
@@ -2264,6 +2265,27 @@ impl Interpreter {
             out.push_str(part);
         }
         Ok(ExcelValue::Text(out))
+    }
+
+    fn fn_rept(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.len() != 2 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        let text = match self.as_text(&self.eval_scalar(&args[0], ctx)?) {
+            Ok(s) => s,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        let times = match self.as_number(&self.eval_scalar(&args[1], ctx)?) {
+            Ok(n) => match xlsx_engine_core::rept_trunc_times(n) {
+                Ok(t) => t,
+                Err(e) => return Ok(ExcelValue::Error(e)),
+            },
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        match xlsx_engine_core::excel_rept(&text, times) {
+            Ok(s) => Ok(ExcelValue::Text(s)),
+            Err(e) => Ok(ExcelValue::Error(e)),
+        }
     }
 
     fn fn_concat(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
