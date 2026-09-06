@@ -1,0 +1,579 @@
+[
+  {
+    "id": "fn.choosecols.row-one",
+    "description": "CHOOSECOLS of a row picks the listed column as a 1×1 array",
+    "tags": ["choosecols", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=CHOOSECOLS({1,2,3}, 2)",
+    "expected": { "array": [[{ "number": 2 }]] }
+  },
+  {
+    "id": "fn.choosecols.matrix-one",
+    "description": "One column of a 2-D array stays a column",
+    "tags": ["choosecols"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=CHOOSECOLS({1,2,3;4,5,6}, 2)",
+    "expected": {
+      "array": [[{ "number": 2 }], [{ "number": 5 }]]
+    }
+  },
+  {
+    "id": "fn.choosecols.matrix-two",
+    "description": "Two columns keep source row order",
+    "tags": ["choosecols"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=CHOOSECOLS({1,2,3;4,5,6}, 1, 3)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 3 }],
+        [{ "number": 4 }, { "number": 6 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.choosecols.reorder",
+    "description": "Columns are returned in the listed order, not source order",
+    "tags": ["choosecols"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=CHOOSECOLS({1,2,3;4,5,6}, 3, 1)",
+    "expected": {
+      "array": [
+        [{ "number": 3 }, { "number": 1 }],
+        [{ "number": 6 }, { "number": 4 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.choosecols.duplicate",
+    "description": "The same column may be requested more than once",
+    "tags": ["choosecols"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=CHOOSECOLS({1,2,3;4,5,6}, 1, 1)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 1 }],
+        [{ "number": 4 }, { "number": 4 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.choosecols.microsoft-repeat",
+    "description": "Microsoft example shape: columns 1, 3, 5, 1 again",
+    "tags": ["choosecols"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=CHOOSECOLS({1,2,3,4,5;6,7,8,9,10}, 1, 3, 5, 1)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 3 }, { "number": 5 }, { "number": 1 }],
+        [{ "number": 6 }, { "number": 8 }, { "number": 10 }, { "number": 6 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.choosecols.neg-last",
+    "description": "Negative index: -1 is the last column",
+    "tags": ["choosecols"],
+    "quirks": ["array-eval-mode"],
+    "notes": "Excel counts from the right. -1 is last, not a wrap of column 1.",
+    "formula": "=CHOOSECOLS({1,2,3}, -1)",
+    "expected": { "array": [[{ "number": 3 }]] }
+  },
+  {
+    "id": "fn.choosecols.neg-second-last",
+    "description": "Negative index: -2 is the second-last column",
+    "tags": ["choosecols"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=CHOOSECOLS({1,2,3}, -2)",
+    "expected": { "array": [[{ "number": 2 }]] }
+  },
+  {
+    "id": "fn.choosecols.neg-pair",
+    "description": "Microsoft example: -1, -2 returns last then second-last",
+    "tags": ["choosecols"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=CHOOSECOLS({1,2,13,14;3,4,15,16}, -1, -2)",
+    "expected": {
+      "array": [
+        [{ "number": 14 }, { "number": 13 }],
+        [{ "number": 16 }, { "number": 15 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.choosecols.mix-pos-neg",
+    "description": "First and last columns via 1, -1",
+    "tags": ["choosecols"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=CHOOSECOLS({1,2,3;4,5,6}, 1, -1)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 3 }],
+        [{ "number": 4 }, { "number": 6 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.choosecols.zero",
+    "description": "col_num 0 is #VALUE! (not a valid index)",
+    "tags": ["choosecols", "errors"],
+    "quirks": ["array-eval-mode"],
+    "notes": "Microsoft: #VALUE! if the absolute value of any col_num is zero or exceeds the column count.",
+    "formula": "=CHOOSECOLS({1,2,3}, 0)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.choosecols.zero-among",
+    "description": "A zero among valid col_nums is still #VALUE!",
+    "tags": ["choosecols", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=CHOOSECOLS({1,2,3}, 1, 0)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.choosecols.oob-pos",
+    "description": "Positive col_num past the width is #VALUE!, not INDEX #REF!",
+    "tags": ["choosecols", "errors"],
+    "quirks": ["array-eval-mode"],
+    "notes": "INDEX({1,2,3}, 4) is #REF!. CHOOSECOLS({1,2,3}, 4) is #VALUE!.",
+    "formula": "=CHOOSECOLS({1,2,3}, 4)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.choosecols.oob-neg",
+    "description": "Negative col_num whose abs exceeds width is #VALUE!",
+    "tags": ["choosecols", "errors"],
+    "quirks": ["array-eval-mode"],
+    "notes": "On a 3-column array, -3 is column 1; -4 is #VALUE!. No wrap-around.",
+    "formula": "=CHOOSECOLS({1,2,3}, -4)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.choosecols.neg-width",
+    "description": "Exactly -ncols is the first column",
+    "tags": ["choosecols"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=CHOOSECOLS({1,2,3}, -3)",
+    "expected": { "array": [[{ "number": 1 }]] }
+  },
+  {
+    "id": "fn.choosecols.vs-index-oob",
+    "description": "INDEX of the same OOB position is #REF! (contrast)",
+    "tags": ["choosecols", "index", "errors"],
+    "formula": "=INDEX({1,2,3}, 4)",
+    "expected": { "error": "#REF!" }
+  },
+  {
+    "id": "fn.choosecols.arity-none",
+    "description": "CHOOSECOLS() is #VALUE!",
+    "tags": ["choosecols", "errors"],
+    "formula": "=CHOOSECOLS()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.choosecols.arity-one",
+    "description": "Missing col_num1 is #VALUE!",
+    "tags": ["choosecols", "errors"],
+    "formula": "=CHOOSECOLS({1,2,3})",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.choosecols.trunc-pos",
+    "description": "Fractional col_num truncates toward zero (CHOOSE family)",
+    "tags": ["choosecols"],
+    "quirks": ["array-eval-mode"],
+    "notes": "1.9 → 1, same as CHOOSE(1.9, …). No live Excel recording in CI; this is the documented CHOOSE/INDEX truncation rule, not a guessed golden.",
+    "formula": "=CHOOSECOLS({1,2,3}, 1.9)",
+    "expected": { "array": [[{ "number": 1 }]] }
+  },
+  {
+    "id": "fn.choosecols.trunc-neg",
+    "description": "-1.9 truncates toward zero to -1 (last column)",
+    "tags": ["choosecols"],
+    "quirks": ["array-eval-mode"],
+    "notes": "Toward-zero, not toward -∞. -1.9 → -1, not -2.",
+    "formula": "=CHOOSECOLS({1,2,3}, -1.9)",
+    "expected": { "array": [[{ "number": 3 }]] }
+  },
+  {
+    "id": "fn.choosecols.trunc-to-zero",
+    "description": "0.9 truncates to 0 and is #VALUE!",
+    "tags": ["choosecols", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=CHOOSECOLS({1,2,3}, 0.9)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.choosecols.trunc-neg-to-zero",
+    "description": "-0.4 truncates to 0 and is #VALUE!",
+    "tags": ["choosecols", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=CHOOSECOLS({1,2,3}, -0.4)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.choosecols.trunc-last-ok",
+    "description": "3.9 on a 3-column array truncates to 3 (still in range)",
+    "tags": ["choosecols"],
+    "quirks": ["array-eval-mode"],
+    "notes": "Truncate first, then apply abs-exceeds. 3.9 → 3, not #VALUE! from abs(3.9)>3.",
+    "formula": "=CHOOSECOLS({1,2,3}, 3.9)",
+    "expected": { "array": [[{ "number": 3 }]] }
+  },
+  {
+    "id": "fn.choosecols.array-colnums",
+    "description": "A row array of col_nums is flattened row-major",
+    "tags": ["choosecols"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=CHOOSECOLS({1,2,3;4,5,6}, {1,3})",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 3 }],
+        [{ "number": 4 }, { "number": 6 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.choosecols.array-colnums-col",
+    "description": "A column array of col_nums is the same list",
+    "tags": ["choosecols"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=CHOOSECOLS({1,2,3;4,5,6}, {1;3})",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 3 }],
+        [{ "number": 4 }, { "number": 6 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.choosecols.array-and-scalar",
+    "description": "Array col_nums then a scalar appends that column",
+    "tags": ["choosecols"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=CHOOSECOLS({1,2,3;4,5,6}, {1,3}, 2)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 3 }, { "number": 2 }],
+        [{ "number": 4 }, { "number": 6 }, { "number": 5 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.choosecols.true",
+    "description": "TRUE coerces to 1",
+    "tags": ["choosecols"],
+    "quirks": ["array-eval-mode", "bool-number-equality"],
+    "formula": "=CHOOSECOLS({1,2,3}, TRUE)",
+    "expected": { "array": [[{ "number": 1 }]] }
+  },
+  {
+    "id": "fn.choosecols.false",
+    "description": "FALSE coerces to 0 and is #VALUE!",
+    "tags": ["choosecols", "errors"],
+    "quirks": ["array-eval-mode", "bool-number-equality"],
+    "formula": "=CHOOSECOLS({1,2,3}, FALSE)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.choosecols.text-num",
+    "description": "Numeric text col_num coerces",
+    "tags": ["choosecols"],
+    "quirks": ["array-eval-mode", "equality-vs-arithmetic-coercion"],
+    "formula": "=CHOOSECOLS({1,2,3}, \"2\")",
+    "expected": { "array": [[{ "number": 2 }]] }
+  },
+  {
+    "id": "fn.choosecols.text-bad",
+    "description": "Non-numeric text col_num is #VALUE!",
+    "tags": ["choosecols", "errors"],
+    "formula": "=CHOOSECOLS({1,2,3}, \"x\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.choosecols.blank-colnum",
+    "description": "A blank col_num cell coerces to 0 → #VALUE!",
+    "tags": ["choosecols", "errors", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=CHOOSECOLS({1,2,3}, B1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.choosecols.range",
+    "description": "Worksheet range: pick column 2",
+    "tags": ["choosecols"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=CHOOSECOLS(A1:C3, 2)",
+    "expected": {
+      "array": [[{ "number": 2 }], [{ "number": 5 }], [{ "number": 8 }]]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "B1": { "number": 2 },
+          "C1": { "number": 3 },
+          "A2": { "number": 4 },
+          "B2": { "number": 5 },
+          "C2": { "number": 6 },
+          "A3": { "number": 7 },
+          "B3": { "number": 8 },
+          "C3": { "number": 9 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.choosecols.range-neg",
+    "description": "Worksheet range: -1 is the last column without walking the middle",
+    "tags": ["choosecols"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=CHOOSECOLS(A1:C2, -1)",
+    "expected": {
+      "array": [[{ "number": 3 }], [{ "number": 6 }]]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "B1": { "number": 2 },
+          "C1": { "number": 3 },
+          "A2": { "number": 4 },
+          "B2": { "number": 5 },
+          "C2": { "number": 6 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.choosecols.dropped-col-error",
+    "description": "An error in a dropped column does not become the result",
+    "tags": ["choosecols", "errors"],
+    "quirks": ["array-eval-mode", "error-precedence"],
+    "notes": "Pick-after-materialize and the range-skip path agree: unselected #DIV/0! is not returned. The range-skip path does not walk that cell.",
+    "formula": "=CHOOSECOLS(A1:C1, 1)",
+    "expected": { "array": [[{ "number": 1 }]] },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "B1": { "error": "#DIV/0!" },
+          "C1": { "number": 3 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.choosecols.scalar",
+    "description": "A scalar array with col 1 is a 1×1 result",
+    "tags": ["choosecols"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=CHOOSECOLS(5, 1)",
+    "expected": { "array": [[{ "number": 5 }]] }
+  },
+  {
+    "id": "fn.choosecols.scalar-neg",
+    "description": "A scalar has one column; -1 is that column",
+    "tags": ["choosecols"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=CHOOSECOLS(5, -1)",
+    "expected": { "array": [[{ "number": 5 }]] }
+  },
+  {
+    "id": "fn.choosecols.scalar-oob",
+    "description": "A scalar has one column; 2 is #VALUE!",
+    "tags": ["choosecols", "errors"],
+    "formula": "=CHOOSECOLS(5, 2)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.choosecols.col-vector",
+    "description": "The only column of a column vector is kept",
+    "tags": ["choosecols"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=CHOOSECOLS({1;2;3}, 1)",
+    "expected": {
+      "array": [[{ "number": 1 }], [{ "number": 2 }], [{ "number": 3 }]]
+    }
+  },
+  {
+    "id": "fn.choosecols.col-vector-oob",
+    "description": "A column vector has width 1; col 2 is #VALUE!",
+    "tags": ["choosecols", "errors"],
+    "formula": "=CHOOSECOLS({1;2;3}, 2)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.choosecols.errors-in-array",
+    "description": "Errors inside the source array are copied, not a function-level fail",
+    "tags": ["choosecols", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=CHOOSECOLS({1,#DIV/0!,3}, 2)",
+    "expected": { "array": [[{ "error": "#DIV/0!" }]] }
+  },
+  {
+    "id": "fn.choosecols.errors-in-array-skipped",
+    "description": "Picking a neighbor of an error cell does not surface the error",
+    "tags": ["choosecols", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=CHOOSECOLS({1,#DIV/0!,3}, 1)",
+    "expected": { "array": [[{ "number": 1 }]] }
+  },
+  {
+    "id": "fn.choosecols.error-array-arg",
+    "description": "A scalar error as array wins",
+    "tags": ["choosecols", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=CHOOSECOLS(#DIV/0!, 1)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.choosecols.error-colnum",
+    "description": "An error col_num wins",
+    "tags": ["choosecols", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=CHOOSECOLS({1,2,3}, #N/A)",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.choosecols.error-in-colnum-array",
+    "description": "First error in a col_num array wins (row-major)",
+    "tags": ["choosecols", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=CHOOSECOLS({1,2,3}, {1,#DIV/0!})",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.choosecols.empty-cell-kept",
+    "description": "A blank in a selected column stays empty",
+    "tags": ["choosecols", "empty"],
+    "quirks": ["array-eval-mode", "empty-cell-duality"],
+    "formula": "=CHOOSECOLS(A1:B2, 1)",
+    "expected": {
+      "array": [[{ "number": 1 }], [{ "empty": null }]]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "B1": { "number": 2 },
+          "B2": { "number": 4 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.choosecols.types-kept",
+    "description": "Text, logical, and number cells keep their types",
+    "tags": ["choosecols"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=CHOOSECOLS({\"a\",TRUE,2}, 1, 2, 3)",
+    "expected": {
+      "array": [[{ "text": "a" }, { "bool": true }, { "number": 2 }]]
+    }
+  },
+  {
+    "id": "fn.choosecols.index-nth",
+    "description": "INDEX picks a CHOOSECOLS cell without writing a spill range",
+    "tags": ["choosecols", "index"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=INDEX(CHOOSECOLS({1,2,3;4,5,6}, 2), 2)",
+    "expected": { "number": 5 }
+  },
+  {
+    "id": "fn.choosecols.sum",
+    "description": "SUM consumes the CHOOSECOLS array",
+    "tags": ["choosecols", "sum"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SUM(CHOOSECOLS({1,2,3;4,5,6}, 1, 3))",
+    "expected": { "number": 14 }
+  },
+  {
+    "id": "fn.choosecols.counta",
+    "description": "COUNTA of CHOOSECOLS counts non-blanks in the picked columns",
+    "tags": ["choosecols", "counta"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=COUNTA(CHOOSECOLS(A1:C2, 1, 2))",
+    "expected": { "number": 3 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "a" },
+          "B1": { "text": "b" },
+          "C1": { "text": "c" },
+          "A2": { "text": "d" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.choosecols.nested",
+    "description": "CHOOSECOLS of CHOOSECOLS picks from the already-narrowed array",
+    "tags": ["choosecols"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=CHOOSECOLS(CHOOSECOLS({1,2,3;4,5,6}, 1, 3), 2)",
+    "expected": {
+      "array": [[{ "number": 3 }], [{ "number": 6 }]]
+    }
+  },
+  {
+    "id": "fn.choosecols.dynamic-array-mode",
+    "description": "array_mode=dynamic-array still returns the CHOOSECOLS array (no grid write)",
+    "tags": ["choosecols", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=CHOOSECOLS(A1:C2, 1, 3)",
+    "options": { "array_mode": "dynamic-array" },
+    "expected": {
+      "array": [
+        [{ "number": 10 }, { "number": 30 }],
+        [{ "number": 40 }, { "number": 60 }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 10 },
+          "B1": { "number": 20 },
+          "C1": { "number": 30 },
+          "A2": { "number": 40 },
+          "B2": { "number": 50 },
+          "C2": { "number": 60 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.choosecols.no-grid-write",
+    "description": "Occupied cells in the Excel spill zone do not produce #SPILL! — CHOOSECOLS returns the array",
+    "notes": "Excel would #SPILL! if CHOOSECOLS at B1 needed B2. This model never writes a spill range; neighbors are irrelevant. Pick individual results with INDEX/SUM.",
+    "tags": ["choosecols", "spill"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=CHOOSECOLS({1,2;3,4}, 1)",
+    "at": "Sheet1!B1",
+    "expected": {
+      "array": [[{ "number": 1 }], [{ "number": 3 }]]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "B2": { "text": "blocker" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.choosecols.scalar-plus-top-left",
+    "description": "CHOOSECOLS(...)+1 scalarizes to the top-left (no host-aware spill intersect)",
+    "tags": ["choosecols"],
+    "quirks": ["array-eval-mode"],
+    "notes": "The engine has no written spill. Scalar operators take the top-left element.",
+    "formula": "=CHOOSECOLS({10,20;30,40}, 2)+1",
+    "expected": { "number": 21 }
+  }
+]

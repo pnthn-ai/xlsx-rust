@@ -1,0 +1,294 @@
+[
+  {
+    "id": "fn.rri.ms-96mo",
+    "description": "Microsoft RRI example: $10,000 → $11,000 over 96 months",
+    "tags": ["rri", "financial"],
+    "notes": "support.microsoft.com RRI publishes 0.0009933. Golden is the OpenFormula 6.12.45 identity expm1(ln1p((fv-pv)/pv)/nper).",
+    "formula": "=RRI(96, 10000, 11000)",
+    "expected": { "number": 0.0009933073762913949 }
+  },
+  {
+    "id": "fn.rri.ms-cells",
+    "description": "Same Microsoft example via cell refs (A1=96, A2=10000, A3=11000)",
+    "tags": ["rri", "financial"],
+    "formula": "=RRI(A1, A2, A3)",
+    "expected": { "number": 0.0009933073762913949 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 96 },
+          "A2": { "number": 10000 },
+          "A3": { "number": 11000 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.rri.named",
+    "description": "RRI of defined names for nper / pv / fv",
+    "tags": ["rri", "financial", "named"],
+    "formula": "=RRI(Nper, Pv, Fv)",
+    "expected": { "number": 0.0009933073762913949 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 96 },
+          "A2": { "number": 10000 },
+          "A3": { "number": 11000 }
+        }
+      }],
+      "names": [
+        { "name": "Nper", "refers_to": "Sheet1!A1" },
+        { "name": "Pv", "refers_to": "Sheet1!A2" },
+        { "name": "Fv", "refers_to": "Sheet1!A3" }
+      ]
+    }
+  },
+  {
+    "id": "fn.rri.double-in-10",
+    "description": "Money doubles in 10 periods → ~7.177%",
+    "tags": ["rri", "financial"],
+    "formula": "=RRI(10, 1000, 2000)",
+    "expected": { "number": 0.07177346253629316 }
+  },
+  {
+    "id": "fn.rri.annual-8y",
+    "description": "Same Microsoft dollars over 8 annual periods (~1.1985%)",
+    "tags": ["rri", "financial"],
+    "formula": "=RRI(8, 10000, 11000)",
+    "expected": { "number": 0.011985024140399585 }
+  },
+  {
+    "id": "fn.rri.nper-one",
+    "description": "nper=1 is the simple return (fv-pv)/pv",
+    "tags": ["rri", "financial"],
+    "formula": "=RRI(1, 100, 110)",
+    "expected": { "number": 0.1 }
+  },
+  {
+    "id": "fn.rri.nper-one-opposite",
+    "description": "Opposite signs are allowed only when nper=1 (LibreOffice Excel compat)",
+    "tags": ["rri", "financial"],
+    "formula": "=RRI(1, -100, 110)",
+    "expected": { "number": -2.1 }
+  },
+  {
+    "id": "fn.rri.fv-eq-pv",
+    "description": "fv=pv is a zero rate",
+    "tags": ["rri", "financial"],
+    "formula": "=RRI(10, 100, 100)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.rri.fv-zero",
+    "description": "fv=0 with pv≠0 is a total loss: rate -100%",
+    "tags": ["rri", "financial"],
+    "formula": "=RRI(10, 100, 0)",
+    "expected": { "number": -1 }
+  },
+  {
+    "id": "fn.rri.both-negative",
+    "description": "Same-sign negatives match the positive pair (ratio is positive)",
+    "tags": ["rri", "financial"],
+    "formula": "=RRI(96, -10000, -11000)",
+    "expected": { "number": 0.0009933073762913949 }
+  },
+  {
+    "id": "fn.rri.decay",
+    "description": "fv < pv is a negative equivalent rate",
+    "tags": ["rri", "financial"],
+    "formula": "=RRI(10, 1000, 500)",
+    "expected": { "number": -0.06696700846319258 }
+  },
+  {
+    "id": "fn.rri.frac-nper",
+    "description": "nper is not truncated; fractional periods are allowed",
+    "tags": ["rri", "financial"],
+    "formula": "=RRI(2.5, 100, 200)",
+    "expected": { "number": 0.31950791077289425 }
+  },
+  {
+    "id": "fn.rri.half-period",
+    "description": "nper=0.5 is (fv/pv)^2 − 1",
+    "tags": ["rri", "financial"],
+    "formula": "=RRI(0.5, 100, 121)",
+    "expected": { "number": 0.4641 }
+  },
+  {
+    "id": "fn.rri.long-horizon",
+    "description": "Large nper stays finite (double in 10,000 periods)",
+    "tags": ["rri", "financial", "perf"],
+    "formula": "=RRI(10000, 100, 200)",
+    "expected": { "number": 0.00006931712037656919 }
+  },
+  {
+    "id": "fn.rri.tiny-growth",
+    "description": "Tiny growth uses ln1p/expm1 so (fv/pv)^(1/n)−1 does not cancel",
+    "tags": ["rri", "financial", "perf"],
+    "quirks": ["ieee-vs-excel-precision"],
+    "formula": "=RRI(360, 100000, 100001)",
+    "expected": { "number": 2.7777639275613427e-08 }
+  },
+  {
+    "id": "fn.rri.percent-unary",
+    "description": "fv written with postfix % still coerces (11000%)",
+    "tags": ["rri", "financial"],
+    "quirks": ["percent-unary"],
+    "formula": "=RRI(1, 100, 11000%)",
+    "expected": { "number": 0.1 }
+  },
+  {
+    "id": "fn.rri.text-number",
+    "description": "Numeric text coerces like arithmetic",
+    "tags": ["rri", "financial", "coercion"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=RRI(\"10\", \"1000\", \"2000\")",
+    "expected": { "number": 0.07177346253629316 }
+  },
+  {
+    "id": "fn.rri.true-nper",
+    "description": "TRUE nper coerces to 1 (simple return)",
+    "tags": ["rri", "financial", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=RRI(TRUE, 100, 110)",
+    "expected": { "number": 0.1 }
+  },
+  {
+    "id": "fn.rri.false-nper",
+    "description": "FALSE nper coerces to 0 → #NUM!",
+    "tags": ["rri", "financial", "coercion", "errors"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=RRI(FALSE, 100, 110)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.rri.true-pv",
+    "description": "TRUE pv coerces to 1",
+    "tags": ["rri", "financial", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=RRI(10, TRUE, 2)",
+    "expected": { "number": 0.07177346253629316 }
+  },
+  {
+    "id": "fn.rri.empty-nper",
+    "description": "Blank nper cell coerces to 0 → #NUM!",
+    "tags": ["rri", "financial", "empty", "errors"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=RRI(A1, 100, 110)",
+    "expected": { "error": "#NUM!" },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.rri.empty-pv",
+    "description": "Blank pv cell coerces to 0 → #NUM!",
+    "tags": ["rri", "financial", "empty", "errors"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=RRI(10, A1, 110)",
+    "expected": { "error": "#NUM!" },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.rri.empty-fv",
+    "description": "Blank fv cell coerces to 0 → rate −1",
+    "tags": ["rri", "financial", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=RRI(10, 100, A1)",
+    "expected": { "number": -1 },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.rri.nper-zero",
+    "description": "nper=0 is #NUM! (OpenFormula N>0)",
+    "tags": ["rri", "financial", "errors"],
+    "formula": "=RRI(0, 10000, 11000)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.rri.nper-negative",
+    "description": "Negative nper is #NUM!",
+    "tags": ["rri", "financial", "errors"],
+    "formula": "=RRI(-10, 10000, 11000)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.rri.pv-zero",
+    "description": "pv=0 is #NUM! (division by present value)",
+    "tags": ["rri", "financial", "errors"],
+    "formula": "=RRI(10, 0, 11000)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.rri.opposite-signs",
+    "description": "Opposite signs with nper≠1 is #NUM! (negative base)",
+    "tags": ["rri", "financial", "errors"],
+    "formula": "=RRI(2, 100, -110)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.rri.overflow",
+    "description": "(fv/pv)^(1/nper) overflow is #NUM! (same as POWER)",
+    "tags": ["rri", "financial", "errors"],
+    "formula": "=RRI(1E-10, 1, 2)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.rri.too-few-args",
+    "description": "RRI requires nper, pv, fv",
+    "tags": ["rri", "financial", "errors"],
+    "formula": "=RRI(10, 1000)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.rri.no-args",
+    "description": "RRI() is #VALUE!",
+    "tags": ["rri", "financial", "errors"],
+    "formula": "=RRI()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.rri.too-many-args",
+    "description": "More than three arguments is #VALUE!",
+    "tags": ["rri", "financial", "errors"],
+    "formula": "=RRI(10, 1000, 2000, 0)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.rri.text-nper",
+    "description": "Non-numeric text nper is #VALUE!",
+    "tags": ["rri", "financial", "errors"],
+    "formula": "=RRI(\"x\", 1000, 2000)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.rri.error-left",
+    "description": "Left-to-right error precedence: first arg error wins",
+    "tags": ["rri", "financial", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=RRI(#DIV/0!, #VALUE!, 1)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.rri.error-second",
+    "description": "Second-arg error surfaces when nper is fine",
+    "tags": ["rri", "financial", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=RRI(10, #NAME?, #N/A)",
+    "expected": { "error": "#NAME?" }
+  },
+  {
+    "id": "fn.rri.error-third",
+    "description": "Third-arg error surfaces when nper and pv are fine",
+    "tags": ["rri", "financial", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=RRI(10, 1000, #N/A)",
+    "expected": { "error": "#N/A" }
+  }
+]

@@ -1,0 +1,909 @@
+[
+  {
+    "id": "fn.xlookup.exact-hit",
+    "description": "XLOOKUP exact hit on a column",
+    "tags": ["xlookup", "functions"],
+    "formula": "=XLOOKUP(5, A1:A3, B1:B3)",
+    "expected": { "text": "b" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "text": "a" },
+          "A2": { "number": 5 }, "B2": { "text": "b" },
+          "A3": { "number": 10 }, "B3": { "text": "c" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xlookup.exact-default-miss",
+    "description": "Omitted match_mode is exact: a near key is #N/A (unlike VLOOKUP)",
+    "tags": ["xlookup", "errors"],
+    "formula": "=XLOOKUP(6, A1:A3, B1:B3)",
+    "expected": { "error": "#N/A" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "text": "a" },
+          "A2": { "number": 5 }, "B2": { "text": "b" },
+          "A3": { "number": 10 }, "B3": { "text": "c" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xlookup.match-mode-zero",
+    "description": "Explicit match_mode 0 is exact",
+    "tags": ["xlookup"],
+    "formula": "=XLOOKUP(6, A1:A3, B1:B3, \"miss\", 0)",
+    "expected": { "text": "miss" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "text": "a" },
+          "A2": { "number": 5 }, "B2": { "text": "b" },
+          "A3": { "number": 10 }, "B3": { "text": "c" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xlookup.if-not-found-text",
+    "description": "4th argument replaces #N/A on a miss",
+    "tags": ["xlookup"],
+    "formula": "=XLOOKUP(6, A1:A3, B1:B3, \"miss\")",
+    "expected": { "text": "miss" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "text": "a" },
+          "A2": { "number": 5 }, "B2": { "text": "b" },
+          "A3": { "number": 10 }, "B3": { "text": "c" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xlookup.if-not-found-zero",
+    "description": "if_not_found can be the number 0",
+    "tags": ["xlookup"],
+    "formula": "=XLOOKUP(9, A1:A2, B1:B2, 0)",
+    "expected": { "number": 0 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "text": "a" },
+          "A2": { "number": 2 }, "B2": { "text": "b" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xlookup.if-not-found-empty-string",
+    "description": "if_not_found \"\" is a stored empty string, not #N/A",
+    "tags": ["xlookup"],
+    "formula": "=XLOOKUP(9, A1:A2, B1:B2, \"\")",
+    "expected": { "text": "" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "text": "a" },
+          "A2": { "number": 2 }, "B2": { "text": "b" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xlookup.if-not-found-blank-cell",
+    "description": "if_not_found of a blank cell returns empty",
+    "tags": ["xlookup"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=XLOOKUP(9, A1:A2, B1:B2, C1)",
+    "expected": { "empty": null },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "text": "a" },
+          "A2": { "number": 2 }, "B2": { "text": "b" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xlookup.if-not-found-unused-error",
+    "description": "A hit ignores if_not_found even when that argument is #DIV/0!",
+    "tags": ["xlookup"],
+    "quirks": ["error-precedence"],
+    "formula": "=XLOOKUP(1, A1:A2, B1:B2, 1/0)",
+    "expected": { "text": "a" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "text": "a" },
+          "A2": { "number": 2 }, "B2": { "text": "b" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xlookup.if-not-found-used-error",
+    "description": "A miss returns a provided if_not_found error",
+    "tags": ["xlookup", "errors"],
+    "formula": "=XLOOKUP(9, A1:A2, B1:B2, 1/0)",
+    "expected": { "error": "#DIV/0!" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "text": "a" },
+          "A2": { "number": 2 }, "B2": { "text": "b" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xlookup.next-smaller-between",
+    "description": "match_mode -1 returns the next smaller key",
+    "tags": ["xlookup"],
+    "formula": "=XLOOKUP(6, A1:A3, B1:B3, \"miss\", -1)",
+    "expected": { "text": "b" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "text": "a" },
+          "A2": { "number": 5 }, "B2": { "text": "b" },
+          "A3": { "number": 10 }, "B3": { "text": "c" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xlookup.next-smaller-exact",
+    "description": "match_mode -1 still takes an exact hit",
+    "tags": ["xlookup"],
+    "formula": "=XLOOKUP(5, A1:A3, B1:B3, \"miss\", -1)",
+    "expected": { "text": "b" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "text": "a" },
+          "A2": { "number": 5 }, "B2": { "text": "b" },
+          "A3": { "number": 10 }, "B3": { "text": "c" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xlookup.next-smaller-below-first",
+    "description": "match_mode -1 below every key uses if_not_found",
+    "tags": ["xlookup"],
+    "formula": "=XLOOKUP(0, A1:A3, B1:B3, \"miss\", -1)",
+    "expected": { "text": "miss" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "text": "a" },
+          "A2": { "number": 5 }, "B2": { "text": "b" },
+          "A3": { "number": 10 }, "B3": { "text": "c" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xlookup.next-smaller-above-last",
+    "description": "match_mode -1 above every key returns the last row",
+    "tags": ["xlookup"],
+    "formula": "=XLOOKUP(100, A1:A3, B1:B3, \"miss\", -1)",
+    "expected": { "text": "c" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "text": "a" },
+          "A2": { "number": 5 }, "B2": { "text": "b" },
+          "A3": { "number": 10 }, "B3": { "text": "c" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xlookup.next-larger-between",
+    "description": "match_mode 1 returns the next larger key",
+    "tags": ["xlookup"],
+    "formula": "=XLOOKUP(6, A1:A3, B1:B3, \"miss\", 1)",
+    "expected": { "text": "c" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "text": "a" },
+          "A2": { "number": 5 }, "B2": { "text": "b" },
+          "A3": { "number": 10 }, "B3": { "text": "c" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xlookup.next-larger-below-first",
+    "description": "match_mode 1 below every key returns the first row",
+    "tags": ["xlookup"],
+    "formula": "=XLOOKUP(0, A1:A3, B1:B3, \"miss\", 1)",
+    "expected": { "text": "a" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "text": "a" },
+          "A2": { "number": 5 }, "B2": { "text": "b" },
+          "A3": { "number": 10 }, "B3": { "text": "c" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xlookup.next-larger-above-last",
+    "description": "match_mode 1 above every key uses if_not_found",
+    "tags": ["xlookup"],
+    "formula": "=XLOOKUP(100, A1:A3, B1:B3, \"miss\", 1)",
+    "expected": { "text": "miss" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "text": "a" },
+          "A2": { "number": 5 }, "B2": { "text": "b" },
+          "A3": { "number": 10 }, "B3": { "text": "c" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xlookup.next-smaller-unsorted-linear",
+    "description": "Linear match_mode -1 finds the globally next-smaller key even when unsorted",
+    "tags": ["xlookup"],
+    "formula": "=XLOOKUP(6, A1:A3, B1:B3, \"miss\", -1, 1)",
+    "expected": { "text": "c" },
+    "notes": "Keys 1,10,5. Next smaller than 6 is 5 (row 3), not a binary-search probe.",
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "text": "a" },
+          "A2": { "number": 10 }, "B2": { "text": "b" },
+          "A3": { "number": 5 }, "B3": { "text": "c" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xlookup.match-mode-truncates",
+    "description": "match_mode -1.9 truncates toward zero to -1",
+    "tags": ["xlookup"],
+    "formula": "=XLOOKUP(6, A1:A3, B1:B3, \"miss\", -1.9)",
+    "expected": { "text": "b" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "text": "a" },
+          "A2": { "number": 5 }, "B2": { "text": "b" },
+          "A3": { "number": 10 }, "B3": { "text": "c" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xlookup.match-mode-invalid",
+    "description": "match_mode 3 is #VALUE!",
+    "tags": ["xlookup", "errors"],
+    "formula": "=XLOOKUP(1, A1:A1, B1:B1, \"x\", 3)",
+    "expected": { "error": "#VALUE!" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "number": 2 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xlookup.search-mode-first",
+    "description": "search_mode 1 returns the first duplicate",
+    "tags": ["xlookup"],
+    "formula": "=XLOOKUP(5, A1:A4, B1:B4, \"miss\", 0, 1)",
+    "expected": { "text": "b" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "text": "a" },
+          "A2": { "number": 5 }, "B2": { "text": "b" },
+          "A3": { "number": 5 }, "B3": { "text": "c" },
+          "A4": { "number": 10 }, "B4": { "text": "d" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xlookup.search-mode-last",
+    "description": "search_mode -1 returns the last duplicate",
+    "tags": ["xlookup"],
+    "formula": "=XLOOKUP(5, A1:A4, B1:B4, \"miss\", 0, -1)",
+    "expected": { "text": "c" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "text": "a" },
+          "A2": { "number": 5 }, "B2": { "text": "b" },
+          "A3": { "number": 5 }, "B3": { "text": "c" },
+          "A4": { "number": 10 }, "B4": { "text": "d" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xlookup.search-mode-invalid",
+    "description": "search_mode 0 is #VALUE!",
+    "tags": ["xlookup", "errors"],
+    "formula": "=XLOOKUP(1, A1:A1, B1:B1, \"x\", 0, 0)",
+    "expected": { "error": "#VALUE!" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "number": 2 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xlookup.binary-asc-exact",
+    "description": "search_mode 2 exact hit on a sorted ascending column",
+    "tags": ["xlookup"],
+    "quirks": ["vlookup-approximate-unsorted"],
+    "formula": "=XLOOKUP(5, A1:A3, B1:B3, \"miss\", 0, 2)",
+    "expected": { "text": "b" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "text": "a" },
+          "A2": { "number": 5 }, "B2": { "text": "b" },
+          "A3": { "number": 10 }, "B3": { "text": "c" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xlookup.binary-asc-exact-miss",
+    "description": "search_mode 2 exact miss on a sorted column is if_not_found",
+    "tags": ["xlookup"],
+    "quirks": ["vlookup-approximate-unsorted"],
+    "formula": "=XLOOKUP(6, A1:A3, B1:B3, \"miss\", 0, 2)",
+    "expected": { "text": "miss" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "text": "a" },
+          "A2": { "number": 5 }, "B2": { "text": "b" },
+          "A3": { "number": 10 }, "B3": { "text": "c" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xlookup.binary-asc-next-smaller",
+    "description": "search_mode 2 + match_mode -1 is last key <= lookup",
+    "tags": ["xlookup"],
+    "quirks": ["vlookup-approximate-unsorted"],
+    "formula": "=XLOOKUP(6, A1:A3, B1:B3, \"miss\", -1, 2)",
+    "expected": { "text": "b" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "text": "a" },
+          "A2": { "number": 5 }, "B2": { "text": "b" },
+          "A3": { "number": 10 }, "B3": { "text": "c" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xlookup.binary-unsorted-exact-misses",
+    "description": "Unsorted exact binary search can miss a key that is present",
+    "tags": ["xlookup"],
+    "quirks": ["vlookup-approximate-unsorted"],
+    "notes": "Keys 1,10,5. Binary lower-bound for 5 lands on 10, so the present 5 is missed.",
+    "formula": "=XLOOKUP(5, A1:A3, B1:B3, \"miss\", 0, 2)",
+    "expected": { "text": "miss" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "text": "a" },
+          "A2": { "number": 10 }, "B2": { "text": "b" },
+          "A3": { "number": 5 }, "B3": { "text": "c" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xlookup.binary-unsorted-approx-wrong-row",
+    "description": "Unsorted approximate binary search can return the wrong row",
+    "tags": ["xlookup"],
+    "quirks": ["vlookup-approximate-unsorted"],
+    "notes": "Keys 1,10,5. Lookup 6: mid key 10>6 so the search stays on the first row ('a'), not 5/'c'.",
+    "formula": "=XLOOKUP(6, A1:A3, B1:B3, \"miss\", -1, 2)",
+    "expected": { "text": "a" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "text": "a" },
+          "A2": { "number": 10 }, "B2": { "text": "b" },
+          "A3": { "number": 5 }, "B3": { "text": "c" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xlookup.binary-desc-exact",
+    "description": "search_mode -2 exact hit on a descending column",
+    "tags": ["xlookup"],
+    "quirks": ["vlookup-approximate-unsorted"],
+    "formula": "=XLOOKUP(5, A1:A3, B1:B3, \"miss\", 0, -2)",
+    "expected": { "text": "b" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 10 }, "B1": { "text": "c" },
+          "A2": { "number": 5 }, "B2": { "text": "b" },
+          "A3": { "number": 1 }, "B3": { "text": "a" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xlookup.binary-desc-next-smaller",
+    "description": "search_mode -2 + match_mode -1 on a descending column",
+    "tags": ["xlookup"],
+    "quirks": ["vlookup-approximate-unsorted"],
+    "formula": "=XLOOKUP(6, A1:A3, B1:B3, \"miss\", -1, -2)",
+    "expected": { "text": "b" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 10 }, "B1": { "text": "c" },
+          "A2": { "number": 5 }, "B2": { "text": "b" },
+          "A3": { "number": 1 }, "B3": { "text": "a" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xlookup.wildcard-literal-default",
+    "description": "Default match_mode treats * as a literal (unlike exact VLOOKUP)",
+    "tags": ["xlookup"],
+    "quirks": ["wildcards"],
+    "formula": "=XLOOKUP(\"a*\", A1:A2, B1:B2, \"miss\")",
+    "expected": { "number": 2 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "apple" }, "B1": { "number": 1 },
+          "A2": { "text": "a*" }, "B2": { "number": 2 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xlookup.wildcard-star",
+    "description": "match_mode 2 treats * as a wildcard",
+    "tags": ["xlookup"],
+    "quirks": ["wildcards"],
+    "formula": "=XLOOKUP(\"a*\", A1:A2, B1:B2, \"miss\", 2)",
+    "expected": { "number": 1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "apple" }, "B1": { "number": 1 },
+          "A2": { "text": "a*" }, "B2": { "number": 2 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xlookup.wildcard-question",
+    "description": "match_mode 2 treats ? as a single-character wildcard",
+    "tags": ["xlookup"],
+    "quirks": ["wildcards"],
+    "formula": "=XLOOKUP(\"b?nana\", A1:A2, B1:B2, \"miss\", 2)",
+    "expected": { "number": 2 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "apple" }, "B1": { "number": 1 },
+          "A2": { "text": "banana" }, "B2": { "number": 2 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xlookup.wildcard-escape",
+    "description": "match_mode 2: ~* matches a literal asterisk",
+    "tags": ["xlookup"],
+    "quirks": ["wildcards"],
+    "formula": "=XLOOKUP(\"~*\", A1:A2, B1:B2, \"miss\", 2)",
+    "expected": { "number": 1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "*" }, "B1": { "number": 1 },
+          "A2": { "text": "apple" }, "B2": { "number": 2 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xlookup.wildcard-last",
+    "description": "Wildcard + search_mode -1 returns the last matching text",
+    "tags": ["xlookup"],
+    "quirks": ["wildcards"],
+    "formula": "=XLOOKUP(\"a*\", A1:A3, B1:B3, \"miss\", 2, -1)",
+    "expected": { "number": 2 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "apple" }, "B1": { "number": 1 },
+          "A2": { "text": "apricot" }, "B2": { "number": 2 },
+          "A3": { "text": "banana" }, "B3": { "number": 3 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xlookup.wildcard-text-only",
+    "description": "Wildcard mode does not match a number as if it were text",
+    "tags": ["xlookup"],
+    "quirks": ["wildcards"],
+    "formula": "=XLOOKUP(\"1*\", A1:A2, B1:B2, \"miss\", 2)",
+    "expected": { "text": "text" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 10 }, "B1": { "text": "num" },
+          "A2": { "text": "10" }, "B2": { "text": "text" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xlookup.wildcard-plus-binary-value",
+    "description": "match_mode 2 combined with search_mode 2 is #VALUE!",
+    "tags": ["xlookup", "errors"],
+    "quirks": ["wildcards"],
+    "formula": "=XLOOKUP(\"a*\", A1:A2, B1:B2, \"miss\", 2, 2)",
+    "expected": { "error": "#VALUE!" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "apple" }, "B1": { "number": 1 },
+          "A2": { "text": "banana" }, "B2": { "number": 2 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xlookup.casefold",
+    "description": "XLOOKUP exact match is case-insensitive",
+    "tags": ["xlookup"],
+    "quirks": ["case-insensitive-text"],
+    "formula": "=XLOOKUP(\"apple\", A1:A2, B1:B2)",
+    "expected": { "number": 1 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "Apple" }, "B1": { "number": 1 },
+          "A2": { "text": "Banana" }, "B2": { "number": 2 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xlookup.type-strict-number-not-text",
+    "description": "Exact XLOOKUP does not match 1 to the text \"1\"",
+    "tags": ["xlookup"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=XLOOKUP(1, A1:A2, B1:B2)",
+    "expected": { "text": "num" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "1" }, "B1": { "text": "text" },
+          "A2": { "number": 1 }, "B2": { "text": "num" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xlookup.type-strict-true-not-one",
+    "description": "Exact XLOOKUP does not treat TRUE as 1",
+    "tags": ["xlookup"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=XLOOKUP(1, A1:A2, B1:B2)",
+    "expected": { "text": "num" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "bool": true }, "B1": { "text": "bool" },
+          "A2": { "number": 1 }, "B2": { "text": "num" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xlookup.type-strict-true-hit",
+    "description": "Exact XLOOKUP matches TRUE to TRUE",
+    "tags": ["xlookup"],
+    "formula": "=XLOOKUP(TRUE, A1:A2, B1:B2)",
+    "expected": { "text": "bool" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "bool": true }, "B1": { "text": "bool" },
+          "A2": { "number": 1 }, "B2": { "text": "num" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xlookup.blank-not-zero",
+    "description": "Looking up 0 does not match a blank lookup cell",
+    "tags": ["xlookup"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=XLOOKUP(0, A1:A2, B1:B2)",
+    "expected": { "text": "zero" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "B1": { "text": "blank" },
+          "A2": { "number": 0 }, "B2": { "text": "zero" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xlookup.blank-lookup-value",
+    "description": "An omitted/blank lookup_value matches blank cells in lookup_array",
+    "tags": ["xlookup"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=XLOOKUP(C1, A1:A2, B1:B2)",
+    "expected": { "text": "blank" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "B1": { "text": "blank" },
+          "A2": { "number": 0 }, "B2": { "text": "zero" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xlookup.empty-string-not-blank",
+    "description": "Looking up \"\" matches stored empty text, not a blank cell",
+    "tags": ["xlookup"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=XLOOKUP(\"\", A1:A2, B1:B2)",
+    "expected": { "text": "empty-text" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "B1": { "text": "blank" },
+          "A2": { "text": "" }, "B2": { "text": "empty-text" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xlookup.ieee-fuzzy",
+    "description": "Exact numeric match uses 15-digit equality (0.1+0.2 = 0.3)",
+    "tags": ["xlookup"],
+    "quirks": ["ieee-vs-excel-precision"],
+    "formula": "=XLOOKUP(0.3, {0.1+0.2}, {1})",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.xlookup.horizontal",
+    "description": "XLOOKUP searches a row vector and returns the aligned cell",
+    "tags": ["xlookup"],
+    "formula": "=XLOOKUP(5, A1:C1, A2:C2)",
+    "expected": { "text": "b" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "number": 5 }, "C1": { "number": 10 },
+          "A2": { "text": "a" }, "B2": { "text": "b" }, "C2": { "text": "c" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xlookup.return-row",
+    "description": "A matching row of a 2-D return_array is a 1×N array",
+    "tags": ["xlookup", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=XLOOKUP(5, A1:A3, B1:C3)",
+    "expected": {
+      "array": [[{ "text": "b" }, { "text": "y" }]]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "text": "a" }, "C1": { "text": "x" },
+          "A2": { "number": 5 }, "B2": { "text": "b" }, "C2": { "text": "y" },
+          "A3": { "number": 10 }, "B3": { "text": "c" }, "C3": { "text": "z" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xlookup.return-column",
+    "description": "A matching column of a 2-D return_array is an N×1 array",
+    "tags": ["xlookup", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=XLOOKUP(5, A1:C1, A2:C3)",
+    "expected": {
+      "array": [
+        [{ "text": "b" }],
+        [{ "text": "y" }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "number": 5 }, "C1": { "number": 10 },
+          "A2": { "text": "a" }, "B2": { "text": "b" }, "C2": { "text": "c" },
+          "A3": { "text": "x" }, "B3": { "text": "y" }, "C3": { "text": "z" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xlookup.dim-mismatch",
+    "description": "lookup_array and return_array length mismatch is #VALUE!",
+    "tags": ["xlookup", "errors"],
+    "formula": "=XLOOKUP(1, A1:A3, B1:B2)",
+    "expected": { "error": "#VALUE!" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "text": "a" },
+          "A2": { "number": 2 }, "B2": { "text": "b" },
+          "A3": { "number": 3 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xlookup.lookup-2d-value",
+    "description": "A 2-D lookup_array is #VALUE!",
+    "tags": ["xlookup", "errors"],
+    "formula": "=XLOOKUP(1, A1:B2, C1:C2)",
+    "expected": { "error": "#VALUE!" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "number": 2 },
+          "A2": { "number": 3 }, "B2": { "number": 4 },
+          "C1": { "text": "a" }, "C2": { "text": "b" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xlookup.arity-too-few",
+    "description": "XLOOKUP with two arguments is #VALUE!",
+    "tags": ["xlookup", "errors"],
+    "formula": "=XLOOKUP(1, A1:A1)",
+    "expected": { "error": "#VALUE!" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": { "A1": { "number": 1 } }
+      }]
+    }
+  },
+  {
+    "id": "fn.xlookup.lookup-error-propagates",
+    "description": "An error lookup_value is returned as-is",
+    "tags": ["xlookup", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=XLOOKUP(1/0, A1:A1, B1:B1)",
+    "expected": { "error": "#DIV/0!" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "number": 2 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xlookup.return-error-at-hit",
+    "description": "A matched return cell that is an error is returned",
+    "tags": ["xlookup", "errors"],
+    "formula": "=XLOOKUP(1, A1:A2, B1:B2)",
+    "expected": { "error": "#DIV/0!" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "error": "#DIV/0!" },
+          "A2": { "number": 2 }, "B2": { "number": 5 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.xlookup.array-literal",
+    "description": "XLOOKUP works on array literals",
+    "tags": ["xlookup"],
+    "formula": "=XLOOKUP(2, {1;2;3}, {\"a\";\"b\";\"c\"})",
+    "expected": { "text": "b" }
+  },
+  {
+    "id": "fn.xlookup.index-of-row",
+    "description": "INDEX can pick a column out of a 2-D XLOOKUP result",
+    "tags": ["xlookup", "index"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=INDEX(XLOOKUP(5, A1:A3, B1:C3), 1, 2)",
+    "expected": { "text": "y" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "text": "a" }, "C1": { "text": "x" },
+          "A2": { "number": 5 }, "B2": { "text": "b" }, "C2": { "text": "y" },
+          "A3": { "number": 10 }, "B3": { "text": "c" }, "C3": { "text": "z" }
+        }
+      }]
+    }
+  }
+]

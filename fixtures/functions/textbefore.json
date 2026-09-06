@@ -1,0 +1,477 @@
+[
+  {
+    "id": "fn.textbefore-ms-hood",
+    "description": "TEXTBEFORE(\"Red riding hood's, red hood\", \"hood\") is \"Red riding \" (Microsoft example; trailing space before the delimiter)",
+    "tags": ["text", "textbefore"],
+    "formula": "=TEXTBEFORE(\"Red riding hood's, red hood\", \"hood\")",
+    "expected": { "text": "Red riding " }
+  },
+  {
+    "id": "fn.textbefore-ms-empty-delim",
+    "description": "Empty delimiter matches immediately from the front → empty text (Microsoft)",
+    "tags": ["text", "textbefore"],
+    "formula": "=TEXTBEFORE(\"Red riding hood's, red hood\", \"\")",
+    "expected": { "text": "" }
+  },
+  {
+    "id": "fn.textbefore-ms-empty-delim-neg",
+    "description": "Empty delimiter from the end returns the entire text (Microsoft)",
+    "tags": ["text", "textbefore"],
+    "formula": "=TEXTBEFORE(\"Red riding hood's, red hood\", \"\", -1)",
+    "expected": { "text": "Red riding hood's, red hood" }
+  },
+  {
+    "id": "fn.textbefore-ms-a2-red",
+    "description": "TEXTBEFORE(A2,\"Red\") is \"Little \" (Microsoft example 1)",
+    "tags": ["text", "textbefore"],
+    "formula": "=TEXTBEFORE(A2,\"Red\")",
+    "expected": { "text": "Little " },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A2": { "text": "Little Red Riding Hood's red hood" },
+            "A3": { "text": "Little red Riding Hood's red hood" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.textbefore-ms-a3-red-case",
+    "description": "Case-sensitive miss of \"Red\" in A3 is #N/A (Microsoft)",
+    "tags": ["text", "textbefore", "errors"],
+    "formula": "=TEXTBEFORE(A3,\"Red\")",
+    "expected": { "error": "#N/A" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A3": { "text": "Little red Riding Hood's red hood" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.textbefore-ms-a3-red-2",
+    "description": "Second \"red\" from the front (Microsoft)",
+    "tags": ["text", "textbefore"],
+    "formula": "=TEXTBEFORE(A3,\"red\",2)",
+    "expected": { "text": "Little red Riding Hood's " },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A3": { "text": "Little red Riding Hood's red hood" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.textbefore-ms-a3-red-neg2",
+    "description": "Second \"red\" from the end (Microsoft)",
+    "tags": ["text", "textbefore"],
+    "formula": "=TEXTBEFORE(A3,\"red\",-2)",
+    "expected": { "text": "Little " },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A3": { "text": "Little red Riding Hood's red hood" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.textbefore-ms-a3-red-false",
+    "description": "match_mode FALSE is case-sensitive; \"Red\" misses (Microsoft)",
+    "tags": ["text", "textbefore", "errors"],
+    "formula": "=TEXTBEFORE(A3,\"Red\",1,FALSE)",
+    "expected": { "error": "#N/A" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A3": { "text": "Little red Riding Hood's red hood" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.textbefore-ms-a3-red-3",
+    "description": "Third \"red\" does not exist → #N/A (Microsoft)",
+    "tags": ["text", "textbefore", "errors"],
+    "formula": "=TEXTBEFORE(A3,\"red\",3)",
+    "expected": { "error": "#N/A" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A3": { "text": "Little red Riding Hood's red hood" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.textbefore-ms-marcus",
+    "description": "TEXTBEFORE(A2,\" \",1,0,1) is Marcus (Microsoft example 2)",
+    "tags": ["text", "textbefore"],
+    "formula": "=TEXTBEFORE(A2,\" \",1,0,1)",
+    "expected": { "text": "Marcus" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A2": { "text": "Marcus Aurelius" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.textbefore-ms-socrates-no-end",
+    "description": "Socrates with match_end 0 and no space is #N/A (Microsoft)",
+    "tags": ["text", "textbefore", "errors"],
+    "formula": "=TEXTBEFORE(A3,\" \",1,0,0)",
+    "expected": { "error": "#N/A" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A3": { "text": "Socrates" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.textbefore-ms-socrates-end",
+    "description": "Socrates with match_end 1 returns the whole name (Microsoft)",
+    "tags": ["text", "textbefore"],
+    "formula": "=TEXTBEFORE(A3,\" \",1,0,1)",
+    "expected": { "text": "Socrates" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A3": { "text": "Socrates" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.textbefore-ms-immanuel",
+    "description": "Immanuel Kant with match_end 1 still splits on the space (Microsoft)",
+    "tags": ["text", "textbefore"],
+    "formula": "=TEXTBEFORE(A4,\" \",1,0,1)",
+    "expected": { "text": "Immanuel" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A4": { "text": "Immanuel Kant" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.textbefore-first-hyphen",
+    "description": "Default instance is the first delimiter",
+    "tags": ["text", "textbefore"],
+    "formula": "=TEXTBEFORE(\"a-b-c\", \"-\")",
+    "expected": { "text": "a" }
+  },
+  {
+    "id": "fn.textbefore-second-hyphen",
+    "description": "instance_num 2 is text before the second hyphen",
+    "tags": ["text", "textbefore"],
+    "formula": "=TEXTBEFORE(\"a-b-c\", \"-\", 2)",
+    "expected": { "text": "a-b" }
+  },
+  {
+    "id": "fn.textbefore-last-hyphen",
+    "description": "instance_num -1 is text before the last hyphen",
+    "tags": ["text", "textbefore"],
+    "formula": "=TEXTBEFORE(\"a-b-c\", \"-\", -1)",
+    "expected": { "text": "a-b" }
+  },
+  {
+    "id": "fn.textbefore-instance-zero",
+    "description": "instance_num 0 is #VALUE!",
+    "tags": ["text", "textbefore", "errors"],
+    "formula": "=TEXTBEFORE(\"abc\", \"-\", 0)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.textbefore-instance-gt-len",
+    "description": "instance_num greater than LEN(text) is #VALUE!",
+    "tags": ["text", "textbefore", "errors"],
+    "formula": "=TEXTBEFORE(\"abc\", \"x\", 4)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.textbefore-instance-neg-gt-len",
+    "description": "|instance_num| greater than LEN(text) is #VALUE!",
+    "tags": ["text", "textbefore", "errors"],
+    "formula": "=TEXTBEFORE(\"abc\", \"x\", -4)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.textbefore-miss",
+    "description": "Delimiter not in text is #N/A",
+    "tags": ["text", "textbefore", "errors"],
+    "formula": "=TEXTBEFORE(\"abc\", \"x\")",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.textbefore-if-not-found-text",
+    "description": "if_not_found replaces #N/A on a miss",
+    "tags": ["text", "textbefore"],
+    "formula": "=TEXTBEFORE(\"abc\", \"x\", 1, 0, 0, \"missing\")",
+    "expected": { "text": "missing" }
+  },
+  {
+    "id": "fn.textbefore-if-not-found-number",
+    "description": "if_not_found keeps its type (number)",
+    "tags": ["text", "textbefore"],
+    "formula": "=TEXTBEFORE(\"abc\", \"x\", 1, 0, 0, 42)",
+    "expected": { "number": 42 }
+  },
+  {
+    "id": "fn.textbefore-if-not-found-unused",
+    "description": "if_not_found is unused when the delimiter hits",
+    "tags": ["text", "textbefore"],
+    "formula": "=TEXTBEFORE(\"a-b\", \"-\", 1, 0, 0, \"missing\")",
+    "expected": { "text": "a" }
+  },
+  {
+    "id": "fn.textbefore-match-end-overrides-if-not-found",
+    "description": "match_end=1 supplies the whole text and wins over if_not_found",
+    "tags": ["text", "textbefore"],
+    "formula": "=TEXTBEFORE(\"apple\", \"-\", 1, 0, 1, \"missing\")",
+    "expected": { "text": "apple" }
+  },
+  {
+    "id": "fn.textbefore-match-end-neg",
+    "description": "match_end=1 with instance_num -1 and no hit returns empty",
+    "tags": ["text", "textbefore"],
+    "formula": "=TEXTBEFORE(\"apple\", \"-\", -1, 0, 1)",
+    "expected": { "text": "" }
+  },
+  {
+    "id": "fn.textbefore-match-end-second",
+    "description": "match_end adds one virtual delimiter at the end for instance 2",
+    "tags": ["text", "textbefore"],
+    "formula": "=TEXTBEFORE(\"a-b\", \"-\", 2, 0, 1)",
+    "expected": { "text": "a-b" }
+  },
+  {
+    "id": "fn.textbefore-case-sensitive",
+    "description": "Default match_mode is case-sensitive",
+    "tags": ["text", "textbefore", "errors"],
+    "formula": "=TEXTBEFORE(\"AbC\", \"B\")",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.textbefore-case-insensitive",
+    "description": "match_mode 1 ignores case",
+    "tags": ["text", "textbefore"],
+    "formula": "=TEXTBEFORE(\"AbC\", \"B\", 1, 1)",
+    "expected": { "text": "A" }
+  },
+  {
+    "id": "fn.textbefore-case-insensitive-true",
+    "description": "TRUE coerces to match_mode 1",
+    "tags": ["text", "textbefore", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=TEXTBEFORE(\"AbC\", \"B\", 1, TRUE)",
+    "expected": { "text": "A" }
+  },
+  {
+    "id": "fn.textbefore-match-mode-bad",
+    "description": "match_mode other than 0/1 is #VALUE!",
+    "tags": ["text", "textbefore", "errors"],
+    "formula": "=TEXTBEFORE(\"abc\", \"b\", 1, 2)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.textbefore-match-end-bad",
+    "description": "match_end other than 0/1 is #VALUE!",
+    "tags": ["text", "textbefore", "errors"],
+    "formula": "=TEXTBEFORE(\"abc\", \"b\", 1, 0, 2)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.textbefore-instance-trunc",
+    "description": "instance_num 1.9 truncates toward zero to 1",
+    "tags": ["text", "textbefore"],
+    "formula": "=TEXTBEFORE(\"a-b-c\", \"-\", 1.9)",
+    "expected": { "text": "a" }
+  },
+  {
+    "id": "fn.textbefore-instance-trunc-neg",
+    "description": "instance_num -1.9 truncates toward zero to -1",
+    "tags": ["text", "textbefore"],
+    "formula": "=TEXTBEFORE(\"a-b-c\", \"-\", -1.9)",
+    "expected": { "text": "a-b" }
+  },
+  {
+    "id": "fn.textbefore-delim-at-start",
+    "description": "Delimiter at the start yields empty text",
+    "tags": ["text", "textbefore"],
+    "formula": "=TEXTBEFORE(\"-abc\", \"-\")",
+    "expected": { "text": "" }
+  },
+  {
+    "id": "fn.textbefore-delim-at-end",
+    "description": "Delimiter at the end yields the prefix",
+    "tags": ["text", "textbefore"],
+    "formula": "=TEXTBEFORE(\"abc-\", \"-\")",
+    "expected": { "text": "abc" }
+  },
+  {
+    "id": "fn.textbefore-whole-string",
+    "description": "Delimiter equal to the whole text yields empty",
+    "tags": ["text", "textbefore"],
+    "formula": "=TEXTBEFORE(\"abc\", \"abc\")",
+    "expected": { "text": "" }
+  },
+  {
+    "id": "fn.textbefore-multi-char",
+    "description": "Multi-character delimiter",
+    "tags": ["text", "textbefore"],
+    "formula": "=TEXTBEFORE(\"foo::bar\", \"::\")",
+    "expected": { "text": "foo" }
+  },
+  {
+    "id": "fn.textbefore-array-delims",
+    "description": "Array delimiter takes the leftmost match",
+    "tags": ["text", "textbefore"],
+    "formula": "=TEXTBEFORE(\"a-b,c\", {\",\",\"-\"})",
+    "expected": { "text": "a" }
+  },
+  {
+    "id": "fn.textbefore-array-delims-comma-first",
+    "description": "Array delimiter: comma appears first",
+    "tags": ["text", "textbefore"],
+    "formula": "=TEXTBEFORE(\"a,b-c\", {\",\",\"-\"})",
+    "expected": { "text": "a" }
+  },
+  {
+    "id": "fn.textbefore-longest-at-same-pos",
+    "description": "Same start position prefers the longer delimiter",
+    "tags": ["text", "textbefore"],
+    "formula": "=TEXTBEFORE(\"foo::bar\", {\":\",\"::\"})",
+    "expected": { "text": "foo" }
+  },
+  {
+    "id": "fn.textbefore-non-overlap",
+    "description": "Occurrences are non-overlapping: second \"aa\" in \"aaa\" is #N/A",
+    "tags": ["text", "textbefore", "errors"],
+    "formula": "=TEXTBEFORE(\"aaa\", \"aa\", 2)",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.textbefore-empty-text",
+    "description": "Empty text returns empty text (Microsoft text-argument remark)",
+    "tags": ["text", "textbefore"],
+    "formula": "=TEXTBEFORE(\"\", \"x\")",
+    "expected": { "text": "" }
+  },
+  {
+    "id": "fn.textbefore-empty-text-instance-zero",
+    "description": "Empty text still rejects instance_num 0",
+    "tags": ["text", "textbefore", "errors"],
+    "formula": "=TEXTBEFORE(\"\", \"x\", 0)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.textbefore-number-text",
+    "description": "Numbers coerce to text like &",
+    "tags": ["text", "textbefore", "coercion"],
+    "formula": "=TEXTBEFORE(12345, 3)",
+    "expected": { "text": "12" }
+  },
+  {
+    "id": "fn.textbefore-bool-text",
+    "description": "TRUE coerces to \"TRUE\"",
+    "tags": ["text", "textbefore", "coercion"],
+    "formula": "=TEXTBEFORE(TRUE, \"U\")",
+    "expected": { "text": "TR" }
+  },
+  {
+    "id": "fn.textbefore-blank-text",
+    "description": "Blank text cell is empty text",
+    "tags": ["text", "textbefore", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=TEXTBEFORE(A1, \"x\")",
+    "expected": { "text": "" }
+  },
+  {
+    "id": "fn.textbefore-unicode",
+    "description": "Unicode scalar delimiter (café)",
+    "tags": ["text", "textbefore"],
+    "formula": "=TEXTBEFORE(\"café-latte\", \"-\")",
+    "expected": { "text": "café" }
+  },
+  {
+    "id": "fn.textbefore-unicode-jp",
+    "description": "Japanese scalar delimiter",
+    "tags": ["text", "textbefore"],
+    "formula": "=TEXTBEFORE(\"日本語\", \"本\")",
+    "expected": { "text": "日" }
+  },
+  {
+    "id": "fn.textbefore-literal-wildcard",
+    "description": "* is a literal delimiter, not a SEARCH wildcard",
+    "tags": ["text", "textbefore"],
+    "formula": "=TEXTBEFORE(\"a*b\", \"*\")",
+    "expected": { "text": "a" }
+  },
+  {
+    "id": "fn.textbefore-err-ltr",
+    "description": "Errors evaluate left-to-right: #DIV/0! wins over #N/A",
+    "tags": ["text", "textbefore", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=TEXTBEFORE(1/0, #N/A)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.textbefore-err-delim",
+    "description": "Delimiter error propagates",
+    "tags": ["text", "textbefore", "errors"],
+    "formula": "=TEXTBEFORE(\"abc\", #REF!)",
+    "expected": { "error": "#REF!" }
+  },
+  {
+    "id": "fn.textbefore-arity-1",
+    "description": "One argument is #VALUE!",
+    "tags": ["text", "textbefore", "errors"],
+    "formula": "=TEXTBEFORE(\"abc\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.textbefore-arity-0",
+    "description": "Zero arguments is #VALUE!",
+    "tags": ["text", "textbefore", "errors"],
+    "formula": "=TEXTBEFORE()",
+    "expected": { "error": "#VALUE!" }
+  }
+]

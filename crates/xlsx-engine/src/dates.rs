@@ -276,10 +276,12 @@ pub fn truncate_date_serial(n: f64, system: DateSystem) -> Result<i32, ExcelErro
     Ok(s as i32)
 }
 
+/// Saturday + Sunday in the serial `% 7` convention (bit 0 = Sat, bit 1 = Sun).
+pub const WEEKEND_SAT_SUN: u8 = 0b0000_0011;
+
 /// Excel 1900-system weekend: serial 1 is Sunday, so `n % 7` is 0 (Sat) or 1 (Sun).
 pub fn is_weekend_sat_sun_1900(serial_1900: i32) -> bool {
-    let w = serial_1900.rem_euclid(7);
-    w == 0 || w == 1
+    is_weekend_mask_1900(serial_1900, WEEKEND_SAT_SUN)
 }
 
 fn workdays_through(n: i32) -> i32 {
@@ -542,4 +544,238 @@ mod tests {
         assert_eq!(weekday(60.0, 1, DateSystem::Excel1900).unwrap(), 4.0);
         assert_eq!(weekday(61.0, 1, DateSystem::Excel1900).unwrap(), 5.0);
     }
+}
+
+
+/// Excel `YEARFRAC(start, end, [basis])`. Same day-count rules as
+/// `xlsx-engine-core::dates::yearfrac` (Wheeler / Excel 2007).
+pub fn yearfrac(start: f64, end: f64, basis: i32, system: DateSystem) -> Result<f64, ExcelError> {
+    if !(0..=4).contains(&basis) {
+        return Err(ExcelError::Num);
+    }
+    let start_s = truncate_date_serial(start, system)?;
+    let end_s = truncate_date_serial(end, system)?;
+    if start_s == end_s {
+        return Ok(0.0);
+    }
+    let start_1900 = to_1900_serial(start_s, system)?;
+    let end_1900 = to_1900_serial(end_s, system)?;
+    let (lo, hi) = if start_1900 <= end_1900 {
+        (start_1900, end_1900)
+    } else {
+        (end_1900, start_1900)
+    };
+    let (y1, m1, d1) = serial_to_ymd(lo as f64, DateSystem::Excel1900)?;
+    let (y2, m2, d2) = serial_to_ymd(hi as f64, DateSystem::Excel1900)?;
+    let a = (y1, m1 as i32, d1 as i32);
+    let b = (y2, m2 as i32, d2 as i32);
+    let actual = (hi - lo) as f64;
+    match basis {
+        0 => Ok(basis0_us_nasd(a, b)),
+        1 => basis1_actual_actual(a, b, actual),
+        2 => Ok(actual / 360.0),
+        3 => Ok(actual / 365.0),
+        4 => Ok(basis4_eu_30_360(a, b)),
+        _ => Err(ExcelError::Num),
+    }
+}
+
+
+fn last_day_of_month(year: i32, month: i32, day: i32) -> bool {
+    month >= 1 && month <= 12 && day == days_in_month(year, month)
+}
+
+
+fn ymd_lt(y1: i32, m1: i32, d1: i32, y2: i32, m2: i32, d2: i32) -> bool {
+    (y1, m1, d1) < (y2, m2, d2)
+}
+
+
+fn basis0_us_nasd(a: (i32, i32, i32), b: (i32, i32, i32)) -> f64 {
+    let (y1, m1, mut d1) = a;
+    let (y2, m2, mut d2) = b;
+    if d1 == 31 && d2 == 31 {
+        d1 = 30;
+        d2 = 30;
+    } else if d1 == 31 {
+        d1 = 30;
+    } else if d1 == 30 && d2 == 31 {
+        d2 = 30;
+    } else if m1 == 2 && m2 == 2 && last_day_of_month(y1, m1, d1) && last_day_of_month(y2, m2, d2) {
+        d1 = 30;
+        d2 = 30;
+    } else if m1 == 2 && last_day_of_month(y1, m1, d1) {
+        d1 = 30;
+    }
+    let daydiff = (d2 + m2 * 30 + y2 * 360) - (d1 + m1 * 30 + y1 * 360);
+    daydiff as f64 / 360.0
+}
+
+
+fn basis4_eu_30_360(a: (i32, i32, i32), b: (i32, i32, i32)) -> f64 {
+    let (y1, m1, mut d1) = a;
+    let (y2, m2, mut d2) = b;
+    if d1 == 31 {
+        d1 = 30;
+    }
+    if d2 == 31 {
+        d2 = 30;
+    }
+    let daydiff = (d2 + m2 * 30 + y2 * 360) - (d1 + m1 * 30 + y1 * 360);
+    daydiff as f64 / 360.0
+}
+
+
+fn appears_le_year(a: (i32, i32, i32), b: (i32, i32, i32)) -> bool {
+    let (y1, m1, d1) = a;
+    let (y2, m2, d2) = b;
+    if y1 == y2 {
+        return true;
+    }
+    y1 + 1 == y2 && (m1 > m2 || (m1 == m2 && d1 >= d2))
+}
+
+
+fn feb29_strictly_between(a: (i32, i32, i32), b: (i32, i32, i32)) -> bool {
+    let (y1, m1, d1) = a;
+    let (y2, m2, d2) = b;
+    for y in y1..=y2 {
+        if is_excel_leap(y) && ymd_lt(y1, m1, d1, y, 2, 29) && ymd_lt(y, 2, 29, y2, m2, d2) {
+            return true;
+        }
+    }
+    false
+}
+
+
+fn basis1_actual_actual(
+    a: (i32, i32, i32),
+    b: (i32, i32, i32),
+    actual: f64,
+) -> Result<f64, ExcelError> {
+    if appears_le_year(a, b) {
+        let (y1, _, _) = a;
+        let (_, m2, d2) = b;
+        let year_len = if y1 == b.0 && is_excel_leap(y1) {
+            366.0
+        } else if feb29_strictly_between(a, b) || (m2 == 2 && d2 == 29) {
+            366.0
+        } else {
+            365.0
+        };
+        return Ok(actual / year_len);
+    }
+    let (y1, _, _) = a;
+    let (y2, _, _) = b;
+    let num_years = (y2 - y1) + 1;
+    let days_in_years = serial_of_year_start(y2 + 1)? - serial_of_year_start(y1)?;
+    Ok(actual * (num_years as f64) / (days_in_years as f64))
+}
+
+
+#[inline]
+pub fn is_weekend_mask_1900(serial_1900: i32, weekend_mask: u8) -> bool {
+    let w = serial_1900.rem_euclid(7);
+    weekend_mask & (1 << w) != 0
+}
+
+
+pub fn weekend_mask_from_code(code: i32) -> Result<u8, ExcelError> {
+    match code {
+        1 => Ok(WEEKEND_SAT_SUN),
+        2 => Ok(0b0000_0110),
+        3 => Ok(0b0000_1100),
+        4 => Ok(0b0001_1000),
+        5 => Ok(0b0011_0000),
+        6 => Ok(0b0110_0000),
+        7 => Ok(0b0100_0001),
+        11 => Ok(0b0000_0010),
+        12 => Ok(0b0000_0100),
+        13 => Ok(0b0000_1000),
+        14 => Ok(0b0001_0000),
+        15 => Ok(0b0010_0000),
+        16 => Ok(0b0100_0000),
+        17 => Ok(0b0000_0001),
+        _ => Err(ExcelError::Num),
+    }
+}
+
+
+pub fn weekend_mask_from_string(s: &str) -> Result<u8, ExcelError> {
+    let b = s.as_bytes();
+    if b.len() != 7 {
+        return Err(ExcelError::Value);
+    }
+    const BITS: [u32; 7] = [2, 3, 4, 5, 6, 0, 1];
+    let mut mask = 0u8;
+    for (i, &ch) in b.iter().enumerate() {
+        match ch {
+            b'1' => mask |= 1 << BITS[i],
+            b'0' => {}
+            _ => return Err(ExcelError::Value),
+        }
+    }
+    Ok(mask)
+}
+
+
+pub fn workdays_through_mask(n: i32, weekend_mask: u8) -> i32 {
+    if n < 0 {
+        return 0;
+    }
+    let work_per_week = 7 - weekend_mask.count_ones() as i32;
+    if work_per_week == 0 {
+        return 0;
+    }
+    let complete = (n + 1) / 7;
+    let rem = (n + 1) % 7;
+    let mut extra = 0;
+    for r in 0..rem {
+        if weekend_mask & (1 << r) == 0 {
+            extra += 1;
+        }
+    }
+    complete * work_per_week + extra
+}
+
+
+pub fn weekday_count_mask(lo_1900: i32, hi_1900: i32, weekend_mask: u8) -> i32 {
+    if hi_1900 < lo_1900 {
+        return 0;
+    }
+    workdays_through_mask(hi_1900, weekend_mask) - workdays_through_mask(lo_1900 - 1, weekend_mask)
+}
+
+
+/// Excel `NETWORKDAYS.INTL` count for a pre-parsed weekend mask.
+pub fn networkdays_count_mask(
+    start: f64,
+    end: f64,
+    weekend_mask: u8,
+    holidays: &[f64],
+    system: DateSystem,
+) -> Result<f64, ExcelError> {
+    let start_s = truncate_date_serial(start, system)?;
+    let end_s = truncate_date_serial(end, system)?;
+    let start_1900 = to_1900_serial(start_s, system)?;
+    let end_1900 = to_1900_serial(end_s, system)?;
+    let sign = if start_s <= end_s { 1 } else { -1 };
+    let (lo, hi) = if start_1900 <= end_1900 {
+        (start_1900, end_1900)
+    } else {
+        (end_1900, start_1900)
+    };
+    let mut work = weekday_count_mask(lo, hi, weekend_mask);
+    let mut hols = Vec::with_capacity(holidays.len());
+    for &h in holidays {
+        hols.push(to_1900_serial(truncate_date_serial(h, system)?, system)?);
+    }
+    hols.sort_unstable();
+    hols.dedup();
+    for h in hols {
+        if h >= lo && h <= hi && !is_weekend_mask_1900(h, weekend_mask) {
+            work -= 1;
+        }
+    }
+    Ok((sign * work) as f64)
 }

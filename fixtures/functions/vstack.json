@@ -1,0 +1,501 @@
+[
+  {
+    "id": "fn.vstack.two-cols",
+    "description": "VSTACK of two columns appends rows",
+    "tags": ["vstack", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=VSTACK({1;2}, {3;4})",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "number": 2 }],
+        [{ "number": 3 }],
+        [{ "number": 4 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.vstack.two-rows",
+    "description": "VSTACK of two equal-width rows",
+    "tags": ["vstack", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=VSTACK({1,2}, {3,4})",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 2 }],
+        [{ "number": 3 }, { "number": 4 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.vstack.three-blocks",
+    "description": "Three same-width arrays stack in argument order",
+    "tags": ["vstack", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=VSTACK({1,2}, {3,4}, {5,6})",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 2 }],
+        [{ "number": 3 }, { "number": 4 }],
+        [{ "number": 5 }, { "number": 6 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.vstack.scalar-column",
+    "description": "Scalars are 1×1 and stack into a column",
+    "tags": ["vstack", "functions"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=VSTACK(1, 2, 3)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "number": 2 }],
+        [{ "number": 3 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.vstack.single-array",
+    "description": "One argument is returned as an array value",
+    "tags": ["vstack", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=VSTACK({1,2;3,4})",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 2 }],
+        [{ "number": 3 }, { "number": 4 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.vstack.single-scalar",
+    "description": "VSTACK of a scalar is a 1×1 array",
+    "tags": ["vstack", "functions"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=VSTACK(5)",
+    "expected": {
+      "array": [[{ "number": 5 }]]
+    }
+  },
+  {
+    "id": "fn.vstack.pad-narrow-second",
+    "description": "A narrower second array is padded on the right with #N/A",
+    "notes": "Pad cells are #N/A, not blank. Blank source cells stay empty.",
+    "tags": ["vstack", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=VSTACK({1,2,3}, {4,5})",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 2 }, { "number": 3 }],
+        [{ "number": 4 }, { "number": 5 }, { "error": "#N/A" }]
+      ]
+    }
+  },
+  {
+    "id": "fn.vstack.pad-narrow-first",
+    "description": "A narrower first array is padded to the later max width",
+    "tags": ["vstack", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=VSTACK({1}, {2,3,4})",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "error": "#N/A" }, { "error": "#N/A" }],
+        [{ "number": 2 }, { "number": 3 }, { "number": 4 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.vstack.pad-scalar-onto-row",
+    "description": "A scalar under a 2-col row is 1×1 padded with #N/A",
+    "tags": ["vstack", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=VSTACK({1,2}, 3)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 2 }],
+        [{ "number": 3 }, { "error": "#N/A" }]
+      ]
+    }
+  },
+  {
+    "id": "fn.vstack.ms-example-mixed-width",
+    "description": "Microsoft mixed-width example: 2-col + 3-col + 1×1 → width 3, #N/A pads",
+    "tags": ["vstack", "functions"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=VSTACK(A1:B3, C1:E2, F1)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 2 }, { "error": "#N/A" }],
+        [{ "number": 3 }, { "number": 4 }, { "error": "#N/A" }],
+        [{ "number": 5 }, { "number": 6 }, { "error": "#N/A" }],
+        [{ "text": "A" }, { "text": "B" }, { "text": "C" }],
+        [{ "text": "D" }, { "text": "E" }, { "text": "F" }],
+        [{ "error": "#VALUE!" }, { "error": "#N/A" }, { "error": "#N/A" }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "number": 2 },
+          "A2": { "number": 3 }, "B2": { "number": 4 },
+          "A3": { "number": 5 }, "B3": { "number": 6 },
+          "C1": { "text": "A" }, "D1": { "text": "B" }, "E1": { "text": "C" },
+          "C2": { "text": "D" }, "D2": { "text": "E" }, "E2": { "text": "F" },
+          "F1": { "error": "#VALUE!" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.vstack.range-two-columns",
+    "description": "VSTACK of two sheet columns",
+    "tags": ["vstack", "functions"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=VSTACK(A1:A3, B1:B2)",
+    "expected": {
+      "array": [
+        [{ "text": "red" }],
+        [{ "text": "blue" }],
+        [{ "text": "green" }],
+        [{ "text": "gold" }],
+        [{ "text": "pink" }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "red" },
+          "A2": { "text": "blue" },
+          "A3": { "text": "green" },
+          "B1": { "text": "gold" },
+          "B2": { "text": "pink" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.vstack.blank-stays-empty",
+    "description": "A blank source cell stays empty — it is not rewritten as #N/A",
+    "notes": "#N/A is only the width-pad. Empty in the source remains Empty.",
+    "tags": ["vstack", "empty"],
+    "quirks": ["array-eval-mode", "empty-cell-duality"],
+    "formula": "=VSTACK(A1:B2, C1:D1)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "empty": null }],
+        [{ "number": 2 }, { "number": 3 }],
+        [{ "number": 4 }, { "number": 5 }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 2 }, "B2": { "number": 3 },
+          "C1": { "number": 4 }, "D1": { "number": 5 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.vstack.blank-range-is-not-empty-array",
+    "description": "A blank range contributes Empty cells; it is not ignored as a 0-row array",
+    "tags": ["vstack", "empty"],
+    "quirks": ["array-eval-mode", "empty-cell-duality"],
+    "formula": "=VSTACK(A1:A2, {9})",
+    "expected": {
+      "array": [
+        [{ "empty": null }],
+        [{ "empty": null }],
+        [{ "number": 9 }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.vstack.empty-literal-ignored",
+    "description": "A 0-row array literal is ignored; remaining args still stack",
+    "tags": ["vstack", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=VSTACK({}, {1;2})",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "number": 2 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.vstack.empty-only-calc",
+    "description": "VSTACK of only 0-row arrays would be empty → #CALC!",
+    "notes": "Excel cannot return an empty array. A blank range is not a 0-row array.",
+    "tags": ["vstack", "errors", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=VSTACK({})",
+    "expected": { "error": "#CALC!" }
+  },
+  {
+    "id": "fn.vstack.types-preserved",
+    "description": "Text, logicals, and numbers keep their types",
+    "tags": ["vstack", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=VSTACK({\"a\", TRUE}, {1, FALSE})",
+    "expected": {
+      "array": [
+        [{ "text": "a" }, { "bool": true }],
+        [{ "number": 1 }, { "bool": false }]
+      ]
+    }
+  },
+  {
+    "id": "fn.vstack.error-in-array-stays",
+    "description": "An error inside an array is a stacked cell, not the whole result",
+    "tags": ["vstack", "errors", "array"],
+    "quirks": ["array-eval-mode", "error-precedence"],
+    "formula": "=VSTACK({1;#DIV/0!}, {2})",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "error": "#DIV/0!" }],
+        [{ "number": 2 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.vstack.scalar-error-surfaces",
+    "description": "A computed scalar error (literal / 1/0 / FILTER #CALC!) surfaces as the whole result",
+    "tags": ["vstack", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=VSTACK(#DIV/0!, {1,2})",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.vstack.cell-error-is-data",
+    "description": "A cell that stores #DIV/0! is stacked as a 1×1 error (not the whole result)",
+    "notes": "Microsoft stacks a cell-held #VALUE! in the mixed-width example. Computed errors still surface.",
+    "tags": ["vstack", "errors"],
+    "quirks": ["array-eval-mode", "error-precedence"],
+    "formula": "=VSTACK(A1, {2})",
+    "expected": {
+      "array": [
+        [{ "error": "#DIV/0!" }],
+        [{ "number": 2 }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": { "A1": { "error": "#DIV/0!" } }
+      }]
+    }
+  },
+  {
+    "id": "fn.vstack.scalar-error-second",
+    "description": "A later scalar error still surfaces (args are evaluated)",
+    "tags": ["vstack", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=VSTACK({1}, #N/A)",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.vstack.error-ltr",
+    "description": "First scalar error wins left-to-right",
+    "tags": ["vstack", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=VSTACK(#N/A, #DIV/0!)",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.vstack.filter-calc-propagates",
+    "description": "FILTER #CALC! is a scalar error and VSTACK surfaces it (not a 0-row ignore)",
+    "notes": "This is not an empty array. FILTER returns #CALC!; VSTACK does not skip it.",
+    "tags": ["vstack", "filter", "errors"],
+    "quirks": ["array-eval-mode", "error-precedence"],
+    "formula": "=VSTACK(FILTER({1}, {FALSE}), {2})",
+    "expected": { "error": "#CALC!" }
+  },
+  {
+    "id": "fn.vstack.arity-zero",
+    "description": "VSTACK() is #VALUE!",
+    "tags": ["vstack", "errors"],
+    "formula": "=VSTACK()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.vstack.index-pad-cell",
+    "description": "INDEX picks a width-pad #N/A without writing a spill range",
+    "tags": ["vstack", "index"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=INDEX(VSTACK({1,2}, 3), 2, 2)",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.vstack.index-value",
+    "description": "INDEX picks a real stacked value",
+    "tags": ["vstack", "index"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=INDEX(VSTACK({1;2}, {3}), 3)",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.vstack.sum-equal-width",
+    "description": "SUM consumes an equal-width VSTACK (no pad)",
+    "tags": ["vstack", "sum"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SUM(VSTACK({1;2}, {3;4}))",
+    "expected": { "number": 10 }
+  },
+  {
+    "id": "fn.vstack.sum-pad-is-na",
+    "description": "SUM of a padded VSTACK surfaces #N/A (pad is a real error cell)",
+    "tags": ["vstack", "sum", "errors"],
+    "quirks": ["array-eval-mode", "error-precedence"],
+    "formula": "=SUM(VSTACK({1,2}, 3))",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.vstack.counta-counts-na-pad",
+    "description": "COUNTA counts pad #N/A as non-blank (unlike Empty)",
+    "tags": ["vstack", "counta"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=COUNTA(VSTACK({1,2}, 3))",
+    "expected": { "number": 4 }
+  },
+  {
+    "id": "fn.vstack.countblank-skips-na",
+    "description": "COUNTBLANK does not treat pad #N/A as blank",
+    "tags": ["vstack", "countblank"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=COUNTBLANK(VSTACK({1,2}, 3))",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.vstack.nested",
+    "description": "VSTACK of a VSTACK result appends further rows",
+    "tags": ["vstack", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=VSTACK(VSTACK({1}, {2}), {3})",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "number": 2 }],
+        [{ "number": 3 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.vstack.ifna-does-not-rewrite-pads",
+    "description": "IFNA on a VSTACK array does not walk pad #N/A — the array is returned as-is",
+    "notes": "Excel's dynamic-array IFNA(VSTACK(...), \"\") rewrites each pad cell. This engine's IFNA only replaces a scalar #N/A result. Pad cells stay #N/A inside the array.",
+    "tags": ["vstack", "ifna"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=IFNA(VSTACK({1,2}, 3), \"\")",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 2 }],
+        [{ "number": 3 }, { "error": "#N/A" }]
+      ]
+    }
+  },
+  {
+    "id": "fn.vstack.iferror-scalar-calc",
+    "description": "IFERROR does catch a scalar VSTACK error (#CALC! from empty-only)",
+    "tags": ["vstack", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=IFERROR(VSTACK({}), 0)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.vstack.no-grid-write",
+    "description": "Occupied cells in the Excel spill zone do not produce #SPILL! — VSTACK returns the array",
+    "notes": "Excel would #SPILL! if VSTACK at B1 needed B2:B3. This model never writes a spill range; neighbors are irrelevant. Pick cells with INDEX/SUM.",
+    "tags": ["vstack", "spill"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=VSTACK(A1:A2, A3)",
+    "at": "Sheet1!B1",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "number": 2 }],
+        [{ "number": 3 }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 2 },
+          "A3": { "number": 3 },
+          "B2": { "text": "blocker" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.vstack.scalar-plus-top-left",
+    "description": "VSTACK+n in a scalar operator takes the top-left cell (not host-aware spill intersection)",
+    "notes": "The engine scalarizes arrays to the first element. It does not intersect a written spill with the host cell.",
+    "tags": ["vstack", "arithmetic"],
+    "quirks": ["array-eval-mode", "implicit-intersection"],
+    "formula": "=VSTACK({10;20}, {30})+1",
+    "expected": { "number": 11 }
+  },
+  {
+    "id": "fn.vstack.dynamic-array-mode",
+    "description": "array_mode=dynamic-array still returns the VSTACK array (no grid write)",
+    "tags": ["vstack", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=VSTACK(A1:A2, B1:B2)",
+    "options": { "array_mode": "dynamic-array" },
+    "expected": {
+      "array": [
+        [{ "number": 10 }],
+        [{ "number": 20 }],
+        [{ "number": 30 }],
+        [{ "number": 40 }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 10 },
+          "A2": { "number": 20 },
+          "B1": { "number": 30 },
+          "B2": { "number": 40 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.vstack.2d-range",
+    "description": "VSTACK of two 2-column sheet ranges",
+    "tags": ["vstack", "functions"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=VSTACK(A1:B2, A3:B3)",
+    "expected": {
+      "array": [
+        [{ "text": "a" }, { "number": 1 }],
+        [{ "text": "b" }, { "number": 2 }],
+        [{ "text": "c" }, { "number": 3 }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "text": "a" }, "B1": { "number": 1 },
+          "A2": { "text": "b" }, "B2": { "number": 2 },
+          "A3": { "text": "c" }, "B3": { "number": 3 }
+        }
+      }]
+    }
+  }
+]

@@ -36,9 +36,30 @@ pub enum QuirkCategory {
     /// Implicit intersection of a range in a scalar context.
     ImplicitIntersection,
     /// Dynamic array / CSE / scalar evaluation mode.
-    /// `FILTER` returns an array value; worksheet spill / `#SPILL!` is not modeled.
+    /// `FILTER` / `UNIQUE` / `SORT` return an array value; worksheet spill / `#SPILL!` is not modeled.
+    /// `FILTER` / `UNIQUE` / `SORTBY` return an array value; worksheet spill / `#SPILL!` is not modeled.
+    /// `FILTER` / `UNIQUE` / `TOCOL` return an array value; worksheet spill /
+    /// `FILTER` / `UNIQUE` / `TOROW` return an array value; worksheet spill /
+    /// `#SPILL!` is not modeled.
+    /// `FILTER` / `UNIQUE` / `SEQUENCE` return an array value; worksheet
+    /// spill / `#SPILL!` is not modeled.
+    /// `FILTER` / `VSTACK` / `UNIQUE` return an array value; worksheet spill /
+    /// `#SPILL!` is not modeled. `VSTACK` width-pads with `#N/A`.
+    /// `FILTER` / `WRAPCOLS` return an array value; worksheet spill / `#SPILL!` is not modeled.
+    /// `FILTER` / `WRAPROWS` / `UNIQUE` return an array value; worksheet
+    /// spill / `#SPILL!` from occupancy is not modeled.
+    /// `FILTER` / `HSTACK` return an array value; worksheet spill / `#SPILL!` is not modeled.
+    /// `FILTER` / `UNIQUE` / `TAKE` return an array value; worksheet spill / `#SPILL!` is not modeled.
+    /// `FILTER` / `CHOOSECOLS` return an array value; worksheet spill / `#SPILL!` is not modeled.
+    /// `FILTER` / `UNIQUE` / `DROP` return an array value; worksheet spill /
+    /// `#SPILL!` is not modeled.
+    /// `FILTER` / `EXPAND` / `UNIQUE` return an array value; worksheet
+    /// spill / `#SPILL!` from occupancy is not modeled.
+    /// `FILTER` / `CHOOSEROWS` return an array value; worksheet spill / `#SPILL!` is not modeled.
+    /// `FILTER` / `UNIQUE` / `TEXTSPLIT` return an array value; worksheet
+    /// spill / `#SPILL!` is not modeled. TEXTSPLIT pad cells are `#N/A`.
     ArrayEvalMode,
-    /// Volatile functions (`NOW`, `RAND`, `INDIRECT`, …).
+    /// Volatile functions (`NOW`, `RAND`, `RANDARRAY`, `INDIRECT`, …).
     Volatile,
     /// Locale argument separators and decimal commas.
     Locale,
@@ -48,7 +69,7 @@ pub enum QuirkCategory {
     PrecisionAsDisplayed,
     /// Hidden-row / `SUBTOTAL` semantics.
     HiddenRows,
-    /// Wildcard matching in `VLOOKUP` / `COUNTIF` / `MATCH` / `SEARCH`.
+    /// Wildcard matching in `VLOOKUP` / `COUNTIF` / `COUNTIFS` / `MATCH` / `SEARCH`.
     Wildcards,
     /// Left-to-right Excel error propagation (`#DIV/0!+#VALUE!` keeps `#DIV/0!`).
     ErrorPrecedence,

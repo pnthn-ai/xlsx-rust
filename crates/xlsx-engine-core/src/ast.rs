@@ -27,6 +27,12 @@ pub enum Expr {
     },
     /// Row-major array literal (`{1,2;3,4}`).
     Array(Vec<Vec<Expr>>),
+    /// Omitted function argument (`TEXTSPLIT(text,,row)`).
+    ///
+    /// Evaluates to [`xlsx_types::ExcelValue::Empty`] unless a function
+    /// special-cases it (TEXTSPLIT treats a missing delimiter as “no split
+    /// on that axis”, which is not the same as an empty-string delimiter).
+    Missing,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -59,5 +65,10 @@ impl Expr {
     /// range-like (skip text / logicals) rather than coercing them as scalars.
     pub fn is_reference(&self) -> bool {
         matches!(self, Expr::Cell(_) | Expr::Range(_) | Expr::Name(_))
+    }
+
+    /// `TRUE` for a skipped call argument (`FOO(a,,b)` → the middle slot).
+    pub fn is_omitted(&self) -> bool {
+        matches!(self, Expr::Missing)
     }
 }

@@ -1,0 +1,282 @@
+[
+  {
+    "id": "fn.yearfrac.ms-basis0",
+    "description": "Microsoft example: YEARFRAC(1-Jan-12, 30-Jul-12) is 209/360 (US 30/360)",
+    "tags": ["yearfrac", "dates"],
+    "formula": "=YEARFRAC(DATE(2012,1,1),DATE(2012,7,30))",
+    "expected": { "number": 0.5805555555555556 }
+  },
+  {
+    "id": "fn.yearfrac.ms-basis1",
+    "description": "Microsoft example: same span, actual/actual, 2012 leap year → 211/366",
+    "tags": ["yearfrac", "dates"],
+    "formula": "=YEARFRAC(DATE(2012,1,1),DATE(2012,7,30),1)",
+    "expected": { "number": 0.5765027322404371 }
+  },
+  {
+    "id": "fn.yearfrac.ms-basis3",
+    "description": "Microsoft example: same span, actual/365 → 211/365",
+    "tags": ["yearfrac", "dates"],
+    "formula": "=YEARFRAC(DATE(2012,1,1),DATE(2012,7,30),3)",
+    "expected": { "number": 0.5780821917808219 }
+  },
+  {
+    "id": "fn.yearfrac.basis2",
+    "description": "Actual/360: 211 days / 360",
+    "tags": ["yearfrac", "dates"],
+    "formula": "=YEARFRAC(DATE(2012,1,1),DATE(2012,7,30),2)",
+    "expected": { "number": 0.5861111111111111 }
+  },
+  {
+    "id": "fn.yearfrac.basis4-same-span",
+    "description": "European 30/360 on the Microsoft span (no 31sts) equals US 30/360",
+    "tags": ["yearfrac", "dates"],
+    "formula": "=YEARFRAC(DATE(2012,1,1),DATE(2012,7,30),4)",
+    "expected": { "number": 0.5805555555555556 }
+  },
+  {
+    "id": "fn.yearfrac.half-year-30-360",
+    "description": "US 30/360: 1-Jan-08 to 1-Jul-08 is exactly 0.5",
+    "tags": ["yearfrac", "dates"],
+    "formula": "=YEARFRAC(DATE(2008,1,1),DATE(2008,7,1),0)",
+    "expected": { "number": 0.5 }
+  },
+  {
+    "id": "fn.yearfrac.same-day",
+    "description": "Equal dates are a zero-length fraction on every basis",
+    "tags": ["yearfrac", "dates"],
+    "formula": "=YEARFRAC(DATE(2012,7,30),DATE(2012,7,30),1)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.yearfrac.reversed",
+    "description": "Excel swaps the pair: YEARFRAC(end, start) equals YEARFRAC(start, end)",
+    "tags": ["yearfrac", "dates"],
+    "formula": "=YEARFRAC(DATE(2012,7,30),DATE(2012,1,1))",
+    "expected": { "number": 0.5805555555555556 }
+  },
+  {
+    "id": "fn.yearfrac.both-31sts",
+    "description": "US 30/360: both days 31 become 30 → Jan 31 to Mar 31 is 60/360",
+    "tags": ["yearfrac", "dates"],
+    "formula": "=YEARFRAC(DATE(2012,1,31),DATE(2012,3,31),0)",
+    "expected": { "number": 0.16666666666666666 }
+  },
+  {
+    "id": "fn.yearfrac.date2-31-after-30",
+    "description": "US 30/360: start day 30 forces end day 31 down to 30",
+    "tags": ["yearfrac", "dates"],
+    "formula": "=YEARFRAC(DATE(2012,1,30),DATE(2012,3,31),0)",
+    "expected": { "number": 0.16666666666666666 }
+  },
+  {
+    "id": "fn.yearfrac.date2-stays-31",
+    "description": "US 30/360: end day stays 31 when start day is 29 (< 30)",
+    "tags": ["yearfrac", "dates"],
+    "formula": "=YEARFRAC(DATE(2012,1,29),DATE(2012,3,31),0)",
+    "expected": { "number": 0.17222222222222222 }
+  },
+  {
+    "id": "fn.yearfrac.feb29-start-quirk",
+    "description": "Documented Excel quirk: last-day-of-February start does not pull Mar 31 down to 30",
+    "tags": ["yearfrac", "dates"],
+    "formula": "=YEARFRAC(DATE(2012,2,29),DATE(2012,3,31),0)",
+    "expected": { "number": 0.08611111111111111 }
+  },
+  {
+    "id": "fn.yearfrac.feb28-nonleap-start",
+    "description": "Non-leap last-day-of-February start: same NASD elif as leap Feb 29",
+    "tags": ["yearfrac", "dates"],
+    "formula": "=YEARFRAC(DATE(2011,2,28),DATE(2011,3,31),0)",
+    "expected": { "number": 0.08611111111111111 }
+  },
+  {
+    "id": "fn.yearfrac.both-feb-ends",
+    "description": "Both last days of February become 30/30: 2012-02-29 to 2016-02-29 is 4",
+    "tags": ["yearfrac", "dates"],
+    "formula": "=YEARFRAC(DATE(2012,2,29),DATE(2016,2,29),0)",
+    "expected": { "number": 4 }
+  },
+  {
+    "id": "fn.yearfrac.feb-end-to-leap-feb29",
+    "description": "Non-leap Feb 28 to leap Feb 29: both last-of-month → 1",
+    "tags": ["yearfrac", "dates"],
+    "formula": "=YEARFRAC(DATE(2011,2,28),DATE(2012,2,29),0)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.yearfrac.eu-feb-not-rewritten",
+    "description": "European 30/360 never rewrites February: Feb 29 to Mar 31 is 31/360",
+    "tags": ["yearfrac", "dates"],
+    "formula": "=YEARFRAC(DATE(2012,2,29),DATE(2012,3,31),4)",
+    "expected": { "number": 0.08611111111111111 }
+  },
+  {
+    "id": "fn.yearfrac.actact-anniversary",
+    "description": "Actual/actual anniversary 2015-01-01 to 2016-01-01 is 365/365",
+    "tags": ["yearfrac", "dates"],
+    "formula": "=YEARFRAC(DATE(2015,1,1),DATE(2016,1,1),1)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.yearfrac.actact-avg-year",
+    "description": "Span that is more than a year: 366 / average(2015,2016)=365.5",
+    "tags": ["yearfrac", "dates"],
+    "formula": "=YEARFRAC(DATE(2015,1,1),DATE(2016,1,2),1)",
+    "expected": { "number": 1.0013679890560875 }
+  },
+  {
+    "id": "fn.yearfrac.actact-leap-days",
+    "description": "Same-year leap: 2016-02-27 to 2016-02-29 is 2/366",
+    "tags": ["yearfrac", "dates"],
+    "formula": "=YEARFRAC(DATE(2016,2,27),DATE(2016,2,29),1)",
+    "expected": { "number": 0.00546448087431694 }
+  },
+  {
+    "id": "fn.yearfrac.actact-two-years",
+    "description": "2011-01-01 to 2013-01-01 uses the average of three calendar years",
+    "tags": ["yearfrac", "dates"],
+    "formula": "=YEARFRAC(DATE(2011,1,1),DATE(2013,1,1),1)",
+    "expected": { "number": 2.000912408759124 }
+  },
+  {
+    "id": "fn.yearfrac.serial-60-actact",
+    "description": "Serial 60 is Excel's 1900-02-29; 59→60 is 1/366",
+    "tags": ["yearfrac", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=YEARFRAC(59,60,1)",
+    "expected": { "number": 0.00273224043715847 }
+  },
+  {
+    "id": "fn.yearfrac.serial-60-61-actact",
+    "description": "Serial 60→61 is still inside the Excel leap year (1/366)",
+    "tags": ["yearfrac", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=YEARFRAC(60,61,1)",
+    "expected": { "number": 0.00273224043715847 }
+  },
+  {
+    "id": "fn.yearfrac.serial-1-61-actact",
+    "description": "1900-01-01 to 1900-03-01 includes the fictitious leap day: 60/366",
+    "tags": ["yearfrac", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=YEARFRAC(1,61,1)",
+    "expected": { "number": 0.16393442622950818 }
+  },
+  {
+    "id": "fn.yearfrac.serial-59-61-us",
+    "description": "Feb 28 1900 is not last-of-month (serial 60 is), so US 30/360 keeps 28 and 1",
+    "tags": ["yearfrac", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=YEARFRAC(59,61,0)",
+    "expected": { "number": 0.008333333333333333 }
+  },
+  {
+    "id": "fn.yearfrac.serial-60-eomonth-us",
+    "description": "Last-day-of-February 1900 start to 31-Mar-1900: NASD Feb quirk, 31/360",
+    "tags": ["yearfrac", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=YEARFRAC(60,91,0)",
+    "expected": { "number": 0.08611111111111111 }
+  },
+  {
+    "id": "fn.yearfrac.serial-0",
+    "description": "Serial 0 is 1900-01-00; YEARFRAC(0,31,0) is 31/360",
+    "tags": ["yearfrac", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=YEARFRAC(0,31,0)",
+    "expected": { "number": 0.08611111111111111 }
+  },
+  {
+    "id": "fn.yearfrac.trunc-frac",
+    "description": "Fractional serials are truncated: +0.9 / +0.1 does not change the civil days",
+    "tags": ["yearfrac", "dates"],
+    "formula": "=YEARFRAC(DATE(2012,1,1)+0.9,DATE(2012,7,30)+0.1)",
+    "expected": { "number": 0.5805555555555556 }
+  },
+  {
+    "id": "fn.yearfrac.trunc-basis",
+    "description": "Basis 1.9 truncates toward zero to actual/actual",
+    "tags": ["yearfrac", "dates"],
+    "formula": "=YEARFRAC(DATE(2012,1,1),DATE(2012,7,30),1.9)",
+    "expected": { "number": 0.5765027322404371 }
+  },
+  {
+    "id": "fn.yearfrac.neg-serial",
+    "description": "Negative start serial is not a valid Excel date",
+    "tags": ["yearfrac", "dates", "errors"],
+    "formula": "=YEARFRAC(-1,10,0)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.yearfrac.past-max",
+    "description": "End serial past 9999-12-31 is #NUM!",
+    "tags": ["yearfrac", "dates", "errors"],
+    "formula": "=YEARFRAC(1,2958466,0)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.yearfrac.bad-basis",
+    "description": "Basis outside 0..4 is #NUM!",
+    "tags": ["yearfrac", "errors"],
+    "formula": "=YEARFRAC(DATE(2012,1,1),DATE(2012,7,30),5)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.yearfrac.neg-basis",
+    "description": "Negative basis is #NUM!",
+    "tags": ["yearfrac", "errors"],
+    "formula": "=YEARFRAC(DATE(2012,1,1),DATE(2012,7,30),-1)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.yearfrac.arity",
+    "description": "YEARFRAC requires 2 or 3 arguments",
+    "tags": ["yearfrac", "errors"],
+    "formula": "=YEARFRAC(1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.yearfrac.bad-text",
+    "description": "Non-numeric text start date is #VALUE! (coercion)",
+    "tags": ["yearfrac", "errors"],
+    "formula": "=YEARFRAC(\"x\",1,0)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.yearfrac.text-serial",
+    "description": "Numeric text serials coerce: YEARFRAC(\"40909\",\"41120\") is the Microsoft span",
+    "tags": ["yearfrac", "dates"],
+    "formula": "=YEARFRAC(\"40909\",\"41120\")",
+    "expected": { "number": 0.5805555555555556 }
+  },
+  {
+    "id": "fn.yearfrac.empty-start",
+    "description": "Blank start coerces to 0 → YEARFRAC(0,31,0) is 31/360",
+    "tags": ["yearfrac", "dates", "empty"],
+    "quirks": ["empty-cell-duality", "date-1900-leap-year"],
+    "formula": "=YEARFRAC(A1,31,0)",
+    "expected": { "number": 0.08611111111111111 },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.yearfrac.system-1904",
+    "description": "YEARFRAC(0,31,0) in the 1904 system is 30/360 (1-Jan-04 to 1-Feb-04)",
+    "tags": ["yearfrac", "dates"],
+    "quirks": ["date-system"],
+    "formula": "=YEARFRAC(0,31,0)",
+    "expected": { "number": 0.08333333333333333 },
+    "options": { "date_system": "excel1904" }
+  },
+  {
+    "id": "fn.yearfrac.system-1904-leap",
+    "description": "1904 is a leap year: YEARFRAC(0,366,1) is 1 (1-Jan-04 to 1-Jan-05)",
+    "tags": ["yearfrac", "dates"],
+    "quirks": ["date-system"],
+    "formula": "=YEARFRAC(0,366,1)",
+    "expected": { "number": 1 },
+    "options": { "date_system": "excel1904" }
+  }
+]

@@ -1,0 +1,279 @@
+[
+  {
+    "id": "fn.randarray.constant-2x3-int",
+    "description": "RANDARRAY(2,3,7,7,TRUE) is a 2×3 array of 7 — min=max is a justified constant, not an invented RNG golden",
+    "tags": ["randarray", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=RANDARRAY(2, 3, 7, 7, TRUE)",
+    "expected": {
+      "array": [
+        [{ "number": 7 }, { "number": 7 }, { "number": 7 }],
+        [{ "number": 7 }, { "number": 7 }, { "number": 7 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.randarray.constant-decimal",
+    "description": "min=max decimal fill is that number (1×2 array)",
+    "tags": ["randarray", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=RANDARRAY(1, 2, 4.5, 4.5)",
+    "expected": {
+      "array": [[{ "number": 4.5 }, { "number": 4.5 }]]
+    }
+  },
+  {
+    "id": "fn.randarray.constant-1x1",
+    "description": "RANDARRAY(1,1,9,9,TRUE) is a 1×1 array, not a scalar",
+    "tags": ["randarray", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=RANDARRAY(1, 1, 9, 9, TRUE)",
+    "expected": {
+      "array": [[{ "number": 9 }]]
+    }
+  },
+  {
+    "id": "fn.randarray.rows-only-explicit-col",
+    "description": "RANDARRAY(3,1,0,0) is a 3×1 column of zeros",
+    "tags": ["randarray", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=RANDARRAY(3, 1, 0, 0)",
+    "expected": {
+      "array": [[{ "number": 0 }], [{ "number": 0 }], [{ "number": 0 }]]
+    }
+  },
+  {
+    "id": "fn.randarray.negative-constant",
+    "description": "Negative min=max integer fill",
+    "tags": ["randarray", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=RANDARRAY(2, 2, -3, -3, TRUE)",
+    "expected": {
+      "array": [
+        [{ "number": -3 }, { "number": -3 }],
+        [{ "number": -3 }, { "number": -3 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.randarray.sum-constant",
+    "description": "SUM of a constant RANDARRAY is rows*columns*value",
+    "tags": ["randarray", "functions"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SUM(RANDARRAY(5, 4, 2, 2))",
+    "expected": { "number": 40 }
+  },
+  {
+    "id": "fn.randarray.counta-constant",
+    "description": "COUNTA of RANDARRAY(3,2,0,0) is 6",
+    "tags": ["randarray", "functions"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=COUNTA(RANDARRAY(3, 2, 0, 0))",
+    "expected": { "number": 6 }
+  },
+  {
+    "id": "fn.randarray.index-constant",
+    "description": "INDEX into a constant RANDARRAY returns that number",
+    "tags": ["randarray", "functions"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=INDEX(RANDARRAY(2, 3, 9, 9, TRUE), 2, 3)",
+    "expected": { "number": 9 }
+  },
+  {
+    "id": "fn.randarray.trunc-rows",
+    "description": "Decimal rows/columns are truncated toward zero (2.9×1.8 → 2×1)",
+    "tags": ["randarray", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=RANDARRAY(2.9, 1.8, 1, 1, TRUE)",
+    "expected": {
+      "array": [[{ "number": 1 }], [{ "number": 1 }]]
+    }
+  },
+  {
+    "id": "fn.randarray.text-rows-coerce",
+    "description": "Numeric text rows coerce (\"2\")",
+    "tags": ["randarray", "functions", "array"],
+    "quirks": ["array-eval-mode", "equality-vs-arithmetic-coercion"],
+    "formula": "=RANDARRAY(\"2\", 1, 8, 8, TRUE)",
+    "expected": {
+      "array": [[{ "number": 8 }], [{ "number": 8 }]]
+    }
+  },
+  {
+    "id": "fn.randarray.bool-integer-flag",
+    "description": "integer=1 is TRUE; integer=0 is FALSE",
+    "tags": ["randarray", "functions", "array"],
+    "quirks": ["array-eval-mode", "bool-number-equality"],
+    "formula": "=RANDARRAY(1, 2, 6, 6, 1)",
+    "expected": {
+      "array": [[{ "number": 6 }, { "number": 6 }]]
+    }
+  },
+  {
+    "id": "fn.randarray.bool-rows",
+    "description": "TRUE rows coerces to 1",
+    "tags": ["randarray", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=RANDARRAY(TRUE, TRUE, 4, 4, TRUE)",
+    "expected": {
+      "array": [[{ "number": 4 }]]
+    }
+  },
+  {
+    "id": "fn.randarray.zero-rows-calc",
+    "description": "rows=0 is #CALC! (Excel cannot return an empty array)",
+    "tags": ["randarray", "errors", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=RANDARRAY(0)",
+    "expected": { "error": "#CALC!" }
+  },
+  {
+    "id": "fn.randarray.zero-cols-calc",
+    "description": "columns=0 is #CALC!",
+    "tags": ["randarray", "errors", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=RANDARRAY(1, 0)",
+    "expected": { "error": "#CALC!" }
+  },
+  {
+    "id": "fn.randarray.neg-rows-calc",
+    "description": "Negative rows is #CALC!",
+    "tags": ["randarray", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=RANDARRAY(-1)",
+    "expected": { "error": "#CALC!" }
+  },
+  {
+    "id": "fn.randarray.frac-below-one-calc",
+    "description": "rows=0.9 truncates to 0 → #CALC!",
+    "tags": ["randarray", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=RANDARRAY(0.9)",
+    "expected": { "error": "#CALC!" }
+  },
+  {
+    "id": "fn.randarray.blank-rows-calc",
+    "description": "Blank cell for rows is 0, not omitted, so #CALC!",
+    "tags": ["randarray", "errors", "empty"],
+    "quirks": ["array-eval-mode", "empty-cell-duality"],
+    "formula": "=RANDARRAY(A1)",
+    "expected": { "error": "#CALC!" },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.randarray.blank-cols-calc",
+    "description": "Blank cell for columns is #CALC!",
+    "tags": ["randarray", "errors", "empty"],
+    "quirks": ["array-eval-mode", "empty-cell-duality"],
+    "formula": "=RANDARRAY(2, A1, 1, 1, TRUE)",
+    "expected": { "error": "#CALC!" },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.randarray.min-gt-max",
+    "description": "min > max is #VALUE!",
+    "tags": ["randarray", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=RANDARRAY(1, 1, 5, 1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.randarray.integer-frac-min",
+    "description": "integer=TRUE with non-integer min is #VALUE!",
+    "tags": ["randarray", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=RANDARRAY(1, 1, 1.5, 4, TRUE)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.randarray.integer-frac-max",
+    "description": "integer=TRUE with non-integer max is #VALUE!",
+    "tags": ["randarray", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=RANDARRAY(1, 1, 1, 4.5, TRUE)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.randarray.bad-rows-text",
+    "description": "Non-numeric rows text is #VALUE!",
+    "tags": ["randarray", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=RANDARRAY(\"x\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.randarray.bad-integer-text",
+    "description": "Text \"TRUE\" is not a logical for integer → #VALUE!",
+    "tags": ["randarray", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=RANDARRAY(1, 1, 1, 1, \"TRUE\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.randarray.arity-six",
+    "description": "A sixth argument is #VALUE!",
+    "tags": ["randarray", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=RANDARRAY(1, 1, 1, 1, TRUE, 0)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.randarray.div0-rows",
+    "description": "Error in rows propagates",
+    "tags": ["randarray", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=RANDARRAY(1/0, 1, 1, 1, TRUE)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.randarray.div0-before-min-gt-max",
+    "description": "Left-to-right: rows error wins over a later min>max",
+    "tags": ["randarray", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=RANDARRAY(1/0, 1, 5, 1)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.randarray.value-before-div0",
+    "description": "Left-to-right: earlier #VALUE! in rows wins over later #DIV/0!",
+    "tags": ["randarray", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=RANDARRAY(\"x\", 1/0)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.randarray.cell-rows",
+    "description": "rows from a worksheet cell",
+    "tags": ["randarray", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=RANDARRAY(A1, A2, A3, A3, TRUE)",
+    "expected": {
+      "array": [
+        [{ "number": 5 }, { "number": 5 }],
+        [{ "number": 5 }, { "number": 5 }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 2 },
+          "A2": { "number": 2 },
+          "A3": { "number": 5 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.randarray.iferror-calc",
+    "description": "IFERROR turns #CALC! from zero rows into a fallback",
+    "tags": ["randarray", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=IFERROR(RANDARRAY(0), \"empty\")",
+    "expected": { "text": "empty" }
+  }
+]

@@ -22,3 +22,56 @@ path = "src/bin/xlsx-bench-snapshot.rs"
 [[bench]]
 name = "fn_sum"
 harness = false
+
+[[bench]]
+name = "fn_nper"
+harness = false
+
+[[bench]]
+name = "fn_rate"
+harness = false
+
+[[bench]]
+name = "fn_ipmt"
+harness = false
+
+[[bench]]
+name = "fn_ppmt"
+harness = false
+
+[[bench]]
+name = "fn_cumipmt"
+harness = false
+
+[[bench]]
+name = "fn_torow"
+harness = false
+
+[[bench]]
+name = "fn_wrapcols"
+harness = false
+
+[[bench]]
+name = "fn_wraprows"
+harness = false
+
+[[bench]]
+name = "fn_hstack"
+harness = false
+
+[[bench]]
+name = "fn_drop"
+harness = false
+
+[[bench]]
+name = "fn_expand"
+harness = false
+
+[[bench]]
+name = "fn_randarray"
+harness = false
+
+[[bench]]
+name = "fn_makearray"
+harness = false
+

@@ -1,0 +1,609 @@
+[
+  {
+    "id": "fn.wrapcols.row-basic",
+    "description": "WRAPCOLS fills down columns then wraps to the right",
+    "tags": ["wrapcols", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=WRAPCOLS({1,2,3,4,5,6},2)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 3 }, { "number": 5 }],
+        [{ "number": 2 }, { "number": 4 }, { "number": 6 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.wrapcols.col-basic",
+    "description": "A column vector wraps in the same sequential order as a row",
+    "tags": ["wrapcols", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=WRAPCOLS({1;2;3;4;5;6},2)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 3 }, { "number": 5 }],
+        [{ "number": 2 }, { "number": 4 }, { "number": 6 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.wrapcols.wrap-three",
+    "description": "wrap_count is the column height, not the number of columns",
+    "tags": ["wrapcols", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=WRAPCOLS({1,2,3,4,5,6},3)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 4 }],
+        [{ "number": 2 }, { "number": 5 }],
+        [{ "number": 3 }, { "number": 6 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.wrapcols.default-pad-na",
+    "description": "Omitted pad_with fills the last column with #N/A",
+    "tags": ["wrapcols", "errors", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=WRAPCOLS({1,2,3,4,5},2)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 3 }, { "number": 5 }],
+        [{ "number": 2 }, { "number": 4 }, { "error": "#N/A" }]
+      ]
+    }
+  },
+  {
+    "id": "fn.wrapcols.pad-text",
+    "description": "pad_with replaces leftover cells in the last column",
+    "tags": ["wrapcols", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=WRAPCOLS({1,2,3,4,5},2,\"x\")",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 3 }, { "number": 5 }],
+        [{ "number": 2 }, { "number": 4 }, { "text": "x" }]
+      ]
+    }
+  },
+  {
+    "id": "fn.wrapcols.pad-zero",
+    "description": "pad_with 0 is the number zero, not a blank",
+    "tags": ["wrapcols", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=WRAPCOLS({1,2,3},2,0)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 3 }],
+        [{ "number": 2 }, { "number": 0 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.wrapcols.pad-empty-text",
+    "description": "pad_with \"\" is stored empty text",
+    "tags": ["wrapcols", "functions", "array"],
+    "quirks": ["array-eval-mode", "empty-cell-duality"],
+    "formula": "=WRAPCOLS({1,2,3},2,\"\")",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 3 }],
+        [{ "number": 2 }, { "text": "" }]
+      ]
+    }
+  },
+  {
+    "id": "fn.wrapcols.pad-blank-cell",
+    "description": "A blank pad_with cell stays Empty",
+    "tags": ["wrapcols", "functions"],
+    "quirks": ["array-eval-mode", "empty-cell-duality"],
+    "formula": "=WRAPCOLS({1,2,3},2,B1)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 3 }],
+        [{ "number": 2 }, { "empty": null }]
+      ]
+    }
+  },
+  {
+    "id": "fn.wrapcols.wrap-count-ge-n",
+    "description": "wrap_count >= n returns a single column and does not pad",
+    "tags": ["wrapcols", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=WRAPCOLS({1,2,3},10,\"pad\")",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "number": 2 }],
+        [{ "number": 3 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.wrapcols.wrap-count-eq-n",
+    "description": "wrap_count equal to n is a single column",
+    "tags": ["wrapcols", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=WRAPCOLS({1;2;3},3)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "number": 2 }],
+        [{ "number": 3 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.wrapcols.wrap-count-one",
+    "description": "wrap_count 1 is a single row of every element",
+    "tags": ["wrapcols", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=WRAPCOLS({1,2,3,4},1)",
+    "expected": {
+      "array": [[{ "number": 1 }, { "number": 2 }, { "number": 3 }, { "number": 4 }]]
+    }
+  },
+  {
+    "id": "fn.wrapcols.scalar",
+    "description": "A scalar is a 1×1 vector (still an array result)",
+    "tags": ["wrapcols", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=WRAPCOLS(7,3)",
+    "expected": { "array": [[{ "number": 7 }]] }
+  },
+  {
+    "id": "fn.wrapcols.two-d-value",
+    "description": "A 2-D vector is #VALUE!",
+    "tags": ["wrapcols", "errors", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=WRAPCOLS({1,2;3,4},2)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.wrapcols.two-d-range",
+    "description": "A multi-column sheet range is #VALUE! (flatten first in Excel with TOCOL)",
+    "tags": ["wrapcols", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=WRAPCOLS(A1:B2,2)",
+    "expected": { "error": "#VALUE!" },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 }, "B1": { "number": 2 },
+          "A2": { "number": 3 }, "B2": { "number": 4 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.wrapcols.num-zero",
+    "description": "wrap_count 0 is #NUM!",
+    "tags": ["wrapcols", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=WRAPCOLS({1,2,3},0)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.wrapcols.num-negative",
+    "description": "wrap_count < 1 is #NUM!",
+    "tags": ["wrapcols", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=WRAPCOLS({1,2,3},-1)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.wrapcols.num-fraction-below-one",
+    "description": "wrap_count 0.9 truncates toward zero to 0 → #NUM!",
+    "tags": ["wrapcols", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=WRAPCOLS({1,2,3},0.9)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.wrapcols.wrap-count-trunc",
+    "description": "wrap_count 2.9 truncates toward zero to 2",
+    "tags": ["wrapcols", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=WRAPCOLS({1,2,3,4},2.9)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 3 }],
+        [{ "number": 2 }, { "number": 4 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.wrapcols.wrap-count-true",
+    "description": "TRUE wrap_count coerces to 1",
+    "tags": ["wrapcols", "functions", "array"],
+    "quirks": ["array-eval-mode", "bool-number-equality"],
+    "formula": "=WRAPCOLS({1,2,3},TRUE)",
+    "expected": {
+      "array": [[{ "number": 1 }, { "number": 2 }, { "number": 3 }]]
+    }
+  },
+  {
+    "id": "fn.wrapcols.wrap-count-false",
+    "description": "FALSE wrap_count coerces to 0 → #NUM!",
+    "tags": ["wrapcols", "errors"],
+    "quirks": ["array-eval-mode", "bool-number-equality"],
+    "formula": "=WRAPCOLS({1,2,3},FALSE)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.wrapcols.wrap-count-text-number",
+    "description": "Numeric text wrap_count coerces",
+    "tags": ["wrapcols", "functions", "array"],
+    "quirks": ["array-eval-mode", "equality-vs-arithmetic-coercion"],
+    "formula": "=WRAPCOLS({1,2,3,4},\"2\")",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 3 }],
+        [{ "number": 2 }, { "number": 4 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.wrapcols.wrap-count-bad-text",
+    "description": "Non-numeric wrap_count text is #VALUE!",
+    "tags": ["wrapcols", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=WRAPCOLS({1,2,3},\"x\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.wrapcols.wrap-count-blank",
+    "description": "A blank wrap_count cell is 0 → #NUM!",
+    "tags": ["wrapcols", "errors"],
+    "quirks": ["array-eval-mode", "empty-cell-duality"],
+    "formula": "=WRAPCOLS({1,2,3},B1)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.wrapcols.missing-wrap-count",
+    "description": "wrap_count is required",
+    "tags": ["wrapcols", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=WRAPCOLS({1,2,3})",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.wrapcols.too-many-args",
+    "description": "Four arguments is #VALUE!",
+    "tags": ["wrapcols", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=WRAPCOLS({1,2,3},2,0,1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.wrapcols.no-args",
+    "description": "No arguments is #VALUE!",
+    "tags": ["wrapcols", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=WRAPCOLS()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.wrapcols.vector-scalar-error",
+    "description": "A scalar error vector surfaces (not wrapped)",
+    "tags": ["wrapcols", "errors"],
+    "quirks": ["array-eval-mode", "error-precedence"],
+    "formula": "=WRAPCOLS(1/0,2)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.wrapcols.wrap-count-error",
+    "description": "An error wrap_count surfaces",
+    "tags": ["wrapcols", "errors"],
+    "quirks": ["array-eval-mode", "error-precedence"],
+    "formula": "=WRAPCOLS({1,2,3},1/0)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.wrapcols.error-in-vector-kept",
+    "description": "Errors inside the vector are data and can sit next to default #N/A pad",
+    "tags": ["wrapcols", "errors", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=WRAPCOLS({1,#DIV/0!,3},2)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 3 }],
+        [{ "error": "#DIV/0!" }, { "error": "#N/A" }]
+      ]
+    }
+  },
+  {
+    "id": "fn.wrapcols.pad-error-is-data",
+    "description": "pad_with 1/0 fills leftovers with #DIV/0! (array result, not a function error)",
+    "tags": ["wrapcols", "errors", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=WRAPCOLS({1,2,3},2,1/0)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 3 }],
+        [{ "number": 2 }, { "error": "#DIV/0!" }]
+      ]
+    }
+  },
+  {
+    "id": "fn.wrapcols.unused-pad-error",
+    "description": "pad_with is evaluated but unused when the wrap divides evenly",
+    "tags": ["wrapcols", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=WRAPCOLS({1,2,3,4},2,1/0)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 3 }],
+        [{ "number": 2 }, { "number": 4 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.wrapcols.blanks-kept",
+    "description": "Blank cells in the vector stay Empty (not coerced to 0)",
+    "tags": ["wrapcols", "functions"],
+    "quirks": ["array-eval-mode", "empty-cell-duality"],
+    "formula": "=WRAPCOLS(A1:A4,2)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "empty": null }],
+        [{ "number": 2 }, { "number": 4 }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 2 },
+          "A4": { "number": 4 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.wrapcols.stored-empty-text",
+    "description": "Stored \"\" is text, not a blank",
+    "tags": ["wrapcols", "functions"],
+    "quirks": ["array-eval-mode", "empty-cell-duality"],
+    "formula": "=WRAPCOLS(A1:A4,2)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "text": "" }],
+        [{ "number": 2 }, { "number": 4 }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 2 },
+          "A3": { "text": "" },
+          "A4": { "number": 4 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.wrapcols.mixed-types",
+    "description": "Numbers, text, and logicals keep their types",
+    "tags": ["wrapcols", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=WRAPCOLS({1,\"a\",TRUE,2},2)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "bool": true }],
+        [{ "text": "a" }, { "number": 2 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.wrapcols.range-row",
+    "description": "A sheet row wraps the same way as a row literal",
+    "tags": ["wrapcols", "functions"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=WRAPCOLS(A1:F1,3)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 4 }],
+        [{ "number": 2 }, { "number": 5 }],
+        [{ "number": 3 }, { "number": 6 }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "B1": { "number": 2 },
+          "C1": { "number": 3 },
+          "D1": { "number": 4 },
+          "E1": { "number": 5 },
+          "F1": { "number": 6 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.wrapcols.range-col",
+    "description": "A sheet column wraps sequentially down then right",
+    "tags": ["wrapcols", "functions"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=WRAPCOLS(A1:A5,2,\"-\")",
+    "expected": {
+      "array": [
+        [{ "number": 10 }, { "number": 30 }, { "number": 50 }],
+        [{ "number": 20 }, { "number": 40 }, { "text": "-" }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 10 },
+          "A2": { "number": 20 },
+          "A3": { "number": 30 },
+          "A4": { "number": 40 },
+          "A5": { "number": 50 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.wrapcols.index",
+    "description": "INDEX picks a WRAPCOLS cell without writing a spill range",
+    "tags": ["wrapcols", "index"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=INDEX(WRAPCOLS({1,2,3,4,5,6},2),2,3)",
+    "expected": { "number": 6 }
+  },
+  {
+    "id": "fn.wrapcols.sum",
+    "description": "SUM consumes the WRAPCOLS array (pads are #N/A and do not add)",
+    "tags": ["wrapcols", "sum"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SUM(WRAPCOLS({1,2,3,4,5,6},2))",
+    "expected": { "number": 21 }
+  },
+  {
+    "id": "fn.wrapcols.counta",
+    "description": "COUNTA of WRAPCOLS counts every result cell including #N/A pad",
+    "tags": ["wrapcols", "counta"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=COUNTA(WRAPCOLS({1,2,3},2))",
+    "expected": { "number": 4 }
+  },
+  {
+    "id": "fn.wrapcols.type-array",
+    "description": "TYPE of WRAPCOLS is 64 (array)",
+    "tags": ["wrapcols", "type"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TYPE(WRAPCOLS({1,2,3},2))",
+    "expected": { "number": 64 }
+  },
+  {
+    "id": "fn.wrapcols.nested",
+    "description": "WRAPCOLS of an already-wrapped column is a no-op when wrap_count >= height",
+    "tags": ["wrapcols", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=WRAPCOLS(WRAPCOLS({1,2,3},10),10)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "number": 2 }],
+        [{ "number": 3 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.wrapcols.dynamic-array-mode",
+    "description": "array_mode=dynamic-array still returns the WRAPCOLS array (no grid write)",
+    "tags": ["wrapcols", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=WRAPCOLS(A1:A4,2)",
+    "options": { "array_mode": "dynamic-array" },
+    "expected": {
+      "array": [
+        [{ "number": 10 }, { "number": 30 }],
+        [{ "number": 20 }, { "number": 40 }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 10 },
+          "A2": { "number": 20 },
+          "A3": { "number": 30 },
+          "A4": { "number": 40 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.wrapcols.no-grid-write",
+    "description": "Occupied cells in the Excel spill zone do not produce #SPILL! — WRAPCOLS returns the array",
+    "notes": "Excel would #SPILL! if WRAPCOLS at B1 needed B2. This model never writes a spill range; neighbors are irrelevant. Pick individual results with INDEX/SUM.",
+    "tags": ["wrapcols", "spill"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=WRAPCOLS(A1:A4,2)",
+    "at": "Sheet1!B1",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 3 }],
+        [{ "number": 2 }, { "number": 4 }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 2 },
+          "A3": { "number": 3 },
+          "A4": { "number": 4 },
+          "B2": { "text": "blocker" }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.wrapcols.scalar-plus-top-left",
+    "description": "WRAPCOLS+n in a scalar operator takes the top-left element (not host-aware spill intersection)",
+    "notes": "The engine scalarizes arrays to the first element. It does not intersect a written spill with the host cell.",
+    "tags": ["wrapcols", "arithmetic"],
+    "quirks": ["array-eval-mode", "implicit-intersection"],
+    "formula": "=WRAPCOLS({10,20,30,40},2)+1",
+    "expected": { "number": 11 }
+  },
+  {
+    "id": "fn.wrapcols.wrap-count-array-scalarize",
+    "description": "A 1×1 array wrap_count scalarizes",
+    "tags": ["wrapcols", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=WRAPCOLS({1,2,3,4},{2})",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 3 }],
+        [{ "number": 2 }, { "number": 4 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.wrapcols.two-d-and-bad-wrap-count",
+    "description": "Invalid wrap_count is reported even when vector is also 2-D",
+    "tags": ["wrapcols", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=WRAPCOLS({1,2;3,4},0)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.wrapcols.spill-occupancy-not-modeled",
+    "description": "#SPILL! from a blocked spill range is not produced",
+    "tags": ["wrapcols"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=WRAPCOLS({1,2,3,4},2)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 3 }],
+        [{ "number": 2 }, { "number": 4 }]
+      ]
+    },
+    "ignore": "Workbook snippets have no spill grid. WRAPCOLS returns an array value; #SPILL! from occupied cells below/right of the host is not modeled."
+  },
+  {
+    "id": "fn.wrapcols.excel-size-cap-not-enforced",
+    "description": "Excel's 1,048,576-row / 16,384-column array caps are not enforced",
+    "tags": ["wrapcols"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=WRAPCOLS({1,2,3},2)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 3 }],
+        [{ "number": 2 }, { "error": "#N/A" }]
+      ]
+    },
+    "ignore": "A WRAPCOLS result taller than 1,048,576 rows or wider than 16,384 columns would be #NUM! in live Excel. This engine is memory-bounded and does not emit #NUM! for oversized WRAPCOLS results."
+  }
+]

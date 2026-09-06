@@ -92,6 +92,8 @@ pub fn eval_concat_formula(
                 depth: 0,
                 visiting: Default::default(),
                 host: spec.default_cell().addr,
+                rng: super::randarray::XorShift64::from_eval_options(&spec.options),
+                locals: Vec::new(),
             };
             concat_materialized(&Evaluator::new(), &args, &mut ctx)
         }

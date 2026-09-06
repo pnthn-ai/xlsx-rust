@@ -1,0 +1,311 @@
+[
+  {
+    "id": "fn.networkdays-intl.ms-weekend7-holidays",
+    "description": "Microsoft example: 1-Jan-06 to 1-Feb-06, weekend 7 (Fri/Sat), two Monday holidays is 22",
+    "tags": ["networkdays-intl", "dates"],
+    "formula": "=NETWORKDAYS.INTL(DATE(2006,1,1),DATE(2006,2,1),7,{DATE(2006,1,2),DATE(2006,1,16)})",
+    "expected": { "number": 22 }
+  },
+  {
+    "id": "fn.networkdays-intl.ms-span-default",
+    "description": "Same Microsoft span with omitted weekend (Sat/Sun): 32 days minus 4 Sat minus 5 Sun = 23",
+    "tags": ["networkdays-intl", "dates"],
+    "formula": "=NETWORKDAYS.INTL(DATE(2006,1,1),DATE(2006,2,1))",
+    "expected": { "number": 23 }
+  },
+  {
+    "id": "fn.networkdays-intl.ms-span-code7",
+    "description": "Microsoft span, weekend 7, no holidays: 32 minus 4 Fri minus 4 Sat = 24",
+    "tags": ["networkdays-intl", "dates"],
+    "formula": "=NETWORKDAYS.INTL(DATE(2006,1,1),DATE(2006,2,1),7)",
+    "expected": { "number": 24 }
+  },
+  {
+    "id": "fn.networkdays-intl.ms-span-code11",
+    "description": "Microsoft span, Sunday-only weekend: 32 minus 5 Sun = 27",
+    "tags": ["networkdays-intl", "dates"],
+    "formula": "=NETWORKDAYS.INTL(DATE(2006,1,1),DATE(2006,2,1),11)",
+    "expected": { "number": 27 }
+  },
+  {
+    "id": "fn.networkdays-intl.matches-networkdays",
+    "description": "Omitted weekend matches NETWORKDAYS on the published Oct-12 to Mar-13 span (110)",
+    "tags": ["networkdays-intl", "networkdays", "dates"],
+    "formula": "=NETWORKDAYS.INTL(DATE(2012,10,1),DATE(2013,3,1))",
+    "expected": { "number": 110 }
+  },
+  {
+    "id": "fn.networkdays-intl.code1-equals-networkdays",
+    "description": "Weekend code 1 is Sat/Sun, same 110 as NETWORKDAYS",
+    "tags": ["networkdays-intl", "dates"],
+    "formula": "=NETWORKDAYS.INTL(DATE(2012,10,1),DATE(2013,3,1),1)",
+    "expected": { "number": 110 }
+  },
+  {
+    "id": "fn.networkdays-intl.string-sat-sun",
+    "description": "Weekend string 0000011 is Saturday+Sunday (same 110)",
+    "tags": ["networkdays-intl", "dates"],
+    "formula": "=NETWORKDAYS.INTL(DATE(2012,10,1),DATE(2013,3,1),\"0000011\")",
+    "expected": { "number": 110 }
+  },
+  {
+    "id": "fn.networkdays-intl.string-none",
+    "description": "0000000 treats every day as a workday: 1-Oct-12 through 1-Mar-13 is 152 calendar days",
+    "tags": ["networkdays-intl", "dates"],
+    "formula": "=NETWORKDAYS.INTL(DATE(2012,10,1),DATE(2013,3,1),\"0000000\")",
+    "expected": { "number": 152 }
+  },
+  {
+    "id": "fn.networkdays-intl.string-all-weekend",
+    "description": "1111111 is valid and always returns 0 (Microsoft)",
+    "tags": ["networkdays-intl", "dates"],
+    "formula": "=NETWORKDAYS.INTL(DATE(2006,1,1),DATE(2006,2,1),\"1111111\")",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.networkdays-intl.string-sunday-only",
+    "description": "0000001 is Sunday only, same as code 11 on the Microsoft span (27)",
+    "tags": ["networkdays-intl", "dates"],
+    "formula": "=NETWORKDAYS.INTL(DATE(2006,1,1),DATE(2006,2,1),\"0000001\")",
+    "expected": { "number": 27 }
+  },
+  {
+    "id": "fn.networkdays-intl.string-mwf",
+    "description": "0101011 = Tue/Thu/Sat/Sun off; Mon 1-Jan-24 through Sun 7-Jan-24 leaves Mon+Wed+Fri = 3",
+    "tags": ["networkdays-intl", "dates"],
+    "formula": "=NETWORKDAYS.INTL(DATE(2024,1,1),DATE(2024,1,7),\"0101011\")",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.networkdays-intl.string-monday-off",
+    "description": "1000000 = Monday only weekend; that week is 6 workdays",
+    "tags": ["networkdays-intl", "dates"],
+    "formula": "=NETWORKDAYS.INTL(DATE(2024,1,1),DATE(2024,1,7),\"1000000\")",
+    "expected": { "number": 6 }
+  },
+  {
+    "id": "fn.networkdays-intl.week-code11",
+    "description": "Mon–Sun week with Sunday-only weekend is 6",
+    "tags": ["networkdays-intl", "dates"],
+    "formula": "=NETWORKDAYS.INTL(DATE(2024,1,1),DATE(2024,1,7),11)",
+    "expected": { "number": 6 }
+  },
+  {
+    "id": "fn.networkdays-intl.week-code17",
+    "description": "Mon–Sun week with Saturday-only weekend is 6",
+    "tags": ["networkdays-intl", "dates"],
+    "formula": "=NETWORKDAYS.INTL(DATE(2024,1,1),DATE(2024,1,7),17)",
+    "expected": { "number": 6 }
+  },
+  {
+    "id": "fn.networkdays-intl.week-code7",
+    "description": "Mon–Sun week with Fri/Sat weekend is Mon–Thu + Sun = 5",
+    "tags": ["networkdays-intl", "dates"],
+    "formula": "=NETWORKDAYS.INTL(DATE(2024,1,1),DATE(2024,1,7),7)",
+    "expected": { "number": 5 }
+  },
+  {
+    "id": "fn.networkdays-intl.same-saturday-default",
+    "description": "Same-day Saturday under default weekend is 0",
+    "tags": ["networkdays-intl", "dates"],
+    "formula": "=NETWORKDAYS.INTL(DATE(2024,1,6),DATE(2024,1,6))",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.networkdays-intl.same-saturday-sun-only",
+    "description": "Same-day Saturday under Sunday-only weekend is a workday",
+    "tags": ["networkdays-intl", "dates"],
+    "formula": "=NETWORKDAYS.INTL(DATE(2024,1,6),DATE(2024,1,6),11)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.networkdays-intl.reversed",
+    "description": "Start after end yields the negated forward count",
+    "tags": ["networkdays-intl", "dates"],
+    "formula": "=NETWORKDAYS.INTL(DATE(2024,1,5),DATE(2024,1,1))",
+    "expected": { "number": -5 }
+  },
+  {
+    "id": "fn.networkdays-intl.holiday-weekday",
+    "description": "Monday holiday under default weekend drops the week from 5 to 4",
+    "tags": ["networkdays-intl", "dates"],
+    "formula": "=NETWORKDAYS.INTL(DATE(2024,1,1),DATE(2024,1,7),1,DATE(2024,1,1))",
+    "expected": { "number": 4 }
+  },
+  {
+    "id": "fn.networkdays-intl.holiday-weekend-ignored",
+    "description": "Saturday holiday under Sat/Sun weekend does not change the count",
+    "tags": ["networkdays-intl", "dates"],
+    "formula": "=NETWORKDAYS.INTL(DATE(2024,1,1),DATE(2024,1,7),1,DATE(2024,1,6))",
+    "expected": { "number": 5 }
+  },
+  {
+    "id": "fn.networkdays-intl.holiday-saturday-when-workday",
+    "description": "Saturday holiday under Sunday-only weekend is a workday and is subtracted (6→5)",
+    "tags": ["networkdays-intl", "dates"],
+    "formula": "=NETWORKDAYS.INTL(DATE(2024,1,1),DATE(2024,1,7),11,DATE(2024,1,6))",
+    "expected": { "number": 5 }
+  },
+  {
+    "id": "fn.networkdays-intl.holiday-range",
+    "description": "Holiday range with a blank: Monday 1-Jan-24 off leaves 4 weekdays",
+    "tags": ["networkdays-intl", "dates", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=NETWORKDAYS.INTL(DATE(2024,1,1),DATE(2024,1,7),1,B1:B3)",
+    "expected": { "number": 4 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "B1": { "number": 45292 }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.networkdays-intl.serial-60-workday",
+    "description": "Serial 60 is Wednesday; a workday under Sat/Sun",
+    "tags": ["networkdays-intl", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=NETWORKDAYS.INTL(60,60)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.networkdays-intl.serial-60-wed-weekend",
+    "description": "Weekend code 14 (Wednesday only) makes serial 60 a weekend",
+    "tags": ["networkdays-intl", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=NETWORKDAYS.INTL(60,60,14)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.networkdays-intl.serial-59-61-wed-off",
+    "description": "Tue–Thu around the leap-bug Wednesday with Wednesday-only weekend is 2",
+    "tags": ["networkdays-intl", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=NETWORKDAYS.INTL(59,61,14)",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.networkdays-intl.trunc-frac",
+    "description": "Fractional start/end and weekend code truncate toward zero (1.9 → code 1)",
+    "tags": ["networkdays-intl", "dates"],
+    "formula": "=NETWORKDAYS.INTL(DATE(2024,1,1)+0.9,DATE(2024,1,5)+0.1,1.9)",
+    "expected": { "number": 5 }
+  },
+  {
+    "id": "fn.networkdays-intl.empty-start",
+    "description": "Blank start coerces to serial 0 (Sat); with default weekend NETWORKDAYS.INTL(0,2) is 1",
+    "tags": ["networkdays-intl", "dates", "empty"],
+    "quirks": ["empty-cell-duality", "date-1900-leap-year"],
+    "formula": "=NETWORKDAYS.INTL(A1,2)",
+    "expected": { "number": 1 },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.networkdays-intl.weekend-true",
+    "description": "TRUE weekend coerces to code 1 (Sat/Sun)",
+    "tags": ["networkdays-intl", "dates"],
+    "formula": "=NETWORKDAYS.INTL(DATE(2024,1,1),DATE(2024,1,7),TRUE)",
+    "expected": { "number": 5 }
+  },
+  {
+    "id": "fn.networkdays-intl.weekend-false",
+    "description": "FALSE weekend coerces to 0, which is an invalid weekend number",
+    "tags": ["networkdays-intl", "errors"],
+    "formula": "=NETWORKDAYS.INTL(DATE(2024,1,1),DATE(2024,1,7),FALSE)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.networkdays-intl.weekend-zero",
+    "description": "Weekend number 0 is #NUM! (Microsoft WORKDAY.INTL documents the same)",
+    "tags": ["networkdays-intl", "errors"],
+    "formula": "=NETWORKDAYS.INTL(DATE(2024,1,1),DATE(2024,1,7),0)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.networkdays-intl.weekend-8",
+    "description": "Weekend number 8 is outside 1–7 / 11–17",
+    "tags": ["networkdays-intl", "errors"],
+    "formula": "=NETWORKDAYS.INTL(DATE(2024,1,1),DATE(2024,1,7),8)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.networkdays-intl.weekend-10",
+    "description": "Weekend number 10 (gap between 7 and 11) is #NUM!",
+    "tags": ["networkdays-intl", "errors"],
+    "formula": "=NETWORKDAYS.INTL(DATE(2024,1,1),DATE(2024,1,7),10)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.networkdays-intl.bad-string-length",
+    "description": "Weekend text that is not seven characters is #VALUE!",
+    "tags": ["networkdays-intl", "errors"],
+    "formula": "=NETWORKDAYS.INTL(DATE(2024,1,1),DATE(2024,1,7),\"1\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.networkdays-intl.bad-string-char",
+    "description": "A 7-character weekend string may contain only 0 and 1",
+    "tags": ["networkdays-intl", "errors"],
+    "formula": "=NETWORKDAYS.INTL(DATE(2024,1,1),DATE(2024,1,7),\"0000012\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.networkdays-intl.neg-serial",
+    "description": "Negative start serial is not a valid Excel date",
+    "tags": ["networkdays-intl", "dates", "errors"],
+    "formula": "=NETWORKDAYS.INTL(-1,10)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.networkdays-intl.past-max",
+    "description": "End serial past 9999-12-31 is #NUM!",
+    "tags": ["networkdays-intl", "dates", "errors"],
+    "formula": "=NETWORKDAYS.INTL(1,2958466)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.networkdays-intl.arity",
+    "description": "NETWORKDAYS.INTL requires 2 to 4 arguments",
+    "tags": ["networkdays-intl", "errors"],
+    "formula": "=NETWORKDAYS.INTL(1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.networkdays-intl.bad-text-start",
+    "description": "Non-numeric text start is #VALUE!",
+    "tags": ["networkdays-intl", "errors"],
+    "formula": "=NETWORKDAYS.INTL(\"x\",10)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.networkdays-intl.holiday-bad-text",
+    "description": "Non-numeric holiday text is #VALUE!",
+    "tags": ["networkdays-intl", "errors"],
+    "formula": "=NETWORKDAYS.INTL(1,7,1,\"x\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.networkdays-intl.system-1904",
+    "description": "1904 NETWORKDAYS.INTL(0,4): Fri–Tue with Sat/Sun off is 3",
+    "tags": ["networkdays-intl", "dates"],
+    "quirks": ["date-system"],
+    "formula": "=NETWORKDAYS.INTL(0,4)",
+    "expected": { "number": 3 },
+    "options": { "date_system": "excel1904" }
+  },
+  {
+    "id": "fn.networkdays-intl.system-1904-sun-only",
+    "description": "1904 NETWORKDAYS.INTL(0,4,11): Fri–Tue with Sunday off is Fri+Sat+Mon+Tue = 4",
+    "tags": ["networkdays-intl", "dates"],
+    "quirks": ["date-system"],
+    "formula": "=NETWORKDAYS.INTL(0,4,11)",
+    "expected": { "number": 4 },
+    "options": { "date_system": "excel1904" }
+  }
+]
