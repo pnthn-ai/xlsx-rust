@@ -133,11 +133,7 @@ fn unique_kernel(
     if kept.is_empty() {
         return ExcelValue::Error(ExcelError::Calc);
     }
-    let out = if by_col {
-        columns_to_rows(&kept)
-    } else {
-        kept
-    };
+    let out = if by_col { columns_to_rows(&kept) } else { kept };
     ExcelValue::Array(out)
 }
 

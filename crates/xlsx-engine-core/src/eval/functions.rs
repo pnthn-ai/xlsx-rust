@@ -17,8 +17,8 @@ use crate::text_format;
 use xlsx_types::{
     count_matches, excel_ceiling, excel_ceiling_math, excel_cumipmt, excel_cumprinc, excel_effect,
     excel_floor, excel_floor_math, excel_fv, excel_int, excel_ipmt, excel_nominal, excel_nper,
-    excel_pduration, excel_pmt, excel_ppmt, excel_pv, excel_rate, excel_rri, Criterion, EvalError,
-    ExcelError, ExcelValue,
+    excel_pduration, excel_pmt, excel_ppmt, excel_pv, excel_rate, excel_round, excel_rri,
+    Criterion, EvalError, ExcelError, ExcelValue,
 };
 
 pub(crate) fn dispatch(
@@ -89,8 +89,8 @@ pub(crate) fn dispatch(
         "INT" => fn_unary_num(ev, args, ctx, |n| ExcelValue::Number(excel_int(n))),
         "TRUNC" => fn_trunc(ev, args, ctx),
         "ROUND" => fn_round(ev, args, ctx),
-        "ROUNDUP" => fn_round_dir(ev, args, ctx, RoundDir::Up),
-        "ROUNDDOWN" => fn_round_dir(ev, args, ctx, RoundDir::Down),
+        "ROUNDUP" => super::roundup::fn_roundup(ev, args, ctx),
+        "ROUNDDOWN" => super::rounddown::fn_rounddown(ev, args, ctx),
         "FLOOR" => fn_floor_ceil(ev, args, ctx, FloorCeil::Floor),
         "CEILING" => fn_floor_ceil(ev, args, ctx, FloorCeil::Ceiling),
         "FLOOR.MATH" => fn_floor_ceil_math(ev, args, ctx, FloorCeil::Floor),
@@ -768,48 +768,25 @@ fn fn_floor_ceil_math(
 }
 
 fn fn_round(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
-    if args.len() < 2 {
+    if args.is_empty() || args.len() > 2 {
         return Ok(ExcelValue::Error(ExcelError::Value));
     }
     let n = match coerce::to_number(&ev.eval_scalar(&args[0], ctx)?) {
         Ok(n) => n,
         Err(e) => return Ok(ExcelValue::Error(e)),
     };
-    let digits = match coerce::to_number(&ev.eval_scalar(&args[1], ctx)?) {
-        Ok(d) => d.trunc() as i32,
-        Err(e) => return Ok(ExcelValue::Error(e)),
+    let digits = if args.len() >= 2 {
+        match &args[1] {
+            Expr::Missing => 0,
+            other => match coerce::to_number(&ev.eval_scalar(other, ctx)?) {
+                Ok(d) => d.trunc() as i32,
+                Err(e) => return Ok(ExcelValue::Error(e)),
+            },
+        }
+    } else {
+        0
     };
-    Ok(ExcelValue::Number(excel_round_half_away(n, digits)))
-}
-
-#[derive(Clone, Copy)]
-enum RoundDir {
-    Up,
-    Down,
-}
-
-fn fn_round_dir(
-    ev: &Evaluator,
-    args: &[Expr],
-    ctx: &mut Ctx<'_>,
-    dir: RoundDir,
-) -> Result<ExcelValue, EvalError> {
-    if args.len() != 2 {
-        return Ok(ExcelValue::Error(ExcelError::Value));
-    }
-    let n = match coerce::to_number(&ev.eval_scalar(&args[0], ctx)?) {
-        Ok(n) => n,
-        Err(e) => return Ok(ExcelValue::Error(e)),
-    };
-    let digits = match coerce::to_number(&ev.eval_scalar(&args[1], ctx)?) {
-        Ok(d) => d.trunc() as i32,
-        Err(e) => return Ok(ExcelValue::Error(e)),
-    };
-    let out = match dir {
-        RoundDir::Up => super::round::roundup(n, digits),
-        RoundDir::Down => super::round::rounddown(n, digits),
-    };
-    Ok(ExcelValue::Number(out))
+    Ok(ExcelValue::Number(excel_round(n, digits)))
 }
 
 fn fn_mod(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
@@ -2519,17 +2496,6 @@ fn flatten_vector(v: ExcelValue) -> Vec<ExcelValue> {
         }
         other => vec![other],
     }
-}
-
-fn excel_round_half_away(n: f64, digits: i32) -> f64 {
-    let factor = 10f64.powi(digits);
-    let x = n * factor;
-    let rounded = if x >= 0.0 {
-        (x + 0.5).floor()
-    } else {
-        (x - 0.5).ceil()
-    };
-    rounded / factor
 }
 
 fn excel_trunc(n: f64, digits: i32) -> f64 {

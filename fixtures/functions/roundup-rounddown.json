@@ -319,17 +319,17 @@
   },
   {
     "id": "fn.roundup-arity-1",
-    "description": "ROUNDUP with one argument is #VALUE! (num_digits is required)",
-    "tags": ["math", "roundup", "errors"],
+    "description": "ROUNDUP with one argument treats omitted num_digits as 0: ROUNDUP(3.2) is 4",
+    "tags": ["math", "roundup"],
     "formula": "=ROUNDUP(3.2)",
-    "expected": { "error": "#VALUE!" }
+    "expected": { "number": 4 }
   },
   {
     "id": "fn.rounddown-arity-1",
-    "description": "ROUNDDOWN with one argument is #VALUE!",
-    "tags": ["math", "rounddown", "errors"],
+    "description": "Omitted num_digits defaults to 0: ROUNDDOWN(3.2) is 3",
+    "tags": ["math", "rounddown"],
     "formula": "=ROUNDDOWN(3.2)",
-    "expected": { "error": "#VALUE!" }
+    "expected": { "number": 3 }
   },
   {
     "id": "fn.roundup-arity-3",

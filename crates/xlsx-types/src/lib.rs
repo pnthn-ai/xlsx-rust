@@ -12,7 +12,10 @@ pub mod cell;
 pub mod criterion;
 pub mod error;
 pub mod eval;
+pub mod excel_ceiling;
+pub mod excel_floor;
 pub mod excel_int;
+pub mod excel_round;
 pub mod financial;
 pub mod floor_ceiling;
 pub mod quirk;
@@ -25,9 +28,15 @@ pub use error::ExcelError;
 pub use eval::{
     ArrayMode, Candidate, DateSystem, EvalError, EvalOptions, EvalSpec, EvalTarget, Locale,
 };
+pub use excel_ceiling::{
+    excel_ceiling, excel_ceiling_ieee, excel_ceiling_naive, excel_ceiling_slice,
+    excel_ceiling_slice_naive,
+};
+pub use excel_floor::{excel_floor, excel_floor_naive, excel_floor_slice, excel_floor_slice_naive};
 pub use excel_int::{
     excel_int, excel_int_ieee, excel_int_naive, excel_int_slice, excel_int_slice_naive,
 };
+pub use excel_round::{excel_round, excel_round_naive, excel_round_slice, excel_round_slice_naive};
 pub use financial::{
     cumipmt as excel_cumipmt, cumipmt_naive as excel_cumipmt_naive, cumprinc as excel_cumprinc,
     cumprinc_naive as excel_cumprinc_naive, effect as excel_effect,
@@ -39,11 +48,7 @@ pub use financial::{
     rate as excel_rate, rate_naive as excel_rate_naive, rri as excel_rri,
     rri_naive as excel_rri_naive, RATE_MAX_ITERS, RATE_TOL,
 };
-pub use floor_ceiling::{
-    excel_ceiling, excel_ceiling_math, excel_ceiling_naive, excel_ceiling_slice,
-    excel_ceiling_slice_naive, excel_floor, excel_floor_math, excel_floor_naive, excel_floor_slice,
-    excel_floor_slice_naive,
-};
+pub use floor_ceiling::{excel_ceiling_math, excel_floor_math};
 pub use quirk::QuirkCategory;
 pub use value::{excel_num_eq, excel_round_15, ExcelType, ExcelValue};
 pub use workbook::{Cell, DefinedName, Sheet, Workbook, WorkbookError};

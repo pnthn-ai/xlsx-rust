@@ -1,4 +1,5 @@
-//! Excel `FLOOR` / `CEILING` (classic) and `FLOOR.MATH` / `CEILING.MATH`.
+//! Excel `FLOOR.MATH` / `CEILING.MATH`, plus re-exports of classic `FLOOR` /
+//! `CEILING` from their dedicated kernels.
 //!
 //! Shared kernel so `calc-core` and `seed-compliant` stay aligned. Does not
 //! read fixture goldens — callers pass coerced `f64`s.
@@ -9,37 +10,15 @@ use crate::value::excel_round_15;
 /// Largest magnitude still exactly representable as an integer in `f64`.
 const SAFE_INT: f64 = (1i64 << 53) as f64;
 
-/// Classic Excel `FLOOR(number, significance)`.
-///
-/// - Significance `0` and number `≠ 0` → `#DIV/0!`; `FLOOR(0, 0)` is `0`.
-/// - Positive number + negative significance → `#NUM!`.
-/// - Negative number + positive significance is allowed (Excel 2010+):
-///   rounds away from zero (toward −∞).
-/// - Both negative: rounds toward zero (toward +∞).
-pub fn excel_floor(n: f64, s: f64) -> Result<f64, ExcelError> {
-    floor_ceil(n, s, Dir::Floor)
-}
+/// Classic Excel `FLOOR` — dedicated kernel in [`crate::excel_floor`].
+pub use crate::excel_floor::{
+    excel_floor, excel_floor_naive, excel_floor_slice, excel_floor_slice_naive,
+};
 
-/// Classic Excel `CEILING(number, significance)`.
-///
-/// - Significance `0` and number `≠ 0` → `#DIV/0!`; `CEILING(0, 0)` is `0`.
-/// - Positive number + negative significance → `#NUM!`.
-/// - Negative number + positive significance: rounds toward zero.
-/// - Both negative: rounds away from zero.
-pub fn excel_ceiling(n: f64, s: f64) -> Result<f64, ExcelError> {
-    floor_ceil(n, s, Dir::Ceiling)
-}
-
-/// IEEE-only classic `FLOOR` (same sign / zero rules, no integer path, no
-/// 15-digit multiple snap). Used as the microbench baseline.
-pub fn excel_floor_naive(n: f64, s: f64) -> Result<f64, ExcelError> {
-    floor_ceil_ieee(n, s, Dir::Floor)
-}
-
-/// IEEE-only classic `CEILING` baseline (see [`excel_floor_naive`]).
-pub fn excel_ceiling_naive(n: f64, s: f64) -> Result<f64, ExcelError> {
-    floor_ceil_ieee(n, s, Dir::Ceiling)
-}
+/// Classic Excel `CEILING` — dedicated kernel in [`crate::excel_ceiling`].
+pub use crate::excel_ceiling::{
+    excel_ceiling, excel_ceiling_naive, excel_ceiling_slice, excel_ceiling_slice_naive,
+};
 
 /// `FLOOR.MATH(number, significance, mode)`.
 ///
@@ -58,29 +37,6 @@ pub fn excel_ceiling_math(n: f64, s: f64, mode: f64) -> Result<f64, ExcelError> 
     math_round(n, s, mode, MathKind::Ceiling)
 }
 
-/// Apply classic `FLOOR` to every `n[i]` with a constant significance.
-///
-/// Returns the number of `#DIV/0!` / `#NUM!` inputs (those slots are left
-/// unchanged). Hot path for column-shaped work.
-pub fn excel_floor_slice(n: &[f64], s: f64, out: &mut [f64]) -> usize {
-    slice_apply(n, s, out, Dir::Floor)
-}
-
-/// Apply classic `CEILING` to every `n[i]` with a constant significance.
-pub fn excel_ceiling_slice(n: &[f64], s: f64, out: &mut [f64]) -> usize {
-    slice_apply(n, s, out, Dir::Ceiling)
-}
-
-/// IEEE slice baseline matching [`excel_floor_naive`].
-pub fn excel_floor_slice_naive(n: &[f64], s: f64, out: &mut [f64]) -> usize {
-    slice_apply_ieee(n, s, out, Dir::Floor)
-}
-
-/// IEEE slice baseline matching [`excel_ceiling_naive`].
-pub fn excel_ceiling_slice_naive(n: &[f64], s: f64, out: &mut [f64]) -> usize {
-    slice_apply_ieee(n, s, out, Dir::Ceiling)
-}
-
 #[derive(Clone, Copy)]
 enum Dir {
     Floor,
@@ -91,42 +47,6 @@ enum Dir {
 enum MathKind {
     Floor,
     Ceiling,
-}
-
-fn floor_ceil(n: f64, s: f64, dir: Dir) -> Result<f64, ExcelError> {
-    check_classic(n, s)?;
-    if n == 0.0 {
-        return Ok(0.0);
-    }
-    if let Some(v) = try_int_path(n, s, dir) {
-        return Ok(v);
-    }
-    Ok(round_multiple(n, s, dir))
-}
-
-fn floor_ceil_ieee(n: f64, s: f64, dir: Dir) -> Result<f64, ExcelError> {
-    check_classic(n, s)?;
-    if n == 0.0 {
-        return Ok(0.0);
-    }
-    Ok(ieee_multiple(n, s, dir))
-}
-
-fn check_classic(n: f64, s: f64) -> Result<(), ExcelError> {
-    if !n.is_finite() || !s.is_finite() {
-        return Err(ExcelError::Num);
-    }
-    if s == 0.0 {
-        return if n == 0.0 {
-            Ok(())
-        } else {
-            Err(ExcelError::Div0)
-        };
-    }
-    if n > 0.0 && s < 0.0 {
-        return Err(ExcelError::Num);
-    }
-    Ok(())
 }
 
 fn try_int_path(n: f64, s: f64, dir: Dir) -> Option<f64> {
@@ -193,16 +113,6 @@ fn nearly_int(q: f64) -> bool {
     (q - r).abs() <= 5e-15 * r.abs().max(1.0)
 }
 
-fn ieee_multiple(n: f64, s: f64, dir: Dir) -> f64 {
-    // First-draft path: always snap to Excel's 15-digit model. The integer
-    // fast path skips this (exact `i64` product needs no log10/pow).
-    let v = match dir {
-        Dir::Floor => s * (n / s).floor(),
-        Dir::Ceiling => s * (n / s).ceil(),
-    };
-    snap(v)
-}
-
 fn snap(x: f64) -> f64 {
     excel_round_15(x)
 }
@@ -230,88 +140,6 @@ fn math_round(n: f64, s: f64, mode: f64, kind: MathKind) -> Result<f64, ExcelErr
         return Ok(v);
     }
     Ok(round_multiple(n, sig, signed))
-}
-
-fn slice_apply(n: &[f64], s: f64, out: &mut [f64], dir: Dir) -> usize {
-    let len = n.len().min(out.len());
-    let mut errs = 0usize;
-    if s == 0.0 {
-        for i in 0..len {
-            if n[i] == 0.0 {
-                out[i] = 0.0;
-            } else {
-                errs += 1;
-            }
-        }
-        return errs;
-    }
-    if s < 0.0 {
-        for i in 0..len {
-            match floor_ceil(n[i], s, dir) {
-                Ok(v) => out[i] = v,
-                Err(_) => errs += 1,
-            }
-        }
-        return errs;
-    }
-    if is_safe_int(s) && s > 0.0 {
-        let si = s as i64;
-        for i in 0..len {
-            let ni = n[i];
-            if is_safe_int(ni) {
-                let iv = ni as i64;
-                let q = match dir {
-                    Dir::Floor => i64_div_floor(iv, si),
-                    Dir::Ceiling => i64_div_ceil(iv, si),
-                };
-                if let Some(prod) = q.and_then(|q| q.checked_mul(si)) {
-                    out[i] = prod as f64;
-                    continue;
-                }
-            }
-            match floor_ceil(ni, s, dir) {
-                Ok(v) => out[i] = v,
-                Err(_) => errs += 1,
-            }
-        }
-        return errs;
-    }
-    // Decimal significance: s already passed the classic checks. Skip the
-    // integer probe and `Result` wrap on every element.
-    if s.is_finite() && s > 0.0 {
-        for i in 0..len {
-            let ni = n[i];
-            if !ni.is_finite() {
-                errs += 1;
-                continue;
-            }
-            if ni == 0.0 {
-                out[i] = 0.0;
-            } else {
-                out[i] = round_multiple(ni, s, dir);
-            }
-        }
-        return errs;
-    }
-    for i in 0..len {
-        match floor_ceil(n[i], s, dir) {
-            Ok(v) => out[i] = v,
-            Err(_) => errs += 1,
-        }
-    }
-    errs
-}
-
-fn slice_apply_ieee(n: &[f64], s: f64, out: &mut [f64], dir: Dir) -> usize {
-    let len = n.len().min(out.len());
-    let mut errs = 0usize;
-    for i in 0..len {
-        match floor_ceil_ieee(n[i], s, dir) {
-            Ok(v) => out[i] = v,
-            Err(_) => errs += 1,
-        }
-    }
-    errs
 }
 
 #[cfg(test)]

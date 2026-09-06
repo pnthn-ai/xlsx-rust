@@ -163,11 +163,7 @@ fn countifs_walk(
     let crit_sheets: Vec<String> = prepared
         .pairs
         .iter()
-        .map(|(r, _)| {
-            r.sheet
-                .clone()
-                .unwrap_or_else(|| ctx.current_sheet.clone())
-        })
+        .map(|(r, _)| r.sheet.clone().unwrap_or_else(|| ctx.current_sheet.clone()))
         .collect();
     if crit_sheets
         .iter()

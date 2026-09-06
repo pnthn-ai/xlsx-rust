@@ -276,14 +276,8 @@ mod tests {
 
     #[test]
     fn rate_minus_one_is_div0() {
-        assert_eq!(
-            both(&[-100.0, 110.0], -1.0, 0.12),
-            Err(ExcelError::Div0)
-        );
-        assert_eq!(
-            both(&[-100.0, 110.0], 0.1, -1.0),
-            Err(ExcelError::Div0)
-        );
+        assert_eq!(both(&[-100.0, 110.0], -1.0, 0.12), Err(ExcelError::Div0));
+        assert_eq!(both(&[-100.0, 110.0], 0.1, -1.0), Err(ExcelError::Div0));
     }
 
     #[test]
@@ -294,10 +288,7 @@ mod tests {
 
     #[test]
     fn non_finite_rate_is_num() {
-        assert_eq!(
-            mirr(&[-100.0, 110.0], f64::NAN, 0.1),
-            Err(ExcelError::Num)
-        );
+        assert_eq!(mirr(&[-100.0, 110.0], f64::NAN, 0.1), Err(ExcelError::Num));
         assert_eq!(
             mirr(&[-100.0, 110.0], 0.1, f64::INFINITY),
             Err(ExcelError::Num)
