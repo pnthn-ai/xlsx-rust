@@ -447,7 +447,7 @@ as one or the other. Documented quirk categories:
   `#VALUE!`. Array delimiters take the leftmost / longest match. `TEXTAFTER`
   / `TEXTSPLIT` share the same delimiter / instance conventions.
 - Classic `FLOOR` / `CEILING`: same-sign multiples; positive number + negative significance is `#NUM!`; significance `0` is `#DIV/0!` except `(0, 0)` → `0`. Negative number + positive significance is allowed (Excel 2010+). `FLOOR.MATH` / `CEILING.MATH` ignore significance sign, treat significance `0` as `0`, and take an optional mode.
-- `INT(number)`: floor toward −∞ (`INT(-8.9)` is `-9`). That is not `TRUNC` (toward zero: `TRUNC(-8.9)` is `-8`). `INT(n)` matches classic `FLOOR(n, 1)`. Excel's 15-significant-digit leftover (`1/3+1/3+1/3`) snaps to the integer, so `INT` of that sum is `1` (IEEE `floor` is `0`). Wrong arity / non-numeric text is `#VALUE!`. TVM / `FLOOR` kernels live in `xlsx-types`; `INT` is [`excel_int`](crates/xlsx-types/src/excel_int.rs).
+- `INT(number)`: floor toward −∞ (`INT(-8.9)` is `-9`). That is not `TRUNC` (toward zero: `TRUNC(-8.9)` is `-8`). `INT(n)` matches classic `FLOOR(n, 1)`. Excel's 15-significant-digit leftover snap treats repeated `+0.1` (IEEE `0.999…9`) as `1` and `0.3-0.1-0.2` (tiny negative) as `0`. Wrong arity / non-numeric text is `#VALUE!`. TVM / `FLOOR` kernels live in `xlsx-types`; `INT` is [`excel_int`](crates/xlsx-types/src/excel_int.rs).
 - `TRUE=1` / `FALSE=0` in `=` and in arithmetic; `ISNUMBER(TRUE)` is still false
 - `SUM` / `AVERAGE` / `COUNT` / `PRODUCT` / `MIN` / `MAX`: skip logicals/text
   in ranges and array literals; coerce scalar arguments (`SUM(TRUE)` is 1,

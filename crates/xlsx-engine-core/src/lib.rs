@@ -66,7 +66,7 @@
 //! - [`xlsx_types::excel_effect`] — Excel `EFFECT` (nominal → effective annual)
 //! - [`xlsx_types::excel_nominal`] — Excel `NOMINAL` (effective → nominal annual)
 //! - [`xlsx_types::excel_pduration`] — Excel `PDURATION` (lump-sum periods)
-//! - [`xlsx_types::excel_int`] — Excel `INT` (floor toward −∞; 15-digit snap)
+//! - [`xlsx_types::excel_int`] — Excel `INT` (floor toward −∞; leftover snap)
 //! - Financial TVM: `PMT` / `RRI` via [`xlsx_types::excel_pmt`] / [`xlsx_types::excel_rri`]
 //!
 //! This crate depends only on [`xlsx_types`]. It never reads fixture expected

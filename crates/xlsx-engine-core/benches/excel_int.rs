@@ -41,9 +41,10 @@ fn fractions() -> Vec<f64> {
 }
 
 fn leftovers() -> Vec<f64> {
-    let third = 1.0 / 3.0 + 1.0 / 3.0 + 1.0 / 3.0;
+    let tenths = (0..10).fold(0.0, |a, _| a + 0.1);
+    let sub = 0.3 - 0.1 - 0.2;
     (0..N)
-        .map(|i| if i % 2 == 0 { third } else { -third })
+        .map(|i| if i % 2 == 0 { tenths } else { sub })
         .collect()
 }
 
@@ -147,10 +148,13 @@ fn main() {
             black_box(acc);
         });
         row("200k scalar INT 15-digit leftover", naive, fast);
-        // Production snap: 1/3+1/3+1/3 is 1, not IEEE floor 0.
-        let third = 1.0 / 3.0 + 1.0 / 3.0 + 1.0 / 3.0;
-        assert_eq!(excel_int(third), 1.0);
-        assert_eq!(excel_int_naive(third), 0.0);
+        // Production snap: ten +0.1 is 1, not IEEE floor 0.
+        let tenths = (0..10).fold(0.0, |a, _| a + 0.1);
+        assert_eq!(excel_int(tenths), 1.0);
+        assert_eq!(excel_int_naive(tenths), 0.0);
+        let sub = 0.3 - 0.1 - 0.2;
+        assert_eq!(excel_int(sub), 0.0);
+        assert_eq!(excel_int_naive(sub), -1.0);
     }
 
     {

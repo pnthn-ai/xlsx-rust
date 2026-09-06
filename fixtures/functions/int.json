@@ -98,29 +98,36 @@
     "expected": { "bool": true }
   },
   {
-    "id": "fn.int-thirds-snap",
-    "description": "INT(1/3+1/3+1/3) is 1 — 15-digit leftover, not IEEE floor 0",
+    "id": "fn.int-thirds-identity",
+    "description": "INT(1/3+1/3+1/3) is 1 — IEEE sum is already exact",
     "tags": ["math", "int"],
-    "quirks": ["ieee-vs-excel-precision"],
     "formula": "=INT(1/3+1/3+1/3)",
-    "expected": { "number": 1 },
-    "notes": "IEEE 1/3+1/3+1/3 is 0.999…9; Excel INT snaps to 1. Documented model; live Excel not in CI."
+    "expected": { "number": 1 }
   },
   {
     "id": "fn.int-tenths-snap",
-    "description": "INT of ten 0.1 addends is 1 (15-digit leftover)",
+    "description": "INT of ten 0.1 addends is 1 — IEEE sum sits just below 1",
     "tags": ["math", "int"],
     "quirks": ["ieee-vs-excel-precision"],
     "formula": "=INT(0.1+0.1+0.1+0.1+0.1+0.1+0.1+0.1+0.1+0.1)",
     "expected": { "number": 1 },
-    "notes": "IEEE 0.1×10 sits just below 1; Excel INT is 1. Documented model; live Excel not in CI."
+    "notes": "Repeated IEEE +0.1 is 0.999…9; Excel INT / FLOOR(n,1) snap to 1. Documented model; live Excel not in CI."
   },
   {
-    "id": "fn.int-thirds-eq-floor",
-    "description": "INT(1/3+1/3+1/3) matches FLOOR(..., 1)",
+    "id": "fn.int-point-three-leftover",
+    "description": "INT(0.3-0.1-0.2) is 0 — tiny negative leftover snaps, not IEEE floor −1",
     "tags": ["math", "int"],
     "quirks": ["ieee-vs-excel-precision"],
-    "formula": "=INT(1/3+1/3+1/3)=FLOOR(1/3+1/3+1/3,1)",
+    "formula": "=INT(0.3-0.1-0.2)",
+    "expected": { "number": 0 },
+    "notes": "IEEE 0.3-0.1-0.2 is ≈ −2.8e-17; FLOOR toward −∞ would be −1. Excel INT matches FLOOR(n,1) leftover snap. Documented model; live Excel not in CI."
+  },
+  {
+    "id": "fn.int-tenths-eq-floor",
+    "description": "INT of ten 0.1 addends matches FLOOR(..., 1)",
+    "tags": ["math", "int"],
+    "quirks": ["ieee-vs-excel-precision"],
+    "formula": "=INT(0.1+0.1+0.1+0.1+0.1+0.1+0.1+0.1+0.1+0.1)=FLOOR(0.1+0.1+0.1+0.1+0.1+0.1+0.1+0.1+0.1+0.1,1)",
     "expected": { "bool": true }
   },
   {

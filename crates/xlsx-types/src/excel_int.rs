@@ -7,8 +7,10 @@
 //! - `INT` rounds toward −∞ (`INT(-8.9)` is `-9`). That is not `TRUNC`
 //!   (toward zero: `TRUNC(-8.9)` is `-8`).
 //! - `INT(n)` matches classic `FLOOR(n, 1)` for finite `n`.
-//! - Excel's 15-significant-digit model treats leftovers such as
-//!   `1/3+1/3+1/3` as `1`, so `INT` of that sum is `1` (IEEE `floor` is `0`).
+//! - Excel's 15-significant-digit model treats leftovers such as ten
+//!   `+ 0.1` addends (`0.999…9`) as `1`, so `INT` of that sum is `1`
+//!   (IEEE `floor` is `0`). A tiny negative leftover (`0.3-0.1-0.2`)
+//!   snaps to `0` rather than flooring to `-1`.
 //!
 //! Production specialises already-integers (identity, including `|n| > 2^53`
 //! where every `f64` is integral) and uses a cheap near-integer test instead
@@ -133,19 +135,26 @@ mod tests {
 
     #[test]
     fn fifteen_digit_leftover_snaps() {
-        let third = 1.0 / 3.0 + 1.0 / 3.0 + 1.0 / 3.0;
-        assert!(third < 1.0, "IEEE leftover should sit below 1: {third}");
-        assert_eq!(excel_int_naive(third), 0.0);
-        assert_eq!(excel_int(third), 1.0);
-        assert_eq!(excel_int_round15(third), 1.0);
-
+        // Repeated IEEE `+ 0.1` sits just below 1; `0.1 * 10` is exact.
         let tenths = (0..10).fold(0.0, |a, _| a + 0.1);
         assert!(
             tenths < 1.0,
             "IEEE 0.1×10 leftover should sit below 1: {tenths}"
         );
+        assert_eq!(excel_int_naive(tenths), 0.0);
         assert_eq!(excel_int(tenths), 1.0);
         assert_eq!(excel_int_round15(tenths), 1.0);
+
+        // `0.3-0.1-0.2` is a tiny negative leftover; IEEE floor is −1.
+        let sub = 0.3 - 0.1 - 0.2;
+        assert!(sub < 0.0, "IEEE leftover should be negative: {sub}");
+        assert_eq!(excel_int_naive(sub), -1.0);
+        assert_eq!(excel_int(sub), 0.0);
+
+        let below_int = f64::from_bits(7.0f64.to_bits() - 1);
+        assert!(below_int < 7.0);
+        assert_eq!(excel_int_naive(below_int), 6.0);
+        assert_eq!(excel_int(below_int), 7.0);
     }
 
     #[test]
@@ -161,7 +170,8 @@ mod tests {
             8.9,
             40909.75,
             1.0 / 3.0,
-            1.0 / 3.0 + 1.0 / 3.0 + 1.0 / 3.0,
+            (0..10).fold(0.0, |a, _| a + 0.1),
+            0.3 - 0.1 - 0.2,
         ];
         for n in samples {
             let a = excel_int(n);
