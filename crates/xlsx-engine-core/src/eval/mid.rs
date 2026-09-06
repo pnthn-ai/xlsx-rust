@@ -311,7 +311,9 @@ mod tests {
         assert_eq!(trunc_num_chars(1.9).unwrap(), 1);
         assert_eq!(trunc_num_chars(0.9).unwrap(), 0);
         assert_eq!(trunc_num_chars(0.0).unwrap(), 0);
-        assert_eq!(trunc_num_chars(-0.1), Err(ExcelError::Value));
+        // Trunc toward zero first: −0.1 → 0 (valid empty take). −1 is `#VALUE!`.
+        assert_eq!(trunc_num_chars(-0.1).unwrap(), 0);
+        assert_eq!(trunc_num_chars(-1.0), Err(ExcelError::Value));
         assert_eq!(trunc_num_chars(f64::NAN), Err(ExcelError::Value));
         assert!(trunc_start_num(1e20).unwrap() > 0);
         assert!(trunc_num_chars(1e20).unwrap() > 0);
@@ -388,6 +390,14 @@ mod tests {
         assert_eq!(
             eval_formula_in(&wb, "=MID(\"abc\", 1, 1.9)").unwrap(),
             ExcelValue::Text("a".into())
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=MID(\"abc\", 1, -0.9)").unwrap(),
+            ExcelValue::Text(String::new())
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=MID(\"abc\", 1, -1)").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
         );
         assert_eq!(
             eval_formula_in(&wb, "=MID(\"abc\", \"2\", \"1\")").unwrap(),

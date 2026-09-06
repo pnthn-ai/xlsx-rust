@@ -112,6 +112,13 @@
     "expected": { "error": "#VALUE!" }
   },
   {
+    "id": "fn.mid-num-neg-frac",
+    "description": "num_chars -0.9 truncates toward zero to 0 → \"\" (not #VALUE!)",
+    "tags": ["text", "mid"],
+    "formula": "=MID(\"abc\", 1, -0.9)",
+    "expected": { "text": "" }
+  },
+  {
     "id": "fn.mid-start-trunc",
     "description": "start_num 2.9 truncates toward zero to 2",
     "tags": ["text", "mid"],
