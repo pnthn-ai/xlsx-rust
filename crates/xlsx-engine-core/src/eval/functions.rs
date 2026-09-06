@@ -9,8 +9,8 @@ use super::{coerce, compare, excel_pow, Ctx, Evaluator};
 use crate::ast::Expr;
 use crate::dates::{
     date_serial, eomonth_serial, networkdays_count, networkdays_count_mask, parse_weekend_mask,
-    serial_to_ymd, time_fraction, weekday, weekend_mask_from_code, weekend_mask_from_string,
-    workday_serial, workday_serial_intl, yearfrac, WEEKEND_SAT_SUN,
+    isoweeknum, serial_to_ymd, time_fraction, weekday, weekend_mask_from_code,
+    weekend_mask_from_string, workday_serial, workday_serial_intl, yearfrac, WEEKEND_SAT_SUN,
 };
 use crate::text_format;
 use xlsx_types::{
@@ -137,6 +137,7 @@ pub(crate) fn dispatch(
         "MONTH" => fn_ymd(ev, args, ctx, YmdPart::Month),
         "DAY" => fn_ymd(ev, args, ctx, YmdPart::Day),
         "WEEKDAY" => fn_weekday(ev, args, ctx),
+        "ISOWEEKNUM" => fn_isoweeknum(ev, args, ctx),
         "YEARFRAC" => fn_yearfrac(ev, args, ctx),
         "LEFT" => fn_left_right(ev, args, ctx, true),
         "RIGHT" => fn_left_right(ev, args, ctx, false),
@@ -1211,6 +1212,20 @@ fn fn_weekday(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelV
         1
     };
     match weekday(serial, return_type, ctx.spec.options.date_system) {
+        Ok(n) => Ok(ExcelValue::Number(n)),
+        Err(e) => Ok(ExcelValue::Error(e)),
+    }
+}
+
+fn fn_isoweeknum(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    if args.len() != 1 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let serial = match coerce::to_number(&ev.eval_scalar(&args[0], ctx)?) {
+        Ok(n) => n,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    match isoweeknum(serial, ctx.spec.options.date_system) {
         Ok(n) => Ok(ExcelValue::Number(n)),
         Err(e) => Ok(ExcelValue::Error(e)),
     }

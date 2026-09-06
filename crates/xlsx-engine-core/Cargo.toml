@@ -89,6 +89,10 @@ name = "weekday"
 harness = false
 
 [[bench]]
+name = "isoweeknum"
+harness = false
+
+[[bench]]
 name = "npv"
 harness = false
 

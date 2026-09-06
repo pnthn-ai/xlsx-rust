@@ -1,0 +1,357 @@
+[
+  {
+    "id": "fn.isoweeknum-ms-2012-03-09",
+    "description": "Microsoft example: ISOWEEKNUM(DATE(2012,3,9)) is 10",
+    "tags": ["isoweeknum", "dates"],
+    "formula": "=ISOWEEKNUM(DATE(2012,3,9))",
+    "expected": { "number": 10 }
+  },
+  {
+    "id": "fn.isoweeknum-cfi-2009-jan1",
+    "description": "CFI: serial 39814 (2009-01-01, Thursday) is week 1",
+    "tags": ["isoweeknum", "dates"],
+    "formula": "=ISOWEEKNUM(39814)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.isoweeknum-jan4-always-week1",
+    "description": "January 4 is always in ISO week 1",
+    "tags": ["isoweeknum", "dates"],
+    "formula": "=ISOWEEKNUM(DATE(2011,1,4))",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.isoweeknum-2015-jan1",
+    "description": "2015-01-01 Thursday is week 1 of a 53-week year",
+    "tags": ["isoweeknum", "dates"],
+    "formula": "=ISOWEEKNUM(DATE(2015,1,1))",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.isoweeknum-2015-dec31",
+    "description": "2015-12-31 Thursday is week 53",
+    "tags": ["isoweeknum", "dates"],
+    "formula": "=ISOWEEKNUM(DATE(2015,12,31))",
+    "expected": { "number": 53 }
+  },
+  {
+    "id": "fn.isoweeknum-2016-jan1",
+    "description": "2016-01-01 Friday belongs to week 53 of 2015",
+    "tags": ["isoweeknum", "dates"],
+    "formula": "=ISOWEEKNUM(DATE(2016,1,1))",
+    "expected": { "number": 53 }
+  },
+  {
+    "id": "fn.isoweeknum-2020-dec31",
+    "description": "2020-12-31 Thursday is week 53",
+    "tags": ["isoweeknum", "dates"],
+    "formula": "=ISOWEEKNUM(DATE(2020,12,31))",
+    "expected": { "number": 53 }
+  },
+  {
+    "id": "fn.isoweeknum-2021-jan1",
+    "description": "2021-01-01 Friday belongs to week 53 of 2020",
+    "tags": ["isoweeknum", "dates"],
+    "formula": "=ISOWEEKNUM(DATE(2021,1,1))",
+    "expected": { "number": 53 }
+  },
+  {
+    "id": "fn.isoweeknum-2010-jan1",
+    "description": "2010-01-01 Friday belongs to week 53 of 2009",
+    "tags": ["isoweeknum", "dates"],
+    "formula": "=ISOWEEKNUM(DATE(2010,1,1))",
+    "expected": { "number": 53 }
+  },
+  {
+    "id": "fn.isoweeknum-2011-jan1",
+    "description": "2011-01-01 Saturday belongs to week 52 of 2010",
+    "tags": ["isoweeknum", "dates"],
+    "formula": "=ISOWEEKNUM(DATE(2011,1,1))",
+    "expected": { "number": 52 }
+  },
+  {
+    "id": "fn.isoweeknum-2012-jan1",
+    "description": "2012-01-01 Sunday belongs to week 52 of 2011",
+    "tags": ["isoweeknum", "dates"],
+    "formula": "=ISOWEEKNUM(DATE(2012,1,1))",
+    "expected": { "number": 52 }
+  },
+  {
+    "id": "fn.isoweeknum-2012-dec31",
+    "description": "2012-12-31 Monday is week 1 of 2013",
+    "tags": ["isoweeknum", "dates"],
+    "formula": "=ISOWEEKNUM(DATE(2012,12,31))",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.isoweeknum-2004-jan1",
+    "description": "2004-01-01 Thursday is week 1 of a leap 53-week year",
+    "tags": ["isoweeknum", "dates"],
+    "formula": "=ISOWEEKNUM(DATE(2004,1,1))",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.isoweeknum-2004-dec31",
+    "description": "2004-12-31 Friday is week 53",
+    "tags": ["isoweeknum", "dates"],
+    "formula": "=ISOWEEKNUM(DATE(2004,12,31))",
+    "expected": { "number": 53 }
+  },
+  {
+    "id": "fn.isoweeknum-2000-jan1",
+    "description": "2000-01-01 Saturday belongs to week 52 of 1999",
+    "tags": ["isoweeknum", "dates"],
+    "formula": "=ISOWEEKNUM(DATE(2000,1,1))",
+    "expected": { "number": 52 }
+  },
+  {
+    "id": "fn.isoweeknum-2000-feb29",
+    "description": "2000-02-29 Tuesday is week 9",
+    "tags": ["isoweeknum", "dates"],
+    "formula": "=ISOWEEKNUM(DATE(2000,2,29))",
+    "expected": { "number": 9 }
+  },
+  {
+    "id": "fn.isoweeknum-2008-dec28",
+    "description": "2008-12-28 Sunday is week 52 of 2008",
+    "tags": ["isoweeknum", "dates"],
+    "formula": "=ISOWEEKNUM(DATE(2008,12,28))",
+    "expected": { "number": 52 }
+  },
+  {
+    "id": "fn.isoweeknum-2008-dec29",
+    "description": "2008-12-29 Monday is week 1 of 2009",
+    "tags": ["isoweeknum", "dates"],
+    "formula": "=ISOWEEKNUM(DATE(2008,12,29))",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.isoweeknum-2008-feb14",
+    "description": "2008-02-14 Thursday is week 7",
+    "tags": ["isoweeknum", "dates"],
+    "formula": "=ISOWEEKNUM(DATE(2008,2,14))",
+    "expected": { "number": 7 }
+  },
+  {
+    "id": "fn.isoweeknum-2024-jan1",
+    "description": "2024-01-01 Monday is week 1",
+    "tags": ["isoweeknum", "dates"],
+    "formula": "=ISOWEEKNUM(DATE(2024,1,1))",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.isoweeknum-2024-dec31",
+    "description": "2024-12-31 Tuesday is week 1 of 2025",
+    "tags": ["isoweeknum", "dates"],
+    "formula": "=ISOWEEKNUM(DATE(2024,12,31))",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.isoweeknum-2026-dec31",
+    "description": "2026-12-31 Thursday is week 53",
+    "tags": ["isoweeknum", "dates"],
+    "formula": "=ISOWEEKNUM(DATE(2026,12,31))",
+    "expected": { "number": 53 }
+  },
+  {
+    "id": "fn.isoweeknum-serial-0",
+    "description": "ISOWEEKNUM(0) is 52 — 1900-01-00 Saturday is the same week as serial 1",
+    "tags": ["isoweeknum", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=ISOWEEKNUM(0)",
+    "expected": { "number": 52 }
+  },
+  {
+    "id": "fn.isoweeknum-serial-1-sunday-bug",
+    "description": "Excel 1900-01-01 is Sunday, so ISOWEEKNUM(1) is 52 (civil Monday would be week 1)",
+    "tags": ["isoweeknum", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=ISOWEEKNUM(1)",
+    "expected": { "number": 52 }
+  },
+  {
+    "id": "fn.isoweeknum-serial-2-monday",
+    "description": "Serial 2 is Monday 1900-01-02 — first day of ISO week 1",
+    "tags": ["isoweeknum", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=ISOWEEKNUM(2)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.isoweeknum-jan4-1900",
+    "description": "DATE(1900,1,4) is still ISO week 1 under Excel's weekday",
+    "tags": ["isoweeknum", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=ISOWEEKNUM(DATE(1900,1,4))",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.isoweeknum-feb28-1900",
+    "description": "1900-02-28 is ISO week 9 (same week as the fictitious leap day)",
+    "tags": ["isoweeknum", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=ISOWEEKNUM(DATE(1900,2,28))",
+    "expected": { "number": 9 }
+  },
+  {
+    "id": "fn.isoweeknum-feb29-1900",
+    "description": "Fictitious 1900-02-29 (serial 60, Wednesday) is ISO week 9",
+    "tags": ["isoweeknum", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=ISOWEEKNUM(60)",
+    "expected": { "number": 9 }
+  },
+  {
+    "id": "fn.isoweeknum-mar1-1900",
+    "description": "1900-03-01 Thursday is ISO week 9 (civil weekday matches from here)",
+    "tags": ["isoweeknum", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=ISOWEEKNUM(DATE(1900,3,1))",
+    "expected": { "number": 9 }
+  },
+  {
+    "id": "fn.isoweeknum-1900-dec31",
+    "description": "1900-12-31 Monday is week 1 of 1901",
+    "tags": ["isoweeknum", "dates"],
+    "formula": "=ISOWEEKNUM(DATE(1900,12,31))",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.isoweeknum-1901-jan1",
+    "description": "1901-01-01 Tuesday is week 1",
+    "tags": ["isoweeknum", "dates"],
+    "formula": "=ISOWEEKNUM(DATE(1901,1,1))",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.isoweeknum-1904-jan1",
+    "description": "1904-01-01 Friday belongs to week 53 of 1903",
+    "tags": ["isoweeknum", "dates"],
+    "formula": "=ISOWEEKNUM(DATE(1904,1,1))",
+    "expected": { "number": 53 }
+  },
+  {
+    "id": "fn.isoweeknum-1904-epoch",
+    "description": "ISOWEEKNUM(0) is 53 under the 1904 date system (1904-01-01 Friday)",
+    "tags": ["isoweeknum", "dates"],
+    "quirks": ["date-system"],
+    "formula": "=ISOWEEKNUM(0)",
+    "expected": { "number": 53 },
+    "options": { "date_system": "excel1904" }
+  },
+  {
+    "id": "fn.isoweeknum-1904-date",
+    "description": "ISOWEEKNUM(DATE(1904,1,1)) is 53 in the 1904 system",
+    "tags": ["isoweeknum", "dates"],
+    "quirks": ["date-system"],
+    "formula": "=ISOWEEKNUM(DATE(1904,1,1))",
+    "expected": { "number": 53 },
+    "options": { "date_system": "excel1904" }
+  },
+  {
+    "id": "fn.isoweeknum-serial-frac",
+    "description": "Time fraction is discarded: ISOWEEKNUM(1.9) equals ISOWEEKNUM(1)",
+    "tags": ["isoweeknum", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=ISOWEEKNUM(1.9)",
+    "expected": { "number": 52 }
+  },
+  {
+    "id": "fn.isoweeknum-numeric-text",
+    "description": "Numeric text serial \"39814\" coerces",
+    "tags": ["isoweeknum", "dates"],
+    "formula": "=ISOWEEKNUM(\"39814\")",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.isoweeknum-bool-true",
+    "description": "ISOWEEKNUM(TRUE) is ISOWEEKNUM(1) = 52",
+    "tags": ["isoweeknum", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=ISOWEEKNUM(TRUE)",
+    "expected": { "number": 52 }
+  },
+  {
+    "id": "fn.isoweeknum-bool-false",
+    "description": "ISOWEEKNUM(FALSE) is ISOWEEKNUM(0) = 52",
+    "tags": ["isoweeknum", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=ISOWEEKNUM(FALSE)",
+    "expected": { "number": 52 }
+  },
+  {
+    "id": "fn.isoweeknum-blank-cell",
+    "description": "ISOWEEKNUM of a blank cell is 52 (empty → 0)",
+    "tags": ["isoweeknum", "dates", "empty"],
+    "quirks": ["empty-cell-duality", "date-1900-leap-year"],
+    "formula": "=ISOWEEKNUM(A1)",
+    "expected": { "number": 52 },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.isoweeknum-max-serial",
+    "description": "ISOWEEKNUM(DATE(9999,12,31)) is 52",
+    "tags": ["isoweeknum", "dates"],
+    "formula": "=ISOWEEKNUM(DATE(9999,12,31))",
+    "expected": { "number": 52 }
+  },
+  {
+    "id": "fn.isoweeknum-composed",
+    "description": "ISOWEEKNUM of DATE plus 7 days is the next ISO week",
+    "tags": ["isoweeknum", "dates"],
+    "formula": "=ISOWEEKNUM(DATE(2012,3,9)+7)",
+    "expected": { "number": 11 }
+  },
+  {
+    "id": "fn.isoweeknum-neg-serial",
+    "description": "Negative serial is #NUM!",
+    "tags": ["isoweeknum", "dates", "errors"],
+    "formula": "=ISOWEEKNUM(-1)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.isoweeknum-over-max",
+    "description": "Serial past 9999-12-31 is #NUM!",
+    "tags": ["isoweeknum", "dates", "errors"],
+    "formula": "=ISOWEEKNUM(2958466)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.isoweeknum-text",
+    "description": "Non-numeric text serial is #VALUE!",
+    "tags": ["isoweeknum", "dates", "errors"],
+    "formula": "=ISOWEEKNUM(\"x\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.isoweeknum-no-args",
+    "description": "ISOWEEKNUM() is #VALUE!",
+    "tags": ["isoweeknum", "dates", "errors"],
+    "formula": "=ISOWEEKNUM()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.isoweeknum-too-many-args",
+    "description": "ISOWEEKNUM(1,1) is #VALUE!",
+    "tags": ["isoweeknum", "dates", "errors"],
+    "formula": "=ISOWEEKNUM(1,1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.isoweeknum-err-div0",
+    "description": "Error in date propagates",
+    "tags": ["isoweeknum", "dates", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=ISOWEEKNUM(1/0)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.isoweeknum-err-na",
+    "description": "ISOWEEKNUM(NA()) is #N/A",
+    "tags": ["isoweeknum", "dates", "errors"],
+    "formula": "=ISOWEEKNUM(NA())",
+    "expected": { "error": "#N/A" }
+  }
+]
