@@ -2485,8 +2485,7 @@ impl Interpreter {
         if args.is_empty() {
             return Ok(ExcelValue::Error(ExcelError::Value));
         }
-        let mut out = String::new();
-        let mut utf16 = 0usize;
+        let mut builder = xlsx_engine_core::ConcatBuilder::new();
         for arg in args {
             if let Expr::Range(r) = arg {
                 let sheet = r.sheet.as_deref().unwrap_or(ctx.current_sheet.as_str());
@@ -2501,22 +2500,11 @@ impl Interpreter {
                 }
             }
             let v = self.eval_expr(arg, ctx)?;
-            let mut parts = Vec::new();
-            if let Err(e) = flatten_concat_texts(&v, &mut parts, self) {
+            if let Err(e) = xlsx_engine_core::concat_feed_value(&mut builder, &v) {
                 return Ok(ExcelValue::Error(e));
             }
-            for part in parts {
-                if part.is_empty() {
-                    continue;
-                }
-                utf16 += part.encode_utf16().count();
-                if utf16 > 32767 {
-                    return Ok(ExcelValue::Error(ExcelError::Value));
-                }
-                out.push_str(&part);
-            }
         }
-        Ok(ExcelValue::Text(out))
+        Ok(ExcelValue::Text(builder.finish()))
     }
 
     fn eval_scalar(&self, expr: &Expr, ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
@@ -5058,14 +5046,6 @@ fn flatten_join_texts(
             Ok(())
         }
     }
-}
-
-fn flatten_concat_texts(
-    v: &ExcelValue,
-    out: &mut Vec<String>,
-    interp: &Interpreter,
-) -> Result<(), ExcelError> {
-    flatten_join_texts(v, out, interp)
 }
 
 fn excel_eq(l: &ExcelValue, r: &ExcelValue) -> ExcelValue {
