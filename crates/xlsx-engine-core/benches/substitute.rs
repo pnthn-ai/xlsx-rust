@@ -1,7 +1,8 @@
 //! Before/after microbench for Excel `SUBSTITUTE`.
 //!
 //! Compares the quadratic `replace_range` baseline (`excel_substitute_naive`)
-//! with the single-allocation production kernel (`excel_substitute`).
+//! with the production kernel (`excel_substitute`: ASCII SWAR byte swap /
+//! delete, last-byte probe, equal-width in-place, single-pass resize).
 //!
 //! ```text
 //! cargo bench -p xlsx-engine-core --bench substitute
@@ -33,6 +34,13 @@ fn cases() -> Vec<Case> {
     };
     let foos = "foo-".repeat(50_000);
     let overlapping = "a".repeat(200_000);
+    let miss = "x".repeat(200_000);
+    let almost = {
+        let mut s = "aaa".repeat(80_000);
+        s.push_str("aab");
+        s
+    };
+    let hyphens = "a-".repeat(100_000);
     vec![
         Case {
             name: "200k 'a' → 'b' (many replacements)",
@@ -76,9 +84,57 @@ fn cases() -> Vec<Case> {
         },
         Case {
             name: "200k empty-old no-op",
-            text: "x".repeat(200_000),
+            text: miss.clone(),
             old: "",
             new: "y",
+            instance: None,
+            iters: ITERS_LIGHT,
+        },
+        Case {
+            name: "200k 'x' miss 'a' (SWAR)",
+            text: miss,
+            old: "a",
+            new: "b",
+            instance: None,
+            iters: ITERS_HEAVY,
+        },
+        Case {
+            name: "240k 'aaa' + 'aab' (almost-match)",
+            text: almost,
+            old: "aab",
+            new: "X",
+            instance: None,
+            iters: ITERS_HEAVY,
+        },
+        Case {
+            name: "100k 'a-' delete '-'",
+            text: hyphens.clone(),
+            old: "-",
+            new: "",
+            instance: None,
+            iters: ITERS_HEAVY,
+        },
+        Case {
+            name: "100k 'a-' grow '-' → '--'",
+            text: hyphens,
+            old: "-",
+            new: "--",
+            instance: None,
+            iters: ITERS_HEAVY,
+        },
+        Case {
+            name: "50k café-repeat unicode hit",
+            text: "cafe".repeat(50_000) + "café-end",
+            old: "é",
+            new: "e",
+            instance: None,
+            iters: ITERS_HEAVY,
+        },
+        Case {
+            name: "200k old==new identity",
+            text: "a".repeat(200_000),
+            old: "a",
+            new: "a",
             instance: None,
             iters: ITERS_LIGHT,
         },
@@ -86,7 +142,6 @@ fn cases() -> Vec<Case> {
 }
 
 fn time_it(iters: u32, mut f: impl FnMut()) -> Duration {
-    // Warmup
     f();
     let start = Instant::now();
     for _ in 0..iters {
@@ -105,7 +160,7 @@ fn fmt_dur(d: Duration) -> String {
 }
 
 fn main() {
-    println!("SUBSTITUTE kernel bench (naive replace_range vs specialized)");
+    println!("SUBSTITUTE kernel bench (naive replace_range vs SWAR / last-byte / in-place)");
     println!(
         "{:<42} {:>12} {:>12} {:>8}",
         "case", "naive", "optimized", "speedup"
