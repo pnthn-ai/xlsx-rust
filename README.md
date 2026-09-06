@@ -302,7 +302,7 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 | [`eval/coerce.rs`](crates/xlsx-engine-core/src/eval/coerce.rs) | Arithmetic / `&` / `IF` coercion (`"2"+1` = 3, TRUE → 1, empty → 0) |
 | [`eval/compare.rs`](crates/xlsx-engine-core/src/eval/compare.rs) | 15-digit `=`, case-insensitive text, `TRUE=1`, type ranking (`FALSE>100`) |
 | [`eval/empty.rs`](crates/xlsx-engine-core/src/eval/empty.rs) | Blank ≠ 0 ≠ `""`, but `A1=0` and `A1=""` when `A1` is blank |
-| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Dispatch: aggregators (`SUM`/`SUMIF`/`SUMIFS`/`AVERAGEIF`/`AVERAGEIFS`/`COUNTIF`/`COUNTIFS`/`SUMPRODUCT`), logicals (`IF`/`IFS`/`SWITCH`), lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`/`FILTER`/`UNIQUE`/`SORT`/`SORTBY`/`TOCOL`/`TOROW`/`SEQUENCE`/`VSTACK`/`HSTACK`/`WRAPCOLS`/`WRAPROWS`/`TAKE`/`DROP`/`EXPAND`/`CHOOSECOLS`/`CHOOSEROWS`/`MAKEARRAY`), dates (`DATE`/`EOMONTH`/`NETWORKDAYS`/`NETWORKDAYS.INTL`/`WEEKDAY`/`WORKDAY`/`WORKDAY.INTL`/`YEARFRAC`), math (`ROUND`/`ROUNDUP`/`ROUNDDOWN`/`FLOOR`/`CEILING`/`RANDARRAY`), text (`LEFT`/`SUBSTITUTE`/`REPLACE`/`FIND`/`SEARCH`/`TEXT`/`TEXTJOIN`/`TEXTSPLIT`/`TEXTAFTER`/`TEXTBEFORE`/`CONCAT`), financial (`NPV`/`XNPV`/`PMT`/`FV`/`PV`/`NPER`/`RATE`/`IPMT`/`PPMT`/`CUMPRINC`/`CUMIPMT`/`IRR`/`XIRR`/`MIRR`/`EFFECT`/`NOMINAL`/`PDURATION`/`RRI`), `TYPE` / `IS*` |
+| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Dispatch: aggregators (`SUM`/`SUMIF`/`SUMIFS`/`AVERAGEIF`/`AVERAGEIFS`/`COUNTIF`/`COUNTIFS`/`SUMPRODUCT`), logicals (`IF`/`IFS`/`SWITCH`), lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`/`FILTER`/`UNIQUE`/`SORT`/`SORTBY`/`TOCOL`/`TOROW`/`SEQUENCE`/`VSTACK`/`HSTACK`/`WRAPCOLS`/`WRAPROWS`/`TAKE`/`DROP`/`EXPAND`/`CHOOSECOLS`/`CHOOSEROWS`/`MAKEARRAY`), dates (`DATE`/`EOMONTH`/`NETWORKDAYS`/`NETWORKDAYS.INTL`/`WEEKDAY`/`WORKDAY`/`WORKDAY.INTL`/`YEARFRAC`), math (`ROUND`/`ROUNDUP`/`ROUNDDOWN`/`FLOOR`/`CEILING`/`RANDARRAY`), text (`LEFT`/`SUBSTITUTE`/`REPLACE`/`FIND`/`SEARCH`/`TEXT`/`TEXTJOIN`/`TEXTSPLIT`/`TEXTAFTER`/`TEXTBEFORE`/`CONCAT`/`REPT`), financial (`NPV`/`XNPV`/`PMT`/`FV`/`PV`/`NPER`/`RATE`/`IPMT`/`PPMT`/`CUMPRINC`/`CUMIPMT`/`IRR`/`XIRR`/`MIRR`/`EFFECT`/`NOMINAL`/`PDURATION`/`RRI`), `TYPE` / `IS*` |
 | [`eval/sumif.rs`](crates/xlsx-engine-core/src/eval/sumif.rs) | Excel `SUMIF` kernel (criteria walk, reshape `sum_range`, no array literals) |
 | [`eval/sumifs.rs`](crates/xlsx-engine-core/src/eval/sumifs.rs) | Excel `SUMIFS`: multi-criteria AND, same-shape ranges |
 | [`eval/countifs.rs`](crates/xlsx-engine-core/src/eval/countifs.rs) | Excel `COUNTIFS`: multi-criteria AND, same-shape ranges, COUNTIF matcher |
@@ -318,6 +318,7 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 | [`eval/textjoin.rs`](crates/xlsx-engine-core/src/eval/textjoin.rs) | `TEXTJOIN` with cycling delimiters and `ignore_empty` |
 | [`eval/textsplit.rs`](crates/xlsx-engine-core/src/eval/textsplit.rs) | `TEXTSPLIT` col/row split, `ignore_empty`, `match_mode`, `pad_with` |
 | [`eval/concat.rs`](crates/xlsx-engine-core/src/eval/concat.rs) | Excel `CONCAT`: row-major flatten, blanks/`""` add nothing, 32,767 UTF-16 cap |
+| [`eval/rept.rs`](crates/xlsx-engine-core/src/eval/rept.rs) | Excel `REPT`: repeat `text`, 32,767 UTF-16 cap (reject before alloc) |
 | [`eval/round.rs`](crates/xlsx-engine-core/src/eval/round.rs) | Excel `ROUNDUP` / `ROUNDDOWN` (away / toward zero, negative `num_digits`) |
 | [`eval/switch.rs`](crates/xlsx-engine-core/src/eval/switch.rs) | Excel `SWITCH` exact-match kernel (first hit, default / `#N/A`) |
 | [`eval/ifs.rs`](crates/xlsx-engine-core/src/eval/ifs.rs) | `IFS` pair-selection kernel (eager eval, first TRUE, no-match `#N/A`) |
@@ -394,6 +395,18 @@ as one or the other. Documented quirk categories:
   `if_not_found`; `|instance_num| > LEN(text)` or `instance_num = 0` is
   `#VALUE!`. Array delimiters take the leftmost / longest match. `TEXTAFTER`
   / `TEXTSPLIT` share the same delimiter / instance conventions.
+- `REPT(text, number_times)`: repeats `text` after truncating `number_times`
+  toward zero (`3.9` → 3, `0.9` → `""`). Sign is checked **after** truncate
+  (`−0.9` → 0 → `""`; `−1` is `#VALUE!`). `text` coerces like `&`. Empty
+  `text` (or a blank cell) is `""` for any non-negative count — `0 × n`
+  never overflows. The result cap is **32,767 UTF-16 code units** (Excel’s
+  cell-content limit; same as `CONCAT` / `TEXTJOIN`). Microsoft’s page says
+  “32,767 characters”; that is the stored width, **not** Compatibility
+  Version 2 `LEN` (Unicode scalars). `😀` is two UTF-16 units, so
+  `REPT("😀", 16384)` is `#VALUE!` even though `LEN` of 16383 copies is
+  16383. Overflow is rejected before allocation (`REPT("a", 1E+20)`).
+  Wrong arity is `#VALUE!`. Goldens use `LEN(REPT(…))` / error codes — the
+  kernel does not read fixture expected strings.
 - Classic `FLOOR` / `CEILING`: same-sign multiples; positive number + negative significance is `#NUM!`; significance `0` is `#DIV/0!` except `(0, 0)` → `0`. Negative number + positive significance is allowed (Excel 2010+). `FLOOR.MATH` / `CEILING.MATH` ignore significance sign, treat significance `0` as `0`, and take an optional mode.
 - `TRUE=1` / `FALSE=0` in `=` and in arithmetic; `ISNUMBER(TRUE)` is still false
 - `SUM` / `AVERAGE` / `COUNT` / `PRODUCT` / `MIN` / `MAX`: skip logicals/text

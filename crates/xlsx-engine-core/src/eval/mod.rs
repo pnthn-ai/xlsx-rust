@@ -25,6 +25,7 @@ pub mod substitute;
 pub mod sumif;
 pub mod sumproduct;
 pub mod replace;
+pub mod rept;
 pub mod sumifs;
 pub mod textjoin;
 pub mod textsplit;

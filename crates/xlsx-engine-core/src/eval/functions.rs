@@ -150,6 +150,7 @@ pub(crate) fn dispatch(
         "TEXTAFTER" => fn_textafter(ev, args, ctx),
         "TEXTBEFORE" => fn_textbefore(ev, args, ctx),
         "CONCAT" => super::concat::fn_concat(ev, args, ctx),
+        "REPT" => super::rept::fn_rept(ev, args, ctx),
         "NPV" => super::npv::eval(ev, args, ctx),
         "UNIQUE" => super::unique::eval(ev, args, ctx),
         "TOCOL" => super::tocol::eval(ev, args, ctx),
