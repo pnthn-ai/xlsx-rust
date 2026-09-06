@@ -10,9 +10,10 @@
 //! - Sharp s `ß` is **not** converted to `SS` (Microsoft `UPPER` note).
 //!   Other 1→N Unicode special casings still apply.
 //!
-//! Production path: SWAR lowercase probe + word-wise XOR for ASCII, then a
-//! reserved-buffer Unicode walk. The `Vec<char>` baseline lives beside that
-//! path so benches can report a before/after.
+//! Production path: SWAR lowercase probe + word-wise XOR for ASCII, an
+//! in-place Latin-1 (`C3 xx`) rewrite, then a reserved-buffer Unicode walk.
+//! The `Vec<char>` baseline lives beside that path so benches can report a
+//! before/after.
 
 /// Production `UPPER` kernel.
 pub fn upper(text: &str) -> String {
@@ -39,7 +40,78 @@ fn upper_fast(text: &str) -> String {
     if text.is_ascii() {
         return upper_ascii(text.as_bytes());
     }
+    if let Some(out) = try_upper_latin1(text) {
+        return out;
+    }
     upper_unicode(text)
+}
+
+/// Fast path for ASCII + precomposed Latin-1 (`U+00C0`–`U+00FF`, UTF-8 `C3 xx`).
+///
+/// `ÿ` (`C3 BF` → `Ÿ` `C5 B8`) changes byte length, so that string falls
+/// through to the Unicode walk. `ß` (`C3 9F`) is left unchanged.
+fn try_upper_latin1(text: &str) -> Option<String> {
+    let src = text.as_bytes();
+    let n = src.len();
+    let mut i = 0;
+    let mut need = false;
+    while i < n {
+        let b = src[i];
+        if b < 0x80 {
+            if b.is_ascii_lowercase() {
+                need = true;
+            }
+            i += 1;
+            continue;
+        }
+        if b != 0xC3 || i + 1 >= n {
+            return None;
+        }
+        let c = src[i + 1];
+        if c == 0xBF {
+            // ÿ → Ÿ is not an in-place UTF-8 rewrite.
+            return None;
+        }
+        if is_latin1_lower_c3(c) {
+            need = true;
+        }
+        i += 2;
+    }
+    if !need {
+        return Some(text.to_owned());
+    }
+    let mut out = Vec::with_capacity(n);
+    let dst: *mut u8 = out.as_mut_ptr();
+    let mut i = 0;
+    while i < n {
+        let b = src[i];
+        if b < 0x80 {
+            let u = if b.is_ascii_lowercase() { b - 0x20 } else { b };
+            unsafe {
+                *dst.add(i) = u;
+            }
+            i += 1;
+        } else {
+            let c = src[i + 1];
+            let u = if is_latin1_lower_c3(c) { c - 0x20 } else { c };
+            unsafe {
+                *dst.add(i) = 0xC3;
+                *dst.add(i + 1) = u;
+            }
+            i += 2;
+        }
+    }
+    // SAFETY: ASCII / `C3 xx` rewrite keeps valid UTF-8 of the same length.
+    Some(unsafe {
+        out.set_len(n);
+        String::from_utf8_unchecked(out)
+    })
+}
+
+/// Second byte of UTF-8 `C3 xx` for Latin-1 lowercase letters except `ß` / `ÿ`.
+fn is_latin1_lower_c3(c: u8) -> bool {
+    // à–ö (A0–B6) and ø–þ (B8–BE). ÷ (B7) and ß (9F) stay.
+    (0xA0..=0xB6).contains(&c) || (0xB8..=0xBE).contains(&c)
 }
 
 fn upper_ascii(src: &[u8]) -> String {
@@ -184,6 +256,9 @@ mod tests {
         assert_eq!(both("CAFÉ"), "CAFÉ");
         assert_eq!(both("niño"), "NIÑO");
         assert_eq!(both("über"), "ÜBER");
+        // ÿ → Ÿ changes UTF-8 length; must not use the Latin-1 in-place path.
+        assert_eq!(both("ÿ"), "Ÿ");
+        assert_eq!(both("piaffe ÿ"), "PIAFFE Ÿ");
         assert_eq!(both("αβγ"), "ΑΒΓ");
         assert_eq!(both("русский"), "РУССКИЙ");
         assert_eq!(both("日本語"), "日本語");
