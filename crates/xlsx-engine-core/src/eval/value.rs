@@ -277,8 +277,26 @@ fn parse_plain_number(body: &[u8]) -> Result<f64, ExcelError> {
         let s = std::str::from_utf8(&buf[..w]).map_err(|_| ExcelError::Value)?;
         return parse_f64_strict(s);
     }
+    if let Some(n) = parse_digits_u64(body) {
+        return Ok(n);
+    }
     let s = std::str::from_utf8(body).map_err(|_| ExcelError::Value)?;
     parse_f64_strict(s)
+}
+
+/// Tight integer path: all-ASCII digits that fit in 15 Excel digits.
+fn parse_digits_u64(body: &[u8]) -> Option<f64> {
+    if body.is_empty() || body.len() > 15 {
+        return None;
+    }
+    let mut n: u64 = 0;
+    for &c in body {
+        if !c.is_ascii_digit() {
+            return None;
+        }
+        n = n * 10 + (c - b'0') as u64;
+    }
+    Some(n as f64)
 }
 
 fn comma_groups_ok(body: &[u8]) -> bool {
@@ -334,7 +352,39 @@ fn finite_or_num(n: f64) -> Result<f64, ExcelError> {
 // ---------------------------------------------------------------------------
 
 fn try_mixed_fraction_naive(t: &str) -> Option<Result<f64, ExcelError>> {
-    try_mixed_fraction_fast(t.as_bytes())
+    let owned = t.to_owned();
+    let (body, mut neg) = if owned.starts_with('(') && owned.ends_with(')') && owned.len() >= 2 {
+        (owned[1..owned.len() - 1].to_owned(), true)
+    } else {
+        (owned, false)
+    };
+    let mut body = body;
+    if body.starts_with('+') {
+        body.remove(0);
+    } else if body.starts_with('-') {
+        neg = !neg;
+        body.remove(0);
+    }
+    let chunks: Vec<&str> = body.split_whitespace().collect();
+    if chunks.len() != 2 || !chunks[1].contains('/') {
+        return None;
+    }
+    let frac: Vec<&str> = chunks[1].split('/').collect();
+    if frac.len() != 2 {
+        return None;
+    }
+    if !chunks[0].bytes().all(|c| c.is_ascii_digit())
+        || !frac[0].bytes().all(|c| c.is_ascii_digit())
+        || !frac[1].bytes().all(|c| c.is_ascii_digit())
+    {
+        return None;
+    }
+    Some(mixed_fraction_value(
+        chunks[0].as_bytes(),
+        frac[0].as_bytes(),
+        frac[1].as_bytes(),
+        neg,
+    ))
 }
 
 fn try_mixed_fraction_fast(b: &[u8]) -> Option<Result<f64, ExcelError>> {
@@ -433,11 +483,45 @@ fn parse_u32_bytes(b: &[u8]) -> Result<u32, ExcelError> {
 // ---------------------------------------------------------------------------
 
 fn parse_datetime_naive(t: &str, system: DateSystem) -> Result<f64, ExcelError> {
-    parse_datetime_fast(t.as_bytes(), system)
+    let owned = t.to_owned();
+    if let Some((date, time)) = owned.split_once(' ').or_else(|| owned.split_once('T')) {
+        if looks_like_date(date.as_bytes()) {
+            let serial = parse_date_only_naive(date, system)?;
+            let frac = parse_time_fast(time.trim_start().as_bytes())?;
+            return finite_or_num(serial + frac);
+        }
+    }
+    parse_time_fast(owned.as_bytes())
 }
 
 fn parse_date_only_naive(t: &str, system: DateSystem) -> Result<f64, ExcelError> {
-    parse_date_only_fast(t.as_bytes(), system)
+    let owned = t.to_owned();
+    let sep = if owned.contains('/') {
+        '/'
+    } else if owned.contains('-') {
+        '-'
+    } else {
+        return Err(ExcelError::Value);
+    };
+    let parts: Vec<&str> = owned.split(sep).collect();
+    if parts.len() != 3 {
+        return Err(ExcelError::Value);
+    }
+    let a: i32 = parts[0].parse().map_err(|_| ExcelError::Value)?;
+    let b: i32 = parts[1].parse().map_err(|_| ExcelError::Value)?;
+    let c: i32 = parts[2].parse().map_err(|_| ExcelError::Value)?;
+    let (y, m, d) = if parts[0].len() == 4 || a >= 100 {
+        (a, b, c)
+    } else {
+        (expand_year(c), a, b)
+    };
+    if !(1..=12).contains(&m) {
+        return Err(ExcelError::Value);
+    }
+    if d < 1 || d > days_in_month(y, m) {
+        return Err(ExcelError::Value);
+    }
+    date_serial(y, m, d, system).map_err(|_| ExcelError::Value)
 }
 
 fn parse_datetime_fast(b: &[u8], system: DateSystem) -> Result<f64, ExcelError> {

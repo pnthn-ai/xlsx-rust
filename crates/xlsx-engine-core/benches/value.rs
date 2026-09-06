@@ -12,13 +12,13 @@ use std::time::{Duration, Instant};
 use xlsx_engine_core::{excel_value, excel_value_naive};
 use xlsx_types::DateSystem;
 
-const ITERS_HEAVY: u32 = 80;
-const ITERS_LIGHT: u32 = 160;
+/// Inner-loop count. A single `VALUE` parse is tens of nanoseconds, so
+/// `Instant` granularity would dominate without a batch.
+const BATCH: u32 = 80_000;
 
 struct Case {
     name: &'static str,
     text: String,
-    iters: u32,
 }
 
 fn cases() -> Vec<Case> {
@@ -26,63 +26,55 @@ fn cases() -> Vec<Case> {
         Case {
             name: "plain integer \"123456789\"",
             text: "123456789".into(),
-            iters: ITERS_LIGHT,
         },
         Case {
             name: "trimmed decimal \"   123.45   \"",
             text: "   123.45   ".into(),
-            iters: ITERS_LIGHT,
         },
         Case {
             name: "currency \"$1,234,567.89\"",
             text: "$1,234,567.89".into(),
-            iters: ITERS_HEAVY,
         },
         Case {
             name: "percent \"12.5%\"",
             text: "12.5%".into(),
-            iters: ITERS_LIGHT,
         },
         Case {
             name: "parens+currency \"($1,234.50)\"",
             text: "($1,234.50)".into(),
-            iters: ITERS_HEAVY,
         },
         Case {
             name: "scientific \"1.23456789E+10\"",
             text: "1.23456789E+10".into(),
-            iters: ITERS_LIGHT,
         },
         Case {
             name: "time \"16:48:00\"",
             text: "16:48:00".into(),
-            iters: ITERS_HEAVY,
         },
         Case {
             name: "date \"12/31/2024\"",
             text: "12/31/2024".into(),
-            iters: ITERS_HEAVY,
         },
         Case {
             name: "reject \"not-a-number\"",
             text: "not-a-number".into(),
-            iters: ITERS_LIGHT,
         },
         Case {
-            name: "64-digit grouped currency",
+            name: "grouped currency \"$123,456,789,012.34\"",
             text: "$123,456,789,012.34".into(),
-            iters: ITERS_HEAVY,
         },
     ]
 }
 
-fn time_it(iters: u32, mut f: impl FnMut()) -> Duration {
-    f();
-    let start = Instant::now();
-    for _ in 0..iters {
+fn time_it(mut f: impl FnMut()) -> Duration {
+    for _ in 0..BATCH {
         f();
     }
-    start.elapsed() / iters
+    let start = Instant::now();
+    for _ in 0..BATCH {
+        f();
+    }
+    start.elapsed() / BATCH
 }
 
 fn fmt_dur(d: Duration) -> String {
@@ -103,10 +95,10 @@ fn main() {
     println!("{}", "-".repeat(78));
     let system = DateSystem::Excel1900;
     for c in cases() {
-        let naive = time_it(c.iters, || {
+        let naive = time_it(|| {
             let _ = black_box(excel_value_naive(black_box(&c.text), system));
         });
-        let fast = time_it(c.iters, || {
+        let fast = time_it(|| {
             let _ = black_box(excel_value(black_box(&c.text), system));
         });
         let speedup = naive.as_secs_f64() / fast.as_secs_f64().max(1e-12);
