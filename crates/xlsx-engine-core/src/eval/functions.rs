@@ -1357,22 +1357,7 @@ fn fn_trim(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValu
         return Ok(ExcelValue::Error(ExcelError::Value));
     }
     match coerce::to_text(&ev.eval_scalar(&args[0], ctx)?) {
-        Ok(s) => {
-            let mut out = String::new();
-            let mut prev_space = false;
-            for c in s.trim_matches(' ').chars() {
-                if c == ' ' {
-                    if !prev_space {
-                        out.push(' ');
-                    }
-                    prev_space = true;
-                } else {
-                    out.push(c);
-                    prev_space = false;
-                }
-            }
-            Ok(ExcelValue::Text(out))
-        }
+        Ok(s) => Ok(ExcelValue::Text(super::trim::trim(&s))),
         Err(e) => Ok(ExcelValue::Error(e)),
     }
 }
