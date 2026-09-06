@@ -74,6 +74,7 @@
 //! - [`xlsx_types::excel_int`] — Excel `INT` (floor toward −∞; leftover snap)
 //! - [`eval::roundup`] — Excel `ROUNDUP` (away from zero; omitted digits → 0)
 //! - [`eval::rounddown`] — Excel `ROUNDDOWN` (toward zero; omitted `num_digits` = 0)
+//! - [`eval::trunc`] — Excel `TRUNC` (toward zero; omitted `num_digits` = 0)
 //! - [`xlsx_types::excel_floor`] — Excel classic `FLOOR` (sign/zero-sig; leftover snap)
 //! - [`xlsx_types::excel_ceiling`] — Excel classic `CEILING` (sign / zero-sig / 15-digit multiple)
 //! - Financial TVM: `PMT` / `RRI` via [`xlsx_types::excel_pmt`] / [`xlsx_types::excel_rri`]
@@ -244,6 +245,12 @@ pub use eval::torow::{
     parse_ignore as parse_torow_ignore, TorowIgnore,
 };
 pub use eval::trim::{trim as excel_trim, trim_naive as excel_trim_naive};
+pub use eval::trunc::{
+    trunc as excel_trunc, trunc_naive as excel_trunc_naive, trunc_slice as excel_trunc_slice,
+    trunc_slice_digits as excel_trunc_slice_digits,
+    trunc_slice_digits_naive as excel_trunc_slice_digits_naive,
+    trunc_slice_naive as excel_trunc_slice_naive,
+};
 pub use eval::unichar::{unichar as excel_unichar, unichar_naive as excel_unichar_naive};
 pub use eval::unicode::{
     unicode as excel_unicode, unicode_naive as excel_unicode_naive,

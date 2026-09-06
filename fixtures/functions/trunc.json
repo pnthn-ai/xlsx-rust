@@ -1,0 +1,480 @@
+[
+  {
+    "id": "fn.trunc-help-8.9",
+    "description": "Microsoft: TRUNC(8.9) is 8",
+    "tags": ["math", "trunc"],
+    "formula": "=TRUNC(8.9)",
+    "expected": { "number": 8 },
+    "notes": "Excel golden from Microsoft TRUNC help. Engine does not read this expected value."
+  },
+  {
+    "id": "fn.trunc-help-neg-8.9",
+    "description": "Microsoft: TRUNC(-8.9) is -8 (toward zero, not INT)",
+    "tags": ["math", "trunc"],
+    "formula": "=TRUNC(-8.9)",
+    "expected": { "number": -8 },
+    "notes": "Excel golden from Microsoft TRUNC help. Engine does not read this expected value."
+  },
+  {
+    "id": "fn.trunc-help-pi",
+    "description": "Microsoft: TRUNC(PI()) is 3",
+    "tags": ["math", "trunc"],
+    "formula": "=TRUNC(PI())",
+    "expected": { "number": 3 },
+    "notes": "Excel golden from Microsoft TRUNC help. Engine does not read this expected value."
+  },
+  {
+    "id": "fn.trunc-help-pi-2",
+    "description": "Microsoft-style: TRUNC(PI(), 2) is 3.14",
+    "tags": ["math", "trunc"],
+    "formula": "=TRUNC(PI(), 2)",
+    "expected": { "number": 3.14 },
+    "notes": "Documented Excel golden. Engine does not read this expected value."
+  },
+  {
+    "id": "fn.trunc-omitted-pos",
+    "description": "Omitted num_digits defaults to 0: TRUNC(8.9) is 8",
+    "tags": ["math", "trunc"],
+    "formula": "=TRUNC(8.9)",
+    "expected": { "number": 8 }
+  },
+  {
+    "id": "fn.trunc-omitted-neg",
+    "description": "Omitted num_digits: TRUNC(-8.9) is -8 (toward zero)",
+    "tags": ["math", "trunc"],
+    "formula": "=TRUNC(-8.9)",
+    "expected": { "number": -8 }
+  },
+  {
+    "id": "fn.trunc-omitted-eq-zero",
+    "description": "TRUNC(76.9) equals TRUNC(76.9, 0)",
+    "tags": ["math", "trunc"],
+    "formula": "=TRUNC(76.9)=TRUNC(76.9, 0)",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.trunc-omitted-eq-rounddown",
+    "description": "TRUNC(n) matches ROUNDDOWN(n) when num_digits is omitted",
+    "tags": ["math", "trunc"],
+    "formula": "=TRUNC(-3.2)=ROUNDDOWN(-3.2)",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.trunc-trailing-comma",
+    "description": "Trailing-comma omitted slot is 0: TRUNC(-8.9,) is -8",
+    "tags": ["math", "trunc"],
+    "formula": "=TRUNC(-8.9,)",
+    "expected": { "number": -8 }
+  },
+  {
+    "id": "fn.trunc-toward-neg-half",
+    "description": "TRUNC(-0.5) is 0 — toward zero, not INT (−1)",
+    "tags": ["math", "trunc"],
+    "formula": "=TRUNC(-0.5)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.trunc-vs-int-neg",
+    "description": "TRUNC(-8.9) is -8 while INT(-8.9) is -9",
+    "tags": ["math", "trunc"],
+    "formula": "=TRUNC(-8.9)-INT(-8.9)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.trunc-vs-int-neg-1.5",
+    "description": "TRUNC(-1.5) is -1 while INT(-1.5) is -2",
+    "tags": ["math", "trunc"],
+    "formula": "=TRUNC(-1.5)-INT(-1.5)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.trunc-pos-below-one",
+    "description": "TRUNC(0.99) is 0",
+    "tags": ["math", "trunc"],
+    "formula": "=TRUNC(0.99)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.trunc-neg-below-one",
+    "description": "TRUNC(-0.99) is 0 (toward zero)",
+    "tags": ["math", "trunc"],
+    "formula": "=TRUNC(-0.99)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.trunc-already-int",
+    "description": "TRUNC(8) is 8 — already an integer, identity",
+    "tags": ["math", "trunc"],
+    "formula": "=TRUNC(8)",
+    "expected": { "number": 8 }
+  },
+  {
+    "id": "fn.trunc-already-neg-int",
+    "description": "TRUNC(-3) is -3",
+    "tags": ["math", "trunc"],
+    "formula": "=TRUNC(-3)",
+    "expected": { "number": -3 }
+  },
+  {
+    "id": "fn.trunc-cents",
+    "description": "TRUNC(1.239, 2) is 1.23",
+    "tags": ["math", "trunc"],
+    "formula": "=TRUNC(1.239, 2)",
+    "expected": { "number": 1.23 }
+  },
+  {
+    "id": "fn.trunc-neg-cents",
+    "description": "TRUNC(-1.239, 2) is -1.23",
+    "tags": ["math", "trunc"],
+    "formula": "=TRUNC(-1.239, 2)",
+    "expected": { "number": -1.23 }
+  },
+  {
+    "id": "fn.trunc-pi-3",
+    "description": "TRUNC(3.14159, 3) is 3.141",
+    "tags": ["math", "trunc"],
+    "formula": "=TRUNC(3.14159, 3)",
+    "expected": { "number": 3.141 }
+  },
+  {
+    "id": "fn.trunc-neg-pi-1",
+    "description": "TRUNC(-3.14159, 1) is -3.1 (toward zero)",
+    "tags": ["math", "trunc"],
+    "formula": "=TRUNC(-3.14159, 1)",
+    "expected": { "number": -3.1 }
+  },
+  {
+    "id": "fn.trunc-thousands",
+    "description": "TRUNC(2785.2, -3) is 2000",
+    "tags": ["math", "trunc"],
+    "formula": "=TRUNC(2785.2, -3)",
+    "expected": { "number": 2000 }
+  },
+  {
+    "id": "fn.trunc-neg-thousands",
+    "description": "TRUNC(-2785.2, -3) is -2000",
+    "tags": ["math", "trunc"],
+    "formula": "=TRUNC(-2785.2, -3)",
+    "expected": { "number": -2000 }
+  },
+  {
+    "id": "fn.trunc-neg-digits-tens",
+    "description": "TRUNC(31415.92654, -2) is 31400",
+    "tags": ["math", "trunc"],
+    "formula": "=TRUNC(31415.92654, -2)",
+    "expected": { "number": 31400 }
+  },
+  {
+    "id": "fn.trunc-help-889",
+    "description": "Significant-digit example: TRUNC(-889, -1) is -880",
+    "tags": ["math", "trunc"],
+    "formula": "=TRUNC(-889, -1)",
+    "expected": { "number": -880 }
+  },
+  {
+    "id": "fn.trunc-help-2345678",
+    "description": "TRUNC(2345678, -4) is 2340000",
+    "tags": ["math", "trunc"],
+    "formula": "=TRUNC(2345678, -4)",
+    "expected": { "number": 2340000 }
+  },
+  {
+    "id": "fn.trunc-ieee-1.15",
+    "description": "TRUNC(1.15, 2) stays 1.15 — binary 114.999… must not drop",
+    "tags": ["math", "trunc"],
+    "quirks": ["ieee-vs-excel-precision"],
+    "formula": "=TRUNC(1.15, 2)",
+    "expected": { "number": 1.15 },
+    "notes": "Documented Excel golden: 15-digit leftover snap. Engine does not read this expected value."
+  },
+  {
+    "id": "fn.trunc-ieee-1.1",
+    "description": "TRUNC(1.1, 2) stays 1.1 — binary leftover must not drop",
+    "tags": ["math", "trunc"],
+    "quirks": ["ieee-vs-excel-precision"],
+    "formula": "=TRUNC(1.1, 2)",
+    "expected": { "number": 1.1 }
+  },
+  {
+    "id": "fn.trunc-ieee-15digit-int",
+    "description": "TRUNC(7-1E-15, 0) stays 7 — Excel 15-digit leftover is not a fraction",
+    "tags": ["math", "trunc"],
+    "quirks": ["ieee-vs-excel-precision"],
+    "formula": "=TRUNC(7-1E-15, 0)",
+    "expected": { "number": 7 }
+  },
+  {
+    "id": "fn.trunc-digits-frac",
+    "description": "num_digits 2.9 truncates toward zero to 2",
+    "tags": ["math", "trunc"],
+    "formula": "=TRUNC(3.14159, 2.9)",
+    "expected": { "number": 3.14 }
+  },
+  {
+    "id": "fn.trunc-digits-neg-frac",
+    "description": "num_digits -1.9 truncates toward zero to -1",
+    "tags": ["math", "trunc"],
+    "formula": "=TRUNC(123, -1.9)",
+    "expected": { "number": 120 }
+  },
+  {
+    "id": "fn.trunc-text-pos",
+    "description": "Numeric text is coerced: TRUNC(\"8.9\") is 8",
+    "tags": ["math", "trunc", "coercion"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=TRUNC(\"8.9\")",
+    "expected": { "number": 8 }
+  },
+  {
+    "id": "fn.trunc-text-neg",
+    "description": "TRUNC(\"-8.9\") is -8",
+    "tags": ["math", "trunc", "coercion"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=TRUNC(\"-8.9\")",
+    "expected": { "number": -8 }
+  },
+  {
+    "id": "fn.trunc-text-ws",
+    "description": "TRUNC trims numeric text: TRUNC(\"  8.9  \") is 8",
+    "tags": ["math", "trunc", "coercion"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=TRUNC(\"  8.9  \")",
+    "expected": { "number": 8 }
+  },
+  {
+    "id": "fn.trunc-text-bad",
+    "description": "Non-numeric text is #VALUE!",
+    "tags": ["math", "trunc", "errors"],
+    "formula": "=TRUNC(\"x\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.trunc-empty-string",
+    "description": "TRUNC(\"\") is #VALUE! — empty text is not numeric",
+    "tags": ["math", "trunc", "errors"],
+    "formula": "=TRUNC(\"\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.trunc-true",
+    "description": "TRUE coerces to 1; TRUNC(TRUE, -1) is 0",
+    "tags": ["math", "trunc", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=TRUNC(TRUE, -1)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.trunc-false",
+    "description": "FALSE coerces to 0",
+    "tags": ["math", "trunc", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=TRUNC(FALSE, 2)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.trunc-percent-pos",
+    "description": "TRUNC(150%) is TRUNC(1.5) = 1",
+    "tags": ["math", "trunc"],
+    "quirks": ["percent-unary"],
+    "formula": "=TRUNC(150%)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.trunc-percent-neg",
+    "description": "TRUNC(-150%) is -1 (toward zero)",
+    "tags": ["math", "trunc"],
+    "quirks": ["percent-unary"],
+    "formula": "=TRUNC(-150%)",
+    "expected": { "number": -1 }
+  },
+  {
+    "id": "fn.trunc-blank-number",
+    "description": "Blank number cell coerces to 0",
+    "tags": ["math", "trunc", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=TRUNC(A1, 2)",
+    "expected": { "number": 0 },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.trunc-blank-digits-omitted",
+    "description": "Blank num_digits cell coerces to 0 — same as omitted",
+    "tags": ["math", "trunc", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=TRUNC(8.9, A1)",
+    "expected": { "number": 8 },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.trunc-arity-zero",
+    "description": "TRUNC() is #VALUE!",
+    "tags": ["math", "trunc", "errors"],
+    "formula": "=TRUNC()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.trunc-arity-three",
+    "description": "Three arguments is #VALUE!",
+    "tags": ["math", "trunc", "errors"],
+    "formula": "=TRUNC(8.9, 0, 1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.trunc-err-number",
+    "description": "Error in number propagates",
+    "tags": ["math", "trunc", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=TRUNC(1/0, 0)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.trunc-err-digits-na",
+    "description": "Error in num_digits propagates",
+    "tags": ["math", "trunc", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=TRUNC(8.9, NA())",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.trunc-err-left-wins",
+    "description": "Left-to-right: number error beats a later #N/A",
+    "tags": ["math", "trunc", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=TRUNC(#DIV/0!, #N/A)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.trunc-err-right-only",
+    "description": "Left-to-right: clean number, digits error is #N/A",
+    "tags": ["math", "trunc", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=TRUNC(8.9, #N/A)",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.trunc-eq-rounddown-digits",
+    "description": "TRUNC(n, d) matches ROUNDDOWN(n, d)",
+    "tags": ["math", "trunc"],
+    "formula": "=TRUNC(-3.14159, 2)=ROUNDDOWN(-3.14159, 2)",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.trunc-cell-frac",
+    "description": "TRUNC of a cell holding 8.9 is 8",
+    "tags": ["math", "trunc"],
+    "formula": "=TRUNC(A1)",
+    "expected": { "number": 8 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "number": 8.9 }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.trunc-cell-neg",
+    "description": "TRUNC of a cell holding -3.14159 to 1 digit is -3.1",
+    "tags": ["math", "trunc"],
+    "formula": "=TRUNC(A1, 1)",
+    "expected": { "number": -3.1 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "number": -3.14159 }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.trunc-named",
+    "description": "TRUNC of a defined name holding 3.14159 to 3 digits is 3.141",
+    "tags": ["math", "trunc"],
+    "formula": "=TRUNC(Amt, 3)",
+    "expected": { "number": 3.141 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "number": 3.14159 }
+          }
+        }
+      ],
+      "names": [{ "name": "Amt", "refers_to": "Sheet1!A1" }]
+    }
+  },
+  {
+    "id": "fn.trunc-implicit-intersect",
+    "description": "TRUNC(A1:A3) from host B2 uses implicit intersection (A2 = -8.9 → -8)",
+    "tags": ["math", "trunc"],
+    "quirks": ["implicit-intersection"],
+    "at": "Sheet1!B2",
+    "formula": "=TRUNC(A1:A3)",
+    "expected": { "number": -8 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "number": 8.9 },
+            "A2": { "number": -8.9 },
+            "A3": { "number": 76.9 }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.trunc-array-literal",
+    "description": "Scalar TRUNC takes the top-left of an array literal: TRUNC({8.9,-8.9}) is 8",
+    "tags": ["math", "trunc"],
+    "formula": "=TRUNC({8.9,-8.9})",
+    "expected": { "number": 8 }
+  },
+  {
+    "id": "fn.trunc-datetime",
+    "description": "TRUNC of a date+time serial keeps the civil day (2012-01-01 = 40909)",
+    "tags": ["math", "trunc", "dates"],
+    "formula": "=TRUNC(DATE(2012,1,1)+0.75)",
+    "expected": { "number": 40909 }
+  },
+  {
+    "id": "fn.trunc-zero-neg-digits",
+    "description": "TRUNC(0, -2) is 0",
+    "tags": ["math", "trunc"],
+    "formula": "=TRUNC(0, -2)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.trunc-sci",
+    "description": "TRUNC(1.239E+3, -2) is 1200",
+    "tags": ["math", "trunc"],
+    "formula": "=TRUNC(1.239E+3, -2)",
+    "expected": { "number": 1200 }
+  },
+  {
+    "id": "fn.trunc-pos-half",
+    "description": "TRUNC(0.5) is 0",
+    "tags": ["math", "trunc"],
+    "formula": "=TRUNC(0.5)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.trunc-zero",
+    "description": "TRUNC(0) is 0",
+    "tags": ["math", "trunc"],
+    "formula": "=TRUNC(0)",
+    "expected": { "number": 0 }
+  }
+]
