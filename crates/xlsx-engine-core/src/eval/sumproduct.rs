@@ -477,9 +477,6 @@ mod tests {
     fn mismatch_is_value() {
         let a = num_row(&[1.0, 2.0]);
         let b = num_row(&[1.0, 2.0, 3.0]);
-        assert_eq!(
-            product_sum(&[a, b]),
-            ExcelValue::Error(ExcelError::Value)
-        );
+        assert_eq!(product_sum(&[a, b]), ExcelValue::Error(ExcelError::Value));
     }
 }

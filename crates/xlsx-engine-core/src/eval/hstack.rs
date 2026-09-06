@@ -333,11 +333,7 @@ mod tests {
 
     #[test]
     fn in_bounds_blank_stays_empty() {
-        let a = ExcelValue::Array(vec![
-            vec![n(1.0)],
-            vec![ExcelValue::Empty],
-            vec![n(3.0)],
-        ]);
+        let a = ExcelValue::Array(vec![vec![n(1.0)], vec![ExcelValue::Empty], vec![n(3.0)]]);
         let b = col(&[4.0, 5.0, 6.0]);
         let got = hstack(&[a.clone(), b.clone()]);
         assert_eq!(
@@ -389,7 +385,11 @@ mod tests {
 
     #[test]
     fn types_preserved() {
-        let a = ExcelValue::Array(vec![vec![n(1.0)], vec![t("x")], vec![ExcelValue::Bool(true)]]);
+        let a = ExcelValue::Array(vec![
+            vec![n(1.0)],
+            vec![t("x")],
+            vec![ExcelValue::Bool(true)],
+        ]);
         let b = ExcelValue::Array(vec![
             vec![ExcelValue::Empty],
             vec![ExcelValue::Error(ExcelError::Na)],

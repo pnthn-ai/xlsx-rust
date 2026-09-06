@@ -344,9 +344,7 @@ fn split_parts_fast(
         }
         return split_str_find(text, d, ignore_empty);
     }
-    let ascii_ci = case_insensitive
-        && text.is_ascii()
-        && delims.iter().all(|d| d.is_ascii());
+    let ascii_ci = case_insensitive && text.is_ascii() && delims.iter().all(|d| d.is_ascii());
     if ascii_ci && delims.len() == 1 {
         return split_ascii_ci_one(text, &delims[0], ignore_empty);
     }
@@ -404,7 +402,10 @@ fn find_bytes_ci(hay: &[u8], needle: &[u8]) -> Option<usize> {
 }
 
 fn bytes_eq_ci(a: &[u8], b: &[u8]) -> bool {
-    a.len() == b.len() && a.iter().zip(b.iter()).all(|(x, y)| x.eq_ignore_ascii_case(y))
+    a.len() == b.len()
+        && a.iter()
+            .zip(b.iter())
+            .all(|(x, y)| x.eq_ignore_ascii_case(y))
 }
 
 fn split_ascii_byte(text: &str, delim: u8, ignore_empty: bool) -> Vec<String> {

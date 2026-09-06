@@ -51,7 +51,6 @@ pub fn pmt(rate: f64, nper: f64, pv: f64, fv: f64, typ: f64) -> Result<f64, Exce
     finite(-(pv * term + fv) * rate / (type_scale * term_m1))
 }
 
-
 /// `( (1+rate)^nper , (1+rate)^nper - 1 )` without allocating.
 ///
 /// Small `|rate|` uses `expm1(nper * ln1p(rate))` so the annuity factor does
@@ -82,7 +81,6 @@ pub fn pow_term(one_plus: f64, rate: f64, nper: f64) -> Result<(f64, f64), Excel
     }
 }
 
-
 #[inline]
 fn finite(n: f64) -> Result<f64, ExcelError> {
     if n.is_finite() {
@@ -91,7 +89,6 @@ fn finite(n: f64) -> Result<f64, ExcelError> {
         Err(ExcelError::Num)
     }
 }
-
 
 /// Excel / OpenFormula `FV(rate, nper, pmt, [pv], [type])`.
 ///
@@ -117,7 +114,6 @@ pub fn fv(rate: f64, nper: f64, pmt: f64, pv: f64, typ: f64) -> Result<f64, Exce
     fv_kernel(rate, nper, pmt, pv, typ, false)
 }
 
-
 /// Same OpenFormula identity as [`fv`], but always uses `powf` for `(1+r)^n`.
 ///
 /// Useful as a before/after bench baseline. Tiny `|rate|` loses the annuity
@@ -126,7 +122,6 @@ pub fn fv(rate: f64, nper: f64, pmt: f64, pv: f64, typ: f64) -> Result<f64, Exce
 pub fn fv_naive(rate: f64, nper: f64, pmt: f64, pv: f64, typ: f64) -> Result<f64, ExcelError> {
     fv_kernel(rate, nper, pmt, pv, typ, true)
 }
-
 
 #[inline]
 fn fv_kernel(
@@ -180,7 +175,6 @@ fn fv_kernel(
     finite(-pv * term - pmt * type_scale * term_m1 / rate)
 }
 
-
 /// Excel / OpenFormula `PV(rate, nper, pmt, [fv], [type])`.
 ///
 /// OpenFormula 6.12.41 (cash-flow sign convention matches Excel: money paid
@@ -205,14 +199,12 @@ pub fn pv(rate: f64, nper: f64, pmt: f64, fv: f64, typ: f64) -> Result<f64, Exce
     pv_inner(rate, nper, pmt, fv, typ, false)
 }
 
-
 /// Baseline `PV`: same domain rules, but always `powf` so `(1+r)^n − 1`
 /// cancels on tiny rates. Used only for the hill-climb bench.
 #[inline]
 pub fn pv_naive(rate: f64, nper: f64, pmt: f64, fv: f64, typ: f64) -> Result<f64, ExcelError> {
     pv_inner(rate, nper, pmt, fv, typ, true)
 }
-
 
 #[inline]
 fn pv_inner(
@@ -260,7 +252,6 @@ fn pv_inner(
 
     finite(-(fv + pmt * type_scale * term_m1 / rate) / term)
 }
-
 
 /// Excel / OpenFormula `NPER(rate, pmt, pv, [fv], [type])`.
 ///
@@ -328,7 +319,6 @@ pub fn nper(rate: f64, pmt: f64, pv: f64, fv: f64, typ: f64) -> Result<f64, Exce
     signed_zero(finite(log_ratio / log_one_plus))
 }
 
-
 /// Baseline `NPER`: `ln(num/den) / ln(1+rate)` without `ln1p`.
 ///
 /// Same domain errors as [`nper`]. Tiny rates cancel; used only as the
@@ -366,7 +356,6 @@ pub fn nper_naive(rate: f64, pmt: f64, pv: f64, fv: f64, typ: f64) -> Result<f64
     signed_zero(finite(ratio.ln() / one_plus.ln()))
 }
 
-
 #[inline]
 fn signed_zero(r: Result<f64, ExcelError>) -> Result<f64, ExcelError> {
     match r {
@@ -375,19 +364,15 @@ fn signed_zero(r: Result<f64, ExcelError>) -> Result<f64, ExcelError> {
     }
 }
 
-
 /// Excel iteration cap for [`rate`] (`#NUM!` if the guess has not settled).
 pub const RATE_MAX_ITERS: u32 = 20;
-
 
 /// Absolute rate tolerance: successive results within `0.0000001` (Excel RATE).
 pub const RATE_TOL: f64 = 1e-7;
 
-
 const DERIV_MIN: f64 = 1e-14;
 
 const ZERO_RATE: f64 = 1e-14;
-
 
 /// Excel / OpenFormula `RATE(nper, pmt, pv, [fv], [type], [guess])`.
 ///
@@ -421,7 +406,6 @@ pub fn rate(
     rate_inner(nper, pmt, pv, fv, typ, guess, false)
 }
 
-
 /// Baseline `RATE`: same Excel decision rules, but Newton uses `powf`
 /// so `(1+r)^n − 1` cancels on tiny rates. Used only for the hill-climb bench.
 pub fn rate_naive(
@@ -434,7 +418,6 @@ pub fn rate_naive(
 ) -> Result<f64, ExcelError> {
     rate_inner(nper, pmt, pv, fv, typ, guess, true)
 }
-
 
 fn rate_inner(
     nper: f64,
@@ -479,7 +462,6 @@ fn rate_inner(
     rate_newton(nper, pmt, pv, fv, typ, guess, naive)
 }
 
-
 /// `nper = 1` → `r = −(pv + pmt + fv) / (pv + pmt·type)`.
 fn rate_one_period(pmt: f64, pv: f64, fv: f64, typ: f64) -> Result<f64, ExcelError> {
     let den = pv + pmt * typ;
@@ -492,7 +474,6 @@ fn rate_one_period(pmt: f64, pv: f64, fv: f64, typ: f64) -> Result<f64, ExcelErr
     }
     Ok(if r.abs() < ZERO_RATE { 0.0 } else { r })
 }
-
 
 /// `pmt = 0` → `r = (−fv/pv)^(1/nper) − 1`. Needs `−fv/pv > 0` so `r > −1`.
 fn rate_no_pmt(nper: f64, pv: f64, fv: f64) -> Result<f64, ExcelError> {
@@ -513,7 +494,6 @@ fn rate_no_pmt(nper: f64, pv: f64, fv: f64) -> Result<f64, ExcelError> {
     }
     Ok(if r.abs() < ZERO_RATE { 0.0 } else { r })
 }
-
 
 fn rate_newton(
     nper: f64,
@@ -576,7 +556,6 @@ fn rate_newton(
     Err(ExcelError::Num)
 }
 
-
 /// Extra Newton steps after Excel's 20-iter settle, so a `PMT` inverse
 /// compares equal under 15-digit Excel rounding. Does not change the
 /// `#NUM!` decision (that already happened).
@@ -603,7 +582,6 @@ fn polish_rate(mut r: f64, nper: f64, pmt: f64, pv: f64, fv: f64, typ: f64, naiv
         r
     }
 }
-
 
 /// TVM residual `y(r)` and `y'(r)` for Newton.
 ///
@@ -660,7 +638,6 @@ fn tvm_residual(
     Ok((y, dy))
 }
 
-
 /// Excel / OpenFormula `IPMT(rate, per, nper, pv, [fv], [type])`.
 ///
 /// Interest portion of the periodic payment for period `per`. OpenFormula
@@ -686,7 +663,6 @@ pub fn ipmt(rate: f64, per: f64, nper: f64, pv: f64, fv: f64, typ: f64) -> Resul
     ipmt_kernel(rate, per, nper, pv, fv, typ, false)
 }
 
-
 /// Same OpenFormula identity as [`ipmt`], but the remaining-balance `FV`
 /// always uses `powf` for `(1+r)^n`.
 ///
@@ -703,7 +679,6 @@ pub fn ipmt_naive(
 ) -> Result<f64, ExcelError> {
     ipmt_kernel(rate, per, nper, pv, fv, typ, true)
 }
-
 
 #[inline]
 fn ipmt_kernel(
@@ -752,7 +727,6 @@ fn ipmt_kernel(
     }
     finite(interest)
 }
-
 
 /// OpenFormula 6.12.20 `FV` used only as the IPMT remaining-balance step.
 ///
@@ -803,7 +777,6 @@ fn fv_at(
     finite(-pv * term - pmt * type_scale * term_m1 / rate)
 }
 
-
 /// Excel / OpenFormula `PPMT(rate, per, nper, pv, [fv], [type])`.
 ///
 /// OpenFormula 6.12.37 (principal portion of a period payment). Cash-flow
@@ -832,7 +805,6 @@ pub fn ppmt(rate: f64, per: f64, nper: f64, pv: f64, fv: f64, typ: f64) -> Resul
     ppmt_kernel(rate, per, nper, pv, fv, typ, false)
 }
 
-
 /// `powf` baseline of [`ppmt`] for the kernel bench (no `expm1` / `ln1p`).
 #[inline]
 pub fn ppmt_naive(
@@ -845,7 +817,6 @@ pub fn ppmt_naive(
 ) -> Result<f64, ExcelError> {
     ppmt_kernel(rate, per, nper, pv, fv, typ, true)
 }
-
 
 #[inline]
 fn ppmt_kernel(
@@ -879,7 +850,6 @@ fn ppmt_kernel(
     finite(payment - interest)
 }
 
-
 /// Interest on the remaining balance after `per - 1` payments.
 #[inline]
 fn ipmt_from_payment(
@@ -897,7 +867,6 @@ fn ipmt_from_payment(
     let remaining = tvm_fv(rate, per - 1.0, payment, pv, typ, naive)?;
     finite(remaining * rate / type_scale)
 }
-
 
 /// Excel `FV(rate, nper, pmt, pv, type)` used only as a remaining-balance
 /// helper for `PPMT`. Not a worksheet export.
@@ -941,7 +910,6 @@ fn tvm_fv(
     }
     finite(-(pv * term + pmt_val * type_scale * term_m1 / rate))
 }
-
 
 #[inline]
 fn pmt_kernel(
@@ -987,13 +955,11 @@ fn pmt_kernel(
     finite(-(pv * term + fv) * rate / (type_scale * term_m1))
 }
 
-
 #[inline]
 fn pow_term_powf(one_plus: f64, nper: f64) -> (f64, f64) {
     let term = one_plus.powf(nper);
     (term, term - 1.0)
 }
-
 
 /// Excel `CUMPRINC(rate, nper, pv, start_period, end_period, type)`.
 ///
@@ -1029,7 +995,6 @@ pub fn cumprinc(
     cumprinc_closed(args)
 }
 
-
 /// Period-by-period `Σ PPMT` baseline (same domain / result as [`cumprinc`]).
 #[inline]
 pub fn cumprinc_naive(
@@ -1044,7 +1009,6 @@ pub fn cumprinc_naive(
     cumprinc_loop(args)
 }
 
-
 #[derive(Clone, Copy)]
 struct CumprincArgs {
     rate: f64,
@@ -1054,7 +1018,6 @@ struct CumprincArgs {
     end: u32,
     typ: u8,
 }
-
 
 #[inline]
 fn cumprinc_args(
@@ -1093,7 +1056,6 @@ fn cumprinc_args(
     })
 }
 
-
 #[inline]
 fn trunc_period(n: f64) -> Result<u32, ExcelError> {
     let t = n.trunc();
@@ -1102,7 +1064,6 @@ fn trunc_period(n: f64) -> Result<u32, ExcelError> {
     }
     Ok(t as u32)
 }
-
 
 #[inline]
 fn trunc_pay_type(n: f64) -> Result<u8, ExcelError> {
@@ -1116,7 +1077,6 @@ fn trunc_pay_type(n: f64) -> Result<u8, ExcelError> {
     }
 }
 
-
 #[inline]
 fn cumprinc_closed(a: CumprincArgs) -> Result<f64, ExcelError> {
     let payment = pmt(a.rate, a.nper, a.pv, 0.0, f64::from(a.typ))?;
@@ -1128,7 +1088,6 @@ fn cumprinc_closed(a: CumprincArgs) -> Result<f64, ExcelError> {
         cumprinc_due_closed(a.rate, a.pv, payment, a.start, a.end)
     }
 }
-
 
 /// Annuity-due (`type = 1`) closed form of the LibreOffice PPMT loop.
 #[inline]
@@ -1153,7 +1112,6 @@ fn cumprinc_due_closed(
     finite(acc)
 }
 
-
 /// `Σ_{j=a}^{a+n−1} FV(rate, j, pmt, pv, 1)` via a geometric series.
 #[inline]
 fn sum_fv_due(rate: f64, pv: f64, payment: f64, a: f64, n: f64) -> Result<f64, ExcelError> {
@@ -1166,7 +1124,6 @@ fn sum_fv_due(rate: f64, pv: f64, payment: f64, a: f64, n: f64) -> Result<f64, E
     }
     finite(n * coeff - (pv + coeff) * q_a * q_n_m1 / rate)
 }
-
 
 /// LibreOffice `getCumprinc` period loop (semantic reference / bench baseline).
 fn cumprinc_loop(a: CumprincArgs) -> Result<f64, ExcelError> {
@@ -1196,7 +1153,6 @@ fn cumprinc_loop(a: CumprincArgs) -> Result<f64, ExcelError> {
     finite(acc)
 }
 
-
 /// Excel / OpenFormula `CUMIPMT(rate, nper, pv, start_period, end_period, type)`.
 ///
 /// Cumulative interest paid on a loan between `start_period` and
@@ -1225,7 +1181,6 @@ pub fn cumipmt(
     cumipmt_kernel(rate, nper, pv, start, end, typ, false)
 }
 
-
 /// Same OpenFormula 6.12.12 identity as [`cumipmt`], but sums one IPMT per
 /// period and uses `powf` for each remaining-balance `FV`.
 ///
@@ -1242,7 +1197,6 @@ pub fn cumipmt_naive(
 ) -> Result<f64, ExcelError> {
     cumipmt_kernel(rate, nper, pv, start, end, typ, true)
 }
-
 
 #[inline]
 fn cumipmt_kernel(
@@ -1285,7 +1239,6 @@ fn cumipmt_kernel(
         cumipmt_closed(rate, nper, pv, start, end, typ)
     }
 }
-
 
 /// Closed form of Σ IPMT for `fv = 0` after the CUMIPMT domain checks
 /// (`rate > 0`, integer `start..=end`, `type ∈ {0,1}`).
@@ -1342,7 +1295,6 @@ fn cumipmt_closed(
     }
 }
 
-
 /// Per-period IPMT sum (OpenFormula 6.12.28, `fv = 0`) using `powf` FV.
 #[inline]
 fn cumipmt_loop(
@@ -1375,7 +1327,6 @@ fn cumipmt_loop(
     }
     finite(sum)
 }
-
 
 /// Excel / OpenFormula `EFFECT(nominal_rate, npery)`.
 ///
@@ -1413,7 +1364,6 @@ pub fn effect(nominal: f64, npery: f64) -> Result<f64, ExcelError> {
     finite(term_m1)
 }
 
-
 /// Textbook `(1 + nominal/npery).powf(npery) - 1` baseline (same domain as
 /// [`effect`]). Used as the microbench naive path.
 #[inline]
@@ -1425,7 +1375,6 @@ pub fn effect_naive(nominal: f64, npery: f64) -> Result<f64, ExcelError> {
     }
     finite(one_plus.powf(n) - 1.0)
 }
-
 
 #[inline]
 fn trunc_npery(nominal: f64, npery: f64) -> Result<f64, ExcelError> {
@@ -1441,7 +1390,6 @@ fn trunc_npery(nominal: f64, npery: f64) -> Result<f64, ExcelError> {
     }
     Ok(n)
 }
-
 
 /// Excel / OpenFormula `NOMINAL(effect_rate, npery)`.
 ///
@@ -1485,7 +1433,6 @@ pub fn nominal(effect_rate: f64, npery: f64) -> Result<f64, ExcelError> {
     finite(n * term_m1)
 }
 
-
 /// Textbook `npery * ((1 + effect).powf(1/npery) - 1)` baseline (same domain
 /// as [`nominal`]). Used as the microbench naive path.
 #[inline]
@@ -1497,7 +1444,6 @@ pub fn nominal_naive(effect_rate: f64, npery: f64) -> Result<f64, ExcelError> {
     }
     finite(n * (one_plus.powf(1.0 / n) - 1.0))
 }
-
 
 /// Excel / OpenFormula `PDURATION(rate, pv, fv)`.
 ///
@@ -1545,7 +1491,6 @@ pub fn pduration(rate: f64, pv: f64, fv: f64) -> Result<f64, ExcelError> {
     finite(log_ratio / log_rate)
 }
 
-
 /// Textbook `(ln(fv) − ln(pv)) / ln(1+rate)` baseline (same domain as
 /// [`pduration`]). Used as the microbench naive path.
 #[inline]
@@ -1558,7 +1503,6 @@ pub fn pduration_naive(rate: f64, pv: f64, fv: f64) -> Result<f64, ExcelError> {
     finite((fv.ln() - pv.ln()) / den)
 }
 
-
 #[inline]
 fn check_pduration_domain(rate: f64, pv: f64, fv: f64) -> Result<(), ExcelError> {
     if !rate.is_finite() || !pv.is_finite() || !fv.is_finite() {
@@ -1569,7 +1513,6 @@ fn check_pduration_domain(rate: f64, pv: f64, fv: f64) -> Result<(), ExcelError>
     }
     Ok(())
 }
-
 
 /// Excel / OpenFormula `RRI(nper, pv, fv)`.
 ///
@@ -1595,7 +1538,6 @@ pub fn rri(nper: f64, pv: f64, fv: f64) -> Result<f64, ExcelError> {
     rri_checked(nper, pv, fv, rri_expm1)
 }
 
-
 /// Quadratic-ish baseline: `(fv/pv).powf(1/nper) − 1`.
 ///
 /// Same Excel domain as [`rri`]; slower / less accurate when `fv ≈ pv`.
@@ -1603,7 +1545,6 @@ pub fn rri(nper: f64, pv: f64, fv: f64) -> Result<f64, ExcelError> {
 pub fn rri_naive(nper: f64, pv: f64, fv: f64) -> Result<f64, ExcelError> {
     rri_checked(nper, pv, fv, rri_powf)
 }
-
 
 #[inline]
 fn rri_checked(
@@ -1625,7 +1566,6 @@ fn rri_checked(
     eval(nper, pv, fv)
 }
 
-
 #[inline]
 fn rri_expm1(nper: f64, pv: f64, fv: f64) -> Result<f64, ExcelError> {
     if nper == 1.0 {
@@ -1646,7 +1586,6 @@ fn rri_expm1(nper: f64, pv: f64, fv: f64) -> Result<f64, ExcelError> {
     finite(log_term.exp_m1())
 }
 
-
 #[inline]
 fn rri_powf(nper: f64, pv: f64, fv: f64) -> Result<f64, ExcelError> {
     if nper == 1.0 {
@@ -1661,17 +1600,6 @@ fn rri_powf(nper: f64, pv: f64, fv: f64) -> Result<f64, ExcelError> {
 
 #[cfg(test)]
 mod tests {
-
-
-
-
-
-
-
-
-
-
-
 
     use super::*;
     use crate::value::excel_num_eq;
