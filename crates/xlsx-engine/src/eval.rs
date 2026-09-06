@@ -405,8 +405,8 @@ impl Interpreter {
             "INT" => self.fn_int(args, ctx),
             "TRUNC" => self.fn_trunc(args, ctx),
             "ROUND" => self.fn_round(args, ctx),
-            "ROUNDUP" => self.fn_round_dir(args, ctx, true),
-            "ROUNDDOWN" => self.fn_round_dir(args, ctx, false),
+            "ROUNDUP" => self.fn_roundup(args, ctx),
+            "ROUNDDOWN" => self.fn_round_dir(args, ctx),
             "FLOOR" => self.fn_floor_ceil(args, ctx, true),
             "CEILING" => self.fn_floor_ceil(args, ctx, false),
             "FLOOR.MATH" => self.fn_floor_ceil_math(args, ctx, true),
@@ -1470,12 +1470,28 @@ impl Interpreter {
         Ok(ExcelValue::Number(excel_round_half_away(n, digits)))
     }
 
-    fn fn_round_dir(
-        &self,
-        args: &[Expr],
-        ctx: &mut Ctx<'_>,
-        up: bool,
-    ) -> Result<ExcelValue, EvalError> {
+    fn fn_roundup(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.is_empty() || args.len() > 2 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        let n = match self.as_number(&self.eval_scalar(&args[0], ctx)?) {
+            Ok(n) => n,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        let digits = if args.len() == 2 {
+            match self.as_number(&self.eval_scalar(&args[1], ctx)?) {
+                Ok(d) => d.trunc() as i32,
+                Err(e) => return Ok(ExcelValue::Error(e)),
+            }
+        } else {
+            0
+        };
+        Ok(ExcelValue::Number(xlsx_engine_core::excel_roundup(
+            n, digits,
+        )))
+    }
+
+    fn fn_round_dir(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
         if args.len() != 2 {
             return Ok(ExcelValue::Error(ExcelError::Value));
         }
@@ -1487,12 +1503,7 @@ impl Interpreter {
             Ok(d) => d.trunc() as i32,
             Err(e) => return Ok(ExcelValue::Error(e)),
         };
-        let out = if up {
-            excel_roundup(n, digits)
-        } else {
-            excel_rounddown(n, digits)
-        };
-        Ok(ExcelValue::Number(out))
+        Ok(ExcelValue::Number(excel_rounddown(n, digits)))
     }
 
     fn fn_mod(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
@@ -4883,11 +4894,6 @@ fn excel_round_half_away(n: f64, digits: i32) -> f64 {
         (x - 0.5).ceil()
     };
     rounded / factor
-}
-
-/// Excel `ROUNDUP`: abs, away from zero, reapply sign. Table + 15-digit snap.
-fn excel_roundup(n: f64, digits: i32) -> f64 {
-    excel_round_dir(n, digits, true)
 }
 
 /// Excel `ROUNDDOWN`: abs, toward zero, reapply sign.
