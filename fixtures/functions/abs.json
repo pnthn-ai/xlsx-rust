@@ -145,7 +145,7 @@
     "id": "fn.abs-text-empty",
     "description": "Stored empty string is #VALUE! (not blank)",
     "tags": ["abs", "math", "errors"],
-    "quirks": ["empty-duality"],
+    "quirks": ["empty-cell-duality"],
     "formula": "=ABS(\"\")",
     "expected": { "error": "#VALUE!" }
   },
@@ -174,7 +174,7 @@
     "id": "fn.abs-blank-cell",
     "description": "Blank cell coerces to 0",
     "tags": ["abs", "math", "coercion"],
-    "quirks": ["empty-duality"],
+    "quirks": ["empty-cell-duality"],
     "formula": "=ABS(A1)",
     "expected": { "number": 0 },
     "workbook": {
@@ -190,7 +190,7 @@
     "id": "fn.abs-stored-empty",
     "description": "Cell storing \"\" is #VALUE! (COUNTA 1, not blank)",
     "tags": ["abs", "math", "errors"],
-    "quirks": ["empty-duality"],
+    "quirks": ["empty-cell-duality"],
     "formula": "=ABS(A1)",
     "expected": { "error": "#VALUE!" },
     "workbook": {
