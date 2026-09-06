@@ -143,7 +143,10 @@ pub use eval::randarray::{
 pub use eval::reduce::{
     fold_fast as excel_reduce, fold_naive as excel_reduce_naive, ReduceOp, ReducePlan,
 };
-pub use eval::replace::{replace as excel_replace, replace_naive as excel_replace_naive};
+pub use eval::replace::{
+    replace as excel_replace, replace_naive as excel_replace_naive,
+    replace_value as excel_replace_value, replace_value_naive as excel_replace_value_naive,
+};
 pub use eval::rept::{
     rept as excel_rept, rept_naive as excel_rept_naive, trunc_times as rept_trunc_times,
     REPT_MAX_CHARS,
