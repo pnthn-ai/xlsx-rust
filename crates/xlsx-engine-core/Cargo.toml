@@ -373,6 +373,10 @@ name = "value"
 harness = false
 
 [[bench]]
+name = "fixed"
+harness = false
+
+[[bench]]
 name = "unichar"
 harness = false
 
