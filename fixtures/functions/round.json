@@ -1,0 +1,488 @@
+[
+  {
+    "id": "fn.round-ms-2.15",
+    "description": "Microsoft: ROUND(2.15, 1) is 2.2 — half away from zero, not banker",
+    "tags": ["math", "round"],
+    "formula": "=ROUND(2.15, 1)",
+    "expected": { "number": 2.2 }
+  },
+  {
+    "id": "fn.round-ms-2.149",
+    "description": "Microsoft: ROUND(2.149, 1) is 2.1",
+    "tags": ["math", "round"],
+    "formula": "=ROUND(2.149, 1)",
+    "expected": { "number": 2.1 }
+  },
+  {
+    "id": "fn.round-ms-neg-1.475",
+    "description": "Microsoft: ROUND(-1.475, 2) is -1.48 (signed half away from zero)",
+    "tags": ["math", "round"],
+    "formula": "=ROUND(-1.475, 2)",
+    "expected": { "number": -1.48 }
+  },
+  {
+    "id": "fn.round-ms-21.5-neg1",
+    "description": "Microsoft: ROUND(21.5, -1) is 20 (left of decimal)",
+    "tags": ["math", "round"],
+    "formula": "=ROUND(21.5, -1)",
+    "expected": { "number": 20 }
+  },
+  {
+    "id": "fn.round-ms-626.3-neg3",
+    "description": "Microsoft: ROUND(626.3, -3) is 1000",
+    "tags": ["math", "round"],
+    "formula": "=ROUND(626.3, -3)",
+    "expected": { "number": 1000 }
+  },
+  {
+    "id": "fn.round-ms-1.98-neg1",
+    "description": "Microsoft: ROUND(1.98, -1) is 0",
+    "tags": ["math", "round"],
+    "formula": "=ROUND(1.98, -1)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.round-ms-neg-50.55",
+    "description": "Microsoft: ROUND(-50.55, -2) is -100",
+    "tags": ["math", "round"],
+    "formula": "=ROUND(-50.55, -2)",
+    "expected": { "number": -100 }
+  },
+  {
+    "id": "fn.round-half-away-2.5",
+    "description": "ROUND(2.5, 0) is 3 — not banker's 2",
+    "tags": ["math", "round"],
+    "formula": "=ROUND(2.5, 0)",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.round-half-away-1.5",
+    "description": "ROUND(1.5, 0) is 2",
+    "tags": ["math", "round"],
+    "formula": "=ROUND(1.5, 0)",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.round-half-away-3.5",
+    "description": "ROUND(3.5, 0) is 4 — even neighbors also go away from zero",
+    "tags": ["math", "round"],
+    "formula": "=ROUND(3.5, 0)",
+    "expected": { "number": 4 }
+  },
+  {
+    "id": "fn.round-half-away-neg-1.5",
+    "description": "ROUND(-1.5, 0) is -2 (away from zero, not toward +∞)",
+    "tags": ["math", "round"],
+    "formula": "=ROUND(-1.5, 0)",
+    "expected": { "number": -2 }
+  },
+  {
+    "id": "fn.round-half-away-neg-2.5",
+    "description": "ROUND(-2.5, 0) is -3",
+    "tags": ["math", "round"],
+    "formula": "=ROUND(-2.5, 0)",
+    "expected": { "number": -3 }
+  },
+  {
+    "id": "fn.round-one-digit-1.25",
+    "description": "ROUND(1.25, 1) is 1.3",
+    "tags": ["math", "round"],
+    "formula": "=ROUND(1.25, 1)",
+    "expected": { "number": 1.3 }
+  },
+  {
+    "id": "fn.round-one-digit-neg-1.25",
+    "description": "ROUND(-1.25, 1) is -1.3",
+    "tags": ["math", "round"],
+    "formula": "=ROUND(-1.25, 1)",
+    "expected": { "number": -1.3 }
+  },
+  {
+    "id": "fn.round-omitted-digits",
+    "description": "Omitted num_digits defaults to 0: ROUND(2.5) is 3",
+    "tags": ["math", "round"],
+    "formula": "=ROUND(2.5)",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.round-omitted-digits-neg",
+    "description": "ROUND(-1.4) is -1 (default num_digits 0)",
+    "tags": ["math", "round"],
+    "formula": "=ROUND(-1.4)",
+    "expected": { "number": -1 }
+  },
+  {
+    "id": "fn.round-missing-digits",
+    "description": "ROUND(2.5,) treats the omitted slot as 0",
+    "tags": ["math", "round"],
+    "formula": "=ROUND(2.5,)",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.round-neg-digits-123",
+    "description": "ROUND(123, -1) is 120",
+    "tags": ["math", "round"],
+    "formula": "=ROUND(123, -1)",
+    "expected": { "number": 120 }
+  },
+  {
+    "id": "fn.round-neg-digits-125",
+    "description": "ROUND(125, -1) is 130 — 12.5 half away from zero",
+    "tags": ["math", "round"],
+    "formula": "=ROUND(125, -1)",
+    "expected": { "number": 130 }
+  },
+  {
+    "id": "fn.round-neg-digits-neg-123",
+    "description": "ROUND(-123, -1) is -120",
+    "tags": ["math", "round"],
+    "formula": "=ROUND(-123, -1)",
+    "expected": { "number": -120 }
+  },
+  {
+    "id": "fn.round-already-prec",
+    "description": "ROUND(3.2, 1) stays 3.2",
+    "tags": ["math", "round"],
+    "formula": "=ROUND(3.2, 1)",
+    "expected": { "number": 3.2 }
+  },
+  {
+    "id": "fn.round-already-int",
+    "description": "ROUND(123, 0) is 123 — already an integer",
+    "tags": ["math", "round"],
+    "formula": "=ROUND(123, 0)",
+    "expected": { "number": 123 }
+  },
+  {
+    "id": "fn.round-zero-pos-digits",
+    "description": "ROUND(0, 5) is 0",
+    "tags": ["math", "round"],
+    "formula": "=ROUND(0, 5)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.round-zero-neg-digits",
+    "description": "ROUND(0, -2) is 0",
+    "tags": ["math", "round"],
+    "formula": "=ROUND(0, -2)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.round-pi-3",
+    "description": "ROUND(3.14159, 3) is 3.142",
+    "tags": ["math", "round"],
+    "formula": "=ROUND(3.14159, 3)",
+    "expected": { "number": 3.142 }
+  },
+  {
+    "id": "fn.round-below-half",
+    "description": "ROUND(1.49, 0) is 1",
+    "tags": ["math", "round"],
+    "formula": "=ROUND(1.49, 0)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.round-ieee-1.1",
+    "description": "ROUND(1.1, 2) stays 1.1 — binary leftover 110.00…01 must not bump",
+    "tags": ["math", "round"],
+    "quirks": ["ieee-vs-excel-precision"],
+    "formula": "=ROUND(1.1, 2)",
+    "expected": { "number": 1.1 },
+    "notes": "1.1*100 is 110.00…01 in IEEE. Excel 15-digit snap keeps 1.1. Documented model; live Excel not in CI."
+  },
+  {
+    "id": "fn.round-ieee-2.15",
+    "description": "ROUND(2.15, 1) is 2.2 — binary 21.499… snaps to the .5 tie",
+    "tags": ["math", "round"],
+    "quirks": ["ieee-vs-excel-precision"],
+    "formula": "=ROUND(2.15, 1)",
+    "expected": { "number": 2.2 },
+    "notes": "2.15*10 is 21.499… in IEEE. Microsoft example is 2.2. Documented model; live Excel not in CI."
+  },
+  {
+    "id": "fn.round-ieee-1.225",
+    "description": "ROUND(1.225, 2) is 1.23 — 122.499… snaps to the .5 tie",
+    "tags": ["math", "round"],
+    "quirks": ["ieee-vs-excel-precision"],
+    "formula": "=ROUND(1.225, 2)",
+    "expected": { "number": 1.23 },
+    "notes": "1.225*100 is 122.499… in IEEE. 15-digit model half-away is 1.23. Documented model; live Excel not in CI."
+  },
+  {
+    "id": "fn.round-ieee-7-eps",
+    "description": "ROUND(7+1E-15, 0) stays 7 — Excel 15-digit leftover is not a fraction",
+    "tags": ["math", "round"],
+    "quirks": ["ieee-vs-excel-precision"],
+    "formula": "=ROUND(7+1E-15, 0)",
+    "expected": { "number": 7 },
+    "notes": "7+1e-15 is not a .5 tie. Excel leftover snap keeps 7. Documented model; live Excel not in CI."
+  },
+  {
+    "id": "fn.round-tenths-snap",
+    "description": "ROUND of ten 0.1 addends is 1 — IEEE sum sits just below 1",
+    "tags": ["math", "round"],
+    "quirks": ["ieee-vs-excel-precision"],
+    "formula": "=ROUND(0.1+0.1+0.1+0.1+0.1+0.1+0.1+0.1+0.1+0.1, 0)",
+    "expected": { "number": 1 },
+    "notes": "Repeated IEEE +0.1 is 0.999…9; Excel ROUND snaps to 1. Documented model; live Excel not in CI."
+  },
+  {
+    "id": "fn.round-point-three-leftover",
+    "description": "ROUND(0.3-0.1-0.2, 0) is 0 — tiny negative leftover is not −1",
+    "tags": ["math", "round"],
+    "quirks": ["ieee-vs-excel-precision"],
+    "formula": "=ROUND(0.3-0.1-0.2, 0)",
+    "expected": { "number": 0 },
+    "notes": "IEEE 0.3-0.1-0.2 is ≈ −2.8e-17. Excel leftover snap keeps 0. Documented model; live Excel not in CI."
+  },
+  {
+    "id": "fn.round-digits-trunc",
+    "description": "num_digits 1.9 truncates toward zero to 1",
+    "tags": ["math", "round"],
+    "formula": "=ROUND(3.14159, 1.9)",
+    "expected": { "number": 3.1 }
+  },
+  {
+    "id": "fn.round-digits-neg-trunc",
+    "description": "num_digits -1.9 truncates toward zero to -1",
+    "tags": ["math", "round"],
+    "formula": "=ROUND(123, -1.9)",
+    "expected": { "number": 120 }
+  },
+  {
+    "id": "fn.round-text-num",
+    "description": "Numeric text is coerced: ROUND(\"2.15\", 1) is 2.2",
+    "tags": ["math", "round", "coercion"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=ROUND(\"2.15\", 1)",
+    "expected": { "number": 2.2 }
+  },
+  {
+    "id": "fn.round-text-num-digits",
+    "description": "Numeric text num_digits: ROUND(2.15, \"1\") is 2.2",
+    "tags": ["math", "round", "coercion"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=ROUND(2.15, \"1\")",
+    "expected": { "number": 2.2 }
+  },
+  {
+    "id": "fn.round-text-num-ws",
+    "description": "ROUND trims numeric text: ROUND(\"  2.15  \", 1) is 2.2",
+    "tags": ["math", "round", "coercion"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=ROUND(\"  2.15  \", 1)",
+    "expected": { "number": 2.2 }
+  },
+  {
+    "id": "fn.round-true",
+    "description": "TRUE coerces to 1; ROUND(TRUE, -1) is 0",
+    "tags": ["math", "round", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=ROUND(TRUE, -1)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.round-true-zero",
+    "description": "TRUE coerces to 1; ROUND(TRUE, 0) is 1",
+    "tags": ["math", "round", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=ROUND(TRUE, 0)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.round-false",
+    "description": "FALSE coerces to 0",
+    "tags": ["math", "round", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=ROUND(FALSE, 2)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.round-percent",
+    "description": "ROUND(150%, 0) is ROUND(1.5, 0) = 2",
+    "tags": ["math", "round"],
+    "quirks": ["percent-unary"],
+    "formula": "=ROUND(150%, 0)",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.round-blank",
+    "description": "Blank cell coerces to 0",
+    "tags": ["math", "round", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=ROUND(A1, 0)",
+    "expected": { "number": 0 },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.round-blank-digits",
+    "description": "Blank num_digits cell coerces to 0",
+    "tags": ["math", "round", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=ROUND(2.5, A1)",
+    "expected": { "number": 3 },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.round-text-bad",
+    "description": "Non-numeric text is #VALUE!",
+    "tags": ["math", "round", "errors"],
+    "formula": "=ROUND(\"x\", 0)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.round-empty-string",
+    "description": "ROUND(\"\") is #VALUE! — empty text is not numeric",
+    "tags": ["math", "round", "errors"],
+    "formula": "=ROUND(\"\", 0)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.round-arity-0",
+    "description": "ROUND() is #VALUE!",
+    "tags": ["math", "round", "errors"],
+    "formula": "=ROUND()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.round-arity-3",
+    "description": "Three arguments is #VALUE!",
+    "tags": ["math", "round", "errors"],
+    "formula": "=ROUND(2.15, 1, 0)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.round-err-number",
+    "description": "Error in number propagates",
+    "tags": ["math", "round", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=ROUND(1/0, 0)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.round-err-digits",
+    "description": "Error in num_digits propagates",
+    "tags": ["math", "round", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=ROUND(2.15, 1/0)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.round-err-left-wins",
+    "description": "Left-to-right: number error beats a later #N/A",
+    "tags": ["math", "round", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=ROUND(#DIV/0!, #N/A)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.round-err-left-na",
+    "description": "Left-to-right: #N/A in number beats a later #DIV/0!",
+    "tags": ["math", "round", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=ROUND(#N/A, 1/0)",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.round-cell",
+    "description": "ROUND of a cell holding 2.15 to 1 digit is 2.2",
+    "tags": ["math", "round"],
+    "formula": "=ROUND(A1, 1)",
+    "expected": { "number": 2.2 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "number": 2.15 }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.round-named",
+    "description": "ROUND of a defined name holding 2.5 is 3",
+    "tags": ["math", "round"],
+    "formula": "=ROUND(Amt, 0)",
+    "expected": { "number": 3 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "number": 2.5 }
+          }
+        }
+      ],
+      "names": [{ "name": "Amt", "refers_to": "Sheet1!A1" }]
+    }
+  },
+  {
+    "id": "fn.round-implicit-intersect",
+    "description": "ROUND(A1:A3, 0) from host B2 uses implicit intersection (same row → A2 = -1.5 → -2)",
+    "tags": ["math", "round"],
+    "quirks": ["implicit-intersection"],
+    "at": "Sheet1!B2",
+    "formula": "=ROUND(A1:A3, 0)",
+    "expected": { "number": -2 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "number": 1.4 },
+            "A2": { "number": -1.5 },
+            "A3": { "number": 2.5 }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.round-implicit-intersect-digits",
+    "description": "num_digits range implicit-intersects the host row (B2 → B2 = 1)",
+    "tags": ["math", "round"],
+    "quirks": ["implicit-intersection"],
+    "at": "Sheet1!A2",
+    "formula": "=ROUND(2.15, B1:B3)",
+    "expected": { "number": 2.2 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "B1": { "number": 0 },
+            "B2": { "number": 1 },
+            "B3": { "number": 2 }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.round-array-literal",
+    "description": "Scalar ROUND takes the top-left of an array literal: ROUND({2.5,-1.5}, 0) is 3",
+    "tags": ["math", "round"],
+    "formula": "=ROUND({2.5,-1.5}, 0)",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.round-not-roundup",
+    "description": "ROUND(3.2, 0) is 3, not ROUNDUP's 4",
+    "tags": ["math", "round"],
+    "formula": "=ROUND(3.2, 0)",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.round-vs-roundup",
+    "description": "ROUND(3.2, 0) differs from ROUNDUP(3.2, 0)",
+    "tags": ["math", "round"],
+    "formula": "=ROUND(3.2, 0)=ROUNDUP(3.2, 0)",
+    "expected": { "bool": false }
+  }
+]

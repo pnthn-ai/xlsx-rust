@@ -10,9 +10,9 @@ use std::collections::{HashMap, HashSet};
 use xlsx_types::{
     count_matches, excel_ceiling, excel_ceiling_math, excel_cumipmt, excel_cumprinc, excel_effect,
     excel_floor, excel_floor_math, excel_fv, excel_int, excel_ipmt, excel_nominal, excel_nper,
-    excel_num_eq, excel_pduration, excel_pmt, excel_ppmt, excel_pv, excel_rate, excel_round_15,
-    excel_rri, ArrayMode, CellAddr, CellRef, Criterion, EvalError, EvalSpec, EvalTarget,
-    ExcelError, ExcelValue, RangeRef, Workbook,
+    excel_num_eq, excel_pduration, excel_pmt, excel_ppmt, excel_pv, excel_rate, excel_round,
+    excel_round_15, excel_rri, ArrayMode, CellAddr, CellRef, Criterion, EvalError, EvalSpec,
+    EvalTarget, ExcelError, ExcelValue, RangeRef, Workbook,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -1456,18 +1456,25 @@ impl Interpreter {
     }
 
     fn fn_round(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
-        if args.len() < 2 {
+        if args.is_empty() || args.len() > 2 {
             return Ok(ExcelValue::Error(ExcelError::Value));
         }
         let n = match self.as_number(&self.eval_scalar(&args[0], ctx)?) {
             Ok(n) => n,
             Err(e) => return Ok(ExcelValue::Error(e)),
         };
-        let digits = match self.as_number(&self.eval_scalar(&args[1], ctx)?) {
-            Ok(d) => d.trunc() as i32,
-            Err(e) => return Ok(ExcelValue::Error(e)),
+        let digits = if args.len() >= 2 {
+            match &args[1] {
+                Expr::Missing => 0,
+                other => match self.as_number(&self.eval_scalar(other, ctx)?) {
+                    Ok(d) => d.trunc() as i32,
+                    Err(e) => return Ok(ExcelValue::Error(e)),
+                },
+            }
+        } else {
+            0
         };
-        Ok(ExcelValue::Number(excel_round_half_away(n, digits)))
+        Ok(ExcelValue::Number(excel_round(n, digits)))
     }
 
     fn fn_round_dir(
@@ -4872,17 +4879,6 @@ fn excel_geq(key: &ExcelValue, lookup: &ExcelValue) -> bool {
         excel_ord(key, lookup, std::cmp::Ordering::Less, true),
         ExcelValue::Bool(true)
     )
-}
-
-fn excel_round_half_away(n: f64, digits: i32) -> f64 {
-    let factor = 10f64.powi(digits);
-    let x = n * factor;
-    let rounded = if x >= 0.0 {
-        (x + 0.5).floor()
-    } else {
-        (x - 0.5).ceil()
-    };
-    rounded / factor
 }
 
 /// Excel `ROUNDUP`: abs, away from zero, reapply sign. Table + 15-digit snap.

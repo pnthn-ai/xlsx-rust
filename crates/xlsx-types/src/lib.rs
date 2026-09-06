@@ -13,6 +13,7 @@ pub mod criterion;
 pub mod error;
 pub mod eval;
 pub mod excel_int;
+pub mod excel_round;
 pub mod financial;
 pub mod floor_ceiling;
 pub mod quirk;
@@ -28,6 +29,7 @@ pub use eval::{
 pub use excel_int::{
     excel_int, excel_int_ieee, excel_int_naive, excel_int_slice, excel_int_slice_naive,
 };
+pub use excel_round::{excel_round, excel_round_naive, excel_round_slice, excel_round_slice_naive};
 pub use financial::{
     cumipmt as excel_cumipmt, cumipmt_naive as excel_cumipmt_naive, cumprinc as excel_cumprinc,
     cumprinc_naive as excel_cumprinc_naive, effect as excel_effect,

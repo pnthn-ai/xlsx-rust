@@ -321,6 +321,7 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 | [`eval/textsplit.rs`](crates/xlsx-engine-core/src/eval/textsplit.rs) | `TEXTSPLIT` col/row split, `ignore_empty`, `match_mode`, `pad_with` |
 | [`eval/concat.rs`](crates/xlsx-engine-core/src/eval/concat.rs) | Excel `CONCAT`: row-major flatten, occupied sparse walk, 32,767 UTF-16 cap (not Compat-v2 `LEN`) |
 | [`eval/round.rs`](crates/xlsx-engine-core/src/eval/round.rs) | Excel `ROUNDUP` / `ROUNDDOWN` (away / toward zero, negative `num_digits`) |
+| [`xlsx-types/src/excel_round.rs`](crates/xlsx-types/src/excel_round.rs) | Excel `ROUND` (half away from zero; omitted `num_digits` = 0; 15-digit leftover snap) |
 | [`xlsx-types/src/excel_int.rs`](crates/xlsx-types/src/excel_int.rs) | Excel `INT` (floor toward −∞; 15-digit leftover snap) |
 | [`eval/switch.rs`](crates/xlsx-engine-core/src/eval/switch.rs) | Excel `SWITCH` exact-match kernel (first hit, default / `#N/A`) |
 | [`eval/ifs.rs`](crates/xlsx-engine-core/src/eval/ifs.rs) | `IFS` pair-selection kernel (eager eval, first TRUE, no-match `#N/A`) |
