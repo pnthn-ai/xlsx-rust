@@ -1,0 +1,481 @@
+[
+  {
+    "id": "fn.weeknum-ms-default",
+    "description": "Microsoft example: WEEKNUM(DATE(2012,3,9)) is 10 (Sunday-start System 1)",
+    "tags": ["weeknum", "dates"],
+    "formula": "=WEEKNUM(DATE(2012,3,9))",
+    "expected": { "number": 10 }
+  },
+  {
+    "id": "fn.weeknum-ms-type-1",
+    "description": "WEEKNUM(DATE(2012,3,9),1) is 10",
+    "tags": ["weeknum", "dates"],
+    "formula": "=WEEKNUM(DATE(2012,3,9),1)",
+    "expected": { "number": 10 }
+  },
+  {
+    "id": "fn.weeknum-ms-type-2",
+    "description": "Microsoft: WEEKNUM(DATE(2012,3,9),2) is 11 (Monday-start System 1)",
+    "tags": ["weeknum", "dates"],
+    "formula": "=WEEKNUM(DATE(2012,3,9),2)",
+    "expected": { "number": 11 }
+  },
+  {
+    "id": "fn.weeknum-type-11",
+    "description": "Type 11 is Monday-start System 1, same as type 2",
+    "tags": ["weeknum", "dates"],
+    "formula": "=WEEKNUM(DATE(2012,3,9),11)",
+    "expected": { "number": 11 }
+  },
+  {
+    "id": "fn.weeknum-type-12",
+    "description": "2012-03-09 Friday, Tuesday-start: week containing Jan 1 (Sunday) starts Dec 27 → 11",
+    "tags": ["weeknum", "dates"],
+    "formula": "=WEEKNUM(DATE(2012,3,9),12)",
+    "expected": { "number": 11 }
+  },
+  {
+    "id": "fn.weeknum-type-13",
+    "description": "Wednesday-start System 1 for 2012-03-09 is 11",
+    "tags": ["weeknum", "dates"],
+    "formula": "=WEEKNUM(DATE(2012,3,9),13)",
+    "expected": { "number": 11 }
+  },
+  {
+    "id": "fn.weeknum-type-14",
+    "description": "Thursday-start System 1 for 2012-03-09 is 11",
+    "tags": ["weeknum", "dates"],
+    "formula": "=WEEKNUM(DATE(2012,3,9),14)",
+    "expected": { "number": 11 }
+  },
+  {
+    "id": "fn.weeknum-type-15",
+    "description": "Friday-start System 1 for 2012-03-09 is 11",
+    "tags": ["weeknum", "dates"],
+    "formula": "=WEEKNUM(DATE(2012,3,9),15)",
+    "expected": { "number": 11 }
+  },
+  {
+    "id": "fn.weeknum-type-16",
+    "description": "Saturday-start System 1 for 2012-03-09 is 10",
+    "tags": ["weeknum", "dates"],
+    "formula": "=WEEKNUM(DATE(2012,3,9),16)",
+    "expected": { "number": 10 }
+  },
+  {
+    "id": "fn.weeknum-type-17",
+    "description": "Type 17 is Sunday-start System 1, same as type 1",
+    "tags": ["weeknum", "dates"],
+    "formula": "=WEEKNUM(DATE(2012,3,9),17)",
+    "expected": { "number": 10 }
+  },
+  {
+    "id": "fn.weeknum-type-21-iso-mar2012",
+    "description": "ISO 8601: 2012-03-09 Friday is ISO week 10",
+    "tags": ["weeknum", "dates"],
+    "formula": "=WEEKNUM(DATE(2012,3,9),21)",
+    "expected": { "number": 10 }
+  },
+  {
+    "id": "fn.weeknum-iso-2023-jan1",
+    "description": "2023-01-01 Sunday: System 1 week 1; ISO week 52 (first Thursday is in 2022)",
+    "tags": ["weeknum", "dates"],
+    "formula": "=WEEKNUM(DATE(2023,1,1))",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.weeknum-iso-2023-jan1-type21",
+    "description": "WEEKNUM(DATE(2023,1,1),21) is 52",
+    "tags": ["weeknum", "dates"],
+    "formula": "=WEEKNUM(DATE(2023,1,1),21)",
+    "expected": { "number": 52 }
+  },
+  {
+    "id": "fn.weeknum-2016-dec24",
+    "description": "TechOnTheNet: WEEKNUM of 2016-12-24 (Saturday) is 52",
+    "tags": ["weeknum", "dates"],
+    "formula": "=WEEKNUM(DATE(2016,12,24))",
+    "expected": { "number": 52 }
+  },
+  {
+    "id": "fn.weeknum-2016-dec24-iso",
+    "description": "TechOnTheNet: WEEKNUM(DATE(2016,12,24),21) is 51",
+    "tags": ["weeknum", "dates"],
+    "formula": "=WEEKNUM(DATE(2016,12,24),21)",
+    "expected": { "number": 51 }
+  },
+  {
+    "id": "fn.weeknum-iso-2015-dec31",
+    "description": "2015-12-31 Thursday is ISO week 53",
+    "tags": ["weeknum", "dates"],
+    "formula": "=WEEKNUM(DATE(2015,12,31),21)",
+    "expected": { "number": 53 }
+  },
+  {
+    "id": "fn.weeknum-iso-2016-jan1",
+    "description": "2016-01-01 Friday is ISO week 53 of 2015",
+    "tags": ["weeknum", "dates"],
+    "formula": "=WEEKNUM(DATE(2016,1,1),21)",
+    "expected": { "number": 53 }
+  },
+  {
+    "id": "fn.weeknum-iso-2016-jan4",
+    "description": "2016-01-04 Monday is ISO week 1",
+    "tags": ["weeknum", "dates"],
+    "formula": "=WEEKNUM(DATE(2016,1,4),21)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.weeknum-iso-2012-dec31",
+    "description": "2012-12-31 Monday belongs to ISO week 1 of 2013",
+    "tags": ["weeknum", "dates"],
+    "formula": "=WEEKNUM(DATE(2012,12,31),21)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.weeknum-iso-2020-dec31",
+    "description": "2020-12-31 Thursday is ISO week 53",
+    "tags": ["weeknum", "dates"],
+    "formula": "=WEEKNUM(DATE(2020,12,31),21)",
+    "expected": { "number": 53 }
+  },
+  {
+    "id": "fn.weeknum-week54-2000",
+    "description": "Leap year starting Saturday: WEEKNUM(DATE(2000,12,31),1) is 54",
+    "tags": ["weeknum", "dates"],
+    "formula": "=WEEKNUM(DATE(2000,12,31),1)",
+    "expected": { "number": 54 }
+  },
+  {
+    "id": "fn.weeknum-jan1-2008",
+    "description": "DATE(2008,1,1) is Tuesday = serial 39448; System 1 week 1",
+    "tags": ["weeknum", "dates"],
+    "formula": "=WEEKNUM(DATE(2008,1,1))",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.weeknum-serial-39448",
+    "description": "WEEKNUM(39448) is week 1 of 2008",
+    "tags": ["weeknum", "dates"],
+    "formula": "=WEEKNUM(39448)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.weeknum-jan1-2012-type2",
+    "description": "2012-01-01 Sunday, Monday-start: still week 1 (week containing Jan 1)",
+    "tags": ["weeknum", "dates"],
+    "formula": "=WEEKNUM(DATE(2012,1,1),2)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.weeknum-jan1-2012-iso",
+    "description": "2012-01-01 Sunday is ISO week 52 of 2011",
+    "tags": ["weeknum", "dates"],
+    "formula": "=WEEKNUM(DATE(2012,1,1),21)",
+    "expected": { "number": 52 }
+  },
+  {
+    "id": "fn.weeknum-serial-1-sunday-bug",
+    "description": "WEEKNUM(1) is 1 — Excel 1900-01-01 is Sunday, week containing Jan 1",
+    "tags": ["weeknum", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=WEEKNUM(1)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.weeknum-jan1-1900",
+    "description": "WEEKNUM(DATE(1900,1,1)) is 1",
+    "tags": ["weeknum", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=WEEKNUM(DATE(1900,1,1))",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.weeknum-jan8-1900",
+    "description": "WEEKNUM(DATE(1900,1,8)) is 2 (next Sunday)",
+    "tags": ["weeknum", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=WEEKNUM(DATE(1900,1,8))",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.weeknum-feb29-1900",
+    "description": "WEEKNUM(60) is 9 — fictitious 1900-02-29 is day 60 of a Sunday-start year",
+    "tags": ["weeknum", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=WEEKNUM(60)",
+    "expected": { "number": 9 }
+  },
+  {
+    "id": "fn.weeknum-mar1-1900",
+    "description": "WEEKNUM(61) is 9 — 1900-03-01 is day 61, still week 9",
+    "tags": ["weeknum", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=WEEKNUM(61)",
+    "expected": { "number": 9 }
+  },
+  {
+    "id": "fn.weeknum-1900-iso-jan1",
+    "description": "Excel Sunday 1900-01-01 → ISO week 52 (civil ISO would be 1; leap-bug weekday)",
+    "tags": ["weeknum", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=WEEKNUM(DATE(1900,1,1),21)",
+    "expected": { "number": 52 }
+  },
+  {
+    "id": "fn.weeknum-1900-iso-jan2",
+    "description": "Excel Monday 1900-01-02 is ISO week 1 under Excel weekdays",
+    "tags": ["weeknum", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=WEEKNUM(DATE(1900,1,2),21)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.weeknum-serial-0",
+    "description": "WEEKNUM(0) is 0 — 1900-01-00 Saturday is the week before Jan 1 Sunday",
+    "tags": ["weeknum", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=WEEKNUM(0)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.weeknum-1904-epoch",
+    "description": "WEEKNUM(0) is 1 under the 1904 date system (1904-01-01 Friday)",
+    "tags": ["weeknum", "dates"],
+    "quirks": ["date-system"],
+    "formula": "=WEEKNUM(0)",
+    "expected": { "number": 1 },
+    "options": { "date_system": "excel1904" }
+  },
+  {
+    "id": "fn.weeknum-1904-iso",
+    "description": "1904-01-01 Friday is ISO week 53 of 1903",
+    "tags": ["weeknum", "dates"],
+    "quirks": ["date-system"],
+    "formula": "=WEEKNUM(0,21)",
+    "expected": { "number": 53 },
+    "options": { "date_system": "excel1904" }
+  },
+  {
+    "id": "fn.weeknum-1904-iso-week1",
+    "description": "WEEKNUM(DATE(1904,1,4),21) is 1 in the 1904 system",
+    "tags": ["weeknum", "dates"],
+    "quirks": ["date-system"],
+    "formula": "=WEEKNUM(DATE(1904,1,4),21)",
+    "expected": { "number": 1 },
+    "options": { "date_system": "excel1904" }
+  },
+  {
+    "id": "fn.weeknum-serial-frac",
+    "description": "Time fraction is discarded: WEEKNUM(1.9) equals WEEKNUM(1)",
+    "tags": ["weeknum", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=WEEKNUM(1.9)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.weeknum-type-trunc",
+    "description": "return_type 2.9 truncates to 2",
+    "tags": ["weeknum", "dates"],
+    "formula": "=WEEKNUM(DATE(2012,3,9),2.9)",
+    "expected": { "number": 11 }
+  },
+  {
+    "id": "fn.weeknum-type-21-trunc",
+    "description": "return_type 21.9 truncates to 21",
+    "tags": ["weeknum", "dates"],
+    "formula": "=WEEKNUM(DATE(2012,3,9),21.9)",
+    "expected": { "number": 10 }
+  },
+  {
+    "id": "fn.weeknum-type-numeric-text",
+    "description": "Numeric text return_type \"2\" coerces to 2",
+    "tags": ["weeknum", "dates"],
+    "formula": "=WEEKNUM(DATE(2012,3,9),\"2\")",
+    "expected": { "number": 11 }
+  },
+  {
+    "id": "fn.weeknum-serial-numeric-text",
+    "description": "Numeric text serial \"39448\" coerces",
+    "tags": ["weeknum", "dates"],
+    "formula": "=WEEKNUM(\"39448\")",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.weeknum-bool-true",
+    "description": "WEEKNUM(TRUE) is WEEKNUM(1) = 1",
+    "tags": ["weeknum", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=WEEKNUM(TRUE)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.weeknum-bool-false",
+    "description": "WEEKNUM(FALSE) is WEEKNUM(0) = 0",
+    "tags": ["weeknum", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=WEEKNUM(FALSE)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.weeknum-type-true",
+    "description": "TRUE return_type coerces to 1",
+    "tags": ["weeknum", "dates"],
+    "formula": "=WEEKNUM(DATE(2012,3,9),TRUE)",
+    "expected": { "number": 10 }
+  },
+  {
+    "id": "fn.weeknum-type-false",
+    "description": "FALSE return_type coerces to 0 → #NUM!",
+    "tags": ["weeknum", "dates", "errors"],
+    "formula": "=WEEKNUM(DATE(2012,3,9),FALSE)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.weeknum-blank-cell",
+    "description": "WEEKNUM of a blank cell is 0 (empty → 0 → week before Jan 1 1900)",
+    "tags": ["weeknum", "dates", "empty"],
+    "quirks": ["empty-cell-duality", "date-1900-leap-year"],
+    "formula": "=WEEKNUM(A1)",
+    "expected": { "number": 0 },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.weeknum-neg-serial",
+    "description": "Negative serial is #NUM!",
+    "tags": ["weeknum", "dates", "errors"],
+    "formula": "=WEEKNUM(-1)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.weeknum-over-max",
+    "description": "Serial past 9999-12-31 is #NUM!",
+    "tags": ["weeknum", "dates", "errors"],
+    "formula": "=WEEKNUM(2958466)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.weeknum-max-serial",
+    "description": "WEEKNUM(DATE(9999,12,31)) is 53 (9999-01-01 is Friday)",
+    "tags": ["weeknum", "dates"],
+    "formula": "=WEEKNUM(DATE(9999,12,31))",
+    "expected": { "number": 53 }
+  },
+  {
+    "id": "fn.weeknum-bad-type-0",
+    "description": "return_type 0 is #NUM!",
+    "tags": ["weeknum", "dates", "errors"],
+    "formula": "=WEEKNUM(1,0)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.weeknum-bad-type-3",
+    "description": "return_type 3 is WEEKDAY-only; WEEKNUM treats it as #NUM!",
+    "tags": ["weeknum", "dates", "errors"],
+    "formula": "=WEEKNUM(1,3)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.weeknum-bad-type-4",
+    "description": "return_type 4 is #NUM!",
+    "tags": ["weeknum", "dates", "errors"],
+    "formula": "=WEEKNUM(1,4)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.weeknum-bad-type-10",
+    "description": "return_type 10 is #NUM!",
+    "tags": ["weeknum", "dates", "errors"],
+    "formula": "=WEEKNUM(1,10)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.weeknum-bad-type-18",
+    "description": "return_type 18 is #NUM!",
+    "tags": ["weeknum", "dates", "errors"],
+    "formula": "=WEEKNUM(1,18)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.weeknum-bad-type-22",
+    "description": "return_type 22 is #NUM!",
+    "tags": ["weeknum", "dates", "errors"],
+    "formula": "=WEEKNUM(1,22)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.weeknum-bad-type-neg",
+    "description": "Negative return_type is #NUM!",
+    "tags": ["weeknum", "dates", "errors"],
+    "formula": "=WEEKNUM(1,-1)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.weeknum-text-serial",
+    "description": "Non-numeric text serial is #VALUE!",
+    "tags": ["weeknum", "dates", "errors"],
+    "formula": "=WEEKNUM(\"x\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.weeknum-text-type",
+    "description": "Non-numeric text return_type is #VALUE!",
+    "tags": ["weeknum", "dates", "errors"],
+    "formula": "=WEEKNUM(1,\"x\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.weeknum-no-args",
+    "description": "WEEKNUM() is #VALUE!",
+    "tags": ["weeknum", "dates", "errors"],
+    "formula": "=WEEKNUM()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.weeknum-too-many-args",
+    "description": "WEEKNUM(1,1,1) is #VALUE!",
+    "tags": ["weeknum", "dates", "errors"],
+    "formula": "=WEEKNUM(1,1,1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.weeknum-err-serial-div0",
+    "description": "Error in serial propagates",
+    "tags": ["weeknum", "dates", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=WEEKNUM(1/0)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.weeknum-err-type-div0",
+    "description": "Error in return_type propagates",
+    "tags": ["weeknum", "dates", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=WEEKNUM(1,1/0)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.weeknum-err-ltr",
+    "description": "Left-to-right: serial #DIV/0! wins over return_type #N/A",
+    "tags": ["weeknum", "dates", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=WEEKNUM(1/0,NA())",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.weeknum-err-na-serial",
+    "description": "WEEKNUM(NA()) is #N/A",
+    "tags": ["weeknum", "dates", "errors"],
+    "formula": "=WEEKNUM(NA())",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.weeknum-composed",
+    "description": "WEEKNUM of DATE+7 stays in the next System-1 week",
+    "tags": ["weeknum", "dates"],
+    "formula": "=WEEKNUM(DATE(2012,3,9)+7)",
+    "expected": { "number": 11 }
+  }
+]

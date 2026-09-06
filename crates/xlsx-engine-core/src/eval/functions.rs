@@ -10,7 +10,8 @@ use crate::ast::Expr;
 use crate::dates::{
     date_serial, days360, edate_serial, eomonth_serial, networkdays_count, networkdays_count_mask,
     parse_weekend_mask, serial_to_ymd, time_fraction, weekday, weekend_mask_from_code,
-    weekend_mask_from_string, workday_serial, workday_serial_intl, yearfrac, WEEKEND_SAT_SUN,
+    weekend_mask_from_string, weeknum, workday_serial, workday_serial_intl, yearfrac,
+    WEEKEND_SAT_SUN,
 };
 use crate::text_format;
 use xlsx_types::{
@@ -138,6 +139,7 @@ pub(crate) fn dispatch(
         "MONTH" => fn_ymd(ev, args, ctx, YmdPart::Month),
         "DAY" => fn_ymd(ev, args, ctx, YmdPart::Day),
         "WEEKDAY" => fn_weekday(ev, args, ctx),
+        "WEEKNUM" => fn_weeknum(ev, args, ctx),
         "DAYS360" => fn_days360(ev, args, ctx),
         "YEARFRAC" => fn_yearfrac(ev, args, ctx),
         "LEFT" => fn_left_right(ev, args, ctx, true),
@@ -1231,6 +1233,37 @@ fn fn_weekday(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelV
         1
     };
     match weekday(serial, return_type, ctx.spec.options.date_system) {
+        Ok(n) => Ok(ExcelValue::Number(n)),
+        Err(e) => Ok(ExcelValue::Error(e)),
+    }
+}
+
+fn fn_weeknum(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    if args.is_empty() || args.len() > 2 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let serial = match coerce::to_number(&ev.eval_scalar(&args[0], ctx)?) {
+        Ok(n) => n,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let return_type = if args.len() >= 2 {
+        match coerce::to_number(&ev.eval_scalar(&args[1], ctx)?) {
+            Ok(n) => {
+                if !n.is_finite() {
+                    return Ok(ExcelValue::Error(ExcelError::Num));
+                }
+                let t = n.trunc();
+                if t < i32::MIN as f64 || t > i32::MAX as f64 {
+                    return Ok(ExcelValue::Error(ExcelError::Num));
+                }
+                t as i32
+            }
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        }
+    } else {
+        1
+    };
+    match weeknum(serial, return_type, ctx.spec.options.date_system) {
         Ok(n) => Ok(ExcelValue::Number(n)),
         Err(e) => Ok(ExcelValue::Error(e)),
     }

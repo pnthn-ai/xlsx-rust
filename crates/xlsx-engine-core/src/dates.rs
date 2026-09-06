@@ -646,6 +646,123 @@ pub fn weekday_naive(serial: f64, return_type: i32, system: DateSystem) -> Resul
     map_weekday_return_type(type1_from_1900_serial(s1900), return_type)
 }
 
+/// Type-1 weekday (Sun=1) on which a System-1 `WEEKNUM` week begins.
+fn weeknum_week_start_type1(return_type: i32) -> Result<i32, ExcelError> {
+    match return_type {
+        1 | 17 => Ok(1),
+        2 | 11 => Ok(2),
+        12 => Ok(3),
+        13 => Ok(4),
+        14 => Ok(5),
+        15 => Ok(6),
+        16 => Ok(7),
+        _ => Err(ExcelError::Num),
+    }
+}
+
+/// Civil year of a 1900-system serial, including the ISO Thursday that can
+/// fall in December 1899 (`serial ∈ [-364, -1]`).
+fn year_of_1900_serial(s: i32) -> Result<i32, ExcelError> {
+    if s < 0 {
+        // 1899-01-01 is serial -364. Valid `WEEKNUM` inputs only need s ≥ -3.
+        if s >= -364 {
+            return Ok(1899);
+        }
+        return Err(ExcelError::Num);
+    }
+    if s <= 60 {
+        return Ok(1900);
+    }
+    if s > EXCEL_MAX_SERIAL_1900 {
+        return Err(ExcelError::Num);
+    }
+    Ok(serial_to_ymd(s as f64, DateSystem::Excel1900)?.0)
+}
+
+fn weeknum_system1(s1900: i32, start_type1: i32) -> Result<f64, ExcelError> {
+    let year = year_of_1900_serial(s1900)?;
+    let jan1 = serial_of_year_start(year)?;
+    let offset = (type1_from_1900_serial(jan1) - start_type1).rem_euclid(7);
+    // Week containing January 1 is week 1. Serial 0 (1900-01-00, Saturday)
+    // sits in the week before January 1 1900 (Sunday) when weeks start Sunday.
+    Ok(((s1900 - jan1 + offset).div_euclid(7) + 1) as f64)
+}
+
+fn weeknum_iso(s1900: i32) -> Result<f64, ExcelError> {
+    // ISO weekday Monday=1 … Sunday=7, from Excel type-1 (Sunday=1).
+    let type1 = type1_from_1900_serial(s1900);
+    let iso_wd = if type1 == 1 { 7 } else { type1 - 1 };
+    let thursday = s1900 + (4 - iso_wd);
+    let year = year_of_1900_serial(thursday)?;
+    let jan1 = serial_of_year_start(year)?;
+    Ok(((thursday - jan1).div_euclid(7) + 1) as f64)
+}
+
+/// Excel `WEEKNUM(serial_number, [return_type])`.
+///
+/// System 1 (`return_type` 1 / 2 / 11–17): the week containing January 1 is
+/// week 1. System 2 (`return_type` 21): ISO 8601 — week containing the first
+/// Thursday is week 1; week begins Monday. Uses Excel's weekday (1900-01-01
+/// is Sunday), so early-1900 ISO weeks follow the leap-year bug, not civil
+/// ISO. O(1) on the integer serial (year via Hinnant / closed-form Jan 1).
+pub fn weeknum(serial: f64, return_type: i32, system: DateSystem) -> Result<f64, ExcelError> {
+    let s1900 = serial_as_1900_int(serial, system)?;
+    match return_type {
+        21 => weeknum_iso(s1900),
+        rt => weeknum_system1(s1900, weeknum_week_start_type1(rt)?),
+    }
+}
+
+/// Day-walk `WEEKNUM`: YMD → January 1 of that year, then count week
+/// boundaries. Semantically identical to [`weeknum`]; used as the bench baseline.
+pub fn weeknum_naive(serial: f64, return_type: i32, system: DateSystem) -> Result<f64, ExcelError> {
+    if !serial.is_finite() || serial < 0.0 {
+        return Err(ExcelError::Num);
+    }
+    let (y, m, d) = serial_to_ymd(serial, system)?;
+    let s1900 = ymd_to_serial_1900(y, m as i32, d as i32)?;
+    if return_type == 21 {
+        let type1 = type1_from_1900_serial(s1900);
+        let iso_wd = if type1 == 1 { 7 } else { type1 - 1 };
+        let thursday = s1900 + (4 - iso_wd);
+        let ty = if thursday < 0 {
+            1899
+        } else {
+            serial_to_ymd(thursday as f64, DateSystem::Excel1900)?.0
+        };
+        // January 1 1899 is serial -364 (`ymd_to_serial_1900` rejects < 0).
+        let jan1 = serial_of_year_start(ty)?;
+        if thursday < jan1 {
+            return Ok(0.0);
+        }
+        let mut week = 1i32;
+        let mut s = jan1;
+        while s < thursday {
+            s += 1;
+            if (s - jan1) % 7 == 0 {
+                week += 1;
+            }
+        }
+        return Ok(week as f64);
+    }
+    let start_type1 = weeknum_week_start_type1(return_type)?;
+    let jan1 = ymd_to_serial_1900(y, 1, 1)?;
+    let offset = (type1_from_1900_serial(jan1) - start_type1).rem_euclid(7);
+    let week1_start = jan1 - offset;
+    if s1900 < week1_start {
+        return Ok(0.0);
+    }
+    let mut week = 1i32;
+    let mut s = week1_start;
+    while s < s1900 {
+        s += 1;
+        if (s - week1_start) % 7 == 0 {
+            week += 1;
+        }
+    }
+    Ok(week as f64)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1123,6 +1240,93 @@ mod tests {
                 let a = weekday(s as f64, rt, DateSystem::Excel1900).unwrap();
                 let b = weekday_naive(s as f64, rt, DateSystem::Excel1900).unwrap();
                 assert_eq!(a, b, "serial={s} return_type={rt}");
+            }
+        }
+    }
+
+    #[test]
+    fn weeknum_ms_march_2012() {
+        // Microsoft: WEEKNUM(3/9/2012) = 10; WEEKNUM(..., 2) = 11.
+        let s = date_serial(2012, 3, 9, DateSystem::Excel1900).unwrap();
+        assert_eq!(weeknum(s, 1, DateSystem::Excel1900).unwrap(), 10.0);
+        assert_eq!(weeknum(s, 2, DateSystem::Excel1900).unwrap(), 11.0);
+        assert_eq!(weeknum(s, 11, DateSystem::Excel1900).unwrap(), 11.0);
+        assert_eq!(weeknum(s, 17, DateSystem::Excel1900).unwrap(), 10.0);
+        assert_eq!(weeknum(s, 21, DateSystem::Excel1900).unwrap(), 10.0);
+    }
+
+    #[test]
+    fn weeknum_iso_documented() {
+        // 2023-01-01 Sunday: System 1 week 1; ISO week 52 of 2022.
+        let s = date_serial(2023, 1, 1, DateSystem::Excel1900).unwrap();
+        assert_eq!(weeknum(s, 1, DateSystem::Excel1900).unwrap(), 1.0);
+        assert_eq!(weeknum(s, 21, DateSystem::Excel1900).unwrap(), 52.0);
+        // TechOnTheNet: 2016-12-24 → 52 / ISO 51.
+        let s = date_serial(2016, 12, 24, DateSystem::Excel1900).unwrap();
+        assert_eq!(weeknum(s, 1, DateSystem::Excel1900).unwrap(), 52.0);
+        assert_eq!(weeknum(s, 21, DateSystem::Excel1900).unwrap(), 51.0);
+    }
+
+    #[test]
+    fn weeknum_week_54_leap_saturday() {
+        // 2000-01-01 Saturday + leap year: System 1 Sunday-start reaches week 54.
+        let s = date_serial(2000, 12, 31, DateSystem::Excel1900).unwrap();
+        assert_eq!(weeknum(s, 1, DateSystem::Excel1900).unwrap(), 54.0);
+    }
+
+    #[test]
+    fn weeknum_1900_leap_window() {
+        assert_eq!(weeknum(0.0, 1, DateSystem::Excel1900).unwrap(), 0.0);
+        assert_eq!(weeknum(1.0, 1, DateSystem::Excel1900).unwrap(), 1.0);
+        assert_eq!(weeknum(8.0, 1, DateSystem::Excel1900).unwrap(), 2.0);
+        assert_eq!(weeknum(60.0, 1, DateSystem::Excel1900).unwrap(), 9.0);
+        assert_eq!(weeknum(61.0, 1, DateSystem::Excel1900).unwrap(), 9.0);
+        // Excel Sunday 1900-01-01 → ISO week 52 of 1899 (civil ISO would be 1).
+        assert_eq!(weeknum(1.0, 21, DateSystem::Excel1900).unwrap(), 52.0);
+        assert_eq!(weeknum(2.0, 21, DateSystem::Excel1900).unwrap(), 1.0);
+    }
+
+    #[test]
+    fn weeknum_bad_return_type() {
+        assert!(weeknum(1.0, 3, DateSystem::Excel1900).is_err());
+        assert!(weeknum(1.0, 0, DateSystem::Excel1900).is_err());
+        assert!(weeknum(1.0, 4, DateSystem::Excel1900).is_err());
+        assert!(weeknum(1.0, 18, DateSystem::Excel1900).is_err());
+        assert!(weeknum(1.0, 22, DateSystem::Excel1900).is_err());
+        assert!(weeknum(-1.0, 1, DateSystem::Excel1900).is_err());
+    }
+
+    #[test]
+    fn weeknum_1904_epoch() {
+        // 1904-01-01 Friday: System 1 week 1; ISO week 53 of 1903.
+        assert_eq!(weeknum(0.0, 1, DateSystem::Excel1904).unwrap(), 1.0);
+        assert_eq!(weeknum(0.0, 21, DateSystem::Excel1904).unwrap(), 53.0);
+        let s = date_serial(1904, 1, 4, DateSystem::Excel1904).unwrap();
+        assert_eq!(weeknum(s, 21, DateSystem::Excel1904).unwrap(), 1.0);
+    }
+
+    #[test]
+    fn weeknum_matches_naive_across_range() {
+        let types = [1, 2, 11, 12, 13, 14, 15, 16, 17, 21];
+        for s in 0..=400 {
+            for rt in types {
+                let a = weeknum(s as f64, rt, DateSystem::Excel1900).unwrap();
+                let b = weeknum_naive(s as f64, rt, DateSystem::Excel1900).unwrap();
+                assert_eq!(a, b, "serial={s} return_type={rt}");
+            }
+        }
+        for s in [36526, 39448, 40909, 42005, 42736, EXCEL_MAX_SERIAL_1900] {
+            for rt in types {
+                let a = weeknum(s as f64, rt, DateSystem::Excel1900).unwrap();
+                let b = weeknum_naive(s as f64, rt, DateSystem::Excel1900).unwrap();
+                assert_eq!(a, b, "serial={s} return_type={rt}");
+            }
+        }
+        for s in 0..=400 {
+            for rt in types {
+                let a = weeknum(s as f64, rt, DateSystem::Excel1904).unwrap();
+                let b = weeknum_naive(s as f64, rt, DateSystem::Excel1904).unwrap();
+                assert_eq!(a, b, "serial={s} return_type={rt} 1904");
             }
         }
     }
