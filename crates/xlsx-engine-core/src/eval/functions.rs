@@ -65,6 +65,7 @@ pub(crate) fn dispatch(
         "CHOOSEROWS" => fn_chooserows(ev, args, ctx),
         "MAKEARRAY" | "_XLFN.MAKEARRAY" => fn_makearray(ev, args, ctx),
         "LAMBDA" | "_XLFN.LAMBDA" => Ok(ExcelValue::Error(ExcelError::Calc)),
+        "LET" | "_XLFN.LET" => fn_let(ev, args, ctx),
         "INDEX" => fn_index(ev, args, ctx),
         "MATCH" => fn_match(ev, args, ctx),
         "CHOOSE" => fn_choose(ev, args, ctx),
@@ -204,7 +205,9 @@ fn fn_agg(
 ) -> Result<ExcelValue, EvalError> {
     let mut acc = AggAcc::new(kind);
     for arg in args {
-        let from_range = arg.is_reference();
+        // LET / LAMBDA locals are values, not worksheet refs: SUM(TRUE) is 1.
+        let from_range = arg.is_reference()
+            && !matches!(arg, Expr::Name(n) if super::excel_let::is_bound(&ctx.locals, n));
         let v = ev.eval_expr(arg, ctx)?;
         if let Some(err) = acc.fold(&v, from_range) {
             return Ok(ExcelValue::Error(err));
@@ -447,6 +450,14 @@ fn fn_hlookup(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelV
         Some(c) => Ok(rows[row_idx - 1][c].clone()),
         None => Ok(ExcelValue::Error(ExcelError::Na)),
     }
+}
+
+/// Excel `LET(name1, value1, [name2, value2, …], calculation)`.
+///
+/// Name arguments are identifiers (not evaluated). Values bind onto the
+/// shared locals stack. See [`super::excel_let`].
+fn fn_let(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    super::excel_let::apply(ev, args, ctx)
 }
 
 /// Excel `MAKEARRAY(rows, cols, LAMBDA(r, c, body))`.

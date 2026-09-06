@@ -695,4 +695,24 @@ mod tests {
             other => panic!("{other:?}"),
         }
     }
+
+    #[test]
+    fn parse_let_names() {
+        match parse("=LET(x, 1, y, x+1, y*2)").unwrap() {
+            Expr::Call { name, args } => {
+                assert!(name.eq_ignore_ascii_case("LET"));
+                assert_eq!(args.len(), 5);
+                assert!(matches!(&args[0], Expr::Name(n) if n == "x"));
+                assert!(matches!(&args[2], Expr::Name(n) if n == "y"));
+            }
+            other => panic!("{other:?}"),
+        }
+        match parse("=_xlfn.LET(_xlpm.x, 1, _xlpm.x)").unwrap() {
+            Expr::Call { name, args } => {
+                assert!(name.eq_ignore_ascii_case("_xlfn.LET"));
+                assert!(matches!(&args[0], Expr::Name(n) if n == "_xlpm.x"));
+            }
+            other => panic!("{other:?}"),
+        }
+    }
 }
