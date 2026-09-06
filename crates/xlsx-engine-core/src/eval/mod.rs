@@ -31,6 +31,7 @@ pub mod isomitted;
 pub mod lower;
 pub mod makearray;
 pub mod map;
+pub mod mid;
 pub mod mirr;
 pub mod npv;
 pub mod proper;

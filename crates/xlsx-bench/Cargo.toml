@@ -112,6 +112,10 @@ name = "fn_proper"
 harness = false
 
 [[bench]]
+name = "fn_mid"
+harness = false
+
+[[bench]]
 name = "fn_unicode"
 harness = false
 

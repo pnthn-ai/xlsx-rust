@@ -1,0 +1,556 @@
+[
+  {
+    "id": "fn.mid-ms-fluid",
+    "description": "Microsoft example: MID(\"Fluid Flow\", 1, 5) → \"Fluid\"",
+    "tags": ["text", "mid"],
+    "formula": "=MID(\"Fluid Flow\", 1, 5)",
+    "expected": { "text": "Fluid" }
+  },
+  {
+    "id": "fn.mid-ms-flow",
+    "description": "Microsoft example: MID(\"Fluid Flow\", 7, 20) → \"Flow\" (num_chars past LEN returns the remainder)",
+    "tags": ["text", "mid"],
+    "formula": "=MID(\"Fluid Flow\", 7, 20)",
+    "expected": { "text": "Flow" }
+  },
+  {
+    "id": "fn.mid-ms-past-len",
+    "description": "Microsoft example: MID(\"Fluid Flow\", 20, 5) → \"\" (start_num past LEN)",
+    "tags": ["text", "mid"],
+    "formula": "=MID(\"Fluid Flow\", 20, 5)",
+    "expected": { "text": "" }
+  },
+  {
+    "id": "fn.mid-start-1",
+    "description": "start_num 1 (1-based) takes from the first character",
+    "tags": ["text", "mid"],
+    "formula": "=MID(\"abc\", 1, 1)",
+    "expected": { "text": "a" }
+  },
+  {
+    "id": "fn.mid-start-3",
+    "description": "start_num 3 takes the last character of a 3-char string",
+    "tags": ["text", "mid"],
+    "formula": "=MID(\"abc\", 3, 1)",
+    "expected": { "text": "c" }
+  },
+  {
+    "id": "fn.mid-two-chars",
+    "description": "MID(\"abcd\", 2, 2) is \"bc\"",
+    "tags": ["text", "mid"],
+    "formula": "=MID(\"abcd\", 2, 2)",
+    "expected": { "text": "bc" }
+  },
+  {
+    "id": "fn.mid-num-0",
+    "description": "num_chars 0 is empty text (not an error)",
+    "tags": ["text", "mid"],
+    "formula": "=MID(\"abc\", 1, 0)",
+    "expected": { "text": "" }
+  },
+  {
+    "id": "fn.mid-num-0-mid",
+    "description": "num_chars 0 at start_num 2 is still empty",
+    "tags": ["text", "mid"],
+    "formula": "=MID(\"abc\", 2, 0)",
+    "expected": { "text": "" }
+  },
+  {
+    "id": "fn.mid-num-all",
+    "description": "num_chars equal to LEN returns the whole string from start 1",
+    "tags": ["text", "mid"],
+    "formula": "=MID(\"abc\", 1, 3)",
+    "expected": { "text": "abc" }
+  },
+  {
+    "id": "fn.mid-start-len-plus-1",
+    "description": "start_num = LEN+1 is empty text (no error)",
+    "tags": ["text", "mid"],
+    "formula": "=MID(\"abc\", 4, 1)",
+    "expected": { "text": "" }
+  },
+  {
+    "id": "fn.mid-start-far-past",
+    "description": "start_num far past LEN is empty text",
+    "tags": ["text", "mid"],
+    "formula": "=MID(\"abc\", 100, 5)",
+    "expected": { "text": "" }
+  },
+  {
+    "id": "fn.mid-start-huge",
+    "description": "start_num 1E20 is past LEN → \"\"",
+    "tags": ["text", "mid"],
+    "formula": "=MID(\"abc\", 1E20, 1)",
+    "expected": { "text": "" }
+  },
+  {
+    "id": "fn.mid-num-huge",
+    "description": "num_chars 1E20 returns the remainder",
+    "tags": ["text", "mid"],
+    "formula": "=MID(\"abc\", 1, 1E20)",
+    "expected": { "text": "abc" }
+  },
+  {
+    "id": "fn.mid-start-0",
+    "description": "start_num 0 is #VALUE! (positions are 1-based)",
+    "tags": ["text", "mid", "errors"],
+    "formula": "=MID(\"abc\", 0, 1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.mid-start-neg",
+    "description": "Negative start_num is #VALUE!",
+    "tags": ["text", "mid", "errors"],
+    "formula": "=MID(\"abc\", -1, 1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.mid-num-neg",
+    "description": "Negative num_chars is #VALUE!",
+    "tags": ["text", "mid", "errors"],
+    "formula": "=MID(\"abc\", 1, -1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.mid-start-trunc",
+    "description": "start_num 2.9 truncates toward zero to 2",
+    "tags": ["text", "mid"],
+    "formula": "=MID(\"abc\", 2.9, 1)",
+    "expected": { "text": "b" }
+  },
+  {
+    "id": "fn.mid-start-trunc-zero",
+    "description": "start_num 0.9 truncates to 0 → #VALUE!",
+    "tags": ["text", "mid", "errors"],
+    "formula": "=MID(\"abc\", 0.9, 1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.mid-num-trunc",
+    "description": "num_chars 1.9 truncates toward zero to 1",
+    "tags": ["text", "mid"],
+    "formula": "=MID(\"abc\", 1, 1.9)",
+    "expected": { "text": "a" }
+  },
+  {
+    "id": "fn.mid-num-trunc-zero",
+    "description": "num_chars 0.9 truncates to 0 → \"\"",
+    "tags": ["text", "mid"],
+    "formula": "=MID(\"abc\", 1, 0.9)",
+    "expected": { "text": "" }
+  },
+  {
+    "id": "fn.mid-number",
+    "description": "Numbers coerce to plain text; result stays text",
+    "tags": ["text", "mid", "coercion"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=MID(12345, 2, 3)",
+    "expected": { "text": "234" }
+  },
+  {
+    "id": "fn.mid-bool-true",
+    "description": "TRUE coerces to the text \"TRUE\"",
+    "tags": ["text", "mid", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=MID(TRUE, 1, 1)",
+    "expected": { "text": "T" }
+  },
+  {
+    "id": "fn.mid-bool-false",
+    "description": "FALSE coerces to the text \"FALSE\"",
+    "tags": ["text", "mid", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=MID(FALSE, 1, 1)",
+    "expected": { "text": "F" }
+  },
+  {
+    "id": "fn.mid-start-true",
+    "description": "TRUE coerces to start_num 1",
+    "tags": ["text", "mid", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=MID(\"abc\", TRUE, 1)",
+    "expected": { "text": "a" }
+  },
+  {
+    "id": "fn.mid-start-false",
+    "description": "FALSE coerces to start_num 0 → #VALUE!",
+    "tags": ["text", "mid", "errors", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=MID(\"abc\", FALSE, 1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.mid-num-true",
+    "description": "TRUE coerces to num_chars 1",
+    "tags": ["text", "mid", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=MID(\"abc\", 2, TRUE)",
+    "expected": { "text": "b" }
+  },
+  {
+    "id": "fn.mid-num-false",
+    "description": "FALSE coerces to num_chars 0 → \"\"",
+    "tags": ["text", "mid", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=MID(\"abc\", 2, FALSE)",
+    "expected": { "text": "" }
+  },
+  {
+    "id": "fn.mid-start-text-num",
+    "description": "Numeric text start_num is coerced",
+    "tags": ["text", "mid", "coercion"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=MID(\"abc\", \"2\", 1)",
+    "expected": { "text": "b" }
+  },
+  {
+    "id": "fn.mid-num-text-num",
+    "description": "Numeric text num_chars is coerced",
+    "tags": ["text", "mid", "coercion"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=MID(\"abc\", 1, \"2\")",
+    "expected": { "text": "ab" }
+  },
+  {
+    "id": "fn.mid-start-text-bad",
+    "description": "Non-numeric start_num is #VALUE!",
+    "tags": ["text", "mid", "errors"],
+    "formula": "=MID(\"abc\", \"x\", 1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.mid-num-text-bad",
+    "description": "Non-numeric num_chars is #VALUE!",
+    "tags": ["text", "mid", "errors"],
+    "formula": "=MID(\"abc\", 1, \"x\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.mid-blank-text",
+    "description": "Blank text cell coerces like & to \"\" → empty result",
+    "tags": ["text", "mid", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=MID(A1, 1, 1)",
+    "expected": { "text": "" },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.mid-stored-empty",
+    "description": "Stored \"\" is empty text → empty result",
+    "tags": ["text", "mid"],
+    "formula": "=MID(A1, 1, 1)",
+    "expected": { "text": "" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": { "A1": { "text": "" } }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.mid-blank-start",
+    "description": "Blank start_num cell coerces to 0 → #VALUE!",
+    "tags": ["text", "mid", "errors", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=MID(\"abc\", A1, 1)",
+    "expected": { "error": "#VALUE!" },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.mid-blank-num",
+    "description": "Blank num_chars cell coerces to 0 → \"\"",
+    "tags": ["text", "mid", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=MID(\"abc\", 2, A1)",
+    "expected": { "text": "" },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.mid-empty-literal",
+    "description": "MID(\"\", 1, 1) is empty text (start 1 is allowed on LEN 0)",
+    "tags": ["text", "mid"],
+    "formula": "=MID(\"\", 1, 1)",
+    "expected": { "text": "" }
+  },
+  {
+    "id": "fn.mid-empty-start-0",
+    "description": "MID(\"\", 0, 1) is still #VALUE!",
+    "tags": ["text", "mid", "errors"],
+    "formula": "=MID(\"\", 0, 1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.mid-cell",
+    "description": "MID of a stored text cell",
+    "tags": ["text", "mid"],
+    "formula": "=MID(A1, 2, 3)",
+    "expected": { "text": "ell" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": { "A1": { "text": "Hello" } }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.mid-formula-cell",
+    "description": "MID of a formula cell that yields text",
+    "tags": ["text", "mid"],
+    "formula": "=MID(A1, 2, 2)",
+    "expected": { "text": "BC" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": { "A1": { "formula": "=\"ABCD\"" } }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.mid-named",
+    "description": "MID of a defined name referring to a cell",
+    "tags": ["text", "mid", "named"],
+    "formula": "=MID(Title, 1, 1)",
+    "expected": { "text": "H" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": { "A1": { "text": "Hello" } }
+        }
+      ],
+      "names": [{ "name": "Title", "refers_to": "Sheet1!A1" }]
+    }
+  },
+  {
+    "id": "fn.mid-unicode-cafe",
+    "description": "Precomposed é is one Unicode scalar (same as LEN/REPLACE)",
+    "tags": ["text", "mid"],
+    "formula": "=MID(\"café\", 4, 1)",
+    "expected": { "text": "é" }
+  },
+  {
+    "id": "fn.mid-unicode-cjk",
+    "description": "CJK ideographs are one scalar each",
+    "tags": ["text", "mid"],
+    "formula": "=MID(\"日本語\", 2, 1)",
+    "expected": { "text": "本" }
+  },
+  {
+    "id": "fn.mid-emoji-scalar",
+    "description": "Surrogate-pair emoji is one character (Excel Compatibility Version 2; matches LEN/REPLACE chars). Version 1 counted UTF-16 units (😀=2) and is not the calc-core default.",
+    "tags": ["text", "mid"],
+    "notes": "Microsoft Compatibility Version 2: LEN/MID/FIND/SEARCH/REPLACE count a surrogate pair as one character. Version 1 (legacy UTF-16) is deferred.",
+    "formula": "=MID(\"a😀b\", 2, 1)",
+    "expected": { "text": "😀" }
+  },
+  {
+    "id": "fn.mid-emoji-after",
+    "description": "Character after a surrogate-pair emoji is start_num 3 under Version 2",
+    "tags": ["text", "mid"],
+    "formula": "=MID(\"a😀b\", 3, 1)",
+    "expected": { "text": "b" }
+  },
+  {
+    "id": "fn.mid-emoji-len",
+    "description": "LEN(MID(emoji, 1, 1)) is 1 under Compat v2",
+    "tags": ["text", "mid"],
+    "formula": "=LEN(MID(A1, 1, 1))",
+    "expected": { "number": 1 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": { "A1": { "text": "😀" } }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.mid-emoji-unicode",
+    "description": "UNICODE(MID of grinning face) is 128512, not a UTF-16 surrogate",
+    "tags": ["text", "mid", "unicode"],
+    "formula": "=UNICODE(MID(A1, 2, 1))",
+    "expected": { "number": 128512 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": { "A1": { "text": "a😀b" } }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.mid-combining-mark",
+    "description": "Combining marks stay separate characters (Excel Version 2; not clustered into a grapheme)",
+    "tags": ["text", "mid"],
+    "formula": "=MID(A1, 2, 1)",
+    "expected": { "text": "\u0301" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": { "A1": { "text": "e\u0301" } }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.mid-combining-base",
+    "description": "MID of the base letter of e+combining-acute is just e",
+    "tags": ["text", "mid"],
+    "formula": "=MID(A1, 1, 1)",
+    "expected": { "text": "e" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": { "A1": { "text": "e\u0301" } }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.mid-nested-left",
+    "description": "MID(LEFT(\"abcdef\", 4), 2, 2) is \"bc\"",
+    "tags": ["text", "mid"],
+    "formula": "=MID(LEFT(\"abcdef\", 4), 2, 2)",
+    "expected": { "text": "bc" }
+  },
+  {
+    "id": "fn.mid-concat",
+    "description": "MID of concatenated pieces uses the joined text",
+    "tags": ["text", "mid"],
+    "formula": "=MID(\"ab\"&\"cd\", 2, 2)",
+    "expected": { "text": "bc" }
+  },
+  {
+    "id": "fn.mid-len-remainder",
+    "description": "LEN of a remainder slice",
+    "tags": ["text", "mid"],
+    "formula": "=LEN(MID(\"abc\", 2, 10))",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.mid-array-literal",
+    "description": "MID of an array literal scalarizes to the top-left",
+    "tags": ["text", "mid"],
+    "formula": "=MID({\"XY\",\"Z\"}, 2, 1)",
+    "expected": { "text": "Y" }
+  },
+  {
+    "id": "fn.mid-implicit-intersect",
+    "description": "MID(A1:A3, 1, 1) from host B2 uses implicit intersection (same row → A2)",
+    "tags": ["text", "mid"],
+    "quirks": ["implicit-intersection"],
+    "at": "Sheet1!B2",
+    "formula": "=MID(A1:A3, 1, 1)",
+    "expected": { "text": "T" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "ONE" },
+            "A2": { "text": "TWO" },
+            "A3": { "text": "THREE" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.mid-err-text",
+    "description": "Error in text propagates",
+    "tags": ["text", "mid", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=MID(1/0, 1, 1)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.mid-err-start",
+    "description": "Error in start_num propagates",
+    "tags": ["text", "mid", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=MID(\"abc\", 1/0, 1)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.mid-err-num",
+    "description": "Error in num_chars propagates",
+    "tags": ["text", "mid", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=MID(\"abc\", 1, 1/0)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.mid-err-left-wins",
+    "description": "Left-to-right: text error beats a later #N/A",
+    "tags": ["text", "mid", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=MID(#DIV/0!, #N/A, 1)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.mid-err-cell",
+    "description": "Error in the referenced cell propagates",
+    "tags": ["text", "mid", "errors"],
+    "formula": "=MID(A1, 1, 1)",
+    "expected": { "error": "#VALUE!" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": { "A1": { "error": "#VALUE!" } }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.mid-arity-0",
+    "description": "MID() is #VALUE!",
+    "tags": ["text", "mid", "errors"],
+    "formula": "=MID()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.mid-arity-1",
+    "description": "One argument is #VALUE! (all three are required)",
+    "tags": ["text", "mid", "errors"],
+    "formula": "=MID(\"abc\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.mid-arity-2",
+    "description": "Two arguments is #VALUE!",
+    "tags": ["text", "mid", "errors"],
+    "formula": "=MID(\"abc\", 1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.mid-arity-4",
+    "description": "Four arguments is #VALUE!",
+    "tags": ["text", "mid", "errors"],
+    "formula": "=MID(\"abc\", 1, 1, 1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.mid-map-join",
+    "description": "TEXTJOIN of MAP(..., MID) takes the second scalar of each piece",
+    "tags": ["text", "mid", "map"],
+    "formula": "=TEXTJOIN(\"\",TRUE,MAP({\"ab\";\"cd\";\"ef\"},LAMBDA(x,MID(x,2,1))))",
+    "expected": { "text": "bdf" }
+  }
+]

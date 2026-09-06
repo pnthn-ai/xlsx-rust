@@ -1987,29 +1987,28 @@ impl Interpreter {
         if args.len() != 3 {
             return Ok(ExcelValue::Error(ExcelError::Value));
         }
-        let s = match self.as_text(&self.eval_scalar(&args[0], ctx)?) {
-            Ok(s) => s,
-            Err(e) => return Ok(ExcelValue::Error(e)),
-        };
-        let start = match self.as_number(&self.eval_scalar(&args[1], ctx)?) {
-            Ok(n) => n.trunc() as i64,
-            Err(e) => return Ok(ExcelValue::Error(e)),
-        };
-        let len = match self.as_number(&self.eval_scalar(&args[2], ctx)?) {
-            Ok(n) => n.trunc() as i64,
-            Err(e) => return Ok(ExcelValue::Error(e)),
-        };
-        if start < 1 || len < 0 {
-            return Ok(ExcelValue::Error(ExcelError::Value));
+        let text = self.eval_scalar(&args[0], ctx)?;
+        if let ExcelValue::Error(e) = text {
+            return Ok(ExcelValue::Error(e));
         }
-        let chars: Vec<char> = s.chars().collect();
-        let i = (start as usize) - 1;
-        if i >= chars.len() {
-            return Ok(ExcelValue::Text(String::new()));
+        let start_num = match self.as_number(&self.eval_scalar(&args[1], ctx)?) {
+            Ok(n) => match xlsx_engine_core::excel_mid_trunc_start_num(n) {
+                Ok(n) => n,
+                Err(e) => return Ok(ExcelValue::Error(e)),
+            },
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        let num_chars = match self.as_number(&self.eval_scalar(&args[2], ctx)?) {
+            Ok(n) => match xlsx_engine_core::excel_mid_trunc_num_chars(n) {
+                Ok(n) => n,
+                Err(e) => return Ok(ExcelValue::Error(e)),
+            },
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        match xlsx_engine_core::excel_mid_value(&text, start_num, num_chars) {
+            Ok(s) => Ok(ExcelValue::Text(s)),
+            Err(e) => Ok(ExcelValue::Error(e)),
         }
-        Ok(ExcelValue::Text(
-            chars.iter().skip(i).take(len as usize).collect(),
-        ))
     }
 
     fn fn_len(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {

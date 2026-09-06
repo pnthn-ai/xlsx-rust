@@ -145,7 +145,7 @@ pub(crate) fn dispatch(
         "YEARFRAC" => fn_yearfrac(ev, args, ctx),
         "LEFT" => fn_left_right(ev, args, ctx, true),
         "RIGHT" => fn_left_right(ev, args, ctx, false),
-        "MID" => fn_mid(ev, args, ctx),
+        "MID" => super::mid::fn_mid(ev, args, ctx),
         "LEN" => fn_len(ev, args, ctx),
         "UNICODE" => super::unicode::fn_unicode(ev, args, ctx),
         "LOWER" => fn_lower(ev, args, ctx),
@@ -1440,35 +1440,6 @@ fn fn_left_right(
             .collect()
     };
     Ok(ExcelValue::Text(out))
-}
-
-fn fn_mid(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
-    if args.len() != 3 {
-        return Ok(ExcelValue::Error(ExcelError::Value));
-    }
-    let s = match coerce::to_text(&ev.eval_scalar(&args[0], ctx)?) {
-        Ok(s) => s,
-        Err(e) => return Ok(ExcelValue::Error(e)),
-    };
-    let start = match coerce::to_number(&ev.eval_scalar(&args[1], ctx)?) {
-        Ok(n) => n.trunc() as i64,
-        Err(e) => return Ok(ExcelValue::Error(e)),
-    };
-    let len = match coerce::to_number(&ev.eval_scalar(&args[2], ctx)?) {
-        Ok(n) => n.trunc() as i64,
-        Err(e) => return Ok(ExcelValue::Error(e)),
-    };
-    if start < 1 || len < 0 {
-        return Ok(ExcelValue::Error(ExcelError::Value));
-    }
-    let chars: Vec<char> = s.chars().collect();
-    let i = (start as usize) - 1;
-    if i >= chars.len() {
-        return Ok(ExcelValue::Text(String::new()));
-    }
-    Ok(ExcelValue::Text(
-        chars.iter().skip(i).take(len as usize).collect(),
-    ))
 }
 
 fn fn_len(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
