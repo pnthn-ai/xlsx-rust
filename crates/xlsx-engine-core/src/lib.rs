@@ -76,6 +76,7 @@
 //! - [`eval::rounddown`] — Excel `ROUNDDOWN` (toward zero; omitted `num_digits` = 0)
 //! - [`xlsx_types::excel_floor`] — Excel classic `FLOOR` (sign/zero-sig; leftover snap)
 //! - [`xlsx_types::excel_ceiling`] — Excel classic `CEILING` (sign / zero-sig / 15-digit multiple)
+//! - [`xlsx_types::excel_mround`] — Excel `MROUND` (same-sign / zero-multiple; half-away; shares `ROUND` at `|m|=1`)
 //! - Financial TVM: `PMT` / `RRI` via [`xlsx_types::excel_pmt`] / [`xlsx_types::excel_rri`]
 //!
 //! This crate depends only on [`xlsx_types`]. It never reads fixture expected
@@ -282,7 +283,8 @@ pub use xlsx_types::{
     excel_ceiling_slice_naive, excel_cumipmt, excel_cumipmt_naive, excel_cumprinc,
     excel_cumprinc_naive, excel_effect, excel_effect_naive, excel_fv, excel_fv_naive, excel_int,
     excel_int_ieee, excel_int_naive, excel_int_slice, excel_int_slice_naive, excel_ipmt,
-    excel_ipmt_naive, excel_nominal, excel_nominal_naive, excel_nper, excel_nper_naive,
+    excel_ipmt_naive, excel_mround, excel_mround_naive, excel_mround_slice,
+    excel_mround_slice_naive, excel_nominal, excel_nominal_naive, excel_nper, excel_nper_naive,
     excel_pduration, excel_pduration_naive, excel_pmt, excel_ppmt, excel_ppmt_naive, excel_pv,
     excel_pv_naive, excel_rate, excel_rate_naive, excel_rri, excel_rri_naive,
 };
