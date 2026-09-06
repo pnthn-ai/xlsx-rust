@@ -21,7 +21,15 @@
     "tags": ["volatile"],
     "quirks": ["volatile"],
     "formula": "=RAND()",
-    "ignore": "Volatile random; no deterministic expected value."
+    "ignore": "Volatile random; no deterministic expected value. RAND is a later workstream; RANDARRAY is implemented separately."
+  },
+  {
+    "id": "ignore.randarray-volatile",
+    "description": "Unseeded RANDARRAY() has no stable golden — this engine's RNG is not Excel's",
+    "tags": ["volatile", "randarray"],
+    "quirks": ["volatile"],
+    "formula": "=RANDARRAY()",
+    "ignore": "Volatile; each evaluate() draws a new stream. The kernel uses xorshift64*, not Microsoft's undocumented generator, so a sequence golden would be invented. Deterministic coverage uses min=max, error cases, and a test-only EvalOptions.rng_seed hook (not a worksheet argument)."
   },
   {
     "id": "ignore.indirect",

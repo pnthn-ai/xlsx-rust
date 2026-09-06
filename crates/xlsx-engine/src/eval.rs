@@ -30,6 +30,7 @@ struct Ctx<'a> {
     depth: usize,
     visiting: HashSet<String>,
     host: CellAddr,
+    rng: xlsx_engine_core::XorShift64,
 }
 
 impl Interpreter {
@@ -49,6 +50,7 @@ impl Interpreter {
             depth: 0,
             visiting: HashSet::new(),
             host: default_cell.addr,
+            rng: xlsx_engine_core::XorShift64::from_eval_options(&spec.options),
         };
         match &spec.target {
             EvalTarget::Formula { formula, at } => {
@@ -450,6 +452,7 @@ impl Interpreter {
             "CONCAT" => self.fn_concat(args, ctx),
             "NPV" => self.fn_npv(args, ctx),
             "UNIQUE" => self.fn_unique(args, ctx),
+            "RANDARRAY" => self.fn_randarray(args, ctx),
             "IRR" => self.fn_irr(args, ctx),
             "TRUE" => Ok(ExcelValue::Bool(true)),
             "FALSE" => Ok(ExcelValue::Bool(false)),
@@ -931,6 +934,28 @@ impl Interpreter {
             Err(e) => return Ok(ExcelValue::Error(e)),
         };
         Ok(unique_apply_seed(&grid, by_col, exactly_once))
+    }
+
+    fn fn_randarray(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.len() > 5 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        let mut vals: [Option<ExcelValue>; 5] = [None, None, None, None, None];
+        for (i, arg) in args.iter().enumerate() {
+            let v = self.eval_scalar(arg, ctx)?;
+            if let ExcelValue::Error(e) = v {
+                return Ok(ExcelValue::Error(e));
+            }
+            vals[i] = Some(v);
+        }
+        Ok(xlsx_engine_core::excel_randarray(
+            vals[0].as_ref(),
+            vals[1].as_ref(),
+            vals[2].as_ref(),
+            vals[3].as_ref(),
+            vals[4].as_ref(),
+            &mut ctx.rng,
+        ))
     }
 
     fn fn_ifna(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
@@ -1700,7 +1725,7 @@ impl Interpreter {
         }
     }
 
-        fn collect_holiday_serials(&self, v: &ExcelValue, out: &mut Vec<f64>) -> Option<ExcelError> {
+    fn collect_holiday_serials(&self, v: &ExcelValue, out: &mut Vec<f64>) -> Option<ExcelError> {
         match v {
             ExcelValue::Array(rows) => {
                 for row in rows {

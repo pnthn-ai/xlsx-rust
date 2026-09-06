@@ -38,7 +38,7 @@ pub enum QuirkCategory {
     /// Dynamic array / CSE / scalar evaluation mode.
     /// `FILTER` returns an array value; worksheet spill / `#SPILL!` is not modeled.
     ArrayEvalMode,
-    /// Volatile functions (`NOW`, `RAND`, `INDIRECT`, …).
+    /// Volatile functions (`NOW`, `RAND`, `RANDARRAY`, `INDIRECT`, …).
     Volatile,
     /// Locale argument separators and decimal commas.
     Locale,

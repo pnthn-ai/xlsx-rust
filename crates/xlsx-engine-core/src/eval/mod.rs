@@ -8,22 +8,23 @@ pub mod coerce;
 pub mod compare;
 pub mod concat;
 pub mod empty;
-pub mod find;
 pub mod filter;
+pub mod find;
 pub mod functions;
-pub mod substitute;
-pub mod sumif;
-pub mod sumproduct;
+pub mod ifs;
+pub mod irr;
+pub mod npv;
+pub mod randarray;
 pub mod replace;
-pub mod sumifs;
-pub mod textjoin;
 pub mod round;
 pub mod search;
-pub mod npv;
+pub mod substitute;
+pub mod sumif;
+pub mod sumifs;
+pub mod sumproduct;
 pub mod switch;
-pub mod ifs;
+pub mod textjoin;
 pub mod unique;
-pub mod irr;
 
 use crate::ast::{BinOp, Expr, UnaryOp};
 use crate::parse::parse;
@@ -41,6 +42,7 @@ pub(crate) struct Ctx<'a> {
     depth: usize,
     visiting: HashSet<String>,
     host: CellAddr,
+    pub(crate) rng: randarray::XorShift64,
 }
 
 impl Evaluator {
@@ -80,6 +82,7 @@ impl Evaluator {
             depth: 0,
             visiting: HashSet::new(),
             host: spec.default_cell().addr,
+            rng: randarray::XorShift64::from_eval_options(&spec.options),
         }
     }
 
@@ -273,7 +276,11 @@ impl Evaluator {
         Ok(ExcelValue::Array(rows))
     }
 
-    pub(crate) fn eval_named(&self, name: &str, ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    pub(crate) fn eval_named(
+        &self,
+        name: &str,
+        ctx: &mut Ctx<'_>,
+    ) -> Result<ExcelValue, EvalError> {
         let def = match ctx.spec.workbook.defined_name(name) {
             Ok(d) => d,
             Err(_) => return Ok(ExcelValue::Error(ExcelError::Name)),
@@ -541,6 +548,7 @@ pub fn eval_sumif_materialized(
         depth: 0,
         visiting: HashSet::new(),
         host: spec.default_cell().addr,
+        rng: randarray::XorShift64::from_eval_options(&spec.options),
     };
     match ast {
         Expr::Call { name, args } if name.eq_ignore_ascii_case("SUMIF") => {
@@ -570,6 +578,7 @@ pub fn eval_sumifs_materialized(
         depth: 0,
         visiting: HashSet::new(),
         host: spec.default_cell().addr,
+        rng: randarray::XorShift64::from_eval_options(&spec.options),
     };
     match ast {
         Expr::Call { name, args } if name.eq_ignore_ascii_case("SUMIFS") => {
@@ -599,6 +608,7 @@ pub fn eval_averageif_materialized(
         depth: 0,
         visiting: HashSet::new(),
         host: spec.default_cell().addr,
+        rng: randarray::XorShift64::from_eval_options(&spec.options),
     };
     match ast {
         Expr::Call { name, args } if name.eq_ignore_ascii_case("AVERAGEIF") => {
