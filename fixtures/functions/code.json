@@ -1,0 +1,480 @@
+[
+  {
+    "id": "fn.code-microsoft-a",
+    "description": "Microsoft example: CODE(\"A\") is 65",
+    "tags": ["text", "code"],
+    "formula": "=CODE(\"A\")",
+    "expected": { "number": 65 }
+  },
+  {
+    "id": "fn.code-microsoft-cell",
+    "description": "Microsoft example: CODE of a cell holding \"A\" is 65",
+    "tags": ["text", "code"],
+    "formula": "=CODE(A2)",
+    "expected": { "number": 65 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A2": { "text": "A" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.code-lowercase-a",
+    "description": "CODE(\"a\") is 97",
+    "tags": ["text", "code"],
+    "formula": "=CODE(\"a\")",
+    "expected": { "number": 97 }
+  },
+  {
+    "id": "fn.code-first-only",
+    "description": "Only the first character is used: CODE(\"ABC\") is 65",
+    "tags": ["text", "code"],
+    "formula": "=CODE(\"ABC\")",
+    "expected": { "number": 65 }
+  },
+  {
+    "id": "fn.code-bang",
+    "description": "CODE(\"!\") is 33",
+    "tags": ["text", "code"],
+    "formula": "=CODE(\"!\")",
+    "expected": { "number": 33 }
+  },
+  {
+    "id": "fn.code-space",
+    "description": "CODE of a space is 32",
+    "tags": ["text", "code"],
+    "formula": "=CODE(\" \")",
+    "expected": { "number": 32 }
+  },
+  {
+    "id": "fn.code-digit-zero",
+    "description": "CODE(\"0\") is 48",
+    "tags": ["text", "code"],
+    "formula": "=CODE(\"0\")",
+    "expected": { "number": 48 }
+  },
+  {
+    "id": "fn.code-empty-string",
+    "description": "CODE(\"\") is #VALUE!",
+    "tags": ["text", "code", "errors"],
+    "formula": "=CODE(\"\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.code-blank-cell",
+    "description": "Blank cell coerces to \"\" then CODE is #VALUE!",
+    "tags": ["text", "code", "empty", "errors"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=CODE(A1)",
+    "expected": { "error": "#VALUE!" },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.code-stored-empty",
+    "description": "Stored empty text is #VALUE!",
+    "tags": ["text", "code", "errors"],
+    "formula": "=CODE(A1)",
+    "expected": { "error": "#VALUE!" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.code-tab",
+    "description": "CODE of a tab (C0 9) is 9",
+    "tags": ["text", "code"],
+    "formula": "=CODE(A1)",
+    "expected": { "number": 9 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "\t" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.code-lf",
+    "description": "CODE of a line feed (C0 10) is 10",
+    "tags": ["text", "code"],
+    "formula": "=CODE(A1)",
+    "expected": { "number": 10 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "\n" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.code-cr",
+    "description": "CODE of a carriage return (C0 13) is 13",
+    "tags": ["text", "code"],
+    "formula": "=CODE(A1)",
+    "expected": { "number": 13 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "\r" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.code-bel",
+    "description": "CODE of BEL (C0 7) is 7",
+    "tags": ["text", "code"],
+    "formula": "=CODE(A1)",
+    "expected": { "number": 7 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "\u0007x" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.code-del",
+    "description": "CODE of DEL (127) is 127 (CLEAN leftover, still a CODE value)",
+    "tags": ["text", "code"],
+    "formula": "=CODE(A1)",
+    "expected": { "number": 127 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "\u007f" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.code-nbsp",
+    "description": "NBSP (U+00A0) is Windows-1252 160",
+    "tags": ["text", "code"],
+    "formula": "=CODE(A1)",
+    "expected": { "number": 160 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "\u00a0" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.code-latin1-e-acute",
+    "description": "CODE(\"é\") is 233 (Windows-1252 / Latin-1)",
+    "tags": ["text", "code"],
+    "formula": "=CODE(\"é\")",
+    "expected": { "number": 233 }
+  },
+  {
+    "id": "fn.code-latin1-n-tilde",
+    "description": "CODE(\"ñ\") is 241",
+    "tags": ["text", "code"],
+    "formula": "=CODE(\"ñ\")",
+    "expected": { "number": 241 }
+  },
+  {
+    "id": "fn.code-euro",
+    "description": "CODE(\"€\") is 128 (Windows-1252; not UNICODE 8364)",
+    "tags": ["text", "code"],
+    "formula": "=CODE(\"€\")",
+    "expected": { "number": 128 }
+  },
+  {
+    "id": "fn.code-ellipsis",
+    "description": "CODE(\"…\") is 133 (Windows-1252 0x85)",
+    "tags": ["text", "code"],
+    "formula": "=CODE(\"…\")",
+    "expected": { "number": 133 }
+  },
+  {
+    "id": "fn.code-right-quote",
+    "description": "CODE of a typographic apostrophe is 146",
+    "tags": ["text", "code"],
+    "formula": "=CODE(\"’\")",
+    "expected": { "number": 146 }
+  },
+  {
+    "id": "fn.code-em-dash",
+    "description": "CODE of an em dash is 151",
+    "tags": ["text", "code"],
+    "formula": "=CODE(\"—\")",
+    "expected": { "number": 151 }
+  },
+  {
+    "id": "fn.code-trademark",
+    "description": "CODE(\"™\") is 153",
+    "tags": ["text", "code"],
+    "formula": "=CODE(\"™\")",
+    "expected": { "number": 153 }
+  },
+  {
+    "id": "fn.code-c1-leftover-129",
+    "description": "Unused CP1252 leftover U+0081 maps to 129 (CLEAN leftover)",
+    "tags": ["text", "code"],
+    "formula": "=CODE(A1)",
+    "expected": { "number": 129 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "\u0081" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.code-cjk",
+    "description": "CJK is outside Windows-1252: CODE(\"中\") is #VALUE!",
+    "tags": ["text", "code", "errors"],
+    "formula": "=CODE(\"中\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.code-emoji",
+    "description": "Emoji is outside Windows-1252: CODE of 😀 is #VALUE! (not UNICODE / not UTF-16 hi-surrogate)",
+    "tags": ["text", "code", "errors"],
+    "formula": "=CODE(A1)",
+    "expected": { "error": "#VALUE!" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "😀" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.code-greek",
+    "description": "Greek α is outside Windows-1252",
+    "tags": ["text", "code", "errors"],
+    "formula": "=CODE(\"α\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.code-combining-mark",
+    "description": "Decomposed e + combining acute: first scalar is 'e' (101), matching LEN/MID Compat v2",
+    "tags": ["text", "code"],
+    "formula": "=CODE(A1)",
+    "expected": { "number": 101 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "e\u0301" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.code-number",
+    "description": "CODE(65) coerces to \"65\"; first char '6' is 54",
+    "tags": ["text", "code", "coercion"],
+    "formula": "=CODE(65)",
+    "expected": { "number": 54 }
+  },
+  {
+    "id": "fn.code-number-123",
+    "description": "CODE(123) is CODE(\"123\") = 49",
+    "tags": ["text", "code", "coercion"],
+    "formula": "=CODE(123)",
+    "expected": { "number": 49 }
+  },
+  {
+    "id": "fn.code-number-zero",
+    "description": "CODE(0) is 48",
+    "tags": ["text", "code", "coercion"],
+    "formula": "=CODE(0)",
+    "expected": { "number": 48 }
+  },
+  {
+    "id": "fn.code-number-neg",
+    "description": "CODE(-2) is 45 (the minus sign)",
+    "tags": ["text", "code", "coercion"],
+    "formula": "=CODE(-2)",
+    "expected": { "number": 45 }
+  },
+  {
+    "id": "fn.code-number-decimal",
+    "description": "CODE(1.5) is 49 (\"1.5\")",
+    "tags": ["text", "code", "coercion"],
+    "formula": "=CODE(1.5)",
+    "expected": { "number": 49 }
+  },
+  {
+    "id": "fn.code-true",
+    "description": "CODE(TRUE) is 84 (\"TRUE\")",
+    "tags": ["text", "code", "coercion"],
+    "formula": "=CODE(TRUE)",
+    "expected": { "number": 84 }
+  },
+  {
+    "id": "fn.code-false",
+    "description": "CODE(FALSE) is 70 (\"FALSE\")",
+    "tags": ["text", "code", "coercion"],
+    "formula": "=CODE(FALSE)",
+    "expected": { "number": 70 }
+  },
+  {
+    "id": "fn.code-nested-upper",
+    "description": "CODE(UPPER(\"a\")) is 65",
+    "tags": ["text", "code"],
+    "formula": "=CODE(UPPER(\"a\"))",
+    "expected": { "number": 65 }
+  },
+  {
+    "id": "fn.code-nested-left",
+    "description": "CODE(LEFT(\"xyz\")) is 120",
+    "tags": ["text", "code"],
+    "formula": "=CODE(LEFT(\"xyz\"))",
+    "expected": { "number": 120 }
+  },
+  {
+    "id": "fn.code-nested-lower",
+    "description": "CODE(LOWER(\"ABC\")) is 97",
+    "tags": ["text", "code"],
+    "formula": "=CODE(LOWER(\"ABC\"))",
+    "expected": { "number": 97 }
+  },
+  {
+    "id": "fn.code-concat",
+    "description": "CODE of concatenated text uses the left operand's first char",
+    "tags": ["text", "code"],
+    "formula": "=CODE(\"Z\"&\"abc\")",
+    "expected": { "number": 90 }
+  },
+  {
+    "id": "fn.code-named",
+    "description": "CODE of a defined name referring to a cell",
+    "tags": ["text", "code", "named"],
+    "formula": "=CODE(Greeting)",
+    "expected": { "number": 72 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "Hello" }
+          }
+        }
+      ],
+      "names": [{ "name": "Greeting", "refers_to": "Sheet1!A1" }]
+    }
+  },
+  {
+    "id": "fn.code-implicit-intersect",
+    "description": "CODE(A1:A3) from host B2 uses implicit intersection (same row → A2)",
+    "tags": ["text", "code"],
+    "quirks": ["implicit-intersection"],
+    "at": "Sheet1!B2",
+    "formula": "=CODE(A1:A3)",
+    "expected": { "number": 66 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "Axx" },
+            "A2": { "text": "Bxx" },
+            "A3": { "text": "Cxx" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.code-array-literal",
+    "description": "Scalar CODE takes the top-left of an array literal: CODE({65,66}) is CODE(65)",
+    "tags": ["text", "code"],
+    "formula": "=CODE({65,66})",
+    "expected": { "number": 54 }
+  },
+  {
+    "id": "fn.code-err-div0",
+    "description": "Error argument propagates #DIV/0!",
+    "tags": ["text", "code", "errors"],
+    "formula": "=CODE(1/0)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.code-err-na",
+    "description": "NA() propagates #N/A",
+    "tags": ["text", "code", "errors"],
+    "formula": "=CODE(NA())",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.code-err-cell",
+    "description": "Error in the referenced cell propagates",
+    "tags": ["text", "code", "errors"],
+    "formula": "=CODE(A1)",
+    "expected": { "error": "#VALUE!" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "error": "#VALUE!" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.code-arity-zero",
+    "description": "CODE() with no arguments is #VALUE!",
+    "tags": ["text", "code", "errors"],
+    "formula": "=CODE()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.code-arity-two",
+    "description": "CODE with two arguments is #VALUE!",
+    "tags": ["text", "code", "errors"],
+    "formula": "=CODE(\"A\",\"B\")",
+    "expected": { "error": "#VALUE!" }
+  }
+]

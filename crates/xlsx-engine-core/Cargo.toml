@@ -305,6 +305,10 @@ name = "clean"
 harness = false
 
 [[bench]]
+name = "code"
+harness = false
+
+[[bench]]
 name = "proper"
 harness = false
 

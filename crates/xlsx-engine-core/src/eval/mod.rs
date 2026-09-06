@@ -10,6 +10,7 @@ pub mod byrow;
 pub mod choosecols;
 pub mod chooserows;
 pub mod clean;
+pub mod code;
 pub mod coerce;
 pub mod compare;
 pub mod concat;
