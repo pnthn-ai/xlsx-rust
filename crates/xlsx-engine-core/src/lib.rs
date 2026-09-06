@@ -13,6 +13,7 @@
 //! - [`eval::clean`] — Excel `CLEAN` (strip ASCII C0 `0..=31`)
 //! - [`eval::rept`] — Excel `REPT` (repeat + 32767 UTF-16 cap)
 //! - [`dates::weekday`] — O(1) Excel `WEEKDAY` on the date serial
+//! - [`dates::weeknum`] — O(1) Excel `WEEKNUM` (System 1 + ISO `return_type` 21)
 //! - [`dates::yearfrac`] — Excel `YEARFRAC` day-count bases 0–4
 //! - [`dates::workday_serial_intl`] — O(1) Excel `WORKDAY.INTL` weekend mask
 //! - [`dates::networkdays_count_mask`] — O(1) `NETWORKDAYS` / `NETWORKDAYS.INTL`
@@ -73,7 +74,8 @@ pub use dates::{workday_serial, workday_serial_intl};
 
 pub use ast::{BinOp, Expr, UnaryOp};
 pub use dates::{
-    weekday as excel_weekday, weekday_naive as excel_weekday_naive, yearfrac as excel_yearfrac,
+    weekday as excel_weekday, weekday_naive as excel_weekday_naive, weeknum as excel_weeknum,
+    weeknum_naive as excel_weeknum_naive, yearfrac as excel_yearfrac,
     yearfrac_naive as excel_yearfrac_naive,
 };
 pub use eval::bycol::{

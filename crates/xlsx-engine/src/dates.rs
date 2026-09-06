@@ -223,7 +223,6 @@ pub fn eomonth_serial(start: f64, months: f64, system: DateSystem) -> Result<f64
     }
 }
 
-
 pub fn to_1900_serial(serial: i32, system: DateSystem) -> Result<i32, ExcelError> {
     match system {
         DateSystem::Excel1900 => Ok(serial),
@@ -477,6 +476,59 @@ pub fn weekday(serial: f64, return_type: i32, system: DateSystem) -> Result<f64,
     map_weekday_return_type(type1_from_1900_serial(s1900), return_type)
 }
 
+fn weeknum_week_start_type1(return_type: i32) -> Result<i32, ExcelError> {
+    match return_type {
+        1 | 17 => Ok(1),
+        2 | 11 => Ok(2),
+        12 => Ok(3),
+        13 => Ok(4),
+        14 => Ok(5),
+        15 => Ok(6),
+        16 => Ok(7),
+        _ => Err(ExcelError::Num),
+    }
+}
+
+fn year_of_1900_serial(s: i32) -> Result<i32, ExcelError> {
+    if s < 0 {
+        if s >= -364 {
+            return Ok(1899);
+        }
+        return Err(ExcelError::Num);
+    }
+    if s <= 60 {
+        return Ok(1900);
+    }
+    if s > EXCEL_MAX_SERIAL_1900 {
+        return Err(ExcelError::Num);
+    }
+    Ok(serial_to_ymd(s as f64, DateSystem::Excel1900)?.0)
+}
+
+fn weeknum_system1(s1900: i32, start_type1: i32) -> Result<f64, ExcelError> {
+    let year = year_of_1900_serial(s1900)?;
+    let jan1 = serial_of_year_start(year)?;
+    let offset = (type1_from_1900_serial(jan1) - start_type1).rem_euclid(7);
+    Ok(((s1900 - jan1 + offset).div_euclid(7) + 1) as f64)
+}
+
+fn weeknum_iso(s1900: i32) -> Result<f64, ExcelError> {
+    let type1 = type1_from_1900_serial(s1900);
+    let iso_wd = if type1 == 1 { 7 } else { type1 - 1 };
+    let thursday = s1900 + (4 - iso_wd);
+    let year = year_of_1900_serial(thursday)?;
+    let jan1 = serial_of_year_start(year)?;
+    Ok(((thursday - jan1).div_euclid(7) + 1) as f64)
+}
+
+/// Excel `WEEKNUM(serial_number, [return_type])`.
+pub fn weeknum(serial: f64, return_type: i32, system: DateSystem) -> Result<f64, ExcelError> {
+    let s1900 = serial_as_1900_int(serial, system)?;
+    match return_type {
+        21 => weeknum_iso(s1900),
+        rt => weeknum_system1(s1900, weeknum_week_start_type1(rt)?),
+    }
+}
 
 #[cfg(test)]
 mod tests {
@@ -546,7 +598,6 @@ mod tests {
     }
 }
 
-
 /// Excel `YEARFRAC(start, end, [basis])`. Same day-count rules as
 /// `xlsx-engine-core::dates::yearfrac` (Wheeler / Excel 2007).
 pub fn yearfrac(start: f64, end: f64, basis: i32, system: DateSystem) -> Result<f64, ExcelError> {
@@ -580,16 +631,13 @@ pub fn yearfrac(start: f64, end: f64, basis: i32, system: DateSystem) -> Result<
     }
 }
 
-
 fn last_day_of_month(year: i32, month: i32, day: i32) -> bool {
     month >= 1 && month <= 12 && day == days_in_month(year, month)
 }
 
-
 fn ymd_lt(y1: i32, m1: i32, d1: i32, y2: i32, m2: i32, d2: i32) -> bool {
     (y1, m1, d1) < (y2, m2, d2)
 }
-
 
 fn basis0_us_nasd(a: (i32, i32, i32), b: (i32, i32, i32)) -> f64 {
     let (y1, m1, mut d1) = a;
@@ -611,7 +659,6 @@ fn basis0_us_nasd(a: (i32, i32, i32), b: (i32, i32, i32)) -> f64 {
     daydiff as f64 / 360.0
 }
 
-
 fn basis4_eu_30_360(a: (i32, i32, i32), b: (i32, i32, i32)) -> f64 {
     let (y1, m1, mut d1) = a;
     let (y2, m2, mut d2) = b;
@@ -625,7 +672,6 @@ fn basis4_eu_30_360(a: (i32, i32, i32), b: (i32, i32, i32)) -> f64 {
     daydiff as f64 / 360.0
 }
 
-
 fn appears_le_year(a: (i32, i32, i32), b: (i32, i32, i32)) -> bool {
     let (y1, m1, d1) = a;
     let (y2, m2, d2) = b;
@@ -634,7 +680,6 @@ fn appears_le_year(a: (i32, i32, i32), b: (i32, i32, i32)) -> bool {
     }
     y1 + 1 == y2 && (m1 > m2 || (m1 == m2 && d1 >= d2))
 }
-
 
 fn feb29_strictly_between(a: (i32, i32, i32), b: (i32, i32, i32)) -> bool {
     let (y1, m1, d1) = a;
@@ -646,7 +691,6 @@ fn feb29_strictly_between(a: (i32, i32, i32), b: (i32, i32, i32)) -> bool {
     }
     false
 }
-
 
 fn basis1_actual_actual(
     a: (i32, i32, i32),
@@ -672,13 +716,11 @@ fn basis1_actual_actual(
     Ok(actual * (num_years as f64) / (days_in_years as f64))
 }
 
-
 #[inline]
 pub fn is_weekend_mask_1900(serial_1900: i32, weekend_mask: u8) -> bool {
     let w = serial_1900.rem_euclid(7);
     weekend_mask & (1 << w) != 0
 }
-
 
 pub fn weekend_mask_from_code(code: i32) -> Result<u8, ExcelError> {
     match code {
@@ -700,7 +742,6 @@ pub fn weekend_mask_from_code(code: i32) -> Result<u8, ExcelError> {
     }
 }
 
-
 pub fn weekend_mask_from_string(s: &str) -> Result<u8, ExcelError> {
     let b = s.as_bytes();
     if b.len() != 7 {
@@ -717,7 +758,6 @@ pub fn weekend_mask_from_string(s: &str) -> Result<u8, ExcelError> {
     }
     Ok(mask)
 }
-
 
 pub fn workdays_through_mask(n: i32, weekend_mask: u8) -> i32 {
     if n < 0 {
@@ -738,14 +778,12 @@ pub fn workdays_through_mask(n: i32, weekend_mask: u8) -> i32 {
     complete * work_per_week + extra
 }
 
-
 pub fn weekday_count_mask(lo_1900: i32, hi_1900: i32, weekend_mask: u8) -> i32 {
     if hi_1900 < lo_1900 {
         return 0;
     }
     workdays_through_mask(hi_1900, weekend_mask) - workdays_through_mask(lo_1900 - 1, weekend_mask)
 }
-
 
 /// Excel `NETWORKDAYS.INTL` count for a pre-parsed weekend mask.
 pub fn networkdays_count_mask(
