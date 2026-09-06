@@ -119,4 +119,20 @@ fn main() {
             c.name
         );
     }
+
+    // Accuracy: tiny growth is where powf(1+ε, 1/n)−1 cancels.
+    let nper = 360.0;
+    let pv = 100_000.0;
+    let fv = 100_001.0;
+    let rel: f64 = (fv - pv) / pv;
+    let identity = (rel.ln_1p() / nper).exp_m1();
+    let naive = excel_rri_naive(nper, pv, fv).unwrap();
+    let fast = excel_rri(nper, pv, fv).unwrap();
+    println!();
+    println!("tiny-growth accuracy vs ln1p/expm1 identity {identity:.16e}");
+    println!(
+        "  naive relerr {:.3e}   optimized relerr {:.3e}",
+        ((naive - identity) / identity).abs(),
+        ((fast - identity) / identity).abs()
+    );
 }
