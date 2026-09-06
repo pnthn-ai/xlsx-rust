@@ -454,6 +454,7 @@ impl Interpreter {
             "PROPER" => self.fn_proper(args, ctx),
             "TRIM" => self.fn_trim(args, ctx),
             "CLEAN" => self.fn_clean(args, ctx),
+            "CHAR" => self.fn_char(args, ctx),
             "EXACT" => self.fn_exact(args, ctx),
             "FIND" => self.fn_find(args, ctx),
             "SEARCH" => self.fn_search(args, ctx),
@@ -1997,6 +1998,19 @@ impl Interpreter {
         }
         match self.as_text(&self.eval_scalar(&args[0], ctx)?) {
             Ok(s) => Ok(ExcelValue::Text(xlsx_engine_core::excel_clean(&s))),
+            Err(e) => Ok(ExcelValue::Error(e)),
+        }
+    }
+
+    fn fn_char(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.len() != 1 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        match self.as_number(&self.eval_scalar(&args[0], ctx)?) {
+            Ok(n) => match xlsx_engine_core::excel_char(n) {
+                Ok(s) => Ok(ExcelValue::Text(s.to_owned())),
+                Err(e) => Ok(ExcelValue::Error(e)),
+            },
             Err(e) => Ok(ExcelValue::Error(e)),
         }
     }

@@ -11,6 +11,7 @@
 //! - [`eval::functions`] also dispatches `SUMIF` / `COUNTIF` / `COUNTIFS` / `SUMPRODUCT` / `SUBSTITUTE` / `CLEAN`
 //! - [`eval::concat`] — Excel `CONCAT` (range/array flatten + 32767 cap)
 //! - [`eval::clean`] — Excel `CLEAN` (strip ASCII C0 `0..=31`)
+//! - [`eval::excel_char`] — Excel `CHAR` (Windows-1252, 1..=255)
 //! - [`eval::rept`] — Excel `REPT` (repeat + 32767 UTF-16 cap)
 //! - [`dates::weekday`] — O(1) Excel `WEEKDAY` on the date serial
 //! - [`dates::yearfrac`] — Excel `YEARFRAC` day-count bases 0–4
@@ -89,6 +90,10 @@ pub use eval::clean::{clean as excel_clean, clean_naive as excel_clean_naive};
 pub use eval::concat::{concat_naive_join, eval_concat_formula, ConcatBuilder, CONCAT_MAX_CHARS};
 pub use eval::drop::{apply as excel_drop, apply_naive as excel_drop_naive};
 pub use eval::exact::{exact as excel_exact, exact_naive as excel_exact_naive};
+pub use eval::excel_char::{
+    excel_char, excel_char_naive, excel_char_owned, trunc_code as char_trunc_code,
+    w1252_scalar as char_w1252_scalar,
+};
 pub use eval::excel_let::{
     eval_fast as excel_let_eval_fast, eval_naive as excel_let_eval_naive, FastCalc,
     FastOp as LetFastOp, MAX_PAIRS as LET_MAX_PAIRS,

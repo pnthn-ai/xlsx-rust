@@ -17,6 +17,7 @@ pub mod countifs;
 pub mod drop;
 pub mod empty;
 pub mod exact;
+pub mod excel_char;
 pub mod excel_let;
 pub mod expand;
 pub mod filter;

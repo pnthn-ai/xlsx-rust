@@ -111,3 +111,7 @@ harness = false
 name = "fn_proper"
 harness = false
 
+[[bench]]
+name = "fn_char"
+harness = false
+

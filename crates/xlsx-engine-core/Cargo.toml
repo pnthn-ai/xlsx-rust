@@ -309,6 +309,10 @@ name = "exact"
 harness = false
 
 [[bench]]
+name = "excel_char"
+harness = false
+
+[[bench]]
 name = "textsplit"
 harness = false
 
