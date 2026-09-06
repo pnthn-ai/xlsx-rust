@@ -383,5 +383,9 @@ mod tests {
             eval_formula_in(&wb, "=UNICODE(\"中\")").unwrap(),
             ExcelValue::Number(20013.0)
         );
+        assert_eq!(
+            eval_formula_in(&wb, "=SUM(MAP({\"A\";\"B\";\"C\"},LAMBDA(x,UNICODE(x))))").unwrap(),
+            ExcelValue::Number(198.0)
+        );
     }
 }

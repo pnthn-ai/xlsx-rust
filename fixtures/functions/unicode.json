@@ -455,5 +455,12 @@
     "tags": ["text", "unicode", "errors"],
     "formula": "=UNICODE(\"a\",\"b\")",
     "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.unicode-map-sum",
+    "description": "SUM(MAP(array, LAMBDA(x, UNICODE(x)))) adds first-scalar codes",
+    "tags": ["text", "unicode", "map"],
+    "formula": "=SUM(MAP({\"A\";\"B\";\"C\"},LAMBDA(x,UNICODE(x))))",
+    "expected": { "number": 198 }
   }
 ]
