@@ -106,11 +106,13 @@ fn time_it(iters: u32, mut f: impl FnMut()) -> Duration {
 }
 
 fn fmt_dur(d: Duration) -> String {
-    let us = d.as_secs_f64() * 1e6;
-    if us >= 1000.0 {
-        format!("{:.2} ms", us / 1000.0)
+    let ns = d.as_secs_f64() * 1e9;
+    if ns >= 1_000_000.0 {
+        format!("{:.2} ms", ns / 1e6)
+    } else if ns >= 1000.0 {
+        format!("{:.1} µs", ns / 1000.0)
     } else {
-        format!("{us:.1} µs")
+        format!("{ns:.1} ns")
     }
 }
 
