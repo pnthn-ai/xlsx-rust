@@ -387,7 +387,7 @@ pub(crate) fn apply(
     if let Some(fast) = classify(body, row_param, col_param) {
         return Ok(fill_fast(rows, cols, &fast));
     }
-    apply_general(ev, ctx, rows, cols, row_param, col_param, body)
+    apply_naive(ev, ctx, rows, cols, row_param, col_param, body)
 }
 
 /// Always walk the AST (bench baseline / seed-compliant-shaped path).
@@ -561,6 +561,36 @@ mod tests {
             )
             .unwrap(),
             ExcelValue::Array(vec![vec![n(7.0)]])
+        );
+    }
+
+    #[test]
+    fn apply_naive_matches_eval_for_if_body() {
+        use crate::eval::Ctx;
+        use crate::eval::Evaluator;
+        use std::collections::HashSet;
+        use xlsx_types::{CellAddr, EvalSpec, EvalTarget};
+
+        let spec = EvalSpec {
+            case_id: "naive".into(),
+            workbook: Workbook::default(),
+            target: EvalTarget::formula("=MAKEARRAY(2,2,LAMBDA(r,c,IF(r=c,1,0)))"),
+            options: Default::default(),
+        };
+        let ev = Evaluator::new();
+        let mut ctx = Ctx {
+            spec: &spec,
+            current_sheet: "Sheet1".into(),
+            depth: 0,
+            visiting: HashSet::new(),
+            host: CellAddr::new(0, 0),
+            locals: Vec::new(),
+        };
+        let body = parse("IF(r=c,1,0)").unwrap();
+        let via_naive = apply_naive(&ev, &mut ctx, 2, 2, "r", "c", &body).unwrap();
+        assert_eq!(
+            via_naive,
+            ExcelValue::Array(vec![vec![n(1.0), n(0.0)], vec![n(0.0), n(1.0)],])
         );
     }
 }
