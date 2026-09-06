@@ -75,3 +75,7 @@ harness = false
 name = "fn_makearray"
 harness = false
 
+[[bench]]
+name = "fn_substitute"
+harness = false
+
