@@ -35,6 +35,7 @@ pub mod sortby;
 pub mod sequence;
 pub mod randarray;
 pub mod makearray;
+pub mod reduce;
 pub mod switch;
 pub mod unique;
 pub mod tocol;
@@ -1970,6 +1971,23 @@ mod tests {
         );
         assert_eq!(
             eval_formula_in(&wb, "=MAKEARRAY(0,1,LAMBDA(r,c,1))").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
+        );
+    }
+
+    #[test]
+    fn reduce_sum_and_omitted_initial() {
+        let wb = Workbook::default();
+        assert_eq!(
+            eval_formula_in(&wb, "=REDUCE(0,{1,2,3},LAMBDA(a,b,a+b))").unwrap(),
+            ExcelValue::Number(6.0)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=REDUCE(,{10,3},LAMBDA(a,b,a-b))").unwrap(),
+            ExcelValue::Number(7.0)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=REDUCE(0,{1},1)").unwrap(),
             ExcelValue::Error(ExcelError::Value)
         );
     }

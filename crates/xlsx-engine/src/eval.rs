@@ -8,7 +8,11 @@ use crate::dates::{
 use crate::parse::{parse, BinOp, Expr, UnaryOp};
 use std::collections::{HashMap, HashSet};
 use xlsx_types::{
-    count_matches, excel_ceiling, excel_ceiling_math, excel_floor, excel_floor_math, excel_num_eq, excel_pmt, excel_round_15, ArrayMode, CellAddr, CellRef, Criterion, EvalError, EvalSpec, EvalTarget, ExcelError, ExcelValue, RangeRef, Workbook, excel_fv, excel_pv, excel_nper, excel_rate, excel_ipmt, excel_ppmt, excel_cumprinc, excel_cumipmt, excel_effect, excel_nominal, excel_pduration, excel_rri,
+    count_matches, excel_ceiling, excel_ceiling_math, excel_cumipmt, excel_cumprinc, excel_effect,
+    excel_floor, excel_floor_math, excel_fv, excel_ipmt, excel_nominal, excel_nper, excel_num_eq,
+    excel_pduration, excel_pmt, excel_ppmt, excel_pv, excel_rate, excel_round_15, excel_rri,
+    ArrayMode, CellAddr, CellRef, Criterion, EvalError, EvalSpec, EvalTarget, ExcelError,
+    ExcelValue, RangeRef, Workbook,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -472,6 +476,7 @@ impl Interpreter {
             "DROP" => self.fn_drop(args, ctx),
             "CHOOSEROWS" => self.fn_chooserows(args, ctx),
             "MAKEARRAY" | "_XLFN.MAKEARRAY" => self.fn_makearray(args, ctx),
+            "REDUCE" | "_XLFN.REDUCE" => self.fn_reduce(args, ctx),
             "LAMBDA" | "_XLFN.LAMBDA" => Ok(ExcelValue::Error(ExcelError::Calc)),
             "CHOOSECOLS" => self.fn_choosecols(args, ctx),
             "NETWORKDAYS.INTL" => self.fn_networkdays_intl(args, ctx),
@@ -2603,11 +2608,7 @@ impl Interpreter {
 
         let sheets: Vec<String> = pairs
             .iter()
-            .map(|(r, _)| {
-                r.sheet
-                    .clone()
-                    .unwrap_or_else(|| ctx.current_sheet.clone())
-            })
+            .map(|(r, _)| r.sheet.clone().unwrap_or_else(|| ctx.current_sheet.clone()))
             .collect();
         if sheets
             .iter()
@@ -3755,6 +3756,67 @@ impl Interpreter {
         }
         ctx.locals.truncate(base);
         Ok(ExcelValue::Array(grid))
+    }
+
+    fn fn_reduce(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        let (initial_expr, array_expr, lambda_expr) = match args.len() {
+            2 => (None, &args[0], &args[1]),
+            3 => {
+                let init = if matches!(args[0], Expr::Missing) {
+                    None
+                } else {
+                    Some(&args[0])
+                };
+                (init, &args[1], &args[2])
+            }
+            _ => return Ok(ExcelValue::Error(ExcelError::Value)),
+        };
+        let initial = if let Some(expr) = initial_expr {
+            let v = self.eval_expr(expr, ctx)?;
+            if let ExcelValue::Error(e) = v {
+                return Ok(ExcelValue::Error(e));
+            }
+            Some(v)
+        } else {
+            None
+        };
+        if let Expr::Range(range) = array_expr {
+            let sheet = range
+                .sheet
+                .clone()
+                .unwrap_or_else(|| ctx.current_sheet.clone());
+            if ctx.spec.workbook.sheet(Some(&sheet)).is_err() {
+                return Ok(ExcelValue::Error(ExcelError::Ref));
+            }
+        }
+        let array = self.eval_expr(array_expr, ctx)?;
+        if let ExcelValue::Error(e) = array {
+            return Ok(ExcelValue::Error(e));
+        }
+        let (names, body) = match resolve_seed_lambda_n(lambda_expr, ctx, 2, 0) {
+            Ok(l) => l,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        let items = xlsx_engine_core::eval::reduce::flatten_row_major(&array);
+        let had_initial = initial.is_some();
+        let mut acc = match initial {
+            Some(v) => v,
+            None => match items.first() {
+                Some(v) => v.clone(),
+                None => return Ok(ExcelValue::Error(ExcelError::Calc)),
+            },
+        };
+        let start = if had_initial { 0 } else { 1 };
+        let base = ctx.locals.len();
+        ctx.locals.push((names[0].clone(), ExcelValue::Empty));
+        ctx.locals.push((names[1].clone(), ExcelValue::Empty));
+        for v in &items[start..] {
+            ctx.locals[base].1 = acc;
+            ctx.locals[base + 1].1 = v.clone();
+            acc = self.eval_expr(&body, ctx)?;
+        }
+        ctx.locals.truncate(base);
+        Ok(acc)
     }
 
     fn fn_rri(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
@@ -5030,7 +5092,6 @@ fn collect_irr_cashflows(
     let mut out = Vec::new();
     collect_irr_cashflows_into(v, from_range, sem, &mut out)?;
     Ok(out)
-
 }
 fn collect_textafter_delims(v: &ExcelValue, out: &mut Vec<String>) -> Result<(), ExcelError> {
     match v {
@@ -5066,7 +5127,6 @@ fn collect_textafter_delims(v: &ExcelValue, out: &mut Vec<String>) -> Result<(),
     }
 }
 
-
 fn flatten_textbefore_delims(
     v: &ExcelValue,
     out: &mut Vec<String>,
@@ -5089,48 +5149,58 @@ fn flatten_textbefore_delims(
     }
 }
 
-
 fn lookup_local(locals: &[(String, ExcelValue)], name: &str) -> Option<ExcelValue> {
     xlsx_engine_core::eval::makearray::lookup_binding(locals, name)
 }
 
-
 fn seed_lambda_name(name: &str) -> bool {
     xlsx_engine_core::eval::makearray::is_lambda_name(name)
 }
-
 
 fn resolve_seed_lambda(
     expr: &Expr,
     ctx: &Ctx<'_>,
     depth: usize,
 ) -> Result<(String, String, Expr), ExcelError> {
-    if depth > 16 {
+    let (mut names, body) = resolve_seed_lambda_n(expr, ctx, 2, depth)?;
+    let col = names.pop().unwrap();
+    let row = names.pop().unwrap();
+    Ok((row, col, body))
+}
+
+fn resolve_seed_lambda_n(
+    expr: &Expr,
+    ctx: &Ctx<'_>,
+    n: usize,
+    depth: usize,
+) -> Result<(Vec<String>, Expr), ExcelError> {
+    if depth > 16 || n == 0 {
         return Err(ExcelError::Value);
     }
     match expr {
         Expr::Call { name, args } if seed_lambda_name(name) => {
-            if args.len() != 3 {
+            if args.len() != n + 1 {
                 return Err(ExcelError::Value);
             }
-            let row = match &args[0] {
-                Expr::Name(n) => xlsx_engine_core::eval::makearray::strip_xlpm(n).to_string(),
-                _ => return Err(ExcelError::Value),
-            };
-            let col = match &args[1] {
-                Expr::Name(n) => xlsx_engine_core::eval::makearray::strip_xlpm(n).to_string(),
-                _ => return Err(ExcelError::Value),
-            };
-            Ok((row, col, args[2].clone()))
+            let mut names = Vec::with_capacity(n);
+            for p in &args[..n] {
+                match p {
+                    Expr::Name(nm) => {
+                        names.push(xlsx_engine_core::eval::makearray::strip_xlpm(nm).to_string())
+                    }
+                    _ => return Err(ExcelError::Value),
+                }
+            }
+            Ok((names, args[n].clone()))
         }
-        Expr::Name(n) => {
+        Expr::Name(nm) => {
             let def = ctx
                 .spec
                 .workbook
-                .defined_name(n)
+                .defined_name(nm)
                 .map_err(|_| ExcelError::Value)?;
             let ast = parse(&def.refers_to).map_err(|_| ExcelError::Value)?;
-            resolve_seed_lambda(&ast, ctx, depth + 1)
+            resolve_seed_lambda_n(&ast, ctx, n, depth + 1)
         }
         _ => Err(ExcelError::Value),
     }
