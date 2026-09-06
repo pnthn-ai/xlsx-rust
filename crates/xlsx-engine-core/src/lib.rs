@@ -6,6 +6,7 @@
 //! - [`eval::coerce`] / [`eval::compare`] / [`eval::empty`] — quirk modules
 //! - [`eval::functions`] — worksheet functions used by the expanded corpus
 //! - [`eval::textbefore`] — Excel `TEXTBEFORE` (nth delimiter, match_end / if_not_found)
+//! - [`eval::proper`] — Excel `PROPER` (ASCII title-case; apostrophe / digit breaks)
 //! - [`text_format`] — Excel `TEXT` for a documented number/date format subset
 //! - [`eval::functions`] also dispatches `SUMIF` / `COUNTIF` / `COUNTIFS` / `SUMPRODUCT` / `SUBSTITUTE`
 //! - [`eval::concat`] — Excel `CONCAT` (range/array flatten + 32767 cap)
@@ -81,6 +82,7 @@ pub use eval::makearray::{
     fill_fast as excel_makearray, fill_naive as excel_makearray_naive, FastBody, FastOp,
 };
 pub use eval::npv::{npv as excel_npv, npv_naive as excel_npv_naive};
+pub use eval::proper::{proper as excel_proper, proper_naive as excel_proper_naive};
 pub use eval::randarray::{
     apply as excel_randarray, apply_naive as excel_randarray_naive, fill as excel_randarray_fill,
     fill_naive as excel_randarray_fill_naive, XorShift64,

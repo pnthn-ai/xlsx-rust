@@ -47,6 +47,7 @@ pub mod vstack;
 pub mod wrapcols;
 pub mod wraprows;
 pub mod take;
+pub mod proper;
 pub mod textafter;
 pub mod textbefore;
 

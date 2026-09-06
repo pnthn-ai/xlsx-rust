@@ -445,6 +445,7 @@ impl Interpreter {
             "LEN" => self.fn_len(args, ctx),
             "LOWER" => self.fn_case(args, ctx, true),
             "UPPER" => self.fn_case(args, ctx, false),
+            "PROPER" => self.fn_proper(args, ctx),
             "TRIM" => self.fn_trim(args, ctx),
             "EXACT" => self.fn_exact(args, ctx),
             "FIND" => self.fn_find(args, ctx),
@@ -1874,6 +1875,16 @@ impl Interpreter {
         }
         match self.as_text(&self.eval_scalar(&args[0], ctx)?) {
             Ok(s) => Ok(ExcelValue::Number(s.chars().count() as f64)),
+            Err(e) => Ok(ExcelValue::Error(e)),
+        }
+    }
+
+    fn fn_proper(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.len() != 1 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        match self.as_text(&self.eval_scalar(&args[0], ctx)?) {
+            Ok(s) => Ok(ExcelValue::Text(xlsx_engine_core::excel_proper(&s))),
             Err(e) => Ok(ExcelValue::Error(e)),
         }
     }
