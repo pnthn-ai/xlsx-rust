@@ -30,6 +30,7 @@ struct Ctx<'a> {
     depth: usize,
     visiting: HashSet<String>,
     host: CellAddr,
+    locals: Vec<(String, ExcelValue)>,
 }
 
 impl Interpreter {
@@ -49,6 +50,7 @@ impl Interpreter {
             depth: 0,
             visiting: HashSet::new(),
             host: default_cell.addr,
+            locals: Vec::new(),
         };
         match &spec.target {
             EvalTarget::Formula { formula, at } => {
@@ -167,6 +169,9 @@ impl Interpreter {
     }
 
     fn eval_named(&self, name: &str, ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if let Some(v) = lookup_local(&ctx.locals, name) {
+            return Ok(v);
+        }
         let def = match ctx.spec.workbook.defined_name(name) {
             Ok(d) => d,
             Err(_) => return Ok(ExcelValue::Error(ExcelError::Name)),
@@ -385,6 +390,8 @@ impl Interpreter {
             "HLOOKUP" => self.fn_hlookup(args, ctx),
             "XLOOKUP" => self.fn_xlookup(args, ctx),
             "FILTER" => self.fn_filter(args, ctx),
+            "MAKEARRAY" | "_XLFN.MAKEARRAY" => self.fn_makearray(args, ctx),
+            "LAMBDA" | "_XLFN.LAMBDA" => Ok(ExcelValue::Error(ExcelError::Calc)),
             "INDEX" => self.fn_index(args, ctx),
             "MATCH" => self.fn_match(args, ctx),
             "CHOOSE" => self.fn_choose(args, ctx),
@@ -1118,6 +1125,47 @@ impl Interpreter {
         }
     }
 
+    fn fn_makearray(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.len() != 3 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        let rows_v = self.eval_scalar(&args[0], ctx)?;
+        if let ExcelValue::Error(e) = rows_v {
+            return Ok(ExcelValue::Error(e));
+        }
+        let cols_v = self.eval_scalar(&args[1], ctx)?;
+        if let ExcelValue::Error(e) = cols_v {
+            return Ok(ExcelValue::Error(e));
+        }
+        let (rows, cols) = match xlsx_engine_core::eval::makearray::dims(&rows_v, &cols_v) {
+            Ok(d) => d,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        let (row_p, col_p, body) = match resolve_seed_lambda(&args[2], ctx, 0) {
+            Ok(l) => l,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        let base = ctx.locals.len();
+        ctx.locals.push((row_p, ExcelValue::Number(1.0)));
+        ctx.locals.push((col_p, ExcelValue::Number(1.0)));
+        let mut grid = Vec::with_capacity(rows);
+        for r in 1..=rows {
+            ctx.locals[base].1 = ExcelValue::Number(r as f64);
+            let mut row = Vec::with_capacity(cols);
+            for c in 1..=cols {
+                ctx.locals[base + 1].1 = ExcelValue::Number(c as f64);
+                let v = self.eval_expr(&body, ctx)?;
+                row.push(match v {
+                    ExcelValue::Array(_) => ExcelValue::Error(ExcelError::Calc),
+                    other => other,
+                });
+            }
+            grid.push(row);
+        }
+        ctx.locals.truncate(base);
+        Ok(ExcelValue::Array(grid))
+    }
+
     fn fn_filter(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
         if args.len() < 2 || args.len() > 3 {
             return Ok(ExcelValue::Error(ExcelError::Value));
@@ -1700,7 +1748,7 @@ impl Interpreter {
         }
     }
 
-        fn collect_holiday_serials(&self, v: &ExcelValue, out: &mut Vec<f64>) -> Option<ExcelError> {
+    fn collect_holiday_serials(&self, v: &ExcelValue, out: &mut Vec<f64>) -> Option<ExcelError> {
         match v {
             ExcelValue::Array(rows) => {
                 for row in rows {
@@ -2587,6 +2635,50 @@ fn intersect_ranges(a: &RangeRef, b: &RangeRef) -> Option<RangeRef> {
         CellAddr::new(c1, r1),
         CellAddr::new(c2, r2),
     ))
+}
+
+fn lookup_local(locals: &[(String, ExcelValue)], name: &str) -> Option<ExcelValue> {
+    xlsx_engine_core::eval::makearray::lookup_binding(locals, name)
+}
+
+fn seed_lambda_name(name: &str) -> bool {
+    xlsx_engine_core::eval::makearray::is_lambda_name(name)
+}
+
+fn resolve_seed_lambda(
+    expr: &Expr,
+    ctx: &Ctx<'_>,
+    depth: usize,
+) -> Result<(String, String, Expr), ExcelError> {
+    if depth > 16 {
+        return Err(ExcelError::Value);
+    }
+    match expr {
+        Expr::Call { name, args } if seed_lambda_name(name) => {
+            if args.len() != 3 {
+                return Err(ExcelError::Value);
+            }
+            let row = match &args[0] {
+                Expr::Name(n) => xlsx_engine_core::eval::makearray::strip_xlpm(n).to_string(),
+                _ => return Err(ExcelError::Value),
+            };
+            let col = match &args[1] {
+                Expr::Name(n) => xlsx_engine_core::eval::makearray::strip_xlpm(n).to_string(),
+                _ => return Err(ExcelError::Value),
+            };
+            Ok((row, col, args[2].clone()))
+        }
+        Expr::Name(n) => {
+            let def = ctx
+                .spec
+                .workbook
+                .defined_name(n)
+                .map_err(|_| ExcelError::Value)?;
+            let ast = parse(&def.refers_to).map_err(|_| ExcelError::Value)?;
+            resolve_seed_lambda(&ast, ctx, depth + 1)
+        }
+        _ => Err(ExcelError::Value),
+    }
 }
 
 fn flatten_vector(v: ExcelValue) -> Vec<ExcelValue> {
