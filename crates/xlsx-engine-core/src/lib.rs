@@ -14,6 +14,7 @@
 //! - [`eval::code`] — Excel `CODE` (Windows-1252 first-character code)
 //! - [`eval::excel_char`] — Excel `CHAR` (Windows-1252, 1..=255)
 //! - [`eval::rept`] — Excel `REPT` (repeat + 32767 UTF-16 cap)
+//! - [`eval::right`] — Excel `RIGHT` (Compat v2 Unicode-scalar suffix)
 //! - [`dates::edate_serial`] — Excel `EDATE` (same-day month shift + clip)
 //! - [`dates::weekday`] — O(1) Excel `WEEKDAY` on the date serial
 //! - [`dates::weeknum`] — O(1) Excel `WEEKNUM` (System 1 + ISO `return_type` 21)
@@ -147,6 +148,10 @@ pub use eval::replace::{replace as excel_replace, replace_naive as excel_replace
 pub use eval::rept::{
     rept as excel_rept, rept_naive as excel_rept_naive, trunc_times as rept_trunc_times,
     REPT_MAX_CHARS,
+};
+pub use eval::right::{
+    right as excel_right, right_naive as excel_right_naive, right_owned as excel_right_owned,
+    trunc_num_chars as right_trunc_num_chars,
 };
 pub use eval::round::{
     rounddown as excel_rounddown, rounddown_naive as excel_rounddown_naive,

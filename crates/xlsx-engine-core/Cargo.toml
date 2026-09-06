@@ -360,3 +360,7 @@ harness = false
 name = "text"
 harness = false
 
+[[bench]]
+name = "right"
+harness = false
+

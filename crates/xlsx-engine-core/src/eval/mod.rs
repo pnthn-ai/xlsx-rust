@@ -38,6 +38,7 @@ pub mod randarray;
 pub mod reduce;
 pub mod replace;
 pub mod rept;
+pub mod right;
 pub mod round;
 pub mod scan;
 pub mod search;

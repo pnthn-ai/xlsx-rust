@@ -123,3 +123,7 @@ harness = false
 name = "fn_text"
 harness = false
 
+[[bench]]
+name = "fn_right"
+harness = false
+

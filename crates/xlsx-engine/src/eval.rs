@@ -450,7 +450,7 @@ impl Interpreter {
             "ISOWEEKNUM" => self.fn_isoweeknum(args, ctx),
             "DAYS360" => self.fn_days360(args, ctx),
             "LEFT" => self.fn_left_right(args, ctx, true),
-            "RIGHT" => self.fn_left_right(args, ctx, false),
+            "RIGHT" => self.fn_right(args, ctx),
             "MID" => self.fn_mid(args, ctx),
             "LEN" => self.fn_len(args, ctx),
             "UNICODE" => self.fn_unicode(args, ctx),
@@ -1944,6 +1944,30 @@ impl Interpreter {
             })),
             Err(e) => Ok(ExcelValue::Error(e)),
         }
+    }
+
+    fn fn_right(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.is_empty() || args.len() > 2 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        let text = match self.as_text(&self.eval_scalar(&args[0], ctx)?) {
+            Ok(s) => s,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        let n = if args.len() == 2 {
+            match self.as_number(&self.eval_scalar(&args[1], ctx)?) {
+                Ok(n) => match xlsx_engine_core::right_trunc_num_chars(n) {
+                    Ok(n) => n,
+                    Err(e) => return Ok(ExcelValue::Error(e)),
+                },
+                Err(e) => return Ok(ExcelValue::Error(e)),
+            }
+        } else {
+            1
+        };
+        Ok(ExcelValue::Text(xlsx_engine_core::excel_right_owned(
+            text, n,
+        )))
     }
 
     fn fn_left_right(
