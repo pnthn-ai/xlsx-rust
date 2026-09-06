@@ -8,22 +8,23 @@ pub mod coerce;
 pub mod compare;
 pub mod concat;
 pub mod empty;
-pub mod find;
 pub mod filter;
+pub mod find;
 pub mod functions;
-pub mod substitute;
-pub mod sumif;
-pub mod sumproduct;
+pub mod ifs;
+pub mod irr;
+pub mod makearray;
+pub mod npv;
 pub mod replace;
-pub mod sumifs;
-pub mod textjoin;
 pub mod round;
 pub mod search;
-pub mod npv;
+pub mod substitute;
+pub mod sumif;
+pub mod sumifs;
+pub mod sumproduct;
 pub mod switch;
-pub mod ifs;
+pub mod textjoin;
 pub mod unique;
-pub mod irr;
 
 use crate::ast::{BinOp, Expr, UnaryOp};
 use crate::parse::parse;
@@ -41,6 +42,8 @@ pub(crate) struct Ctx<'a> {
     depth: usize,
     visiting: HashSet<String>,
     host: CellAddr,
+    /// LAMBDA parameter bindings (MAKEARRAY / nested LAMBDA). Innermost last.
+    pub(crate) locals: Vec<(String, ExcelValue)>,
 }
 
 impl Evaluator {
@@ -80,6 +83,7 @@ impl Evaluator {
             depth: 0,
             visiting: HashSet::new(),
             host: spec.default_cell().addr,
+            locals: Vec::new(),
         }
     }
 
@@ -273,7 +277,14 @@ impl Evaluator {
         Ok(ExcelValue::Array(rows))
     }
 
-    pub(crate) fn eval_named(&self, name: &str, ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    pub(crate) fn eval_named(
+        &self,
+        name: &str,
+        ctx: &mut Ctx<'_>,
+    ) -> Result<ExcelValue, EvalError> {
+        if let Some(v) = makearray::lookup_binding(&ctx.locals, name) {
+            return Ok(v);
+        }
         let def = match ctx.spec.workbook.defined_name(name) {
             Ok(d) => d,
             Err(_) => return Ok(ExcelValue::Error(ExcelError::Name)),
@@ -541,6 +552,7 @@ pub fn eval_sumif_materialized(
         depth: 0,
         visiting: HashSet::new(),
         host: spec.default_cell().addr,
+        locals: Vec::new(),
     };
     match ast {
         Expr::Call { name, args } if name.eq_ignore_ascii_case("SUMIF") => {
@@ -570,6 +582,7 @@ pub fn eval_sumifs_materialized(
         depth: 0,
         visiting: HashSet::new(),
         host: spec.default_cell().addr,
+        locals: Vec::new(),
     };
     match ast {
         Expr::Call { name, args } if name.eq_ignore_ascii_case("SUMIFS") => {
@@ -599,6 +612,7 @@ pub fn eval_averageif_materialized(
         depth: 0,
         visiting: HashSet::new(),
         host: spec.default_cell().addr,
+        locals: Vec::new(),
     };
     match ast {
         Expr::Call { name, args } if name.eq_ignore_ascii_case("AVERAGEIF") => {
@@ -689,6 +703,26 @@ mod tests {
         assert_eq!(
             eval_formula_in(&wb, "=NOTAFUNCTION(1)").unwrap(),
             ExcelValue::Error(ExcelError::Name)
+        );
+    }
+
+    #[test]
+    fn makearray_mul_and_index() {
+        let wb = Workbook::default();
+        assert_eq!(
+            eval_formula_in(&wb, "=MAKEARRAY(2,2,LAMBDA(r,c,r*c))").unwrap(),
+            ExcelValue::Array(vec![
+                vec![ExcelValue::Number(1.0), ExcelValue::Number(2.0)],
+                vec![ExcelValue::Number(2.0), ExcelValue::Number(4.0)],
+            ])
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=INDEX(MAKEARRAY(3,3,LAMBDA(r,c,r*c)),2,3)").unwrap(),
+            ExcelValue::Number(6.0)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=MAKEARRAY(0,1,LAMBDA(r,c,1))").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
         );
     }
 

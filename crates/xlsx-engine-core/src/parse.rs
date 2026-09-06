@@ -636,4 +636,24 @@ mod tests {
             other => panic!("{other:?}"),
         }
     }
+
+    #[test]
+    fn parse_makearray_lambda() {
+        match parse("=MAKEARRAY(3,3,LAMBDA(r,c,r*c))").unwrap() {
+            Expr::Call { name, args } => {
+                assert!(name.eq_ignore_ascii_case("MAKEARRAY"));
+                assert_eq!(args.len(), 3);
+                match &args[2] {
+                    Expr::Call { name, args } => {
+                        assert!(name.eq_ignore_ascii_case("LAMBDA"));
+                        assert_eq!(args.len(), 3);
+                        assert!(matches!(&args[0], Expr::Name(n) if n == "r"));
+                        assert!(matches!(&args[1], Expr::Name(n) if n == "c"));
+                    }
+                    other => panic!("{other:?}"),
+                }
+            }
+            other => panic!("{other:?}"),
+        }
+    }
 }

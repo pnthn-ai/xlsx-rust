@@ -2,7 +2,8 @@
 //!
 //! `IFS` lives with the other logicals here; pair selection is [`super::ifs`].
 //! `FILTER` lives with the other lookups here; the mask/select kernel is
-//! [`super::filter`].
+//! [`super::filter`]. `MAKEARRAY` binds a two-parameter `LAMBDA` and fills
+//! the grid in [`super::makearray`].
 //!
 //! Unknown names return `#NAME?` (an Excel value, not [`EvalError`]).
 //! Financial TVM starts with `PMT` (`xlsx_types::excel_pmt`); `PV`/`FV`/`NPER`
@@ -53,6 +54,8 @@ pub(crate) fn dispatch(
         "HLOOKUP" => fn_hlookup(ev, args, ctx),
         "XLOOKUP" => fn_xlookup(ev, args, ctx),
         "FILTER" => fn_filter(ev, args, ctx),
+        "MAKEARRAY" | "_XLFN.MAKEARRAY" => fn_makearray(ev, args, ctx),
+        "LAMBDA" | "_XLFN.LAMBDA" => Ok(ExcelValue::Error(ExcelError::Calc)),
         "INDEX" => fn_index(ev, args, ctx),
         "MATCH" => fn_match(ev, args, ctx),
         "CHOOSE" => fn_choose(ev, args, ctx),
@@ -408,6 +411,33 @@ fn fn_hlookup(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelV
         Some(c) => Ok(rows[row_idx - 1][c].clone()),
         None => Ok(ExcelValue::Error(ExcelError::Na)),
     }
+}
+
+/// Excel `MAKEARRAY(rows, cols, LAMBDA(r, c, body))`.
+///
+/// Third argument is inspected as a LAMBDA (inline or defined name), not
+/// evaluated as a worksheet value. See [`super::makearray`].
+fn fn_makearray(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    if args.len() != 3 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    let rows_v = ev.eval_scalar(&args[0], ctx)?;
+    if let ExcelValue::Error(e) = rows_v {
+        return Ok(ExcelValue::Error(e));
+    }
+    let cols_v = ev.eval_scalar(&args[1], ctx)?;
+    if let ExcelValue::Error(e) = cols_v {
+        return Ok(ExcelValue::Error(e));
+    }
+    let (rows, cols) = match super::makearray::dims(&rows_v, &cols_v) {
+        Ok(d) => d,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    let (row_p, col_p, body) = match super::makearray::resolve_lambda(&args[2], ctx) {
+        Ok(l) => l,
+        Err(e) => return Ok(ExcelValue::Error(e)),
+    };
+    super::makearray::apply(ev, ctx, rows, cols, &row_p, &col_p, &body)
 }
 
 /// Excel `FILTER(array, include, [if_empty])`.

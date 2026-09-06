@@ -1,0 +1,401 @@
+[
+  {
+    "id": "fn.makearray.mul-3x3",
+    "description": "MAKEARRAY 3×3 multiplication table via LAMBDA(r,c,r*c)",
+    "tags": ["makearray", "lambda", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=MAKEARRAY(3,3,LAMBDA(r,c,r*c))",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 2 }, { "number": 3 }],
+        [{ "number": 2 }, { "number": 4 }, { "number": 6 }],
+        [{ "number": 3 }, { "number": 6 }, { "number": 9 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.makearray.add-2x2",
+    "description": "MAKEARRAY 2×2 of r+c",
+    "tags": ["makearray", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=MAKEARRAY(2,2,LAMBDA(r,c,r+c))",
+    "expected": {
+      "array": [
+        [{ "number": 2 }, { "number": 3 }],
+        [{ "number": 3 }, { "number": 4 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.makearray.const",
+    "description": "Body ignores indexes and returns a constant",
+    "tags": ["makearray", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=MAKEARRAY(2,3,LAMBDA(r,c,7))",
+    "expected": {
+      "array": [
+        [{ "number": 7 }, { "number": 7 }, { "number": 7 }],
+        [{ "number": 7 }, { "number": 7 }, { "number": 7 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.makearray.row-index",
+    "description": "Body is the row index; every column of a row matches",
+    "tags": ["makearray", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=MAKEARRAY(3,2,LAMBDA(r,c,r))",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 1 }],
+        [{ "number": 2 }, { "number": 2 }],
+        [{ "number": 3 }, { "number": 3 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.makearray.col-index",
+    "description": "Body is the column index",
+    "tags": ["makearray", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=MAKEARRAY(2,3,LAMBDA(r,c,c))",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 2 }, { "number": 3 }],
+        [{ "number": 1 }, { "number": 2 }, { "number": 3 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.makearray.one-by-one",
+    "description": "1×1 is still an array value",
+    "tags": ["makearray", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=MAKEARRAY(1,1,LAMBDA(r,c,r*c))",
+    "expected": { "array": [[{ "number": 1 }]] }
+  },
+  {
+    "id": "fn.makearray.row-vector",
+    "description": "1×N is a single row",
+    "tags": ["makearray", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=MAKEARRAY(1,4,LAMBDA(r,c,c))",
+    "expected": {
+      "array": [[{ "number": 1 }, { "number": 2 }, { "number": 3 }, { "number": 4 }]]
+    }
+  },
+  {
+    "id": "fn.makearray.col-vector",
+    "description": "N×1 is a single column",
+    "tags": ["makearray", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=MAKEARRAY(4,1,LAMBDA(r,c,r))",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "number": 2 }],
+        [{ "number": 3 }],
+        [{ "number": 4 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.makearray.trunc-dims",
+    "description": "Non-integer rows/cols truncate toward zero",
+    "tags": ["makearray", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=MAKEARRAY(2.9,1.9,LAMBDA(r,c,r))",
+    "expected": { "array": [[{ "number": 1 }], [{ "number": 2 }]] }
+  },
+  {
+    "id": "fn.makearray.bool-dim",
+    "description": "TRUE coerces to 1 for a dimension",
+    "tags": ["makearray", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=MAKEARRAY(TRUE,TRUE,LAMBDA(r,c,9))",
+    "expected": { "array": [[{ "number": 9 }]] }
+  },
+  {
+    "id": "fn.makearray.text-num-dim",
+    "description": "Numeric text coerces for rows",
+    "tags": ["makearray", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=MAKEARRAY(\"2\",1,LAMBDA(r,c,r))",
+    "expected": { "array": [[{ "number": 1 }], [{ "number": 2 }]] }
+  },
+  {
+    "id": "fn.makearray.named-lambda",
+    "description": "Defined name referring to LAMBDA(r,c,r*c)",
+    "tags": ["makearray", "lambda", "named"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=MAKEARRAY(2,2,Mul)",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 2 }],
+        [{ "number": 2 }, { "number": 4 }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }],
+      "names": [{ "name": "Mul", "refers_to": "=LAMBDA(r,c,r*c)" }]
+    }
+  },
+  {
+    "id": "fn.makearray.body-cell-ref",
+    "description": "LAMBDA body may read sheet cells",
+    "tags": ["makearray", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=MAKEARRAY(2,2,LAMBDA(r,c,A1+r))",
+    "expected": {
+      "array": [
+        [{ "number": 11 }, { "number": 11 }],
+        [{ "number": 12 }, { "number": 12 }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": { "A1": { "number": 10 } }
+      }]
+    }
+  },
+  {
+    "id": "fn.makearray.body-if",
+    "description": "LAMBDA body may call other worksheet functions",
+    "tags": ["makearray", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=MAKEARRAY(2,2,LAMBDA(r,c,IF(r=c,1,0)))",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 0 }],
+        [{ "number": 0 }, { "number": 1 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.makearray.text-result",
+    "description": "Body may return text (concat of indexes)",
+    "tags": ["makearray", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=MAKEARRAY(1,2,LAMBDA(r,c,r&\",\"&c))",
+    "expected": { "array": [[{ "text": "1,1" }, { "text": "1,2" }]] }
+  },
+  {
+    "id": "fn.makearray.bool-result",
+    "description": "Body may return a logical",
+    "tags": ["makearray", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=MAKEARRAY(2,2,LAMBDA(r,c,r>c))",
+    "expected": {
+      "array": [
+        [{ "bool": false }, { "bool": false }],
+        [{ "bool": true }, { "bool": false }]
+      ]
+    }
+  },
+  {
+    "id": "fn.makearray.body-div0-cell",
+    "description": "A body error stays in that cell; the array still returns",
+    "tags": ["makearray", "lambda", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=MAKEARRAY(1,2,LAMBDA(r,c,1/(c-1)))",
+    "expected": {
+      "array": [[{ "error": "#DIV/0!" }, { "number": 1 }]]
+    }
+  },
+  {
+    "id": "fn.makearray.body-array-is-calc",
+    "description": "LAMBDA must return a single value; an array body cell is #CALC!",
+    "tags": ["makearray", "lambda", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=MAKEARRAY(1,1,LAMBDA(r,c,{1,2}))",
+    "expected": { "array": [[{ "error": "#CALC!" }]] }
+  },
+  {
+    "id": "fn.makearray.index",
+    "description": "INDEX picks a MAKEARRAY cell without a spill write",
+    "tags": ["makearray", "lambda", "lookup"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=INDEX(MAKEARRAY(3,3,LAMBDA(r,c,r*c)),2,3)",
+    "expected": { "number": 6 }
+  },
+  {
+    "id": "fn.makearray.sum",
+    "description": "SUM of a MAKEARRAY multiplication table",
+    "tags": ["makearray", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SUM(MAKEARRAY(3,3,LAMBDA(r,c,r*c)))",
+    "expected": { "number": 36 }
+  },
+  {
+    "id": "fn.makearray.counta",
+    "description": "COUNTA of MAKEARRAY counts every filled cell",
+    "tags": ["makearray", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=COUNTA(MAKEARRAY(2,3,LAMBDA(r,c,r*c)))",
+    "expected": { "number": 6 }
+  },
+  {
+    "id": "fn.makearray.type-array",
+    "description": "TYPE of MAKEARRAY is 64 (array)",
+    "tags": ["makearray", "information"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TYPE(MAKEARRAY(1,1,LAMBDA(r,c,1)))",
+    "expected": { "number": 64 }
+  },
+  {
+    "id": "fn.makearray.xlfn-prefix",
+    "description": "Excel-stored _xlfn.MAKEARRAY / _xlfn.LAMBDA names",
+    "tags": ["makearray", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=_xlfn.MAKEARRAY(1,2,_xlfn.LAMBDA(r,c,c))",
+    "expected": { "array": [[{ "number": 1 }, { "number": 2 }]] }
+  },
+  {
+    "id": "fn.makearray.param-names-row-col",
+    "description": "Parameter names are caller-chosen (row/col)",
+    "tags": ["makearray", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=MAKEARRAY(2,2,LAMBDA(row,col,row*col))",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 2 }],
+        [{ "number": 2 }, { "number": 4 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.makearray.dims-from-cells",
+    "description": "rows/cols may be cell references",
+    "tags": ["makearray", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=MAKEARRAY(A1,B1,LAMBDA(r,c,r+c))",
+    "expected": {
+      "array": [
+        [{ "number": 2 }, { "number": 3 }],
+        [{ "number": 3 }, { "number": 4 }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 2 },
+          "B1": { "number": 2 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.makearray.zero-rows",
+    "description": "rows < 1 is #VALUE!",
+    "tags": ["makearray", "errors"],
+    "formula": "=MAKEARRAY(0,1,LAMBDA(r,c,1))",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.makearray.zero-cols",
+    "description": "cols < 1 is #VALUE!",
+    "tags": ["makearray", "errors"],
+    "formula": "=MAKEARRAY(1,0,LAMBDA(r,c,1))",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.makearray.negative-dim",
+    "description": "Negative dimension is #VALUE!",
+    "tags": ["makearray", "errors"],
+    "formula": "=MAKEARRAY(-1,2,LAMBDA(r,c,1))",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.makearray.text-dim",
+    "description": "Non-numeric text dimension is #VALUE!",
+    "tags": ["makearray", "errors"],
+    "formula": "=MAKEARRAY(\"x\",1,LAMBDA(r,c,1))",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.makearray.empty-dim",
+    "description": "Blank dimension coerces to 0 then #VALUE!",
+    "tags": ["makearray", "errors"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=MAKEARRAY(A1,1,LAMBDA(r,c,1))",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.makearray.arity-2",
+    "description": "Missing LAMBDA argument is #VALUE!",
+    "tags": ["makearray", "errors"],
+    "formula": "=MAKEARRAY(2,2)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.makearray.lambda-one-param",
+    "description": "LAMBDA must take exactly two parameters",
+    "tags": ["makearray", "lambda", "errors"],
+    "formula": "=MAKEARRAY(1,1,LAMBDA(r,1))",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.makearray.lambda-three-params",
+    "description": "Three-parameter LAMBDA is #VALUE! for MAKEARRAY",
+    "tags": ["makearray", "lambda", "errors"],
+    "formula": "=MAKEARRAY(1,1,LAMBDA(r,c,x,r*c))",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.makearray.not-lambda",
+    "description": "A number is not a LAMBDA",
+    "tags": ["makearray", "errors"],
+    "formula": "=MAKEARRAY(1,1,1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.makearray.unknown-name",
+    "description": "Unknown name as the LAMBDA argument is #VALUE!",
+    "tags": ["makearray", "errors"],
+    "formula": "=MAKEARRAY(1,1,Nope)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.makearray.rows-div0",
+    "description": "Error in rows wins (left-to-right)",
+    "tags": ["makearray", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=MAKEARRAY(1/0,2,LAMBDA(r,c,1))",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.makearray.cols-div0",
+    "description": "Error in cols surfaces after rows succeeds",
+    "tags": ["makearray", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=MAKEARRAY(2,1/0,LAMBDA(r,c,1))",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.lambda.bare-is-calc",
+    "description": "Bare LAMBDA has no first-class function value here; #CALC!",
+    "tags": ["lambda", "errors"],
+    "formula": "=LAMBDA(x,x+1)",
+    "expected": { "error": "#CALC!" },
+    "notes": "Excel 365 can store a LAMBDA as a cell function value. This engine only applies LAMBDA when MAKEARRAY (or a defined name consumed by MAKEARRAY) binds it."
+  },
+  {
+    "id": "fn.makearray.spill-occupancy-not-modeled",
+    "description": "#SPILL! from a blocked spill range is not produced",
+    "tags": ["makearray"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=MAKEARRAY(2,1,LAMBDA(r,c,r))",
+    "expected": { "array": [[{ "number": 1 }], [{ "number": 2 }]] },
+    "ignore": "Workbook snippets have no spill grid. MAKEARRAY returns an array value; #SPILL! from occupied cells below/right of the host is not modeled."
+  },
+  {
+    "id": "fn.makearray.iife-lambda-not-parsed",
+    "description": "Immediately-invoked LAMBDA(...)(args) is not parsed",
+    "tags": ["makearray", "lambda"],
+    "formula": "=MAKEARRAY(1,1,LAMBDA(x,y,x)(1,1))",
+    "expected": { "array": [[{ "number": 1 }]] },
+    "ignore": "Immediately-invoked LAMBDA(...)(args) is not in the parser. MAKEARRAY requires an inline LAMBDA(r,c,body) or a defined name that refers to one."
+  }
+]

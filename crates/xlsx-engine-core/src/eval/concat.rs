@@ -92,6 +92,7 @@ pub fn eval_concat_formula(
                 depth: 0,
                 visiting: Default::default(),
                 host: spec.default_cell().addr,
+                locals: Vec::new(),
             };
             concat_materialized(&Evaluator::new(), &args, &mut ctx)
         }
