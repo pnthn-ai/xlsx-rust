@@ -49,7 +49,7 @@ fn upper_ascii(src: &[u8]) -> String {
     }
     let n = src.len();
     let mut out = Vec::with_capacity(n);
-    let dst = out.as_mut_ptr();
+    let dst: *mut u8 = out.as_mut_ptr();
     let mut i = 0;
     while i + 8 <= n {
         let w = u64::from_le_bytes(src[i..i + 8].try_into().unwrap());
