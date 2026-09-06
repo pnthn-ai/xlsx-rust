@@ -1,0 +1,513 @@
+[
+  {
+    "id": "fn.exact-microsoft-same",
+    "description": "Microsoft example: EXACT(\"word\", \"word\") is TRUE",
+    "tags": ["text", "exact"],
+    "formula": "=EXACT(\"word\", \"word\")",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.exact-microsoft-case",
+    "description": "Microsoft example: EXACT(\"Word\", \"word\") is FALSE (case-sensitive)",
+    "tags": ["text", "exact"],
+    "quirks": ["case-insensitive-text"],
+    "formula": "=EXACT(\"Word\", \"word\")",
+    "expected": { "bool": false }
+  },
+  {
+    "id": "fn.exact-microsoft-space",
+    "description": "Microsoft example: EXACT(\"w ord\", \"word\") is FALSE (spaces matter)",
+    "tags": ["text", "exact"],
+    "formula": "=EXACT(\"w ord\", \"word\")",
+    "expected": { "bool": false }
+  },
+  {
+    "id": "fn.exact-mixed-case-same",
+    "description": "Identical mixed-case strings match",
+    "tags": ["text", "exact"],
+    "formula": "=EXACT(\"AbC\", \"AbC\")",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.exact-vs-eq-case",
+    "description": "EXACT(\"A\",\"a\") is FALSE while A=a is TRUE",
+    "tags": ["text", "exact"],
+    "quirks": ["case-insensitive-text"],
+    "formula": "=EXACT(\"A\", \"a\")",
+    "expected": { "bool": false }
+  },
+  {
+    "id": "fn.exact-upper",
+    "description": "EXACT(UPPER(\"word\"), \"WORD\") is TRUE",
+    "tags": ["text", "exact"],
+    "formula": "=EXACT(UPPER(\"word\"), \"WORD\")",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.exact-lower",
+    "description": "EXACT(LOWER(\"WORD\"), \"word\") is TRUE",
+    "tags": ["text", "exact"],
+    "formula": "=EXACT(LOWER(\"WORD\"), \"word\")",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.exact-empty-empty",
+    "description": "EXACT(\"\", \"\") is TRUE",
+    "tags": ["text", "exact"],
+    "formula": "=EXACT(\"\", \"\")",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.exact-empty-space",
+    "description": "Empty text is not a single ASCII space",
+    "tags": ["text", "exact"],
+    "formula": "=EXACT(\"\", \" \")",
+    "expected": { "bool": false }
+  },
+  {
+    "id": "fn.exact-trailing-space",
+    "description": "Trailing ASCII space is significant",
+    "tags": ["text", "exact"],
+    "formula": "=EXACT(\"A \", \"A\")",
+    "expected": { "bool": false }
+  },
+  {
+    "id": "fn.exact-leading-space",
+    "description": "Leading ASCII space is significant",
+    "tags": ["text", "exact"],
+    "formula": "=EXACT(\" A\", \"A\")",
+    "expected": { "bool": false }
+  },
+  {
+    "id": "fn.exact-blank-blank",
+    "description": "Two blank cells coerce like & to \"\" and match",
+    "tags": ["text", "exact", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=EXACT(A1, B1)",
+    "expected": { "bool": true },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.exact-blank-empty",
+    "description": "Blank cell matches empty text (coerces to \"\")",
+    "tags": ["text", "exact", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=EXACT(A1, \"\")",
+    "expected": { "bool": true },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.exact-stored-empty",
+    "description": "Stored \"\" matches empty text",
+    "tags": ["text", "exact"],
+    "formula": "=EXACT(A1, \"\")",
+    "expected": { "bool": true },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": { "A1": { "text": "" } }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.exact-blank-zero",
+    "description": "Blank ≠ 0 under EXACT (\"\" vs \"0\"), unlike A1=0",
+    "tags": ["text", "exact", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=EXACT(A1, 0)",
+    "expected": { "bool": false },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.exact-blank-false",
+    "description": "Blank ≠ FALSE under EXACT (\"\" vs \"FALSE\")",
+    "tags": ["text", "exact", "empty"],
+    "quirks": ["empty-cell-duality", "bool-number-equality"],
+    "formula": "=EXACT(A1, FALSE)",
+    "expected": { "bool": false },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.exact-num-num",
+    "description": "EXACT(1, 1) is TRUE",
+    "tags": ["text", "exact", "coercion"],
+    "formula": "=EXACT(1, 1)",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.exact-num-text",
+    "description": "EXACT(1, \"1\") is TRUE (number coerces like &)",
+    "tags": ["text", "exact", "coercion"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=EXACT(1, \"1\")",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.exact-num-text-decimal",
+    "description": "EXACT(1.5, \"1.5\") is TRUE",
+    "tags": ["text", "exact", "coercion"],
+    "formula": "=EXACT(1.5, \"1.5\")",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.exact-num-text-dotzero",
+    "description": "EXACT(1, \"1.0\") is FALSE (plain int formats as \"1\")",
+    "tags": ["text", "exact", "coercion"],
+    "formula": "=EXACT(1, \"1.0\")",
+    "expected": { "bool": false }
+  },
+  {
+    "id": "fn.exact-num-neg",
+    "description": "EXACT(-2, \"-2\") is TRUE",
+    "tags": ["text", "exact", "coercion"],
+    "formula": "=EXACT(-2, \"-2\")",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.exact-num-zero",
+    "description": "EXACT(0, \"0\") is TRUE",
+    "tags": ["text", "exact", "coercion"],
+    "formula": "=EXACT(0, \"0\")",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.exact-neg-zero",
+    "description": "EXACT(-0, 0) is FALSE: format_plain(-0) is \"-0\"",
+    "tags": ["text", "exact", "coercion"],
+    "formula": "=EXACT(-0, 0)",
+    "expected": { "bool": false }
+  },
+  {
+    "id": "fn.exact-ieee-vs-eq",
+    "description": "EXACT(0.1+0.2, 0.3) is FALSE; = is TRUE (15-digit)",
+    "tags": ["text", "exact"],
+    "quirks": ["ieee-vs-excel-precision"],
+    "formula": "=EXACT(0.1+0.2, 0.3)",
+    "expected": { "bool": false }
+  },
+  {
+    "id": "fn.exact-true-true",
+    "description": "EXACT(TRUE, TRUE) is TRUE",
+    "tags": ["text", "exact", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=EXACT(TRUE, TRUE)",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.exact-true-text",
+    "description": "EXACT(TRUE, \"TRUE\") is TRUE",
+    "tags": ["text", "exact", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=EXACT(TRUE, \"TRUE\")",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.exact-true-lower",
+    "description": "EXACT(TRUE, \"true\") is FALSE (case-sensitive)",
+    "tags": ["text", "exact", "coercion"],
+    "quirks": ["case-insensitive-text", "bool-number-equality"],
+    "formula": "=EXACT(TRUE, \"true\")",
+    "expected": { "bool": false }
+  },
+  {
+    "id": "fn.exact-true-one",
+    "description": "EXACT(TRUE, 1) is FALSE while TRUE=1 is TRUE",
+    "tags": ["text", "exact", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=EXACT(TRUE, 1)",
+    "expected": { "bool": false }
+  },
+  {
+    "id": "fn.exact-false-false",
+    "description": "EXACT(FALSE, FALSE) is TRUE",
+    "tags": ["text", "exact", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=EXACT(FALSE, FALSE)",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.exact-false-text",
+    "description": "EXACT(FALSE, \"FALSE\") is TRUE",
+    "tags": ["text", "exact", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=EXACT(FALSE, \"FALSE\")",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.exact-false-zero",
+    "description": "EXACT(FALSE, 0) is FALSE while FALSE=0 is TRUE",
+    "tags": ["text", "exact", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=EXACT(FALSE, 0)",
+    "expected": { "bool": false }
+  },
+  {
+    "id": "fn.exact-star-literal",
+    "description": "Asterisk is a literal character, not a wildcard",
+    "tags": ["text", "exact"],
+    "quirks": ["wildcards"],
+    "formula": "=EXACT(\"a*\", \"a*\")",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.exact-star-not-wild",
+    "description": "EXACT(\"a*\", \"abc\") is FALSE (unlike SEARCH / COUNTIF)",
+    "tags": ["text", "exact"],
+    "quirks": ["wildcards"],
+    "formula": "=EXACT(\"a*\", \"abc\")",
+    "expected": { "bool": false }
+  },
+  {
+    "id": "fn.exact-question-not-wild",
+    "description": "Question mark is literal; EXACT(\"a?\", \"ab\") is FALSE",
+    "tags": ["text", "exact"],
+    "quirks": ["wildcards"],
+    "formula": "=EXACT(\"a?\", \"ab\")",
+    "expected": { "bool": false }
+  },
+  {
+    "id": "fn.exact-tab-vs-space",
+    "description": "Tab is not an ASCII space",
+    "tags": ["text", "exact"],
+    "formula": "=EXACT(A1, A2)",
+    "expected": { "bool": false },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "\t" },
+            "A2": { "text": " " }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.exact-nbsp-vs-space",
+    "description": "NBSP (CHAR(160)) is not ASCII 32",
+    "tags": ["text", "exact"],
+    "formula": "=EXACT(A1, \" \")",
+    "expected": { "bool": false },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": { "A1": { "text": "\u00a0" } }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.exact-unicode-cafe",
+    "description": "Identical multibyte strings match",
+    "tags": ["text", "exact"],
+    "formula": "=EXACT(\"café\", \"café\")",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.exact-unicode-cafe-miss",
+    "description": "é is not e",
+    "tags": ["text", "exact"],
+    "formula": "=EXACT(\"café\", \"cafe\")",
+    "expected": { "bool": false }
+  },
+  {
+    "id": "fn.exact-unicode-jp",
+    "description": "CJK scalars compare as UTF-8 bytes",
+    "tags": ["text", "exact"],
+    "formula": "=EXACT(\"日本語\", \"日本語\")",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.exact-emoji",
+    "description": "Emoji scalars: match vs miss",
+    "tags": ["text", "exact"],
+    "formula": "=EXACT(A1, A2)",
+    "expected": { "bool": true },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "😀🎉" },
+            "A2": { "text": "😀🎉" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.exact-emoji-miss",
+    "description": "Different emoji do not match",
+    "tags": ["text", "exact"],
+    "formula": "=EXACT(A1, A2)",
+    "expected": { "bool": false },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "😀" },
+            "A2": { "text": "🎉" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.exact-concat",
+    "description": "EXACT of concatenated pieces vs the joined text",
+    "tags": ["text", "exact"],
+    "formula": "=EXACT(\"a\"&\"b\", \"ab\")",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.exact-trim",
+    "description": "EXACT confirms TRIM result is a single internal space",
+    "tags": ["text", "exact"],
+    "formula": "=EXACT(TRIM(\"  a  b  \"), \"a b\")",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.exact-if",
+    "description": "EXACT of IF result",
+    "tags": ["text", "exact"],
+    "formula": "=EXACT(IF(TRUE, \"A\", \"B\"), \"A\")",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.exact-cells-equal",
+    "description": "EXACT of two equal text cells",
+    "tags": ["text", "exact"],
+    "formula": "=EXACT(A1, B1)",
+    "expected": { "bool": true },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "Hello" },
+            "B1": { "text": "Hello" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.exact-cells-case",
+    "description": "EXACT of two cells that differ only in case",
+    "tags": ["text", "exact"],
+    "quirks": ["case-insensitive-text"],
+    "formula": "=EXACT(A1, B1)",
+    "expected": { "bool": false },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "Hello" },
+            "B1": { "text": "hello" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.exact-implicit-intersect",
+    "description": "EXACT(A1:A3, B1) from host C1 uses implicit intersection (same row → A1)",
+    "tags": ["text", "exact"],
+    "quirks": ["implicit-intersection"],
+    "at": "Sheet1!C1",
+    "formula": "=EXACT(A1:A3, B1)",
+    "expected": { "bool": true },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "one" },
+            "A2": { "text": "two" },
+            "A3": { "text": "three" },
+            "B1": { "text": "one" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.exact-err-div0",
+    "description": "Error argument propagates #DIV/0!",
+    "tags": ["text", "exact", "errors"],
+    "formula": "=EXACT(1/0, \"x\")",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.exact-err-na",
+    "description": "NA() propagates #N/A",
+    "tags": ["text", "exact", "errors"],
+    "formula": "=EXACT(NA(), \"x\")",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.exact-err-left-wins",
+    "description": "Left error wins: EXACT(1/0, NA()) is #DIV/0!",
+    "tags": ["text", "exact", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=EXACT(1/0, NA())",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.exact-err-right",
+    "description": "Right-only error propagates",
+    "tags": ["text", "exact", "errors"],
+    "formula": "=EXACT(\"a\", 1/0)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.exact-err-cell",
+    "description": "Error in the referenced cell propagates",
+    "tags": ["text", "exact", "errors"],
+    "formula": "=EXACT(A1, \"x\")",
+    "expected": { "error": "#VALUE!" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": { "A1": { "error": "#VALUE!" } }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.exact-arity-zero",
+    "description": "EXACT() with no arguments is #VALUE!",
+    "tags": ["text", "exact", "errors"],
+    "formula": "=EXACT()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.exact-arity-one",
+    "description": "EXACT with one argument is #VALUE!",
+    "tags": ["text", "exact", "errors"],
+    "formula": "=EXACT(\"a\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.exact-arity-three",
+    "description": "EXACT with three arguments is #VALUE!",
+    "tags": ["text", "exact", "errors"],
+    "formula": "=EXACT(\"a\", \"b\", \"c\")",
+    "expected": { "error": "#VALUE!" }
+  }
+]

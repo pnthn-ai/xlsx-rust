@@ -253,6 +253,62 @@ name = "makearray"
 harness = false
 
 [[bench]]
+name = "map"
+harness = false
+
+[[bench]]
+name = "scan"
+harness = false
+
+[[bench]]
+name = "byrow"
+harness = false
+
+[[bench]]
+name = "reduce"
+harness = false
+
+[[bench]]
+name = "bycol"
+harness = false
+
+[[bench]]
+name = "excel_let"
+harness = false
+
+[[bench]]
+name = "isomitted"
+harness = false
+
+[[bench]]
+name = "trim"
+harness = false
+
+[[bench]]
+name = "clean"
+harness = false
+
+[[bench]]
+name = "proper"
+harness = false
+
+[[bench]]
+name = "upper"
+harness = false
+
+[[bench]]
+name = "rept"
+harness = false
+
+[[bench]]
+name = "lower"
+harness = false
+
+[[bench]]
+name = "exact"
+harness = false
+
+[[bench]]
 name = "textsplit"
 harness = false
 

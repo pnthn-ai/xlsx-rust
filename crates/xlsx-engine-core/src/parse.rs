@@ -4,6 +4,7 @@
 //! qualification), ranges, defined names, literals (number / text / bool /
 //! error / array), function calls, and space intersection (`A1:B2 B2`).
 //! Locale-specific argument separators and the union operator are deferred.
+//! Immediately-invoked `LAMBDA(...)(args)` is parsed as [`Expr::Apply`].
 
 use crate::ast::{BinOp, Expr, UnaryOp};
 use xlsx_types::{CellAddr, CellRef, EvalError, ExcelError, RangeRef};
@@ -424,12 +425,26 @@ impl Parser {
 
     fn parse_postfix(&mut self) -> Result<Expr, EvalError> {
         let mut expr = self.parse_primary()?;
-        while matches!(self.peek(), Token::Percent) {
-            self.bump();
-            expr = Expr::Unary {
-                op: UnaryOp::Percent,
-                expr: Box::new(expr),
-            };
+        loop {
+            if matches!(self.peek(), Token::Percent) {
+                self.bump();
+                expr = Expr::Unary {
+                    op: UnaryOp::Percent,
+                    expr: Box::new(expr),
+                };
+                continue;
+            }
+            // `LAMBDA(x,y,body)(1,)` — IIFE / named-function apply.
+            if matches!(self.peek(), Token::LParen) {
+                self.bump();
+                let args = self.parse_args()?;
+                expr = Expr::Apply {
+                    callee: Box::new(expr),
+                    args,
+                };
+                continue;
+            }
+            break;
         }
         Ok(expr)
     }
@@ -672,6 +687,143 @@ mod tests {
         }
         match parse("=SUM()").unwrap() {
             Expr::Call { args, .. } => assert!(args.is_empty()),
+            other => panic!("{other:?}"),
+        }
+    }
+
+    #[test]
+    fn parse_map_lambda() {
+        match parse("=MAP({1,2},LAMBDA(x,x*2))").unwrap() {
+            Expr::Call { name, args } => {
+                assert!(name.eq_ignore_ascii_case("MAP"));
+                assert_eq!(args.len(), 2);
+                assert!(matches!(&args[0], Expr::Array(_)));
+                match &args[1] {
+                    Expr::Call { name, args } => {
+                        assert!(name.eq_ignore_ascii_case("LAMBDA"));
+                        assert_eq!(args.len(), 2);
+                        assert!(matches!(&args[0], Expr::Name(n) if n == "x"));
+                    }
+                    other => panic!("{other:?}"),
+                }
+            }
+            other => panic!("{other:?}"),
+        }
+    }
+
+    #[test]
+    fn parse_scan_omitted_initial() {
+        match parse("=SCAN(,{1,2,3},LAMBDA(a,v,a+v))").unwrap() {
+            Expr::Call { name, args } => {
+                assert!(name.eq_ignore_ascii_case("SCAN"));
+                assert_eq!(args.len(), 3);
+                assert!(args[0].is_omitted());
+                match &args[2] {
+                    Expr::Call { name, args } => {
+                        assert!(name.eq_ignore_ascii_case("LAMBDA"));
+                        assert_eq!(args.len(), 3);
+                    }
+                    other => panic!("{other:?}"),
+                }
+            }
+            other => panic!("{other:?}"),
+        }
+    }
+
+    #[test]
+    fn parse_byrow_lambda() {
+        match parse("=BYROW(A1:C2,LAMBDA(row,SUM(row)))").unwrap() {
+            Expr::Call { name, args } => {
+                assert!(name.eq_ignore_ascii_case("BYROW"));
+                assert_eq!(args.len(), 2);
+                match &args[1] {
+                    Expr::Call { name, args } => {
+                        assert!(name.eq_ignore_ascii_case("LAMBDA"));
+                        assert_eq!(args.len(), 2);
+                        assert!(matches!(&args[0], Expr::Name(n) if n == "row"));
+                    }
+                    other => panic!("{other:?}"),
+                }
+            }
+            other => panic!("{other:?}"),
+        }
+    }
+
+    #[test]
+    fn parse_reduce_omitted_initial() {
+        match parse("=REDUCE(,{1,2},LAMBDA(a,b,a+b))").unwrap() {
+            Expr::Call { name, args } => {
+                assert!(name.eq_ignore_ascii_case("REDUCE"));
+                assert_eq!(args.len(), 3);
+                assert!(args[0].is_omitted());
+                match &args[2] {
+                    Expr::Call { name, args } => {
+                        assert!(name.eq_ignore_ascii_case("LAMBDA"));
+                        assert_eq!(args.len(), 3);
+                        assert!(matches!(&args[0], Expr::Name(n) if n == "a"));
+                        assert!(matches!(&args[1], Expr::Name(n) if n == "b"));
+                    }
+                    other => panic!("{other:?}"),
+                }
+            }
+            other => panic!("{other:?}"),
+        }
+    }
+
+    #[test]
+    fn parse_bycol_lambda() {
+        match parse("=BYCOL({1,2;3,4},LAMBDA(c,SUM(c)))").unwrap() {
+            Expr::Call { name, args } => {
+                assert!(name.eq_ignore_ascii_case("BYCOL"));
+                assert_eq!(args.len(), 2);
+                match &args[1] {
+                    Expr::Call { name, args } => {
+                        assert!(name.eq_ignore_ascii_case("LAMBDA"));
+                        assert_eq!(args.len(), 2);
+                        assert!(matches!(&args[0], Expr::Name(n) if n == "c"));
+                    }
+                    other => panic!("{other:?}"),
+                }
+            }
+            other => panic!("{other:?}"),
+        }
+    }
+
+    #[test]
+    fn parse_let_names() {
+        match parse("=LET(x, 1, y, x+1, y*2)").unwrap() {
+            Expr::Call { name, args } => {
+                assert!(name.eq_ignore_ascii_case("LET"));
+                assert_eq!(args.len(), 5);
+                assert!(matches!(&args[0], Expr::Name(n) if n == "x"));
+                assert!(matches!(&args[2], Expr::Name(n) if n == "y"));
+            }
+            other => panic!("{other:?}"),
+        }
+        match parse("=_xlfn.LET(_xlpm.x, 1, _xlpm.x)").unwrap() {
+            Expr::Call { name, args } => {
+                assert!(name.eq_ignore_ascii_case("_xlfn.LET"));
+                assert!(matches!(&args[0], Expr::Name(n) if n == "_xlpm.x"));
+            }
+            other => panic!("{other:?}"),
+        }
+    }
+
+    #[test]
+    fn parse_iife_lambda() {
+        match parse("=LAMBDA(x,y,ISOMITTED(y))(1,)").unwrap() {
+            Expr::Apply { callee, args } => {
+                match *callee {
+                    Expr::Call { name, args: lam } => {
+                        assert!(name.eq_ignore_ascii_case("LAMBDA"));
+                        assert_eq!(lam.len(), 3);
+                    }
+                    other => panic!("{other:?}"),
+                }
+                assert_eq!(args.len(), 2);
+                assert!(matches!(&args[0], Expr::Number(n) if *n == 1.0));
+                assert!(args[1].is_omitted());
+            }
             other => panic!("{other:?}"),
         }
     }

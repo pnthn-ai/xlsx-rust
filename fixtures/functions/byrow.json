@@ -1,0 +1,507 @@
+[
+  {
+    "id": "fn.byrow.sum-3x2",
+    "description": "BYROW sums each row of a 2×3 range (Microsoft-shaped)",
+    "tags": ["byrow", "lambda", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=BYROW(A1:C2,LAMBDA(row,SUM(row)))",
+    "expected": {
+      "array": [
+        [{ "number": 6 }],
+        [{ "number": 15 }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "B1": { "number": 2 },
+          "C1": { "number": 3 },
+          "A2": { "number": 4 },
+          "B2": { "number": 5 },
+          "C2": { "number": 6 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.byrow.max-microsoft",
+    "description": "Microsoft example: MAX of each row",
+    "tags": ["byrow", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=BYROW(A1:C2,LAMBDA(array,MAX(array)))",
+    "expected": {
+      "array": [
+        [{ "number": 3 }],
+        [{ "number": 6 }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "B1": { "number": 2 },
+          "C1": { "number": 3 },
+          "A2": { "number": 4 },
+          "B2": { "number": 5 },
+          "C2": { "number": 6 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.byrow.eta-sum",
+    "description": "Eta-reduced BYROW(array, SUM) is LAMBDA(row, SUM(row))",
+    "tags": ["byrow", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=BYROW(A1:C2,SUM)",
+    "expected": {
+      "array": [
+        [{ "number": 6 }],
+        [{ "number": 15 }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "B1": { "number": 2 },
+          "C1": { "number": 3 },
+          "A2": { "number": 4 },
+          "B2": { "number": 5 },
+          "C2": { "number": 6 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.byrow.average",
+    "description": "AVERAGE of each row",
+    "tags": ["byrow", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=BYROW({2,4,6;10,20,30},LAMBDA(r,AVERAGE(r)))",
+    "expected": {
+      "array": [
+        [{ "number": 4 }],
+        [{ "number": 20 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.byrow.min",
+    "description": "MIN of each row",
+    "tags": ["byrow", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=BYROW({3,1,2;9,8,7},LAMBDA(r,MIN(r)))",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "number": 7 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.byrow.counta",
+    "description": "COUNTA of each row counts numbers and text, not blanks",
+    "tags": ["byrow", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=BYROW(A1:C2,LAMBDA(r,COUNTA(r)))",
+    "expected": {
+      "array": [
+        [{ "number": 2 }],
+        [{ "number": 3 }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "C1": { "text": "x" },
+          "A2": { "number": 4 },
+          "B2": { "number": 5 },
+          "C2": { "bool": true }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.byrow.literal-2d",
+    "description": "Array literal source; SUM each row",
+    "tags": ["byrow", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=BYROW({1,2,3;4,5,6},LAMBDA(r,SUM(r)))",
+    "expected": {
+      "array": [
+        [{ "number": 6 }],
+        [{ "number": 15 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.byrow.one-row",
+    "description": "A single source row still returns a 1×1 array",
+    "tags": ["byrow", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=BYROW({1,2,3},LAMBDA(r,SUM(r)))",
+    "expected": { "array": [[{ "number": 6 }]] }
+  },
+  {
+    "id": "fn.byrow.one-col",
+    "description": "Each 1-wide row sums to itself",
+    "tags": ["byrow", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=BYROW({1;2;3},LAMBDA(r,SUM(r)))",
+    "expected": {
+      "array": [
+        [{ "number": 1 }],
+        [{ "number": 2 }],
+        [{ "number": 3 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.byrow.scalar",
+    "description": "A scalar first argument is a 1×1 array",
+    "tags": ["byrow", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=BYROW(5,LAMBDA(r,SUM(r)))",
+    "expected": { "array": [[{ "number": 5 }]] }
+  },
+  {
+    "id": "fn.byrow.const",
+    "description": "Body may ignore the row and return a constant",
+    "tags": ["byrow", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=BYROW({1,2;3,4},LAMBDA(r,7))",
+    "expected": {
+      "array": [
+        [{ "number": 7 }],
+        [{ "number": 7 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.byrow.index",
+    "description": "INDEX(row, n) picks the n-th cell of the 1-row array",
+    "tags": ["byrow", "lambda", "lookup"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=BYROW({10,20,30;1,2,3},LAMBDA(r,INDEX(r,2)))",
+    "expected": {
+      "array": [
+        [{ "number": 20 }],
+        [{ "number": 2 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.byrow.named-lambda",
+    "description": "Defined name referring to LAMBDA(r,SUM(r))",
+    "tags": ["byrow", "lambda", "named"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=BYROW(A1:B2,RowSum)",
+    "expected": {
+      "array": [
+        [{ "number": 3 }],
+        [{ "number": 7 }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "B1": { "number": 2 },
+          "A2": { "number": 3 },
+          "B2": { "number": 4 }
+        }
+      }],
+      "names": [{ "name": "RowSum", "refers_to": "=LAMBDA(r,SUM(r))" }]
+    }
+  },
+  {
+    "id": "fn.byrow.body-cell-ref",
+    "description": "LAMBDA body may read sheet cells",
+    "tags": ["byrow", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=BYROW({1,2;3,4},LAMBDA(r,SUM(r)+A1))",
+    "expected": {
+      "array": [
+        [{ "number": 13 }],
+        [{ "number": 17 }]
+      ]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": { "A1": { "number": 10 } }
+      }]
+    }
+  },
+  {
+    "id": "fn.byrow.body-if",
+    "description": "LAMBDA body may call other worksheet functions",
+    "tags": ["byrow", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=BYROW({1,2;10,1},LAMBDA(r,IF(SUM(r)>5,1,0)))",
+    "expected": {
+      "array": [
+        [{ "number": 0 }],
+        [{ "number": 1 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.byrow.text-result",
+    "description": "Body may return text",
+    "tags": ["byrow", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=BYROW({1,2;3,4},LAMBDA(r,IF(SUM(r)>4,\"hi\",\"lo\")))",
+    "expected": {
+      "array": [
+        [{ "text": "lo" }],
+        [{ "text": "hi" }]
+      ]
+    }
+  },
+  {
+    "id": "fn.byrow.bool-result",
+    "description": "Body may return a logical",
+    "tags": ["byrow", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=BYROW({1,2;8,1},LAMBDA(r,SUM(r)>5))",
+    "expected": {
+      "array": [
+        [{ "bool": false }],
+        [{ "bool": true }]
+      ]
+    }
+  },
+  {
+    "id": "fn.byrow.skip-text-logicals",
+    "description": "SUM of a row skips text and logicals (range semantics)",
+    "tags": ["byrow", "lambda"],
+    "quirks": ["array-eval-mode", "sum-arg-vs-range"],
+    "formula": "=BYROW(A1:C1,LAMBDA(r,SUM(r)))",
+    "expected": { "array": [[{ "number": 3 }]] },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 3 },
+          "B1": { "text": "x" },
+          "C1": { "bool": true }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.byrow.body-div0-cell",
+    "description": "A body error stays in that result cell; the column still returns",
+    "tags": ["byrow", "lambda", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=BYROW({1,0;2,1},LAMBDA(r,1/INDEX(r,2)))",
+    "expected": {
+      "array": [
+        [{ "error": "#DIV/0!" }],
+        [{ "number": 1 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.byrow.row-error-in-sum",
+    "description": "An error inside the source row surfaces in that result cell",
+    "tags": ["byrow", "lambda", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=BYROW({1,2;#DIV/0!,3},LAMBDA(r,SUM(r)))",
+    "expected": {
+      "array": [
+        [{ "number": 3 }],
+        [{ "error": "#DIV/0!" }]
+      ]
+    }
+  },
+  {
+    "id": "fn.byrow.body-array-is-calc",
+    "description": "LAMBDA must return a single value; returning the row is #CALC!",
+    "tags": ["byrow", "lambda", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=BYROW({1,2;3,4},LAMBDA(r,r))",
+    "expected": {
+      "array": [
+        [{ "error": "#CALC!" }],
+        [{ "error": "#CALC!" }]
+      ]
+    }
+  },
+  {
+    "id": "fn.byrow.body-array-literal-is-calc",
+    "description": "An array-literal body is #CALC! in that cell",
+    "tags": ["byrow", "lambda", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=BYROW({1;2},LAMBDA(r,{1,2}))",
+    "expected": {
+      "array": [
+        [{ "error": "#CALC!" }],
+        [{ "error": "#CALC!" }]
+      ]
+    }
+  },
+  {
+    "id": "fn.byrow.index-of-result",
+    "description": "INDEX picks a BYROW cell without a spill write",
+    "tags": ["byrow", "lambda", "lookup"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=INDEX(BYROW({1,2,3;4,5,6},LAMBDA(r,SUM(r))),2)",
+    "expected": { "number": 15 }
+  },
+  {
+    "id": "fn.byrow.sum-of-result",
+    "description": "SUM of a BYROW column of row-sums",
+    "tags": ["byrow", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SUM(BYROW({1,2,3;4,5,6},LAMBDA(r,SUM(r))))",
+    "expected": { "number": 21 }
+  },
+  {
+    "id": "fn.byrow.counta-of-result",
+    "description": "COUNTA of BYROW counts every result cell",
+    "tags": ["byrow", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=COUNTA(BYROW({1,2;3,4;5,6},LAMBDA(r,SUM(r))))",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.byrow.type-array",
+    "description": "TYPE of BYROW is 64 (array)",
+    "tags": ["byrow", "information"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TYPE(BYROW({1,2},LAMBDA(r,SUM(r))))",
+    "expected": { "number": 64 }
+  },
+  {
+    "id": "fn.byrow.xlfn-prefix",
+    "description": "Excel-stored _xlfn.BYROW / _xlfn.LAMBDA names",
+    "tags": ["byrow", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=_xlfn.BYROW({1,2;3,4},_xlfn.LAMBDA(r,SUM(r)))",
+    "expected": {
+      "array": [
+        [{ "number": 3 }],
+        [{ "number": 7 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.byrow.param-name-row",
+    "description": "Parameter names are caller-chosen",
+    "tags": ["byrow", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=BYROW({1,2;3,4},LAMBDA(row,SUM(row)))",
+    "expected": {
+      "array": [
+        [{ "number": 3 }],
+        [{ "number": 7 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.byrow.makearray-source",
+    "description": "BYROW can consume a MAKEARRAY result without a spill write",
+    "tags": ["byrow", "makearray", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=BYROW(MAKEARRAY(3,3,LAMBDA(r,c,r*c)),LAMBDA(row,SUM(row)))",
+    "expected": {
+      "array": [
+        [{ "number": 6 }],
+        [{ "number": 12 }],
+        [{ "number": 18 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.byrow.array-div0",
+    "description": "Error in the array argument wins",
+    "tags": ["byrow", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=BYROW(1/0,LAMBDA(r,1))",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.byrow.lambda-div0",
+    "description": "Error while evaluating a non-LAMBDA second argument surfaces",
+    "tags": ["byrow", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=BYROW({1,2},1/0)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.byrow.arity-1",
+    "description": "Missing LAMBDA argument is #VALUE!",
+    "tags": ["byrow", "errors"],
+    "formula": "=BYROW({1,2})",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.byrow.arity-0",
+    "description": "No arguments is #VALUE!",
+    "tags": ["byrow", "errors"],
+    "formula": "=BYROW()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.byrow.arity-3",
+    "description": "Extra argument is #VALUE!",
+    "tags": ["byrow", "errors"],
+    "formula": "=BYROW({1,2},LAMBDA(r,SUM(r)),1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.byrow.lambda-two-params",
+    "description": "LAMBDA must take exactly one parameter",
+    "tags": ["byrow", "lambda", "errors"],
+    "formula": "=BYROW({1,2},LAMBDA(a,b,a))",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.byrow.lambda-zero-params",
+    "description": "Zero-parameter LAMBDA is #VALUE! for BYROW",
+    "tags": ["byrow", "lambda", "errors"],
+    "formula": "=BYROW({1,2},LAMBDA(1))",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.byrow.not-lambda",
+    "description": "A number is not a LAMBDA → #CALC!",
+    "tags": ["byrow", "errors"],
+    "formula": "=BYROW({1,2},1)",
+    "expected": { "error": "#CALC!" }
+  },
+  {
+    "id": "fn.byrow.unknown-name",
+    "description": "Unknown name as the LAMBDA argument is #NAME? (name resolves first)",
+    "tags": ["byrow", "errors"],
+    "formula": "=BYROW({1,2},Nope)",
+    "expected": { "error": "#NAME?" }
+  },
+  {
+    "id": "fn.byrow.spill-occupancy-not-modeled",
+    "description": "#SPILL! from a blocked spill range is not produced",
+    "tags": ["byrow"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=BYROW({1;2},LAMBDA(r,SUM(r)))",
+    "expected": { "array": [[{ "number": 1 }], [{ "number": 2 }]] },
+    "ignore": "Workbook snippets have no spill grid. BYROW returns an array value; #SPILL! from occupied cells below the host is not modeled."
+  },
+  {
+    "id": "fn.byrow.iife-lambda-not-parsed",
+    "description": "Immediately-invoked LAMBDA(...)(args) is not parsed",
+    "tags": ["byrow", "lambda"],
+    "formula": "=BYROW({1,2},LAMBDA(x,SUM(x))({1,2}))",
+    "expected": { "array": [[{ "number": 3 }]] },
+    "ignore": "Immediately-invoked LAMBDA(...)(args) is not in the parser. BYROW requires an inline LAMBDA(row,body), a defined name that refers to one, or an eta aggregator name (SUM / AVERAGE / …)."
+  }
+]

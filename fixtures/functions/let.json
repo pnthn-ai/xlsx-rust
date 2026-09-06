@@ -1,0 +1,383 @@
+[
+  {
+    "id": "fn.let.basic",
+    "description": "LET(x, 1, x+1) is 2",
+    "tags": ["let", "functions"],
+    "formula": "=LET(x, 1, x+1)",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.let.two-pairs",
+    "description": "Later names can use earlier ones",
+    "tags": ["let"],
+    "formula": "=LET(x, 2, y, x*3, y+1)",
+    "expected": { "number": 7 }
+  },
+  {
+    "id": "fn.let.unused-name-in-calc",
+    "description": "Calculation need not reference every name",
+    "tags": ["let"],
+    "formula": "=LET(x, 5, 9)",
+    "expected": { "number": 9 }
+  },
+  {
+    "id": "fn.let.case-insensitive",
+    "description": "LET names match case-insensitively",
+    "tags": ["let"],
+    "formula": "=LET(Foo, 10, foo)",
+    "expected": { "number": 10 }
+  },
+  {
+    "id": "fn.let.last-wins-same-name",
+    "description": "A later pair with the same name shadows the earlier one",
+    "tags": ["let"],
+    "formula": "=LET(x, 1, x, 2, x)",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.let.redefine-uses-prior",
+    "description": "The second value can see the first binding of the same name",
+    "tags": ["let"],
+    "formula": "=LET(x, 1, x, x+1, x)",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.let.nested-shadow",
+    "description": "Inner LET shadows x; after it returns the outer x is visible again",
+    "tags": ["let"],
+    "formula": "=LET(x, 1, LET(x, 2, x)+x)",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.let.adjacent-lets",
+    "description": "Two sibling LETs do not share names",
+    "tags": ["let"],
+    "formula": "=LET(x, 1, x)+LET(y, 2, y)",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.let.no-scope-leak",
+    "description": "A LET name is not visible after the call",
+    "tags": ["let", "errors"],
+    "formula": "=LET(x, 1, x)+x",
+    "expected": { "error": "#NAME?" }
+  },
+  {
+    "id": "fn.let.self-ref-before-bind",
+    "description": "A name is not bound while its own value is evaluated",
+    "tags": ["let", "errors"],
+    "formula": "=LET(x, x+1, x)",
+    "expected": { "error": "#NAME?" }
+  },
+  {
+    "id": "fn.let.unknown-name",
+    "description": "An unbound name in the calculation is #NAME?",
+    "tags": ["let", "errors"],
+    "formula": "=LET(x, 1, y)",
+    "expected": { "error": "#NAME?" }
+  },
+  {
+    "id": "fn.let.empty-arity",
+    "description": "LET() is #VALUE!",
+    "tags": ["let", "errors"],
+    "formula": "=LET()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.let.two-args",
+    "description": "A pair with no calculation is #VALUE!",
+    "tags": ["let", "errors"],
+    "formula": "=LET(x, 1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.let.even-arity",
+    "description": "Even argument count (missing calculation) is #VALUE!",
+    "tags": ["let", "errors"],
+    "formula": "=LET(x, 1, y, 2)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.let.reserved-c",
+    "description": "c conflicts with R1C1 and is #NAME?",
+    "tags": ["let", "errors"],
+    "formula": "=LET(c, 1, c)",
+    "expected": { "error": "#NAME?" }
+  },
+  {
+    "id": "fn.let.reserved-r",
+    "description": "r conflicts with R1C1 and is #NAME?",
+    "tags": ["let", "errors"],
+    "formula": "=LET(r, 1, r)",
+    "expected": { "error": "#NAME?" }
+  },
+  {
+    "id": "fn.let.cell-as-name",
+    "description": "A1 tokenizes as a cell, not a bindable name",
+    "tags": ["let", "errors"],
+    "formula": "=LET(A1, 5, 1)",
+    "expected": { "error": "#NAME?" }
+  },
+  {
+    "id": "fn.let.number-as-name",
+    "description": "A name argument cannot be a formula result",
+    "tags": ["let", "errors"],
+    "formula": "=LET(1, 2, 3)",
+    "expected": { "error": "#NAME?" }
+  },
+  {
+    "id": "fn.let.true-as-name",
+    "description": "TRUE is a logical, not a name",
+    "tags": ["let", "errors"],
+    "formula": "=LET(TRUE, 1, 1)",
+    "expected": { "error": "#NAME?" }
+  },
+  {
+    "id": "fn.let.used-div0",
+    "description": "A bound error surfaces when the name is used",
+    "tags": ["let", "errors"],
+    "formula": "=LET(x, 1/0, x)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.let.unused-div0",
+    "description": "An unused bound error does not replace the calculation",
+    "tags": ["let", "errors"],
+    "formula": "=LET(x, 1/0, 1)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.let.iferror-bound",
+    "description": "IFERROR can catch a bound error value",
+    "tags": ["let", "errors"],
+    "formula": "=LET(x, 1/0, IFERROR(x, 0))",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.let.if-short-circuit",
+    "description": "IF inside the calculation still skips the unused branch",
+    "tags": ["let", "if"],
+    "quirks": ["if-short-circuit"],
+    "formula": "=LET(x, 1, IF(TRUE, x, 1/0))",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.let.if-around",
+    "description": "LET as the true branch of IF",
+    "tags": ["let", "if"],
+    "formula": "=IF(TRUE, LET(x, 1, x+1), 0)",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.let.text-concat",
+    "description": "Bound text is reused without recomputing",
+    "tags": ["let", "text"],
+    "formula": "=LET(s, \"ab\", s&s)",
+    "expected": { "text": "abab" }
+  },
+  {
+    "id": "fn.let.bool-if",
+    "description": "Bound logical used as IF test",
+    "tags": ["let"],
+    "formula": "=LET(b, TRUE, IF(b, 1, 0))",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.let.sum-logical-scalar",
+    "description": "LET names are values: SUM(TRUE) is 1, not a range skip",
+    "tags": ["let", "sum"],
+    "quirks": ["sum-arg-vs-range"],
+    "formula": "=LET(b, TRUE, SUM(b))",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.let.array-sum",
+    "description": "A bound array literal is summed",
+    "tags": ["let", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=LET(a, {1,2,3}, SUM(a))",
+    "expected": { "number": 6 }
+  },
+  {
+    "id": "fn.let.array-index",
+    "description": "INDEX a bound 2-D array",
+    "tags": ["let", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=LET(a, {1,2;3,4}, INDEX(a,2,1))",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.let.blank-plus",
+    "description": "A blank cell bound as a name is 0 in arithmetic",
+    "tags": ["let", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=LET(x, A1, x+1)",
+    "expected": { "number": 1 },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.let.range-sum",
+    "description": "Bind a range and SUM it once",
+    "tags": ["let", "sum"],
+    "formula": "=LET(vals, A1:A3, SUM(vals))",
+    "expected": { "number": 6 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 2 },
+          "A3": { "number": 3 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.let.reuse-sum",
+    "description": "One SUM bound, used twice (the LET performance case)",
+    "tags": ["let", "sum"],
+    "formula": "=LET(s, SUM(A1:A3), s+s)",
+    "expected": { "number": 12 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 2 },
+          "A3": { "number": 3 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.let.shadow-defined-name",
+    "description": "A LET name shadows a workbook defined name",
+    "tags": ["let", "named"],
+    "formula": "=LET(Total, 3, Total+1)",
+    "expected": { "number": 4 },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }],
+      "names": [{ "name": "Total", "refers_to": "10" }]
+    }
+  },
+  {
+    "id": "fn.let.defined-name-outside",
+    "description": "The defined name is unchanged outside LET",
+    "tags": ["let", "named"],
+    "formula": "=Total+LET(Total, 3, Total)",
+    "expected": { "number": 13 },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }],
+      "names": [{ "name": "Total", "refers_to": "10" }]
+    }
+  },
+  {
+    "id": "fn.let.underscore-name",
+    "description": "Names may start with an underscore",
+    "tags": ["let"],
+    "formula": "=LET(_x, 4, _x*2)",
+    "expected": { "number": 8 }
+  },
+  {
+    "id": "fn.let.dotted-name",
+    "description": "Names may contain a period",
+    "tags": ["let"],
+    "formula": "=LET(x.y, 4, x.y*2)",
+    "expected": { "number": 8 }
+  },
+  {
+    "id": "fn.let.xlfn-xlpm",
+    "description": "_xlfn.LET / _xlpm.x as stored in workbook XML",
+    "tags": ["let"],
+    "formula": "=_xlfn.LET(_xlpm.x, 1, _xlpm.x+1)",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.let.sum-of-name-and-literal",
+    "description": "SUM(s, 1) uses the bound name as a scalar",
+    "tags": ["let", "sum"],
+    "formula": "=LET(s, 5, SUM(s, 1))",
+    "expected": { "number": 6 }
+  },
+  {
+    "id": "fn.let.makearray-dim",
+    "description": "LET can feed MAKEARRAY dimensions",
+    "tags": ["let", "makearray", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=INDEX(MAKEARRAY(LET(n, 2, n), 2, LAMBDA(r,c,r*c)), 2, 2)",
+    "expected": { "number": 4 }
+  },
+  {
+    "id": "fn.let.makearray-inner",
+    "description": "LET inside a MAKEARRAY LAMBDA body",
+    "tags": ["let", "makearray", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=INDEX(MAKEARRAY(2, 2, LAMBDA(r,c,LET(x, r*c, x+1))), 1, 2)",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.let.makearray-wrap",
+    "description": "LET binds n, then MAKEARRAY(n,n,…)",
+    "tags": ["let", "makearray", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=INDEX(LET(n, 2, MAKEARRAY(n, n, LAMBDA(r,c,r*c))), 2, 1)",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.let.percent",
+    "description": "Bound number with postfix %",
+    "tags": ["let"],
+    "quirks": ["percent-unary"],
+    "formula": "=LET(x, 50, x%)",
+    "expected": { "number": 0.5 }
+  },
+  {
+    "id": "fn.let.unary-minus",
+    "description": "Unary minus of a bound name",
+    "tags": ["let"],
+    "formula": "=LET(x, 3, -x)",
+    "expected": { "number": -3 }
+  },
+  {
+    "id": "fn.let.power",
+    "description": "Bound base raised to a bound exponent",
+    "tags": ["let"],
+    "formula": "=LET(x, 2, y, 3, x^y)",
+    "expected": { "number": 8 }
+  },
+  {
+    "id": "fn.let.type-number",
+    "description": "TYPE of a bound number is 1",
+    "tags": ["let"],
+    "formula": "=LET(x, 3, TYPE(x))",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.let.bound-lambda-is-calc",
+    "description": "LET cannot store a first-class LAMBDA; the value is #CALC!",
+    "tags": ["let", "lambda", "errors"],
+    "formula": "=LET(f, LAMBDA(x, x+1), f)",
+    "expected": { "error": "#CALC!" }
+  },
+  {
+    "id": "fn.let.iife-lambda",
+    "description": "f(3) after binding a LAMBDA is a #NAME? call, not an invocation",
+    "tags": ["let", "lambda"],
+    "formula": "=LET(f, LAMBDA(x, x+1), f(3))",
+    "expected": { "number": 4 },
+    "ignore": "No first-class LAMBDA. f(3) is an unknown-function call, not LAMBDA invocation. Immediately-invoked LAMBDA(...)(args) is not parsed."
+  },
+  {
+    "id": "fn.let.spill-occupied",
+    "description": "Occupied neighbors never yield #SPILL! (no spill grid)",
+    "tags": ["let", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=LET(a, {1,2,3}, a)",
+    "expected": {
+      "array": [[{ "number": 1 }, { "number": 2 }, { "number": 3 }]]
+    },
+    "ignore": "Snippet workbook has no spill grid; occupied neighbors never yield #SPILL!"
+  }
+]

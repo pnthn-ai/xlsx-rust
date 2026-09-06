@@ -2,8 +2,8 @@
 //!
 //! Unknown names return `#NAME?` (an Excel value, not [`EvalError`]).
 //! Dedicated kernels live in sibling modules (`ifs`, `filter`, `sort`,
-//! `xlookup`, `textsplit`, `xnpv`, …). Financial TVM kernels live in
-//! [`xlsx_types`] (`excel_pmt` / `excel_fv` / `excel_pv` / …).
+//! `xlookup`, `textsplit`, `xnpv`, `map`, `isomitted`, …). Financial TVM
+//! kernels live in [`xlsx_types`] (`excel_pmt` / `excel_fv` / `excel_pv` / …).
 
 use super::{coerce, compare, excel_pow, Ctx, Evaluator};
 use crate::ast::Expr;
@@ -15,9 +15,9 @@ use crate::dates::{
 use crate::text_format;
 use xlsx_types::{
     count_matches, excel_ceiling, excel_ceiling_math, excel_cumipmt, excel_cumprinc, excel_effect,
-    excel_floor, excel_floor_math, excel_fv, excel_ipmt, excel_nominal, excel_nper, excel_pduration,
-    excel_pmt, excel_ppmt, excel_pv, excel_rate, excel_rri, Criterion, EvalError, ExcelError,
-    ExcelValue,
+    excel_floor, excel_floor_math, excel_fv, excel_ipmt, excel_nominal, excel_nper,
+    excel_pduration, excel_pmt, excel_ppmt, excel_pv, excel_rate, excel_rri, Criterion, EvalError,
+    ExcelError, ExcelValue,
 };
 
 pub(crate) fn dispatch(
@@ -64,7 +64,13 @@ pub(crate) fn dispatch(
         "DROP" => super::drop::eval(ev, args, ctx),
         "CHOOSEROWS" => fn_chooserows(ev, args, ctx),
         "MAKEARRAY" | "_XLFN.MAKEARRAY" => fn_makearray(ev, args, ctx),
+        "MAP" | "_XLFN.MAP" => super::map::eval(ev, args, ctx),
+        "SCAN" | "_XLFN.SCAN" => super::scan::eval(ev, args, ctx),
+        "BYROW" | "_XLFN.BYROW" => super::byrow::eval(ev, args, ctx),
+        "REDUCE" | "_XLFN.REDUCE" => super::reduce::eval(ev, args, ctx),
+        "BYCOL" | "_XLFN.BYCOL" => super::bycol::eval(ev, args, ctx),
         "LAMBDA" | "_XLFN.LAMBDA" => Ok(ExcelValue::Error(ExcelError::Calc)),
+        "LET" | "_XLFN.LET" => fn_let(ev, args, ctx),
         "INDEX" => fn_index(ev, args, ctx),
         "MATCH" => fn_match(ev, args, ctx),
         "CHOOSE" => fn_choose(ev, args, ctx),
@@ -117,6 +123,7 @@ pub(crate) fn dispatch(
         "ISNA" => fn_is(ev, args, ctx, |v| {
             matches!(v, ExcelValue::Error(ExcelError::Na))
         }),
+        "ISOMITTED" | "_XLFN.ISOMITTED" => fn_isomitted(args, ctx),
         "ISEVEN" => fn_even_odd(ev, args, ctx, true),
         "ISODD" => fn_even_odd(ev, args, ctx, false),
         "DATE" => fn_date(ev, args, ctx),
@@ -135,9 +142,11 @@ pub(crate) fn dispatch(
         "RIGHT" => fn_left_right(ev, args, ctx, false),
         "MID" => fn_mid(ev, args, ctx),
         "LEN" => fn_len(ev, args, ctx),
-        "LOWER" => fn_case(ev, args, ctx, true),
-        "UPPER" => fn_case(ev, args, ctx, false),
+        "LOWER" => fn_lower(ev, args, ctx),
+        "UPPER" => fn_upper(ev, args, ctx),
+        "PROPER" => fn_proper(ev, args, ctx),
         "TRIM" => fn_trim(ev, args, ctx),
+        "CLEAN" => fn_clean(ev, args, ctx),
         "EXACT" => fn_exact(ev, args, ctx),
         "FIND" => fn_find(ev, args, ctx),
         "SEARCH" => fn_search(ev, args, ctx),
@@ -150,6 +159,7 @@ pub(crate) fn dispatch(
         "TEXTAFTER" => fn_textafter(ev, args, ctx),
         "TEXTBEFORE" => fn_textbefore(ev, args, ctx),
         "CONCAT" => super::concat::fn_concat(ev, args, ctx),
+        "REPT" => super::rept::fn_rept(ev, args, ctx),
         "NPV" => super::npv::eval(ev, args, ctx),
         "UNIQUE" => super::unique::eval(ev, args, ctx),
         "TOCOL" => super::tocol::eval(ev, args, ctx),
@@ -177,7 +187,7 @@ pub(crate) fn dispatch(
         "NOMINAL" => fn_nominal(ev, args, ctx),
         "PDURATION" => fn_pduration(ev, args, ctx),
         "RRI" => fn_rri(ev, args, ctx),
-        _ => Ok(ExcelValue::Error(ExcelError::Name)),
+        _ => apply_named_lambda(ev, name, args, ctx),
     }
 }
 
@@ -204,7 +214,9 @@ fn fn_agg(
 ) -> Result<ExcelValue, EvalError> {
     let mut acc = AggAcc::new(kind);
     for arg in args {
-        let from_range = arg.is_reference();
+        // LET / LAMBDA locals are values, not worksheet refs: SUM(TRUE) is 1.
+        let from_range = arg.is_reference()
+            && !matches!(arg, Expr::Name(n) if super::excel_let::is_bound(&ctx.locals, n));
         let v = ev.eval_expr(arg, ctx)?;
         if let Some(err) = acc.fold(&v, from_range) {
             return Ok(ExcelValue::Error(err));
@@ -449,10 +461,19 @@ fn fn_hlookup(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelV
     }
 }
 
+/// Excel `LET(name1, value1, [name2, value2, …], calculation)`.
+///
+/// Name arguments are identifiers (not evaluated). Values bind onto the
+/// shared locals stack. See [`super::excel_let`].
+fn fn_let(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    super::excel_let::apply(ev, args, ctx)
+}
+
 /// Excel `MAKEARRAY(rows, cols, LAMBDA(r, c, body))`.
 ///
 /// Third argument is inspected as a LAMBDA (inline or defined name), not
-/// evaluated as a worksheet value. See [`super::makearray`].
+/// evaluated as a worksheet value. See [`super::makearray`]. Shared LAMBDA
+/// resolve is reused by MAP / SCAN / BYROW / REDUCE / BYCOL.
 fn fn_makearray(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
     if args.len() != 3 {
         return Ok(ExcelValue::Error(ExcelError::Value));
@@ -864,6 +885,26 @@ fn fn_error_type(
         },
         _ => ExcelValue::Error(ExcelError::Na),
     })
+}
+
+fn fn_isomitted(args: &[Expr], ctx: &Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    match super::isomitted::eval(args, &ctx.locals) {
+        Ok(b) => Ok(ExcelValue::Bool(b)),
+        Err(e) => Ok(ExcelValue::Error(e)),
+    }
+}
+
+/// `MyFn(args)` when `MyFn` is a defined name that refers to a LAMBDA.
+fn apply_named_lambda(
+    ev: &Evaluator,
+    name: &str,
+    args: &[Expr],
+    ctx: &mut Ctx<'_>,
+) -> Result<ExcelValue, EvalError> {
+    if ctx.spec.workbook.defined_name(name).is_err() {
+        return Ok(ExcelValue::Error(ExcelError::Name));
+    }
+    super::makearray::apply_callee(ev, &Expr::Name(name.to_string()), args, ctx)
 }
 
 fn fn_is(
@@ -1333,21 +1374,32 @@ fn fn_len(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue
     }
 }
 
-fn fn_case(
-    ev: &Evaluator,
-    args: &[Expr],
-    ctx: &mut Ctx<'_>,
-    lower: bool,
-) -> Result<ExcelValue, EvalError> {
+fn fn_proper(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
     if args.len() != 1 {
         return Ok(ExcelValue::Error(ExcelError::Value));
     }
     match coerce::to_text(&ev.eval_scalar(&args[0], ctx)?) {
-        Ok(s) => Ok(ExcelValue::Text(if lower {
-            s.to_ascii_lowercase()
-        } else {
-            s.to_ascii_uppercase()
-        })),
+        Ok(s) => Ok(ExcelValue::Text(super::proper::proper(&s))),
+        Err(e) => Ok(ExcelValue::Error(e)),
+    }
+}
+
+fn fn_lower(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    if args.len() != 1 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    match coerce::to_text(&ev.eval_scalar(&args[0], ctx)?) {
+        Ok(s) => Ok(ExcelValue::Text(super::lower::lower_owned(s))),
+        Err(e) => Ok(ExcelValue::Error(e)),
+    }
+}
+
+fn fn_upper(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    if args.len() != 1 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    match coerce::to_text(&ev.eval_scalar(&args[0], ctx)?) {
+        Ok(s) => Ok(ExcelValue::Text(super::upper::upper(&s))),
         Err(e) => Ok(ExcelValue::Error(e)),
     }
 }
@@ -1357,22 +1409,17 @@ fn fn_trim(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValu
         return Ok(ExcelValue::Error(ExcelError::Value));
     }
     match coerce::to_text(&ev.eval_scalar(&args[0], ctx)?) {
-        Ok(s) => {
-            let mut out = String::new();
-            let mut prev_space = false;
-            for c in s.trim_matches(' ').chars() {
-                if c == ' ' {
-                    if !prev_space {
-                        out.push(' ');
-                    }
-                    prev_space = true;
-                } else {
-                    out.push(c);
-                    prev_space = false;
-                }
-            }
-            Ok(ExcelValue::Text(out))
-        }
+        Ok(s) => Ok(ExcelValue::Text(super::trim::trim(&s))),
+        Err(e) => Ok(ExcelValue::Error(e)),
+    }
+}
+
+fn fn_clean(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    if args.len() != 1 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    match coerce::to_text(&ev.eval_scalar(&args[0], ctx)?) {
+        Ok(s) => Ok(ExcelValue::Text(super::clean::clean_owned(s))),
         Err(e) => Ok(ExcelValue::Error(e)),
     }
 }
@@ -1381,15 +1428,12 @@ fn fn_exact(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelVal
     if args.len() != 2 {
         return Ok(ExcelValue::Error(ExcelError::Value));
     }
-    let a = match coerce::to_text(&ev.eval_scalar(&args[0], ctx)?) {
-        Ok(s) => s,
-        Err(e) => return Ok(ExcelValue::Error(e)),
-    };
-    let b = match coerce::to_text(&ev.eval_scalar(&args[1], ctx)?) {
-        Ok(s) => s,
-        Err(e) => return Ok(ExcelValue::Error(e)),
-    };
-    Ok(ExcelValue::Bool(a == b))
+    let a = ev.eval_scalar(&args[0], ctx)?;
+    let b = ev.eval_scalar(&args[1], ctx)?;
+    match super::exact::exact(&a, &b) {
+        Ok(eq) => Ok(ExcelValue::Bool(eq)),
+        Err(e) => Ok(ExcelValue::Error(e)),
+    }
 }
 
 fn fn_substitute(

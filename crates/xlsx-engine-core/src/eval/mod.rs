@@ -4,51 +4,65 @@
 //! Worksheet functions live in [`functions`].
 
 pub mod averageif;
+pub mod averageifs;
+pub mod bycol;
+pub mod byrow;
 pub mod choosecols;
 pub mod chooserows;
-pub mod averageifs;
+pub mod clean;
 pub mod coerce;
-pub mod countifs;
 pub mod compare;
 pub mod concat;
+pub mod countifs;
 pub mod drop;
 pub mod empty;
+pub mod exact;
+pub mod excel_let;
 pub mod expand;
 pub mod filter;
 pub mod find;
 pub mod functions;
+pub mod hstack;
 pub mod ifs;
 pub mod irr;
+pub mod isomitted;
+pub mod lower;
+pub mod makearray;
+pub mod map;
+pub mod mirr;
 pub mod npv;
-pub mod hstack;
-pub mod substitute;
-pub mod sumif;
-pub mod sumproduct;
+pub mod proper;
+pub mod randarray;
+pub mod reduce;
 pub mod replace;
-pub mod sumifs;
-pub mod textjoin;
-pub mod textsplit;
+pub mod rept;
 pub mod round;
+pub mod scan;
 pub mod search;
+pub mod sequence;
 pub mod sort;
 pub mod sortby;
-pub mod sequence;
-pub mod randarray;
-pub mod makearray;
+pub mod substitute;
+pub mod sumif;
+pub mod sumifs;
+pub mod sumproduct;
 pub mod switch;
-pub mod unique;
-pub mod tocol;
-pub mod xnpv;
-pub mod xirr;
-pub mod mirr;
-pub mod xlookup;
-pub mod torow;
-pub mod vstack;
-pub mod wrapcols;
-pub mod wraprows;
 pub mod take;
 pub mod textafter;
 pub mod textbefore;
+pub mod textjoin;
+pub mod textsplit;
+pub mod tocol;
+pub mod torow;
+pub mod trim;
+pub mod unique;
+pub mod upper;
+pub mod vstack;
+pub mod wrapcols;
+pub mod wraprows;
+pub mod xirr;
+pub mod xlookup;
+pub mod xnpv;
 
 use crate::ast::{BinOp, Expr, UnaryOp};
 use crate::parse::parse;
@@ -67,8 +81,8 @@ pub(crate) struct Ctx<'a> {
     visiting: HashSet<String>,
     host: CellAddr,
     pub(crate) rng: randarray::XorShift64,
-    /// LAMBDA parameter bindings (MAKEARRAY / nested LAMBDA). Innermost last.
-    pub(crate) locals: Vec<(String, ExcelValue)>,
+    /// LAMBDA / LET name bindings. Innermost last (MAKEARRAY params, LET pairs).
+    pub(crate) locals: Vec<makearray::Local>,
 }
 
 impl Evaluator {
@@ -163,6 +177,7 @@ impl Evaluator {
             Expr::Unary { op, expr } => self.eval_unary(*op, expr, ctx),
             Expr::Binary { op, left, right } => self.eval_binary(*op, left, right, ctx),
             Expr::Call { name, args } => functions::dispatch(self, name, args, ctx),
+            Expr::Apply { callee, args } => makearray::apply_callee(self, callee, args, ctx),
             Expr::Missing => Ok(ExcelValue::Empty),
             Expr::Array(rows) => {
                 let mut out = Vec::new();
@@ -1950,6 +1965,176 @@ mod tests {
         );
         assert_eq!(
             eval_formula_in(&wb, "=PDURATION()").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
+        );
+    }
+
+    #[test]
+    fn map_times2_and_index() {
+        let wb = Workbook::default();
+        assert_eq!(
+            eval_formula_in(&wb, "=MAP({1,2,3},LAMBDA(x,x*2))").unwrap(),
+            ExcelValue::Array(vec![vec![
+                ExcelValue::Number(2.0),
+                ExcelValue::Number(4.0),
+                ExcelValue::Number(6.0),
+            ]])
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=INDEX(MAP({1,2,3},LAMBDA(x,x*2)),1,3)").unwrap(),
+            ExcelValue::Number(6.0)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=MAP({1},LAMBDA(a,b,a+b))").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
+        );
+    }
+
+    #[test]
+    fn scan_running_sum_and_index() {
+        let wb = Workbook::default();
+        assert_eq!(
+            eval_formula_in(&wb, "=SCAN(0,{1,2,3},LAMBDA(a,v,a+v))").unwrap(),
+            ExcelValue::Array(vec![vec![
+                ExcelValue::Number(1.0),
+                ExcelValue::Number(3.0),
+                ExcelValue::Number(6.0)
+            ]])
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=INDEX(SCAN(0,{1,2,3},LAMBDA(a,v,a+v)),1,3)").unwrap(),
+            ExcelValue::Number(6.0)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=SCAN({1,2,3})").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
+        );
+    }
+
+    #[test]
+    fn byrow_sum_and_index() {
+        let mut sheet = xlsx_types::Sheet::new("Sheet1");
+        sheet.cells.insert(
+            "A1".into(),
+            xlsx_types::Cell::value(ExcelValue::Number(1.0)),
+        );
+        sheet.cells.insert(
+            "B1".into(),
+            xlsx_types::Cell::value(ExcelValue::Number(2.0)),
+        );
+        sheet.cells.insert(
+            "C1".into(),
+            xlsx_types::Cell::value(ExcelValue::Number(3.0)),
+        );
+        sheet.cells.insert(
+            "A2".into(),
+            xlsx_types::Cell::value(ExcelValue::Number(4.0)),
+        );
+        sheet.cells.insert(
+            "B2".into(),
+            xlsx_types::Cell::value(ExcelValue::Number(5.0)),
+        );
+        sheet.cells.insert(
+            "C2".into(),
+            xlsx_types::Cell::value(ExcelValue::Number(6.0)),
+        );
+        let wb = Workbook {
+            sheets: vec![sheet],
+            names: vec![],
+        };
+        assert_eq!(
+            eval_formula_in(&wb, "=BYROW(A1:C2,LAMBDA(r,SUM(r)))").unwrap(),
+            ExcelValue::Array(vec![
+                vec![ExcelValue::Number(6.0)],
+                vec![ExcelValue::Number(15.0)],
+            ])
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=INDEX(BYROW(A1:C2,SUM),2)").unwrap(),
+            ExcelValue::Number(15.0)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=BYROW({1,2},LAMBDA(a,b,a))").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
+        );
+    }
+
+    #[test]
+    fn reduce_sum_and_omitted_initial() {
+        let wb = Workbook::default();
+        assert_eq!(
+            eval_formula_in(&wb, "=REDUCE(0,{1,2,3},LAMBDA(a,b,a+b))").unwrap(),
+            ExcelValue::Number(6.0)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=REDUCE(,{10,3},LAMBDA(a,b,a-b))").unwrap(),
+            ExcelValue::Number(7.0)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=REDUCE(0,{1},1)").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
+        );
+    }
+
+    #[test]
+    fn bycol_sum_and_index() {
+        let wb = Workbook::default();
+        assert_eq!(
+            eval_formula_in(&wb, "=BYCOL({1,2,3;4,5,6},LAMBDA(c,SUM(c)))").unwrap(),
+            ExcelValue::Array(vec![vec![
+                ExcelValue::Number(5.0),
+                ExcelValue::Number(7.0),
+                ExcelValue::Number(9.0),
+            ]])
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=INDEX(BYCOL({1,2;3,4},LAMBDA(c,SUM(c))),1,2)").unwrap(),
+            ExcelValue::Number(6.0)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=BYCOL({1},LAMBDA(r,c,r))").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
+        );
+    }
+
+    #[test]
+    fn let_bind_once_and_nested() {
+        let wb = Workbook::default();
+        assert_eq!(
+            eval_formula_in(&wb, "=LET(x, 2, y, x*3, y+1)").unwrap(),
+            ExcelValue::Number(7.0)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=LET(x, 1, LET(x, 2, x)+x)").unwrap(),
+            ExcelValue::Number(3.0)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=LET()").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=LET(c, 1, c)").unwrap(),
+            ExcelValue::Error(ExcelError::Name)
+        );
+    }
+
+    #[test]
+    fn isomitted_iife_and_blank() {
+        let wb = Workbook::default();
+        assert_eq!(
+            eval_formula_in(&wb, "=LAMBDA(x,y,ISOMITTED(y))(1,)").unwrap(),
+            ExcelValue::Bool(true)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=LAMBDA(x,y,ISOMITTED(y))(1,2)").unwrap(),
+            ExcelValue::Bool(false)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=ISOMITTED(A1)").unwrap(),
+            ExcelValue::Bool(false)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=ISOMITTED()").unwrap(),
             ExcelValue::Error(ExcelError::Value)
         );
     }

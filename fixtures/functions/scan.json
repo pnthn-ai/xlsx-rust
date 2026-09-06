@@ -1,0 +1,439 @@
+[
+  {
+    "id": "fn.scan.sum-row",
+    "description": "SCAN running sum with explicit 0 initial on a row literal",
+    "tags": ["scan", "lambda", "functions", "array"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SCAN(0,{1,2,3},LAMBDA(a,v,a+v))",
+    "expected": {
+      "array": [[{ "number": 1 }, { "number": 3 }, { "number": 6 }]]
+    }
+  },
+  {
+    "id": "fn.scan.product-row",
+    "description": "SCAN running product with initial 1",
+    "tags": ["scan", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SCAN(1,{2,3,4},LAMBDA(a,v,a*v))",
+    "expected": {
+      "array": [[{ "number": 2 }, { "number": 6 }, { "number": 24 }]]
+    }
+  },
+  {
+    "id": "fn.scan.nonzero-initial",
+    "description": "Non-zero initial is added on the first step",
+    "tags": ["scan", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SCAN(10,{1,2,3},LAMBDA(a,v,a+v))",
+    "expected": {
+      "array": [[{ "number": 11 }, { "number": 13 }, { "number": 16 }]]
+    }
+  },
+  {
+    "id": "fn.scan.omitted-initial-comma",
+    "description": "Omitted initial (empty first slot) copies the first element, then accumulates",
+    "tags": ["scan", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SCAN(,{1,2,3},LAMBDA(a,v,a+v))",
+    "expected": {
+      "array": [[{ "number": 1 }, { "number": 3 }, { "number": 6 }]]
+    }
+  },
+  {
+    "id": "fn.scan.two-arg",
+    "description": "Two-argument SCAN(array, lambda) is omitted-initial",
+    "tags": ["scan", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SCAN({1,2,3},LAMBDA(a,v,a+v))",
+    "expected": {
+      "array": [[{ "number": 1 }, { "number": 3 }, { "number": 6 }]]
+    }
+  },
+  {
+    "id": "fn.scan.row-major-2d",
+    "description": "2-D SCAN walks row-major and keeps the input shape",
+    "tags": ["scan", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SCAN(0,{1,2;3,4},LAMBDA(a,v,a+v))",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 3 }],
+        [{ "number": 6 }, { "number": 10 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.scan.col-vector-range",
+    "description": "Vertical range stays a column of running totals",
+    "tags": ["scan", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SCAN(0,A1:A3,LAMBDA(a,v,a+v))",
+    "expected": {
+      "array": [[{ "number": 1 }], [{ "number": 3 }], [{ "number": 6 }]]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A2": { "number": 2 },
+          "A3": { "number": 3 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.scan.one-by-one",
+    "description": "1×1 is still an array value",
+    "tags": ["scan", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SCAN(0,{5},LAMBDA(a,v,a+v))",
+    "expected": { "array": [[{ "number": 5 }]] }
+  },
+  {
+    "id": "fn.scan.scalar-array",
+    "description": "A scalar array argument is a 1×1 result",
+    "tags": ["scan", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SCAN(0,5,LAMBDA(a,v,a+v))",
+    "expected": { "array": [[{ "number": 5 }]] }
+  },
+  {
+    "id": "fn.scan.bool-initial",
+    "description": "TRUE coerces to 1 as the accumulator start",
+    "tags": ["scan", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SCAN(TRUE,{1},LAMBDA(a,v,a+v))",
+    "expected": { "array": [[{ "number": 2 }]] }
+  },
+  {
+    "id": "fn.scan.text-num-initial",
+    "description": "Numeric text initial coerces in arithmetic",
+    "tags": ["scan", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SCAN(\"2\",{3},LAMBDA(a,v,a+v))",
+    "expected": { "array": [[{ "number": 5 }]] }
+  },
+  {
+    "id": "fn.scan.bool-values",
+    "description": "Logical array values coerce in a running sum",
+    "tags": ["scan", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SCAN(0,{TRUE,FALSE,TRUE},LAMBDA(a,v,a+v))",
+    "expected": {
+      "array": [[{ "number": 1 }, { "number": 1 }, { "number": 2 }]]
+    }
+  },
+  {
+    "id": "fn.scan.empty-cell-in-range",
+    "description": "Blank cells in the array coerce to 0 for +",
+    "tags": ["scan", "lambda"],
+    "quirks": ["array-eval-mode", "empty-cell-duality"],
+    "formula": "=SCAN(0,A1:A3,LAMBDA(a,v,a+v))",
+    "expected": {
+      "array": [[{ "number": 1 }], [{ "number": 1 }], [{ "number": 2 }]]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 1 },
+          "A3": { "number": 1 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.scan.empty-vs-omitted-initial",
+    "description": "A blank-cell initial is Empty (ISBLANK), not omitted",
+    "tags": ["scan", "lambda"],
+    "quirks": ["array-eval-mode", "empty-cell-duality"],
+    "formula": "=SCAN(A1,{5},LAMBDA(a,v,IF(ISBLANK(a),100,a)+v))",
+    "expected": { "array": [[{ "number": 105 }]] },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {}
+      }]
+    }
+  },
+  {
+    "id": "fn.scan.omitted-skips-lambda",
+    "description": "Omitted initial does not run LAMBDA on the first element",
+    "tags": ["scan", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SCAN(,{5},LAMBDA(a,v,IF(ISBLANK(a),100,a)+v))",
+    "expected": { "array": [[{ "number": 5 }]] }
+  },
+  {
+    "id": "fn.scan.named-lambda",
+    "description": "Defined name referring to LAMBDA(a,v,a+v)",
+    "tags": ["scan", "lambda", "named"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SCAN(0,{1,2},Add)",
+    "expected": {
+      "array": [[{ "number": 1 }, { "number": 3 }]]
+    },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }],
+      "names": [{ "name": "Add", "refers_to": "=LAMBDA(a,v,a+v)" }]
+    }
+  },
+  {
+    "id": "fn.scan.body-cell-ref",
+    "description": "LAMBDA body may read sheet cells",
+    "tags": ["scan", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SCAN(0,{1,2},LAMBDA(a,v,a+v+A1))",
+    "expected": {
+      "array": [[{ "number": 11 }, { "number": 23 }]]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": { "A1": { "number": 10 } }
+      }]
+    }
+  },
+  {
+    "id": "fn.scan.running-max",
+    "description": "LAMBDA body may call other worksheet functions (running max)",
+    "tags": ["scan", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SCAN(,{3,1,4,2},LAMBDA(a,v,IF(a>v,a,v)))",
+    "expected": {
+      "array": [[{ "number": 3 }, { "number": 3 }, { "number": 4 }, { "number": 4 }]]
+    }
+  },
+  {
+    "id": "fn.scan.text-concat",
+    "description": "Running concatenation via acc&value",
+    "tags": ["scan", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SCAN(\"\",{\"a\",\"b\",\"c\"},LAMBDA(a,v,a&v))",
+    "expected": {
+      "array": [[{ "text": "a" }, { "text": "ab" }, { "text": "abc" }]]
+    }
+  },
+  {
+    "id": "fn.scan.bool-result",
+    "description": "Body may return a logical",
+    "tags": ["scan", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SCAN(0,{5,1},LAMBDA(a,v,v>3))",
+    "expected": {
+      "array": [[{ "bool": true }, { "bool": false }]]
+    }
+  },
+  {
+    "id": "fn.scan.subtract",
+    "description": "Running difference",
+    "tags": ["scan", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SCAN(0,{5,1},LAMBDA(a,v,a-v))",
+    "expected": {
+      "array": [[{ "number": -5 }, { "number": -6 }]]
+    }
+  },
+  {
+    "id": "fn.scan.sequence",
+    "description": "SCAN of SEQUENCE is row-major over the generated grid",
+    "tags": ["scan", "lambda", "sequence"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SCAN(0,SEQUENCE(2,2),LAMBDA(a,v,a+v))",
+    "expected": {
+      "array": [
+        [{ "number": 1 }, { "number": 3 }],
+        [{ "number": 6 }, { "number": 10 }]
+      ]
+    }
+  },
+  {
+    "id": "fn.scan.body-div0-cell",
+    "description": "A body error stays in that cell; unused acc lets later cells compute",
+    "tags": ["scan", "lambda", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SCAN(0,{1,0,2},LAMBDA(a,v,1/v))",
+    "expected": {
+      "array": [[{ "number": 1 }, { "error": "#DIV/0!" }, { "number": 0.5 }]]
+    }
+  },
+  {
+    "id": "fn.scan.body-error-propagates",
+    "description": "When the body uses acc, a step error carries forward",
+    "tags": ["scan", "lambda", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SCAN(0,{1,0,2},LAMBDA(a,v,a+1/v))",
+    "expected": {
+      "array": [[{ "number": 1 }, { "error": "#DIV/0!" }, { "error": "#DIV/0!" }]]
+    }
+  },
+  {
+    "id": "fn.scan.body-array-is-calc",
+    "description": "LAMBDA must return a single value; an array body cell is #CALC!",
+    "tags": ["scan", "lambda", "errors"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SCAN(0,{1},LAMBDA(a,v,{1,2}))",
+    "expected": { "array": [[{ "error": "#CALC!" }]] }
+  },
+  {
+    "id": "fn.scan.index",
+    "description": "INDEX picks a SCAN cell without a spill write",
+    "tags": ["scan", "lambda", "lookup"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=INDEX(SCAN(0,{1,2,3},LAMBDA(a,v,a+v)),1,3)",
+    "expected": { "number": 6 }
+  },
+  {
+    "id": "fn.scan.sum",
+    "description": "SUM of a SCAN running total",
+    "tags": ["scan", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SUM(SCAN(0,{1,2,3},LAMBDA(a,v,a+v)))",
+    "expected": { "number": 10 }
+  },
+  {
+    "id": "fn.scan.counta",
+    "description": "COUNTA of SCAN counts every filled cell",
+    "tags": ["scan", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=COUNTA(SCAN(0,{1,2,3},LAMBDA(a,v,a+v)))",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.scan.type-array",
+    "description": "TYPE of SCAN is 64 (array)",
+    "tags": ["scan", "information"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=TYPE(SCAN(0,{1},LAMBDA(a,v,a+v)))",
+    "expected": { "number": 64 }
+  },
+  {
+    "id": "fn.scan.xlfn-prefix",
+    "description": "Excel-stored _xlfn.SCAN / _xlfn.LAMBDA names",
+    "tags": ["scan", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=_xlfn.SCAN(0,{1,2},_xlfn.LAMBDA(a,v,a+v))",
+    "expected": { "array": [[{ "number": 1 }, { "number": 3 }]] }
+  },
+  {
+    "id": "fn.scan.param-names-acc-val",
+    "description": "Parameter names are caller-chosen (acc/val)",
+    "tags": ["scan", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SCAN(0,{1,2},LAMBDA(acc,val,acc+val))",
+    "expected": {
+      "array": [[{ "number": 1 }, { "number": 3 }]]
+    }
+  },
+  {
+    "id": "fn.scan.dims-from-cells",
+    "description": "initial and array may be cell references",
+    "tags": ["scan", "lambda"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SCAN(A1,B1:B2,LAMBDA(a,v,a+v))",
+    "expected": {
+      "array": [[{ "number": 11 }], [{ "number": 13 }]]
+    },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 10 },
+          "B1": { "number": 1 },
+          "B2": { "number": 2 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.scan.arity-1",
+    "description": "Missing LAMBDA argument is #VALUE!",
+    "tags": ["scan", "errors"],
+    "formula": "=SCAN({1,2,3})",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.scan.arity-0",
+    "description": "SCAN() is #VALUE!",
+    "tags": ["scan", "errors"],
+    "formula": "=SCAN()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.scan.arity-4",
+    "description": "Too many arguments is #VALUE!",
+    "tags": ["scan", "errors"],
+    "formula": "=SCAN(0,{1},LAMBDA(a,v,a+v),1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.scan.lambda-one-param",
+    "description": "LAMBDA must take exactly two parameters",
+    "tags": ["scan", "lambda", "errors"],
+    "formula": "=SCAN(0,{1},LAMBDA(a,1))",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.scan.lambda-three-params",
+    "description": "Three-parameter LAMBDA is #VALUE! for SCAN",
+    "tags": ["scan", "lambda", "errors"],
+    "formula": "=SCAN(0,{1},LAMBDA(a,v,x,a+v))",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.scan.not-lambda",
+    "description": "A number is not a LAMBDA",
+    "tags": ["scan", "errors"],
+    "formula": "=SCAN(0,{1},1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.scan.unknown-name",
+    "description": "Unknown name as the LAMBDA argument is #VALUE!",
+    "tags": ["scan", "errors"],
+    "formula": "=SCAN(0,{1},Nope)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.scan.initial-div0",
+    "description": "Error in initial_value wins (left-to-right)",
+    "tags": ["scan", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=SCAN(1/0,{1},LAMBDA(a,v,a+v))",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.scan.array-div0",
+    "description": "Error in array surfaces after initial succeeds",
+    "tags": ["scan", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=SCAN(0,1/0,LAMBDA(a,v,a+v))",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.scan.spill-occupancy-not-modeled",
+    "description": "#SPILL! from a blocked spill range is not produced",
+    "tags": ["scan"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=SCAN(0,{1,2},LAMBDA(a,v,a+v))",
+    "expected": { "array": [[{ "number": 1 }, { "number": 3 }]] },
+    "ignore": "Workbook snippets have no spill grid. SCAN returns an array value; #SPILL! from occupied cells below/right of the host is not modeled."
+  },
+  {
+    "id": "fn.scan.iife-lambda-not-parsed",
+    "description": "Immediately-invoked LAMBDA(...)(args) is not parsed",
+    "tags": ["scan", "lambda"],
+    "formula": "=SCAN(0,{1},LAMBDA(a,v,a+v)(0,1))",
+    "expected": { "array": [[{ "number": 1 }]] },
+    "ignore": "Immediately-invoked LAMBDA(...)(args) is not in the parser. SCAN requires an inline LAMBDA(acc,value,body) or a defined name that refers to one."
+  },
+  {
+    "id": "fn.scan.native-sum-as-lambda-not-bound",
+    "description": "Excel can bind SUM as a binary LAMBDA; this engine does not",
+    "tags": ["scan", "lambda"],
+    "formula": "=SCAN(0,{1,2,3},SUM)",
+    "expected": { "array": [[{ "number": 1 }, { "number": 3 }, { "number": 6 }]] },
+    "ignore": "Excel 365 accepts some native functions (SUM) as the SCAN LAMBDA. This engine only binds an inline LAMBDA or a defined name that refers to one — same limit as MAKEARRAY."
+  }
+]

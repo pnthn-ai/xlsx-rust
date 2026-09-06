@@ -1,0 +1,609 @@
+[
+  {
+    "id": "fn.clean-ms-monthly",
+    "description": "Microsoft example: CLEAN of CHAR(9)&\"Monthly report\"&CHAR(10) is \"Monthly report\"",
+    "tags": ["text", "clean"],
+    "formula": "=CLEAN(A2)",
+    "expected": { "text": "Monthly report" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A2": { "text": "\tMonthly report\n" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.clean-already-clean",
+    "description": "CLEAN of printable ASCII is a no-op",
+    "tags": ["text", "clean"],
+    "formula": "=CLEAN(\"hello\")",
+    "expected": { "text": "hello" }
+  },
+  {
+    "id": "fn.clean-empty-string",
+    "description": "CLEAN(\"\") is \"\"",
+    "tags": ["text", "clean"],
+    "formula": "=CLEAN(\"\")",
+    "expected": { "text": "" }
+  },
+  {
+    "id": "fn.clean-blank-cell",
+    "description": "Blank cell coerces to \"\" then CLEAN stays \"\"",
+    "tags": ["text", "clean", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=CLEAN(A1)",
+    "expected": { "text": "" },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.clean-bel",
+    "description": "CHAR(7) BEL is stripped from the middle",
+    "tags": ["text", "clean"],
+    "formula": "=CLEAN(A1)",
+    "expected": { "text": "MonthlyReports" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "Monthly\u0007Reports" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.clean-bel-edges",
+    "description": "CHAR(7) prefix and suffix are stripped",
+    "tags": ["text", "clean"],
+    "formula": "=CLEAN(A1)",
+    "expected": { "text": "text" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "\u0007text\u0007" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.clean-tab",
+    "description": "CHAR(9) tab is stripped; surrounding letters stay",
+    "tags": ["text", "clean"],
+    "formula": "=CLEAN(A1)",
+    "expected": { "text": "ab" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "a\tb" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.clean-lf",
+    "description": "CHAR(10) line feed is stripped",
+    "tags": ["text", "clean"],
+    "formula": "=CLEAN(A1)",
+    "expected": { "text": "ab" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "a\nb" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.clean-cr",
+    "description": "CHAR(13) carriage return is stripped",
+    "tags": ["text", "clean"],
+    "formula": "=CLEAN(A1)",
+    "expected": { "text": "ab" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "a\rb" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.clean-nul",
+    "description": "CHAR(0) NUL is stripped (code point 0 is in the C0 range)",
+    "tags": ["text", "clean"],
+    "formula": "=CLEAN(A1)",
+    "expected": { "text": "ab" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "a\u0000b" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.clean-char-1",
+    "description": "CHAR(1) is stripped",
+    "tags": ["text", "clean"],
+    "formula": "=CLEAN(A1)",
+    "expected": { "text": "ab" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "a\u0001b" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.clean-char-31",
+    "description": "CHAR(31) is the last stripped C0; it is removed",
+    "tags": ["text", "clean"],
+    "formula": "=CLEAN(A1)",
+    "expected": { "text": "ab" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "a\u001fb" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.clean-space-kept",
+    "description": "CHAR(32) space is printable and is not stripped (unlike TRIM collapsing)",
+    "tags": ["text", "clean"],
+    "formula": "=CLEAN(\"  a  b  \")",
+    "expected": { "text": "  a  b  " }
+  },
+  {
+    "id": "fn.clean-char-31-vs-32",
+    "description": "CHAR(31) is removed; the following space (32) stays",
+    "tags": ["text", "clean"],
+    "formula": "=CLEAN(A1)",
+    "expected": { "text": "a b" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "a\u001f b" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.clean-all-c0",
+    "description": "Every ASCII C0 (0 through 31) is removed; leftover letters stay in order",
+    "tags": ["text", "clean"],
+    "formula": "=CLEAN(A1)",
+    "expected": { "text": "ok" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\u0008\u0009\u000a\u000b\u000c\u000d\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001fok" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.clean-only-c0",
+    "description": "A string of only C0 bytes becomes \"\"",
+    "tags": ["text", "clean"],
+    "formula": "=CLEAN(A1)",
+    "expected": { "text": "" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "\u0001\u0007\u0009\u000a\u000d" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.clean-consecutive",
+    "description": "Runs of consecutive C0 bytes are all dropped",
+    "tags": ["text", "clean"],
+    "formula": "=CLEAN(A1)",
+    "expected": { "text": "ab" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "a\u0001\u0002\u0003b" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.clean-del-kept",
+    "description": "CHAR(127) DEL is a documented non-printable that CLEAN does not remove",
+    "tags": ["text", "clean"],
+    "notes": "Microsoft: CLEAN does not remove Unicode non-printables 127, 129, 141, 143, 144, 157. Use SUBSTITUTE for those.",
+    "formula": "=CLEAN(A1)",
+    "expected": { "text": "a\u007fb" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "a\u007fb" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.clean-c1-kept",
+    "description": "Documented leftover non-printables 129/141/143/144/157 stay",
+    "tags": ["text", "clean"],
+    "formula": "=CLEAN(A1)",
+    "expected": { "text": "x\u0081\u008d\u008f\u0090\u009dy" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "x\u0081\u008d\u008f\u0090\u009dy" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.clean-nbsp-kept",
+    "description": "NBSP (160) is not stripped — pair with SUBSTITUTE/TRIM for HTML imports",
+    "tags": ["text", "clean"],
+    "formula": "=CLEAN(A1)",
+    "expected": { "text": "a\u00a0b" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "a\u00a0b" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.clean-zwsp-kept",
+    "description": "Zero-width space (U+200B) is not an ASCII C0 and stays",
+    "tags": ["text", "clean"],
+    "formula": "=CLEAN(A1)",
+    "expected": { "text": "a\u200bb" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "a\u200bb" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.clean-unicode-cafe",
+    "description": "Precomposed é is kept (not a C0)",
+    "tags": ["text", "clean"],
+    "formula": "=CLEAN(\"café\")",
+    "expected": { "text": "café" }
+  },
+  {
+    "id": "fn.clean-unicode-cafe-bel",
+    "description": "C0 in a UTF-8 string is stripped; é stays",
+    "tags": ["text", "clean"],
+    "formula": "=CLEAN(A1)",
+    "expected": { "text": "café!" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "café\u0007!" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.clean-unicode-cjk",
+    "description": "CJK ideographs are kept; LF between them is stripped",
+    "tags": ["text", "clean"],
+    "formula": "=CLEAN(A1)",
+    "expected": { "text": "日本" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "日\n本" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.clean-emoji",
+    "description": "Surrogate-pair emoji is one scalar and is not stripped",
+    "tags": ["text", "clean"],
+    "formula": "=CLEAN(\"a😀b\")",
+    "expected": { "text": "a😀b" }
+  },
+  {
+    "id": "fn.clean-combining-mark",
+    "description": "Combining marks stay (Excel Compatibility Version 2; not clustered)",
+    "tags": ["text", "clean"],
+    "formula": "=CLEAN(A1)",
+    "expected": { "text": "e\u0301" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "e\u0301" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.clean-number",
+    "description": "Numbers coerce to plain text; CLEAN of a clean number is that text",
+    "tags": ["text", "clean", "coercion"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=CLEAN(123)",
+    "expected": { "text": "123" }
+  },
+  {
+    "id": "fn.clean-decimal",
+    "description": "Non-integer numbers coerce via the plain-text kernel",
+    "tags": ["text", "clean", "coercion"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=CLEAN(12.5)",
+    "expected": { "text": "12.5" }
+  },
+  {
+    "id": "fn.clean-zero",
+    "description": "CLEAN(0) is the text \"0\"",
+    "tags": ["text", "clean", "coercion"],
+    "formula": "=CLEAN(0)",
+    "expected": { "text": "0" }
+  },
+  {
+    "id": "fn.clean-neg",
+    "description": "Negative numbers keep the minus in the coerced text",
+    "tags": ["text", "clean", "coercion"],
+    "formula": "=CLEAN(-3)",
+    "expected": { "text": "-3" }
+  },
+  {
+    "id": "fn.clean-true",
+    "description": "TRUE coerces to \"TRUE\"",
+    "tags": ["text", "clean", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=CLEAN(TRUE)",
+    "expected": { "text": "TRUE" }
+  },
+  {
+    "id": "fn.clean-false",
+    "description": "FALSE coerces to \"FALSE\"",
+    "tags": ["text", "clean", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=CLEAN(FALSE)",
+    "expected": { "text": "FALSE" }
+  },
+  {
+    "id": "fn.clean-concat",
+    "description": "CLEAN of concatenated pieces with an embedded C0",
+    "tags": ["text", "clean"],
+    "formula": "=CLEAN(\"pre\"&A1&\"post\")",
+    "expected": { "text": "preXpost" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "\u0007X\u0007" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.clean-literal-tab-lf",
+    "description": "Formula-literal tab and LF (Microsoft shape without CHAR)",
+    "tags": ["text", "clean"],
+    "formula": "=CLEAN(\"\tMonthly report\n\")",
+    "expected": { "text": "Monthly report" }
+  },
+  {
+    "id": "fn.clean-nested-upper",
+    "description": "CLEAN(UPPER(...)) after stripping C0",
+    "tags": ["text", "clean"],
+    "formula": "=CLEAN(UPPER(A1))",
+    "expected": { "text": "AB" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "a\u0007b" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.clean-then-len",
+    "description": "LEN(CLEAN(...)) counts leftover scalars",
+    "tags": ["text", "clean"],
+    "formula": "=LEN(CLEAN(A1))",
+    "expected": { "number": 2 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "a\u0007b" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.clean-vs-trim-spaces",
+    "description": "CLEAN does not collapse ASCII spaces; TRIM does",
+    "tags": ["text", "clean"],
+    "formula": "=CLEAN(\"  a  b  \")=TRIM(\"  a  b  \")",
+    "expected": { "bool": false }
+  },
+  {
+    "id": "fn.clean-trim-tabs",
+    "description": "TRIM keeps tabs; CLEAN removes them",
+    "tags": ["text", "clean"],
+    "formula": "=CLEAN(A1)=TRIM(A1)",
+    "expected": { "bool": false },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "\ta\tb\t" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.clean-then-trim",
+    "description": "TRIM(CLEAN(...)) after dropping C0 then collapsing spaces",
+    "tags": ["text", "clean"],
+    "formula": "=TRIM(CLEAN(A1))",
+    "expected": { "text": "a b" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "  a \u0007 b  " }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.clean-idempotent",
+    "description": "CLEAN(CLEAN(text)) equals CLEAN(text)",
+    "tags": ["text", "clean"],
+    "formula": "=CLEAN(CLEAN(A1))",
+    "expected": { "text": "ab" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "a\u0007b" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.clean-intersect",
+    "description": "CLEAN of a column range implicit-intersects the host row",
+    "tags": ["text", "clean"],
+    "quirks": ["implicit-intersection"],
+    "formula": "=CLEAN(A1:A3)",
+    "at": "Sheet1!B2",
+    "expected": { "text": "mid" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "top\u0007" },
+            "A2": { "text": "\tmid\n" },
+            "A3": { "text": "bot" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.clean-arity-0",
+    "description": "CLEAN() is #VALUE!",
+    "tags": ["text", "clean", "errors"],
+    "formula": "=CLEAN()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.clean-arity-2",
+    "description": "Two arguments is #VALUE! (text is required and exclusive)",
+    "tags": ["text", "clean", "errors"],
+    "formula": "=CLEAN(\"a\", \"b\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.clean-err-div0",
+    "description": "Error in text propagates",
+    "tags": ["text", "clean", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=CLEAN(1/0)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.clean-err-na",
+    "description": "#N/A in text propagates",
+    "tags": ["text", "clean", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=CLEAN(#N/A)",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.clean-err-name",
+    "description": "Unknown callee inside CLEAN is #NAME?",
+    "tags": ["text", "clean", "errors"],
+    "formula": "=CLEAN(NOTAFUNCTION(1))",
+    "expected": { "error": "#NAME?" }
+  }
+]

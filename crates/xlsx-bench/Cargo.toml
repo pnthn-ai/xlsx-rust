@@ -75,3 +75,39 @@ harness = false
 name = "fn_makearray"
 harness = false
 
+[[bench]]
+name = "fn_map"
+harness = false
+
+[[bench]]
+name = "fn_scan"
+harness = false
+
+[[bench]]
+name = "fn_byrow"
+harness = false
+
+[[bench]]
+name = "fn_reduce"
+harness = false
+
+[[bench]]
+name = "fn_bycol"
+harness = false
+
+[[bench]]
+name = "fn_let"
+harness = false
+
+[[bench]]
+name = "fn_isomitted"
+harness = false
+
+[[bench]]
+name = "fn_substitute"
+harness = false
+
+[[bench]]
+name = "fn_proper"
+harness = false
+

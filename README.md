@@ -302,7 +302,7 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 | [`eval/coerce.rs`](crates/xlsx-engine-core/src/eval/coerce.rs) | Arithmetic / `&` / `IF` coercion (`"2"+1` = 3, TRUE → 1, empty → 0) |
 | [`eval/compare.rs`](crates/xlsx-engine-core/src/eval/compare.rs) | 15-digit `=`, case-insensitive text, `TRUE=1`, type ranking (`FALSE>100`) |
 | [`eval/empty.rs`](crates/xlsx-engine-core/src/eval/empty.rs) | Blank ≠ 0 ≠ `""`, but `A1=0` and `A1=""` when `A1` is blank |
-| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Dispatch: aggregators (`SUM`/`SUMIF`/`SUMIFS`/`AVERAGEIF`/`AVERAGEIFS`/`COUNTIF`/`COUNTIFS`/`SUMPRODUCT`), logicals (`IF`/`IFS`/`SWITCH`), lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`/`FILTER`/`UNIQUE`/`SORT`/`SORTBY`/`TOCOL`/`TOROW`/`SEQUENCE`/`VSTACK`/`HSTACK`/`WRAPCOLS`/`WRAPROWS`/`TAKE`/`DROP`/`EXPAND`/`CHOOSECOLS`/`CHOOSEROWS`/`MAKEARRAY`), dates (`DATE`/`EOMONTH`/`NETWORKDAYS`/`NETWORKDAYS.INTL`/`WEEKDAY`/`WORKDAY`/`WORKDAY.INTL`/`YEARFRAC`), math (`ROUND`/`ROUNDUP`/`ROUNDDOWN`/`FLOOR`/`CEILING`/`RANDARRAY`), text (`LEFT`/`SUBSTITUTE`/`REPLACE`/`FIND`/`SEARCH`/`TEXT`/`TEXTJOIN`/`TEXTSPLIT`/`TEXTAFTER`/`TEXTBEFORE`/`CONCAT`), financial (`NPV`/`XNPV`/`PMT`/`FV`/`PV`/`NPER`/`RATE`/`IPMT`/`PPMT`/`CUMPRINC`/`CUMIPMT`/`IRR`/`XIRR`/`MIRR`/`EFFECT`/`NOMINAL`/`PDURATION`/`RRI`), `TYPE` / `IS*` |
+| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Dispatch: aggregators (`SUM`/`SUMIF`/`SUMIFS`/`AVERAGEIF`/`AVERAGEIFS`/`COUNTIF`/`COUNTIFS`/`SUMPRODUCT`), logicals (`IF`/`IFS`/`SWITCH`/`LET`), lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`/`FILTER`/`UNIQUE`/`SORT`/`SORTBY`/`TOCOL`/`TOROW`/`SEQUENCE`/`VSTACK`/`HSTACK`/`WRAPCOLS`/`WRAPROWS`/`TAKE`/`DROP`/`EXPAND`/`CHOOSECOLS`/`CHOOSEROWS`/`MAKEARRAY`/`MAP`/`SCAN`/`BYROW`/`REDUCE`/`BYCOL`), dates (`DATE`/`EOMONTH`/`NETWORKDAYS`/`NETWORKDAYS.INTL`/`WEEKDAY`/`WORKDAY`/`WORKDAY.INTL`/`YEARFRAC`), math (`ROUND`/`ROUNDUP`/`ROUNDDOWN`/`FLOOR`/`CEILING`/`RANDARRAY`), text (`LEFT`/`LOWER`/`UPPER`/`PROPER`/`TRIM`/`CLEAN`/`EXACT`/`SUBSTITUTE`/`REPLACE`/`FIND`/`SEARCH`/`TEXT`/`TEXTJOIN`/`TEXTSPLIT`/`TEXTAFTER`/`TEXTBEFORE`/`CONCAT`/`REPT`), financial (`NPV`/`XNPV`/`PMT`/`FV`/`PV`/`NPER`/`RATE`/`IPMT`/`PPMT`/`CUMPRINC`/`CUMIPMT`/`IRR`/`XIRR`/`MIRR`/`EFFECT`/`NOMINAL`/`PDURATION`/`RRI`), `TYPE` / `IS*` / `ISOMITTED` |
 | [`eval/sumif.rs`](crates/xlsx-engine-core/src/eval/sumif.rs) | Excel `SUMIF` kernel (criteria walk, reshape `sum_range`, no array literals) |
 | [`eval/sumifs.rs`](crates/xlsx-engine-core/src/eval/sumifs.rs) | Excel `SUMIFS`: multi-criteria AND, same-shape ranges |
 | [`eval/countifs.rs`](crates/xlsx-engine-core/src/eval/countifs.rs) | Excel `COUNTIFS`: multi-criteria AND, same-shape ranges, COUNTIF matcher |
@@ -339,7 +339,21 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 | [`eval/expand.rs`](crates/xlsx-engine-core/src/eval/expand.rs) | `EXPAND(array, rows, [columns], [pad_with])` grow/pad (`#N/A` / shrink `#VALUE!`) |
 | [`eval/chooserows.rs`](crates/xlsx-engine-core/src/eval/chooserows.rs) | `CHOOSEROWS(array, row_num1, …)` pick kernel (negative index / `#VALUE!`) |
 | [`eval/randarray.rs`](crates/xlsx-engine-core/src/eval/randarray.rs) | `RANDARRAY([rows],[columns],[min],[max],[integer])` fill (xorshift64*; not Excel's RNG) |
-| [`eval/makearray.rs`](crates/xlsx-engine-core/src/eval/makearray.rs) | `MAKEARRAY(rows, cols, LAMBDA(r, c, body))` index kernel (`r*c` / `r+c` specialized) |
+| [`eval/makearray.rs`](crates/xlsx-engine-core/src/eval/makearray.rs) | `MAKEARRAY(rows, cols, LAMBDA(r, c, body))` index kernel (`r*c` / `r+c` specialized); shared LAMBDA resolve / `Local` bindings |
+| [`eval/map.rs`](crates/xlsx-engine-core/src/eval/map.rs) | `MAP(array1, …, LAMBDA(…))` zip kernel |
+| [`eval/scan.rs`](crates/xlsx-engine-core/src/eval/scan.rs) | `SCAN([initial], array, LAMBDA(acc, value, body))` running fold |
+| [`eval/byrow.rs`](crates/xlsx-engine-core/src/eval/byrow.rs) | `BYROW(array, LAMBDA(row, body))` row-apply kernel |
+| [`eval/reduce.rs`](crates/xlsx-engine-core/src/eval/reduce.rs) | `REDUCE([initial], array, LAMBDA(acc, value, body))` fold |
+| [`eval/bycol.rs`](crates/xlsx-engine-core/src/eval/bycol.rs) | `BYCOL(array, LAMBDA(col, body))` column-reduce kernel |
+| [`eval/excel_let.rs`](crates/xlsx-engine-core/src/eval/excel_let.rs) | `LET(name1, value1, …, calculation)` bind-once |
+| [`eval/isomitted.rs`](crates/xlsx-engine-core/src/eval/isomitted.rs) | `ISOMITTED` omitted LAMBDA parameter |
+| [`eval/trim.rs`](crates/xlsx-engine-core/src/eval/trim.rs) | Excel `TRIM` (ASCII-space collapse) |
+| [`eval/clean.rs`](crates/xlsx-engine-core/src/eval/clean.rs) | Excel `CLEAN` (strip ASCII C0) |
+| [`eval/proper.rs`](crates/xlsx-engine-core/src/eval/proper.rs) | Excel `PROPER` (ASCII title-case) |
+| [`eval/upper.rs`](crates/xlsx-engine-core/src/eval/upper.rs) | Excel `UPPER` |
+| [`eval/lower.rs`](crates/xlsx-engine-core/src/eval/lower.rs) | Excel `LOWER` |
+| [`eval/exact.rs`](crates/xlsx-engine-core/src/eval/exact.rs) | Excel `EXACT` (case-sensitive compare) |
+| [`eval/rept.rs`](crates/xlsx-engine-core/src/eval/rept.rs) | Excel `REPT` (32767 UTF-16 cap) |
 | [`eval/npv.rs`](crates/xlsx-engine-core/src/eval/npv.rs) | Excel `NPV` kernel (period-1 discount, range skip of blanks/text/logicals) |
 | [`eval/irr.rs`](crates/xlsx-engine-core/src/eval/irr.rs) | Excel `IRR` Newton / secant kernel (20 tries, `1e-7` rate, `#NUM!` on failure) |
 | [`eval/xnpv.rs`](crates/xlsx-engine-core/src/eval/xnpv.rs) | Excel `XNPV` kernel (365-day year, serial day counts, blank date → 0) |
@@ -542,8 +556,9 @@ as one or the other. Documented quirk categories:
   is `#VALUE!`; sizes above the worksheet grid are `#NUM!`. The LAMBDA must
   have exactly two name parameters (inline or a defined name that refers to
   one). A body error stays in that cell. A body that returns an array is
-  `#CALC!` in that cell. Bare `LAMBDA(...)` (not consumed by `MAKEARRAY`) is
-  `#CALC!` — this engine has no first-class function value.
+  `#CALC!` in that cell. Bare `LAMBDA(...)` (not consumed by `MAKEARRAY` /
+  `MAP` / `SCAN` / `BYROW` / `REDUCE` / `BYCOL` / IIFE apply / a named
+  LAMBDA call) is `#CALC!` — this engine has no first-class function value.
 - **Spill limitation:** `evaluate` returns that array. The engine does **not**
   write spilled values into neighboring cells, so occupied destinations never
   yield `#SPILL!`. Scalar operators (`UNIQUE(...)+1`, `SORT(...)+1`) take the
@@ -786,9 +801,11 @@ as one or the other. Documented quirk categories:
 
 - MAKEARRAY returns an array **value**. The snippet workbook has no spill
   grid, so a blocked cell below/right of the host never yields `#SPILL!`.
-- Immediately-invoked `LAMBDA(...)(args)` is not parsed. Optional LAMBDA
-  parameters and `LET` helpers are out of scope. Parameter names that
-  tokenize as A1 refs are `#VALUE!`.
+- Immediately-invoked `LAMBDA(...)(args)` is parsed so `ISOMITTED` can see
+  omitted parameters (`LAMBDA(x,y,ISOMITTED(y))(1,)`). Bracket optional-
+  parameter syntax (`[y]`) is out of scope. Parameter names that tokenize
+  as A1 refs are `#VALUE!`.
+- `LET` binds names onto the same locals stack as LAMBDA parameters.
 - Excel's worksheet array-size cap is enforced (`1,048,576` rows /
   `16,384` columns); larger dimensions are `#NUM!`.
 
