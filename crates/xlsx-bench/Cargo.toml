@@ -147,3 +147,7 @@ harness = false
 name = "fn_search"
 harness = false
 
+[[bench]]
+name = "fn_replace"
+harness = false
+

@@ -2301,7 +2301,7 @@ impl Interpreter {
             Ok(s) => s,
             Err(e) => return Ok(ExcelValue::Error(e)),
         };
-        Ok(ExcelValue::Text(excel_replace(
+        Ok(ExcelValue::Text(xlsx_engine_core::excel_replace(
             &old_text, start_num, num_chars, &new_text,
         )))
     }
@@ -5341,36 +5341,6 @@ fn sumproduct_product_sum(arrays: &[ExcelValue]) -> ExcelValue {
     };
     ExcelValue::Number(acc)
 }
-/// Excel `REPLACE` kernel (same semantics as `xlsx-engine-core`).
-fn excel_replace(old_text: &str, start_num: u64, num_chars: u64, new_text: &str) -> String {
-    let chars: Vec<char> = old_text.chars().collect();
-    let start0 = match usize::try_from(start_num.saturating_sub(1)) {
-        Ok(n) => n,
-        Err(_) => {
-            let mut out = String::with_capacity(old_text.len() + new_text.len());
-            out.push_str(old_text);
-            out.push_str(new_text);
-            return out;
-        }
-    };
-    if start0 >= chars.len() {
-        let mut out = String::with_capacity(old_text.len() + new_text.len());
-        out.push_str(old_text);
-        out.push_str(new_text);
-        return out;
-    }
-    let take = match usize::try_from(num_chars) {
-        Ok(n) => n,
-        Err(_) => chars.len() - start0,
-    };
-    let end = start0.saturating_add(take).min(chars.len());
-    let mut out = String::new();
-    out.extend(chars[..start0].iter());
-    out.push_str(new_text);
-    out.extend(chars[end..].iter());
-    out
-}
-
 fn trunc_start_num(n: f64) -> Result<u64, ExcelError> {
     if !n.is_finite() {
         return Err(ExcelError::Value);
