@@ -15,7 +15,15 @@ fn run_pair(
     end: f64,
     european: bool,
 ) {
-    black_box(f(black_box(start), black_box(end), black_box(european), SYSTEM).unwrap());
+    black_box(
+        f(
+            black_box(start),
+            black_box(end),
+            black_box(european),
+            SYSTEM,
+        )
+        .unwrap(),
+    );
 }
 
 fn main() {
@@ -35,7 +43,10 @@ fn main() {
     ] {
         let a = days360(start, end, european, SYSTEM).unwrap();
         let b = days360_naive(start, end, european, SYSTEM).unwrap();
-        assert_eq!(a, b, "fast vs walk mismatch for ({start}, {end}, {european})");
+        assert_eq!(
+            a, b,
+            "fast vs walk mismatch for ({start}, {end}, {european})"
+        );
     }
 
     const SHORT_ITERS: u32 = 50_000;
@@ -66,7 +77,15 @@ fn main() {
 
     let t2 = std::time::Instant::now();
     for _ in 0..SHORT_ITERS {
-        black_box(days360(black_box(ms_start), black_box(ms_end), black_box(false), SYSTEM).unwrap());
+        black_box(
+            days360(
+                black_box(ms_start),
+                black_box(ms_end),
+                black_box(false),
+                SYSTEM,
+            )
+            .unwrap(),
+        );
     }
     let ms_ns = t2.elapsed().as_nanos() / SHORT_ITERS as u128;
 
@@ -80,14 +99,28 @@ fn main() {
     let t4 = std::time::Instant::now();
     for _ in 0..LONG_ITERS {
         black_box(
-            days360_naive(black_box(late), black_box(late_end), black_box(false), SYSTEM).unwrap(),
+            days360_naive(
+                black_box(late),
+                black_box(late_end),
+                black_box(false),
+                SYSTEM,
+            )
+            .unwrap(),
         );
     }
     let walk_late_ns = t4.elapsed().as_nanos() / LONG_ITERS as u128;
 
     let t5 = std::time::Instant::now();
     for _ in 0..LONG_ITERS {
-        black_box(days360(black_box(late), black_box(late_end), black_box(false), SYSTEM).unwrap());
+        black_box(
+            days360(
+                black_box(late),
+                black_box(late_end),
+                black_box(false),
+                SYSTEM,
+            )
+            .unwrap(),
+        );
     }
     let fast_late_ns = t5.elapsed().as_nanos() / LONG_ITERS as u128;
 

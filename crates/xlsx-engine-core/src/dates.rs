@@ -1150,7 +1150,10 @@ mod tests {
     #[test]
     fn days360_reversed_and_same_day() {
         assert_eq!(d360(d(2011, 2, 1), d(2011, 1, 1), false), -30.0);
-        assert_eq!(d360(d(2011, 12, 31), d(2011, 1, 1), false), -360.0);
+        // NASD is not antisymmetric: Jan 1 → Dec 31 is 360, reverse is -359
+        // because the Dec 31 *start* is rewritten to 30.
+        assert_eq!(d360(d(2011, 12, 31), d(2011, 1, 1), false), -359.0);
+        assert_eq!(d360(d(2011, 12, 31), d(2011, 1, 1), true), -359.0);
         assert_eq!(d360(d(2012, 7, 30), d(2012, 7, 30), false), 0.0);
         assert_eq!(d360(d(2012, 7, 30), d(2012, 7, 30), true), 0.0);
     }

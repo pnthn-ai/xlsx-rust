@@ -168,6 +168,13 @@
     "expected": { "number": -30 }
   },
   {
+    "id": "fn.days360.nasd-not-antisymmetric",
+    "description": "NASD: 31-Dec-11 → 1-Jan-11 is -359, not -360 (start 31 becomes 30)",
+    "tags": ["days360", "dates"],
+    "formula": "=DAYS360(DATE(2011,12,31),DATE(2011,1,1))",
+    "expected": { "number": -359 }
+  },
+  {
     "id": "fn.days360.same-day",
     "description": "Equal dates are a zero-length span on both methods",
     "tags": ["days360", "dates"],
