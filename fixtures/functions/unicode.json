@@ -1,0 +1,466 @@
+[
+  {
+    "id": "fn.unicode-microsoft-space",
+    "description": "Microsoft example: UNICODE(\" \") is 32",
+    "tags": ["text", "unicode"],
+    "formula": "=UNICODE(\" \")",
+    "expected": { "number": 32 }
+  },
+  {
+    "id": "fn.unicode-microsoft-A",
+    "description": "Microsoft example: UNICODE(\"A\") is 65",
+    "tags": ["text", "unicode"],
+    "formula": "=UNICODE(\"A\")",
+    "expected": { "number": 65 }
+  },
+  {
+    "id": "fn.unicode-first-only",
+    "description": "Only the first scalar is used: UNICODE(\"ABC\") is 65",
+    "tags": ["text", "unicode"],
+    "formula": "=UNICODE(\"ABC\")",
+    "expected": { "number": 65 }
+  },
+  {
+    "id": "fn.unicode-lowercase",
+    "description": "UNICODE(\"abc\") is 97",
+    "tags": ["text", "unicode"],
+    "formula": "=UNICODE(\"abc\")",
+    "expected": { "number": 97 }
+  },
+  {
+    "id": "fn.unicode-digit-text",
+    "description": "UNICODE(\"9\") is 57",
+    "tags": ["text", "unicode"],
+    "formula": "=UNICODE(\"9\")",
+    "expected": { "number": 57 }
+  },
+  {
+    "id": "fn.unicode-empty",
+    "description": "UNICODE(\"\") is #VALUE!",
+    "tags": ["text", "unicode", "errors"],
+    "formula": "=UNICODE(\"\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.unicode-blank-cell",
+    "description": "Blank cell coerces like & to empty text → #VALUE!",
+    "tags": ["text", "unicode", "empty", "errors"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=UNICODE(A1)",
+    "expected": { "error": "#VALUE!" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {}
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.unicode-stored-empty",
+    "description": "Stored \"\" is empty text → #VALUE!",
+    "tags": ["text", "unicode", "errors"],
+    "formula": "=UNICODE(A1)",
+    "expected": { "error": "#VALUE!" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.unicode-cell",
+    "description": "UNICODE of a stored text cell uses the first scalar",
+    "tags": ["text", "unicode"],
+    "formula": "=UNICODE(A1)",
+    "expected": { "number": 72 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "Hello" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.unicode-formula-cell",
+    "description": "UNICODE of a formula cell that yields text",
+    "tags": ["text", "unicode"],
+    "formula": "=UNICODE(A1)",
+    "expected": { "number": 65 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "formula": "=\"ABC\"" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.unicode-named",
+    "description": "UNICODE of a defined name referring to a cell",
+    "tags": ["text", "unicode", "named"],
+    "formula": "=UNICODE(Title)",
+    "expected": { "number": 72 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "Hello" }
+          }
+        }
+      ],
+      "names": [{ "name": "Title", "refers_to": "Sheet1!A1" }]
+    }
+  },
+  {
+    "id": "fn.unicode-number",
+    "description": "UNICODE(65) coerces to text \"65\" then 54",
+    "tags": ["text", "unicode", "coercion"],
+    "formula": "=UNICODE(65)",
+    "expected": { "number": 54 }
+  },
+  {
+    "id": "fn.unicode-number-zero",
+    "description": "UNICODE(0) coerces to \"0\" then 48",
+    "tags": ["text", "unicode", "coercion"],
+    "formula": "=UNICODE(0)",
+    "expected": { "number": 48 }
+  },
+  {
+    "id": "fn.unicode-number-decimal",
+    "description": "UNICODE(1.5) coerces to \"1.5\" then 49",
+    "tags": ["text", "unicode", "coercion"],
+    "formula": "=UNICODE(1.5)",
+    "expected": { "number": 49 }
+  },
+  {
+    "id": "fn.unicode-number-neg",
+    "description": "UNICODE(-2) coerces to \"-2\" then 45",
+    "tags": ["text", "unicode", "coercion"],
+    "formula": "=UNICODE(-2)",
+    "expected": { "number": 45 }
+  },
+  {
+    "id": "fn.unicode-true",
+    "description": "UNICODE(TRUE) coerces to \"TRUE\" then 84",
+    "tags": ["text", "unicode", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=UNICODE(TRUE)",
+    "expected": { "number": 84 }
+  },
+  {
+    "id": "fn.unicode-false",
+    "description": "UNICODE(FALSE) coerces to \"FALSE\" then 70",
+    "tags": ["text", "unicode", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=UNICODE(FALSE)",
+    "expected": { "number": 70 }
+  },
+  {
+    "id": "fn.unicode-true-text",
+    "description": "UNICODE of the letters T-R-U-E (already a string)",
+    "tags": ["text", "unicode"],
+    "formula": "=UNICODE(\"TRUE\")",
+    "expected": { "number": 84 }
+  },
+  {
+    "id": "fn.unicode-latin1-e-acute",
+    "description": "Precomposed é is U+00E9 = 233",
+    "tags": ["text", "unicode"],
+    "formula": "=UNICODE(\"é\")",
+    "expected": { "number": 233 }
+  },
+  {
+    "id": "fn.unicode-euro",
+    "description": "Euro sign is U+20AC = 8364",
+    "tags": ["text", "unicode"],
+    "formula": "=UNICODE(\"€\")",
+    "expected": { "number": 8364 }
+  },
+  {
+    "id": "fn.unicode-greek-alpha",
+    "description": "Greek small alpha is U+03B1 = 945",
+    "tags": ["text", "unicode"],
+    "formula": "=UNICODE(\"α\")",
+    "expected": { "number": 945 }
+  },
+  {
+    "id": "fn.unicode-cjk",
+    "description": "CJK ideograph 中 is U+4E2D = 20013",
+    "tags": ["text", "unicode"],
+    "formula": "=UNICODE(\"中\")",
+    "expected": { "number": 20013 }
+  },
+  {
+    "id": "fn.unicode-cjk-first-of-two",
+    "description": "UNICODE(\"日語\") is the first ideograph 26085",
+    "tags": ["text", "unicode"],
+    "formula": "=UNICODE(\"日語\")",
+    "expected": { "number": 26085 }
+  },
+  {
+    "id": "fn.unicode-emoji-compat-v2",
+    "description": "Grinning face is one scalar (Compat v2): 128512, not a UTF-16 surrogate",
+    "tags": ["text", "unicode"],
+    "formula": "=UNICODE(A1)",
+    "expected": { "number": 128512 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "😀" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.unicode-emoji-then-ascii",
+    "description": "Leading emoji still returns the full code point, not the next ASCII",
+    "tags": ["text", "unicode"],
+    "formula": "=UNICODE(A1)",
+    "expected": { "number": 128512 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "😀b" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.unicode-ascii-then-emoji",
+    "description": "Leading ASCII wins over a later emoji",
+    "tags": ["text", "unicode"],
+    "formula": "=UNICODE(A1)",
+    "expected": { "number": 97 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "a😀" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.unicode-tab",
+    "description": "Tab is U+0009 = 9",
+    "tags": ["text", "unicode"],
+    "formula": "=UNICODE(A1)",
+    "expected": { "number": 9 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "\t" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.unicode-lf",
+    "description": "Line feed is U+000A = 10",
+    "tags": ["text", "unicode"],
+    "formula": "=UNICODE(A1)",
+    "expected": { "number": 10 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "\n" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.unicode-nbsp",
+    "description": "NBSP is U+00A0 = 160",
+    "tags": ["text", "unicode"],
+    "formula": "=UNICODE(A1)",
+    "expected": { "number": 160 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "\u00a0x" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.unicode-combining-second",
+    "description": "Combining acute after e is its own scalar; first scalar is 101",
+    "tags": ["text", "unicode"],
+    "formula": "=UNICODE(A1)",
+    "expected": { "number": 101 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "e\u0301" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.unicode-combining-alone",
+    "description": "A leading combining mark is the first scalar (769)",
+    "tags": ["text", "unicode"],
+    "formula": "=UNICODE(A1)",
+    "expected": { "number": 769 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "\u0301" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.unicode-nested-lower",
+    "description": "UNICODE(LOWER(\"A\")) is 97",
+    "tags": ["text", "unicode"],
+    "formula": "=UNICODE(LOWER(\"A\"))",
+    "expected": { "number": 97 }
+  },
+  {
+    "id": "fn.unicode-nested-left",
+    "description": "UNICODE(LEFT(\"xyz\",1)) is 120",
+    "tags": ["text", "unicode"],
+    "formula": "=UNICODE(LEFT(\"xyz\",1))",
+    "expected": { "number": 120 }
+  },
+  {
+    "id": "fn.unicode-plus-one",
+    "description": "The code point is a number: UNICODE(\"A\")+1 is 66",
+    "tags": ["text", "unicode"],
+    "formula": "=UNICODE(\"A\")+1",
+    "expected": { "number": 66 }
+  },
+  {
+    "id": "fn.unicode-iferror-empty",
+    "description": "IFERROR wraps UNICODE(\"\")",
+    "tags": ["text", "unicode", "errors"],
+    "formula": "=IFERROR(UNICODE(\"\"),0)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.unicode-concat",
+    "description": "UNICODE of concatenated pieces uses the first scalar of the result",
+    "tags": ["text", "unicode"],
+    "formula": "=UNICODE(\"A\"&\"BC\")",
+    "expected": { "number": 65 }
+  },
+  {
+    "id": "fn.unicode-array-literal",
+    "description": "UNICODE of an array literal scalarizes to the top-left",
+    "tags": ["text", "unicode"],
+    "formula": "=UNICODE({\"X\",\"Y\"})",
+    "expected": { "number": 88 }
+  },
+  {
+    "id": "fn.unicode-implicit-intersect",
+    "description": "UNICODE(A1:A3) from host B2 uses implicit intersection (same row → A2)",
+    "tags": ["text", "unicode"],
+    "quirks": ["implicit-intersection"],
+    "at": "Sheet1!B2",
+    "formula": "=UNICODE(A1:A3)",
+    "expected": { "number": 84 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "ONE" },
+            "A2": { "text": "TWO" },
+            "A3": { "text": "THREE" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.unicode-err-div0",
+    "description": "Error argument propagates #DIV/0!",
+    "tags": ["text", "unicode", "errors"],
+    "formula": "=UNICODE(1/0)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.unicode-err-na",
+    "description": "NA() propagates #N/A",
+    "tags": ["text", "unicode", "errors"],
+    "formula": "=UNICODE(NA())",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.unicode-err-cell",
+    "description": "Error in the referenced cell propagates",
+    "tags": ["text", "unicode", "errors"],
+    "formula": "=UNICODE(A1)",
+    "expected": { "error": "#VALUE!" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "error": "#VALUE!" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.unicode-arity-zero",
+    "description": "UNICODE() with no arguments is #VALUE!",
+    "tags": ["text", "unicode", "errors"],
+    "formula": "=UNICODE()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.unicode-arity-two",
+    "description": "UNICODE with two arguments is #VALUE!",
+    "tags": ["text", "unicode", "errors"],
+    "formula": "=UNICODE(\"a\",\"b\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.unicode-map-sum",
+    "description": "SUM(MAP(array, LAMBDA(x, UNICODE(x)))) adds first-scalar codes",
+    "tags": ["text", "unicode", "map"],
+    "formula": "=SUM(MAP({\"A\";\"B\";\"C\"},LAMBDA(x,UNICODE(x))))",
+    "expected": { "number": 198 }
+  }
+]

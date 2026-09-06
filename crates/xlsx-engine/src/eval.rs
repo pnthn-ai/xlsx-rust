@@ -1,9 +1,9 @@
 //! Seed-scoped evaluator with Excel-like and intentionally naive semantics.
 
 use crate::dates::{
-    date_serial, eomonth_serial, networkdays_count, networkdays_count_mask, serial_to_ymd,
-    time_fraction, weekday, weekend_mask_from_code, weekend_mask_from_string, workday_serial,
-    yearfrac, WEEKEND_SAT_SUN,
+    date_serial, days360, eomonth_serial, isoweeknum, networkdays_count, networkdays_count_mask,
+    serial_to_ymd, time_fraction, weekday, weekend_mask_from_code, weekend_mask_from_string,
+    weeknum, workday_serial, yearfrac, WEEKEND_SAT_SUN,
 };
 use crate::parse::{parse, BinOp, Expr, UnaryOp};
 use std::collections::{HashMap, HashSet};
@@ -438,6 +438,7 @@ impl Interpreter {
             "ISODD" => self.fn_even_odd(args, ctx, false),
             "DATE" => self.fn_date(args, ctx),
             "TIME" => self.fn_time(args, ctx),
+            "EDATE" => self.fn_edate(args, ctx),
             "EOMONTH" => self.fn_eomonth(args, ctx),
             "NETWORKDAYS" => self.fn_networkdays(args, ctx),
             "WORKDAY" => self.fn_workday(args, ctx),
@@ -445,15 +446,21 @@ impl Interpreter {
             "MONTH" => self.fn_ymd(args, ctx, YmdPart::Month),
             "DAY" => self.fn_ymd(args, ctx, YmdPart::Day),
             "WEEKDAY" => self.fn_weekday(args, ctx),
+            "WEEKNUM" => self.fn_weeknum(args, ctx),
+            "ISOWEEKNUM" => self.fn_isoweeknum(args, ctx),
+            "DAYS360" => self.fn_days360(args, ctx),
             "LEFT" => self.fn_left_right(args, ctx, true),
             "RIGHT" => self.fn_left_right(args, ctx, false),
             "MID" => self.fn_mid(args, ctx),
             "LEN" => self.fn_len(args, ctx),
+            "UNICODE" => self.fn_unicode(args, ctx),
             "LOWER" => self.fn_lower(args, ctx),
             "UPPER" => self.fn_upper(args, ctx),
             "PROPER" => self.fn_proper(args, ctx),
             "TRIM" => self.fn_trim(args, ctx),
             "CLEAN" => self.fn_clean(args, ctx),
+            "CODE" => self.fn_code(args, ctx),
+            "CHAR" => self.fn_char(args, ctx),
             "EXACT" => self.fn_exact(args, ctx),
             "FIND" => self.fn_find(args, ctx),
             "SEARCH" => self.fn_search(args, ctx),
@@ -464,6 +471,7 @@ impl Interpreter {
             "TEXTJOIN" => self.fn_textjoin(args, ctx),
             "CONCAT" => self.fn_concat(args, ctx),
             "REPT" => self.fn_rept(args, ctx),
+            "UNICHAR" | "_XLFN.UNICHAR" => self.fn_unichar(args, ctx),
             "NPV" => self.fn_npv(args, ctx),
             "UNIQUE" => self.fn_unique(args, ctx),
             "IRR" => self.fn_irr(args, ctx),
@@ -1717,6 +1725,24 @@ impl Interpreter {
         }
     }
 
+    fn fn_edate(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.len() != 2 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        let start = match self.as_number(&self.eval_scalar(&args[0], ctx)?) {
+            Ok(n) => n,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        let months = match self.as_number(&self.eval_scalar(&args[1], ctx)?) {
+            Ok(n) => n,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        match xlsx_engine_core::dates::edate_serial(start, months, ctx.spec.options.date_system) {
+            Ok(n) => Ok(ExcelValue::Number(n)),
+            Err(e) => Ok(ExcelValue::Error(e)),
+        }
+    }
+
     fn fn_eomonth(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
         if args.len() != 2 {
             return Ok(ExcelValue::Error(ExcelError::Value));
@@ -1823,6 +1849,51 @@ impl Interpreter {
             1
         };
         match weekday(serial, return_type, ctx.spec.options.date_system) {
+            Ok(n) => Ok(ExcelValue::Number(n)),
+            Err(e) => Ok(ExcelValue::Error(e)),
+        }
+    }
+
+    fn fn_weeknum(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.is_empty() || args.len() > 2 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        let serial = match self.as_number(&self.eval_scalar(&args[0], ctx)?) {
+            Ok(n) => n,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        let return_type = if args.len() >= 2 {
+            match self.as_number(&self.eval_scalar(&args[1], ctx)?) {
+                Ok(n) => {
+                    if !n.is_finite() {
+                        return Ok(ExcelValue::Error(ExcelError::Num));
+                    }
+                    let t = n.trunc();
+                    if t < i32::MIN as f64 || t > i32::MAX as f64 {
+                        return Ok(ExcelValue::Error(ExcelError::Num));
+                    }
+                    t as i32
+                }
+                Err(e) => return Ok(ExcelValue::Error(e)),
+            }
+        } else {
+            1
+        };
+        match weeknum(serial, return_type, ctx.spec.options.date_system) {
+            Ok(n) => Ok(ExcelValue::Number(n)),
+            Err(e) => Ok(ExcelValue::Error(e)),
+        }
+    }
+
+    fn fn_isoweeknum(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.len() != 1 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        let serial = match self.as_number(&self.eval_scalar(&args[0], ctx)?) {
+            Ok(n) => n,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        match isoweeknum(serial, ctx.spec.options.date_system) {
             Ok(n) => Ok(ExcelValue::Number(n)),
             Err(e) => Ok(ExcelValue::Error(e)),
         }
@@ -1951,6 +2022,16 @@ impl Interpreter {
         }
     }
 
+    fn fn_unicode(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.len() != 1 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        match xlsx_engine_core::excel_unicode_value(&self.eval_scalar(&args[0], ctx)?) {
+            Ok(n) => Ok(ExcelValue::Number(n)),
+            Err(e) => Ok(ExcelValue::Error(e)),
+        }
+    }
+
     fn fn_lower(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
         if args.len() != 1 {
             return Ok(ExcelValue::Error(ExcelError::Value));
@@ -2001,6 +2082,29 @@ impl Interpreter {
         }
     }
 
+    fn fn_code(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.len() != 1 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        match xlsx_engine_core::excel_code_value(&self.eval_scalar(&args[0], ctx)?) {
+            Ok(n) => Ok(ExcelValue::Number(n)),
+            Err(e) => Ok(ExcelValue::Error(e)),
+        }
+    }
+
+    fn fn_char(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.len() != 1 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        match self.as_number(&self.eval_scalar(&args[0], ctx)?) {
+            Ok(n) => match xlsx_engine_core::excel_char(n) {
+                Ok(s) => Ok(ExcelValue::Text(s.to_owned())),
+                Err(e) => Ok(ExcelValue::Error(e)),
+            },
+            Err(e) => Ok(ExcelValue::Error(e)),
+        }
+    }
+
     fn fn_exact(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
         if args.len() != 2 {
             return Ok(ExcelValue::Error(ExcelError::Value));
@@ -2030,6 +2134,19 @@ impl Interpreter {
         };
         match xlsx_engine_core::excel_rept(&text, times) {
             Ok(s) => Ok(ExcelValue::Text(s)),
+            Err(e) => Ok(ExcelValue::Error(e)),
+        }
+    }
+
+    fn fn_unichar(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.len() != 1 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        match self.as_number(&self.eval_scalar(&args[0], ctx)?) {
+            Ok(n) => match xlsx_engine_core::excel_unichar(n) {
+                Ok(s) => Ok(ExcelValue::Text(s)),
+                Err(e) => Ok(ExcelValue::Error(e)),
+            },
             Err(e) => Ok(ExcelValue::Error(e)),
         }
     }
@@ -2289,10 +2406,12 @@ impl Interpreter {
             ExcelValue::Bool(true) => Ok(ExcelValue::Number(1.0)),
             ExcelValue::Bool(false) => Ok(ExcelValue::Number(0.0)),
             ExcelValue::Empty => Ok(ExcelValue::Number(0.0)),
-            ExcelValue::Text(s) => match parse_excel_number(&s) {
-                Ok(n) => Ok(ExcelValue::Number(n)),
-                Err(e) => Ok(ExcelValue::Error(e)),
-            },
+            ExcelValue::Text(s) => {
+                match xlsx_engine_core::excel_value(&s, ctx.spec.options.date_system) {
+                    Ok(n) => Ok(ExcelValue::Number(n)),
+                    Err(e) => Ok(ExcelValue::Error(e)),
+                }
+            }
             ExcelValue::Error(e) => Ok(ExcelValue::Error(e)),
             ExcelValue::Array(_) => Ok(ExcelValue::Error(ExcelError::Value)),
         }
@@ -2817,6 +2936,37 @@ impl Interpreter {
             Ok(ExcelValue::Error(ExcelError::Div0))
         } else {
             Ok(ExcelValue::Number(sum / count as f64))
+        }
+    }
+
+    fn fn_days360(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.len() < 2 || args.len() > 3 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        let start = match self.as_number(&self.eval_scalar(&args[0], ctx)?) {
+            Ok(n) => n,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        let end = match self.as_number(&self.eval_scalar(&args[1], ctx)?) {
+            Ok(n) => n,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        let european = if args.len() >= 3 {
+            match self.as_number(&self.eval_scalar(&args[2], ctx)?) {
+                Ok(n) => {
+                    if !n.is_finite() {
+                        return Ok(ExcelValue::Error(ExcelError::Num));
+                    }
+                    n != 0.0
+                }
+                Err(e) => return Ok(ExcelValue::Error(e)),
+            }
+        } else {
+            false
+        };
+        match days360(start, end, european, ctx.spec.options.date_system) {
+            Ok(n) => Ok(ExcelValue::Number(n)),
+            Err(e) => Ok(ExcelValue::Error(e)),
         }
     }
 

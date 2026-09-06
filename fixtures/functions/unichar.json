@@ -1,0 +1,466 @@
+[
+  {
+    "id": "fn.unichar-ms-66",
+    "description": "Microsoft example: UNICHAR(66) is uppercase B",
+    "tags": ["unichar", "text"],
+    "formula": "=UNICHAR(66)",
+    "expected": { "text": "B" }
+  },
+  {
+    "id": "fn.unichar-ms-32",
+    "description": "Microsoft example: UNICHAR(32) is a space",
+    "tags": ["unichar", "text"],
+    "formula": "=UNICHAR(32)",
+    "expected": { "text": " " }
+  },
+  {
+    "id": "fn.unichar-ms-0",
+    "description": "Microsoft example: UNICHAR(0) is #VALUE!",
+    "tags": ["unichar", "text", "errors"],
+    "formula": "=UNICHAR(0)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.unichar-a",
+    "description": "UNICHAR(65) is uppercase A",
+    "tags": ["unichar", "text"],
+    "formula": "=UNICHAR(65)",
+    "expected": { "text": "A" }
+  },
+  {
+    "id": "fn.unichar-a-lower",
+    "description": "UNICHAR(97) is lowercase a",
+    "tags": ["unichar", "text"],
+    "formula": "=UNICHAR(97)",
+    "expected": { "text": "a" }
+  },
+  {
+    "id": "fn.unichar-digit",
+    "description": "UNICHAR(49) is the digit 1",
+    "tags": ["unichar", "text"],
+    "formula": "=UNICHAR(49)",
+    "expected": { "text": "1" }
+  },
+  {
+    "id": "fn.unichar-soh",
+    "description": "UNICHAR(1) is the first valid scalar (C0 SOH)",
+    "tags": ["unichar", "text"],
+    "formula": "=UNICHAR(1)",
+    "expected": { "text": "\u0001" }
+  },
+  {
+    "id": "fn.unichar-tab",
+    "description": "UNICHAR(9) is a tab",
+    "tags": ["unichar", "text"],
+    "formula": "=UNICHAR(9)",
+    "expected": { "text": "\t" }
+  },
+  {
+    "id": "fn.unichar-lf",
+    "description": "UNICHAR(10) is a line feed",
+    "tags": ["unichar", "text"],
+    "formula": "=UNICHAR(10)",
+    "expected": { "text": "\n" }
+  },
+  {
+    "id": "fn.unichar-cr",
+    "description": "UNICHAR(13) is a carriage return",
+    "tags": ["unichar", "text"],
+    "formula": "=UNICHAR(13)",
+    "expected": { "text": "\r" }
+  },
+  {
+    "id": "fn.unichar-del",
+    "description": "UNICHAR(127) is DEL",
+    "tags": ["unichar", "text"],
+    "formula": "=UNICHAR(127)",
+    "expected": { "text": "\u007f" }
+  },
+  {
+    "id": "fn.unichar-copyright",
+    "description": "UNICHAR(169) is the copyright sign (LibreOffice / BMP example)",
+    "tags": ["unichar", "text"],
+    "formula": "=UNICHAR(169)",
+    "expected": { "text": "©" }
+  },
+  {
+    "id": "fn.unichar-eacute",
+    "description": "UNICHAR(233) is precomposed é (2-byte UTF-8)",
+    "tags": ["unichar", "text"],
+    "formula": "=UNICHAR(233)",
+    "expected": { "text": "é" }
+  },
+  {
+    "id": "fn.unichar-latin-extended",
+    "description": "UNICHAR(256) is Ā, the first scalar past Latin-1",
+    "tags": ["unichar", "text"],
+    "formula": "=UNICHAR(256)",
+    "expected": { "text": "Ā" }
+  },
+  {
+    "id": "fn.unichar-euro",
+    "description": "UNICHAR(8364) is the euro sign",
+    "tags": ["unichar", "text"],
+    "formula": "=UNICHAR(8364)",
+    "expected": { "text": "€" }
+  },
+  {
+    "id": "fn.unichar-cjk",
+    "description": "UNICHAR(20013) is 中 (3-byte UTF-8 CJK)",
+    "tags": ["unichar", "text"],
+    "formula": "=UNICHAR(20013)",
+    "expected": { "text": "中" }
+  },
+  {
+    "id": "fn.unichar-hiragana",
+    "description": "UNICHAR(12354) is あ",
+    "tags": ["unichar", "text"],
+    "formula": "=UNICHAR(12354)",
+    "expected": { "text": "あ" }
+  },
+  {
+    "id": "fn.unichar-before-surrogate",
+    "description": "UNICHAR(55295) is U+D7FF, the last BMP scalar before surrogates",
+    "tags": ["unichar", "text"],
+    "formula": "=UNICHAR(55295)",
+    "expected": { "text": "\ud7ff" }
+  },
+  {
+    "id": "fn.unichar-private-use",
+    "description": "UNICHAR(57344) is U+E000, first scalar after the surrogate hole",
+    "tags": ["unichar", "text"],
+    "formula": "=UNICHAR(57344)",
+    "expected": { "text": "\ue000" }
+  },
+  {
+    "id": "fn.unichar-bmp-noncharacter",
+    "description": "U+FFFF is a noncharacter but a valid Unicode scalar",
+    "tags": ["unichar", "text"],
+    "formula": "=UNICHAR(65535)",
+    "expected": { "text": "\uffff" }
+  },
+  {
+    "id": "fn.unichar-first-supplementary",
+    "description": "UNICHAR(65536) is the first non-BMP scalar (UTF-16 surrogate pair / 4-byte UTF-8)",
+    "tags": ["unichar", "text"],
+    "formula": "=UNICHAR(65536)",
+    "expected": { "text": "\ud800\udc00" }
+  },
+  {
+    "id": "fn.unichar-emoji",
+    "description": "UNICHAR(128512) is 😀 (U+1F600)",
+    "tags": ["unichar", "text"],
+    "formula": "=UNICHAR(128512)",
+    "expected": { "text": "😀" }
+  },
+  {
+    "id": "fn.unichar-emoji-len",
+    "description": "LEN of a supplementary-plane UNICHAR is 1 (Compatibility Version 2 scalars)",
+    "tags": ["unichar", "text"],
+    "formula": "=LEN(UNICHAR(128512))",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.unichar-max",
+    "description": "UNICHAR(1114111) is U+10FFFF, the last Unicode scalar",
+    "tags": ["unichar", "text"],
+    "formula": "=UNICHAR(1114111)",
+    "expected": { "text": "\udbff\udfff" }
+  },
+  {
+    "id": "fn.unichar-over-max",
+    "description": "UNICHAR(1114112) is past U+10FFFF → #VALUE!",
+    "tags": ["unichar", "text", "errors"],
+    "formula": "=UNICHAR(1114112)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.unichar-huge",
+    "description": "A huge numeric value is outside the Unicode range → #VALUE!",
+    "tags": ["unichar", "text", "errors"],
+    "formula": "=UNICHAR(1E+20)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.unichar-negative",
+    "description": "Negative number is #VALUE!",
+    "tags": ["unichar", "text", "errors"],
+    "formula": "=UNICHAR(-1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.unichar-neg-frac",
+    "description": "−1.9 truncates toward zero to −1 → #VALUE!",
+    "tags": ["unichar", "text", "errors"],
+    "formula": "=UNICHAR(-1.9)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.unichar-neg-frac-trunc-zero",
+    "description": "−0.5 truncates toward zero to 0 → #VALUE!",
+    "tags": ["unichar", "text", "errors"],
+    "formula": "=UNICHAR(-0.5)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.unichar-trunc-below-one",
+    "description": "0.9 truncates toward zero to 0 → #VALUE!",
+    "tags": ["unichar", "text", "errors"],
+    "formula": "=UNICHAR(0.9)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.unichar-trunc-frac",
+    "description": "66.9 truncates toward zero to 66 → B",
+    "tags": ["unichar", "text"],
+    "formula": "=UNICHAR(66.9)",
+    "expected": { "text": "B" }
+  },
+  {
+    "id": "fn.unichar-trunc-low",
+    "description": "66.1 truncates toward zero to 66 → B",
+    "tags": ["unichar", "text"],
+    "formula": "=UNICHAR(66.1)",
+    "expected": { "text": "B" }
+  },
+  {
+    "id": "fn.unichar-scientific",
+    "description": "6.6E1 is 66 → B",
+    "tags": ["unichar", "text"],
+    "formula": "=UNICHAR(6.6E1)",
+    "expected": { "text": "B" }
+  },
+  {
+    "id": "fn.unichar-surrogate-high",
+    "description": "UNICHAR(55296) is U+D800 (high surrogate) → #N/A",
+    "tags": ["unichar", "text", "errors"],
+    "formula": "=UNICHAR(55296)",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.unichar-surrogate-high-end",
+    "description": "UNICHAR(56319) is U+DBFF (last high surrogate) → #N/A",
+    "tags": ["unichar", "text", "errors"],
+    "formula": "=UNICHAR(56319)",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.unichar-surrogate-low",
+    "description": "UNICHAR(56320) is U+DC00 (first low surrogate) → #N/A",
+    "tags": ["unichar", "text", "errors"],
+    "formula": "=UNICHAR(56320)",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.unichar-surrogate-end",
+    "description": "UNICHAR(57343) is U+DFFF (last low surrogate) → #N/A",
+    "tags": ["unichar", "text", "errors"],
+    "formula": "=UNICHAR(57343)",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.unichar-surrogate-mid",
+    "description": "A mid-range surrogate is #N/A (Microsoft: partial surrogates)",
+    "tags": ["unichar", "text", "errors"],
+    "formula": "=UNICHAR(55555)",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.unichar-text-number",
+    "description": "Numeric text coerces like arithmetic: \"66\" → B",
+    "tags": ["unichar", "text", "coercion"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=UNICHAR(\"66\")",
+    "expected": { "text": "B" }
+  },
+  {
+    "id": "fn.unichar-text-spaces",
+    "description": "Leading/trailing spaces on numeric text are trimmed by the number parser",
+    "tags": ["unichar", "text", "coercion"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=UNICHAR(\" 66 \")",
+    "expected": { "text": "B" }
+  },
+  {
+    "id": "fn.unichar-text-frac",
+    "description": "\"66.9\" parses then truncates to 66 → B",
+    "tags": ["unichar", "text", "coercion"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=UNICHAR(\"66.9\")",
+    "expected": { "text": "B" }
+  },
+  {
+    "id": "fn.unichar-non-numeric",
+    "description": "Non-numeric text is #VALUE! (arithmetic coerce, not Microsoft's surrogate #N/A)",
+    "tags": ["unichar", "text", "errors", "coercion"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=UNICHAR(\"B\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.unichar-empty-text",
+    "description": "Stored empty text is not a number → #VALUE!",
+    "tags": ["unichar", "text", "errors", "empty"],
+    "formula": "=UNICHAR(\"\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.unichar-true",
+    "description": "TRUE coerces to 1 → C0 SOH",
+    "tags": ["unichar", "text", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=UNICHAR(TRUE)",
+    "expected": { "text": "\u0001" }
+  },
+  {
+    "id": "fn.unichar-false",
+    "description": "FALSE coerces to 0 → #VALUE!",
+    "tags": ["unichar", "text", "errors", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=UNICHAR(FALSE)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.unichar-blank-cell",
+    "description": "Blank cell coerces to 0 → #VALUE!",
+    "tags": ["unichar", "text", "errors", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=UNICHAR(A1)",
+    "expected": { "error": "#VALUE!" },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.unichar-cell-number",
+    "description": "UNICHAR of a numeric cell",
+    "tags": ["unichar", "text"],
+    "formula": "=UNICHAR(A1)",
+    "expected": { "text": "Z" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "number": 90 }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.unichar-concat",
+    "description": "UNICHAR results concatenate with &",
+    "tags": ["unichar", "text"],
+    "formula": "=UNICHAR(66)&UNICHAR(67)",
+    "expected": { "text": "BC" }
+  },
+  {
+    "id": "fn.unichar-len-ascii",
+    "description": "LEN(UNICHAR(66)) is 1",
+    "tags": ["unichar", "text"],
+    "formula": "=LEN(UNICHAR(66))",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.unichar-nested-upper",
+    "description": "UPPER of UNICHAR(97) is A",
+    "tags": ["unichar", "text"],
+    "formula": "=UPPER(UNICHAR(97))",
+    "expected": { "text": "A" }
+  },
+  {
+    "id": "fn.unichar-iferror-zero",
+    "description": "IFERROR swallows the #VALUE! from UNICHAR(0)",
+    "tags": ["unichar", "text", "errors"],
+    "formula": "=IFERROR(UNICHAR(0),\"x\")",
+    "expected": { "text": "x" }
+  },
+  {
+    "id": "fn.unichar-iferror-surrogate",
+    "description": "IFERROR swallows the #N/A from a surrogate",
+    "tags": ["unichar", "text", "errors"],
+    "formula": "=IFERROR(UNICHAR(55296),\"x\")",
+    "expected": { "text": "x" }
+  },
+  {
+    "id": "fn.unichar-xlfn",
+    "description": "_XLFN.UNICHAR is the Excel 2013+ compatibility alias",
+    "tags": ["unichar", "text"],
+    "formula": "=_XLFN.UNICHAR(66)",
+    "expected": { "text": "B" }
+  },
+  {
+    "id": "fn.unichar-array-literal",
+    "description": "Array literal scalarizes to the top-left element",
+    "tags": ["unichar", "text"],
+    "formula": "=UNICHAR({66,67})",
+    "expected": { "text": "B" }
+  },
+  {
+    "id": "fn.unichar-implicit-intersect",
+    "description": "UNICHAR(A1:A3) from host B2 uses implicit intersection (same row → A2)",
+    "tags": ["unichar", "text"],
+    "quirks": ["implicit-intersection"],
+    "at": "Sheet1!B2",
+    "formula": "=UNICHAR(A1:A3)",
+    "expected": { "text": "B" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "number": 65 },
+            "A2": { "number": 66 },
+            "A3": { "number": 67 }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.unichar-err-div0",
+    "description": "Error argument propagates #DIV/0!",
+    "tags": ["unichar", "text", "errors"],
+    "formula": "=UNICHAR(1/0)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.unichar-err-na",
+    "description": "NA() propagates #N/A (distinct from the surrogate #N/A path)",
+    "tags": ["unichar", "text", "errors"],
+    "formula": "=UNICHAR(NA())",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.unichar-err-cell",
+    "description": "Error in the referenced cell propagates",
+    "tags": ["unichar", "text", "errors"],
+    "formula": "=UNICHAR(A1)",
+    "expected": { "error": "#VALUE!" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "error": "#VALUE!" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.unichar-arity-zero",
+    "description": "UNICHAR() with no arguments is #VALUE!",
+    "tags": ["unichar", "text", "errors"],
+    "formula": "=UNICHAR()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.unichar-arity-two",
+    "description": "UNICHAR with two arguments is #VALUE!",
+    "tags": ["unichar", "text", "errors"],
+    "formula": "=UNICHAR(66,1)",
+    "expected": { "error": "#VALUE!" }
+  }
+]

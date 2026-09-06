@@ -10,6 +10,7 @@ pub mod byrow;
 pub mod choosecols;
 pub mod chooserows;
 pub mod clean;
+pub mod code;
 pub mod coerce;
 pub mod compare;
 pub mod concat;
@@ -17,6 +18,7 @@ pub mod countifs;
 pub mod drop;
 pub mod empty;
 pub mod exact;
+pub mod excel_char;
 pub mod excel_let;
 pub mod expand;
 pub mod filter;
@@ -55,8 +57,11 @@ pub mod textsplit;
 pub mod tocol;
 pub mod torow;
 pub mod trim;
+pub mod unichar;
+pub mod unicode;
 pub mod unique;
 pub mod upper;
+pub mod value;
 pub mod vstack;
 pub mod wrapcols;
 pub mod wraprows;
@@ -1003,6 +1008,22 @@ mod tests {
         assert_eq!(
             eval_formula_in(&wb, "=TEXT(1)").unwrap(),
             ExcelValue::Error(ExcelError::Value)
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=TEXT(0.5,\"#.#\")").unwrap(),
+            ExcelValue::Text(".5".into())
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=TEXT(-0.001,\"0.00\")").unwrap(),
+            ExcelValue::Text("0.00".into())
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=TEXT(1234.5,\"@\")").unwrap(),
+            ExcelValue::Text("1234.5".into())
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=TEXT(1234,\"\"\"USD \"\"#,##0\")").unwrap(),
+            ExcelValue::Text("USD 1,234".into())
         );
     }
 

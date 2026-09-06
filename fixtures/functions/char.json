@@ -1,0 +1,564 @@
+[
+  {
+    "id": "fn.char-ms-65",
+    "description": "Microsoft example: CHAR(65) is A",
+    "tags": ["char", "text"],
+    "formula": "=CHAR(65)",
+    "expected": { "text": "A" }
+  },
+  {
+    "id": "fn.char-ms-32",
+    "description": "Microsoft example: CHAR(32) is a space",
+    "tags": ["char", "text"],
+    "formula": "=CHAR(32)",
+    "expected": { "text": " " }
+  },
+  {
+    "id": "fn.char-ms-51",
+    "description": "Microsoft example: CHAR(51) is the digit 3",
+    "tags": ["char", "text"],
+    "formula": "=CHAR(51)",
+    "expected": { "text": "3" }
+  },
+  {
+    "id": "fn.char-ms-33",
+    "description": "CHAR(33) is !",
+    "tags": ["char", "text"],
+    "formula": "=CHAR(33)",
+    "expected": { "text": "!" }
+  },
+  {
+    "id": "fn.char-upper-z",
+    "description": "CHAR(90) is Z",
+    "tags": ["char", "text"],
+    "formula": "=CHAR(90)",
+    "expected": { "text": "Z" }
+  },
+  {
+    "id": "fn.char-lower-a",
+    "description": "CHAR(97) is a",
+    "tags": ["char", "text"],
+    "formula": "=CHAR(97)",
+    "expected": { "text": "a" }
+  },
+  {
+    "id": "fn.char-digit-zero",
+    "description": "CHAR(48) is 0",
+    "tags": ["char", "text"],
+    "formula": "=CHAR(48)",
+    "expected": { "text": "0" }
+  },
+  {
+    "id": "fn.char-quote",
+    "description": "CHAR(34) is a double quote",
+    "tags": ["char", "text"],
+    "formula": "=CHAR(34)",
+    "expected": { "text": "\"" }
+  },
+  {
+    "id": "fn.char-soh",
+    "description": "CHAR(1) is the SOH control (first valid code)",
+    "tags": ["char", "text"],
+    "formula": "=CHAR(1)",
+    "expected": { "text": "\u0001" }
+  },
+  {
+    "id": "fn.char-bel",
+    "description": "CHAR(7) is BEL",
+    "tags": ["char", "text"],
+    "formula": "=CHAR(7)",
+    "expected": { "text": "\u0007" }
+  },
+  {
+    "id": "fn.char-tab",
+    "description": "CHAR(9) is a tab (used with CLEAN / wrapped labels)",
+    "tags": ["char", "text"],
+    "formula": "=CHAR(9)",
+    "expected": { "text": "\t" }
+  },
+  {
+    "id": "fn.char-lf",
+    "description": "CHAR(10) is a line feed (Excel in-cell wrap)",
+    "tags": ["char", "text"],
+    "formula": "=CHAR(10)",
+    "expected": { "text": "\n" }
+  },
+  {
+    "id": "fn.char-cr",
+    "description": "CHAR(13) is a carriage return",
+    "tags": ["char", "text"],
+    "formula": "=CHAR(13)",
+    "expected": { "text": "\r" }
+  },
+  {
+    "id": "fn.char-us",
+    "description": "CHAR(31) is the last C0 control (unit separator)",
+    "tags": ["char", "text"],
+    "formula": "=CHAR(31)",
+    "expected": { "text": "\u001f" }
+  },
+  {
+    "id": "fn.char-del",
+    "description": "CHAR(127) is DEL — a leftover CLEAN does not strip",
+    "tags": ["char", "text"],
+    "formula": "=CHAR(127)",
+    "expected": { "text": "\u007f" }
+  },
+  {
+    "id": "fn.char-128-euro",
+    "description": "CHAR(128) is € on Windows-1252 (not Latin-1 U+0080)",
+    "tags": ["char", "text"],
+    "formula": "=CHAR(128)",
+    "expected": { "text": "€" }
+  },
+  {
+    "id": "fn.char-129-leftover",
+    "description": "CHAR(129) is the unused CP1252 leftover U+0081",
+    "tags": ["char", "text"],
+    "formula": "=CHAR(129)",
+    "expected": { "text": "\u0081" }
+  },
+  {
+    "id": "fn.char-130-low9",
+    "description": "CHAR(130) is the CP1252 single low-9 quote",
+    "tags": ["char", "text"],
+    "formula": "=CHAR(130)",
+    "expected": { "text": "\u201a" }
+  },
+  {
+    "id": "fn.char-131-florin",
+    "description": "CHAR(131) is the CP1252 florin ƒ",
+    "tags": ["char", "text"],
+    "formula": "=CHAR(131)",
+    "expected": { "text": "\u0192" }
+  },
+  {
+    "id": "fn.char-146-rsquo",
+    "description": "CHAR(146) is the CP1252 right single quote",
+    "tags": ["char", "text"],
+    "formula": "=CHAR(146)",
+    "expected": { "text": "\u2019" }
+  },
+  {
+    "id": "fn.char-147-ldquo",
+    "description": "CHAR(147) is the CP1252 left double quote",
+    "tags": ["char", "text"],
+    "formula": "=CHAR(147)",
+    "expected": { "text": "\u201c" }
+  },
+  {
+    "id": "fn.char-149-bullet",
+    "description": "CHAR(149) is the CP1252 bullet",
+    "tags": ["char", "text"],
+    "formula": "=CHAR(149)",
+    "expected": { "text": "\u2022" }
+  },
+  {
+    "id": "fn.char-150-endash",
+    "description": "CHAR(150) is the CP1252 en dash",
+    "tags": ["char", "text"],
+    "formula": "=CHAR(150)",
+    "expected": { "text": "\u2013" }
+  },
+  {
+    "id": "fn.char-151-emdash",
+    "description": "CHAR(151) is the CP1252 em dash",
+    "tags": ["char", "text"],
+    "formula": "=CHAR(151)",
+    "expected": { "text": "\u2014" }
+  },
+  {
+    "id": "fn.char-153-tm",
+    "description": "CHAR(153) is the CP1252 trademark sign",
+    "tags": ["char", "text"],
+    "formula": "=CHAR(153)",
+    "expected": { "text": "\u2122" }
+  },
+  {
+    "id": "fn.char-141-leftover",
+    "description": "CHAR(141) is a documented CLEAN leftover (U+008D)",
+    "tags": ["char", "text"],
+    "formula": "=CHAR(141)",
+    "expected": { "text": "\u008d" }
+  },
+  {
+    "id": "fn.char-143-leftover",
+    "description": "CHAR(143) is a documented CLEAN leftover (U+008F)",
+    "tags": ["char", "text"],
+    "formula": "=CHAR(143)",
+    "expected": { "text": "\u008f" }
+  },
+  {
+    "id": "fn.char-144-leftover",
+    "description": "CHAR(144) is a documented CLEAN leftover (U+0090)",
+    "tags": ["char", "text"],
+    "formula": "=CHAR(144)",
+    "expected": { "text": "\u0090" }
+  },
+  {
+    "id": "fn.char-157-leftover",
+    "description": "CHAR(157) is a documented CLEAN leftover (U+009D)",
+    "tags": ["char", "text"],
+    "formula": "=CHAR(157)",
+    "expected": { "text": "\u009d" }
+  },
+  {
+    "id": "fn.char-160-nbsp",
+    "description": "CHAR(160) is NBSP (same in CP1252 and Latin-1)",
+    "tags": ["char", "text"],
+    "formula": "=CHAR(160)",
+    "expected": { "text": "\u00a0" }
+  },
+  {
+    "id": "fn.char-163-pound",
+    "description": "CHAR(163) is £",
+    "tags": ["char", "text"],
+    "formula": "=CHAR(163)",
+    "expected": { "text": "£" }
+  },
+  {
+    "id": "fn.char-169-copy",
+    "description": "CHAR(169) is ©",
+    "tags": ["char", "text"],
+    "formula": "=CHAR(169)",
+    "expected": { "text": "©" }
+  },
+  {
+    "id": "fn.char-174-reg",
+    "description": "CHAR(174) is ®",
+    "tags": ["char", "text"],
+    "formula": "=CHAR(174)",
+    "expected": { "text": "®" }
+  },
+  {
+    "id": "fn.char-255-y-diaeresis",
+    "description": "CHAR(255) is ÿ — last valid code",
+    "tags": ["char", "text"],
+    "formula": "=CHAR(255)",
+    "expected": { "text": "ÿ" }
+  },
+  {
+    "id": "fn.char-trunc-65-9",
+    "description": "CHAR(65.9) truncates toward zero to 65 → A",
+    "tags": ["char", "text"],
+    "formula": "=CHAR(65.9)",
+    "expected": { "text": "A" }
+  },
+  {
+    "id": "fn.char-trunc-1-9",
+    "description": "CHAR(1.9) truncates to 1 (SOH)",
+    "tags": ["char", "text"],
+    "formula": "=CHAR(1.9)",
+    "expected": { "text": "\u0001" }
+  },
+  {
+    "id": "fn.char-trunc-255-9",
+    "description": "CHAR(255.9) truncates to 255 → ÿ",
+    "tags": ["char", "text"],
+    "formula": "=CHAR(255.9)",
+    "expected": { "text": "ÿ" }
+  },
+  {
+    "id": "fn.char-trunc-128-7",
+    "description": "CHAR(128.7) truncates to 128 → €",
+    "tags": ["char", "text"],
+    "formula": "=CHAR(128.7)",
+    "expected": { "text": "€" }
+  },
+  {
+    "id": "fn.char-zero",
+    "description": "CHAR(0) is #VALUE! (range is 1–255)",
+    "tags": ["char", "text", "errors"],
+    "formula": "=CHAR(0)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.char-trunc-below-one",
+    "description": "CHAR(0.9) truncates to 0 → #VALUE!",
+    "tags": ["char", "text", "errors"],
+    "formula": "=CHAR(0.9)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.char-neg",
+    "description": "CHAR(-1) is #VALUE!",
+    "tags": ["char", "text", "errors"],
+    "formula": "=CHAR(-1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.char-neg-frac",
+    "description": "CHAR(-0.5) truncates toward zero to 0 → #VALUE!",
+    "tags": ["char", "text", "errors"],
+    "formula": "=CHAR(-0.5)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.char-256",
+    "description": "CHAR(256) is #VALUE! (above 255)",
+    "tags": ["char", "text", "errors"],
+    "formula": "=CHAR(256)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.char-huge",
+    "description": "CHAR(1E+20) is #VALUE! without wrapping the code",
+    "tags": ["char", "text", "errors"],
+    "formula": "=CHAR(1E+20)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.char-text-65",
+    "description": "Numeric text CHAR(\"65\") coerces to A",
+    "tags": ["char", "text", "coercion"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=CHAR(\"65\")",
+    "expected": { "text": "A" }
+  },
+  {
+    "id": "fn.char-text-spaces",
+    "description": "CHAR(\" 65 \") trims then coerces",
+    "tags": ["char", "text", "coercion"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=CHAR(\" 65 \")",
+    "expected": { "text": "A" }
+  },
+  {
+    "id": "fn.char-text-frac",
+    "description": "CHAR(\"65.9\") coerces then truncates to A",
+    "tags": ["char", "text", "coercion"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=CHAR(\"65.9\")",
+    "expected": { "text": "A" }
+  },
+  {
+    "id": "fn.char-empty-text",
+    "description": "CHAR(\"\") is #VALUE! (empty text is not 0 here after parse)",
+    "tags": ["char", "text", "errors"],
+    "formula": "=CHAR(\"\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.char-non-numeric-text",
+    "description": "CHAR(\"A\") is #VALUE!",
+    "tags": ["char", "text", "errors"],
+    "formula": "=CHAR(\"A\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.char-true",
+    "description": "TRUE coerces to 1 → CHAR(1) SOH",
+    "tags": ["char", "text", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=CHAR(TRUE)",
+    "expected": { "text": "\u0001" }
+  },
+  {
+    "id": "fn.char-false",
+    "description": "FALSE coerces to 0 → #VALUE!",
+    "tags": ["char", "text", "errors", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=CHAR(FALSE)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.char-blank-cell",
+    "description": "Blank cell coerces to 0 → #VALUE!",
+    "tags": ["char", "text", "errors", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=CHAR(A1)",
+    "expected": { "error": "#VALUE!" },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.char-percent-65",
+    "description": "CHAR(6500%) is CHAR(65) → A",
+    "tags": ["char", "text"],
+    "quirks": ["percent-unary"],
+    "formula": "=CHAR(6500%)",
+    "expected": { "text": "A" }
+  },
+  {
+    "id": "fn.char-percent-below-one",
+    "description": "CHAR(65%) is CHAR(0.65) → trunc 0 → #VALUE!",
+    "tags": ["char", "text", "errors"],
+    "quirks": ["percent-unary"],
+    "formula": "=CHAR(65%)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.char-cell-65",
+    "description": "CHAR of a numeric cell",
+    "tags": ["char", "text"],
+    "formula": "=CHAR(A1)",
+    "expected": { "text": "A" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": { "A1": { "number": 65 } }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.char-cell-text-128",
+    "description": "CHAR of numeric text 128 is the CP1252 euro",
+    "tags": ["char", "text", "coercion"],
+    "formula": "=CHAR(A1)",
+    "expected": { "text": "€" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": { "A1": { "text": "128" } }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.char-concat-ab",
+    "description": "CHAR(65)&CHAR(66) is AB",
+    "tags": ["char", "text"],
+    "formula": "=CHAR(65)&CHAR(66)",
+    "expected": { "text": "AB" }
+  },
+  {
+    "id": "fn.char-len-lf",
+    "description": "LEN(CHAR(10)) is 1 (one Unicode scalar)",
+    "tags": ["char", "text"],
+    "formula": "=LEN(CHAR(10))",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.char-len-euro",
+    "description": "LEN(CHAR(128)) is 1 (€ is one scalar, two UTF-16 units)",
+    "tags": ["char", "text"],
+    "formula": "=LEN(CHAR(128))",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.char-upper-from-lower",
+    "description": "UPPER(CHAR(97)) is A",
+    "tags": ["char", "text"],
+    "formula": "=UPPER(CHAR(97))",
+    "expected": { "text": "A" }
+  },
+  {
+    "id": "fn.char-exact-a",
+    "description": "EXACT(CHAR(65), \"A\") is TRUE",
+    "tags": ["char", "text"],
+    "formula": "=EXACT(CHAR(65), \"A\")",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.char-exact-case",
+    "description": "EXACT(CHAR(97), \"A\") is FALSE",
+    "tags": ["char", "text"],
+    "formula": "=EXACT(CHAR(97), \"A\")",
+    "expected": { "bool": false }
+  },
+  {
+    "id": "fn.char-exact-euro",
+    "description": "EXACT(CHAR(128), \"€\") is TRUE (Windows-1252, not U+0080)",
+    "tags": ["char", "text"],
+    "formula": "=EXACT(CHAR(128), \"€\")",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.char-rept-dash",
+    "description": "REPT(CHAR(45), 10) is ten dashes (Microsoft REPT shape)",
+    "tags": ["char", "text"],
+    "formula": "=REPT(CHAR(45), 10)",
+    "expected": { "text": "----------" }
+  },
+  {
+    "id": "fn.char-clean-ms-monthly",
+    "description": "Microsoft CLEAN example built from CHAR(9)/CHAR(10)",
+    "tags": ["char", "text", "clean"],
+    "formula": "=CLEAN(CHAR(9)&\"Monthly report\"&CHAR(10))",
+    "expected": { "text": "Monthly report" }
+  },
+  {
+    "id": "fn.char-c0-len",
+    "description": "Concatenating CHAR(1) through CHAR(31) is 31 scalars",
+    "tags": ["char", "text"],
+    "formula": "=LEN(CHAR(1)&CHAR(2)&CHAR(3)&CHAR(4)&CHAR(5)&CHAR(6)&CHAR(7)&CHAR(8)&CHAR(9)&CHAR(10)&CHAR(11)&CHAR(12)&CHAR(13)&CHAR(14)&CHAR(15)&CHAR(16)&CHAR(17)&CHAR(18)&CHAR(19)&CHAR(20)&CHAR(21)&CHAR(22)&CHAR(23)&CHAR(24)&CHAR(25)&CHAR(26)&CHAR(27)&CHAR(28)&CHAR(29)&CHAR(30)&CHAR(31))",
+    "expected": { "number": 31 }
+  },
+  {
+    "id": "fn.char-c0-clean",
+    "description": "CLEAN of CHAR(1)&…&CHAR(31) is empty (every C0 is stripped)",
+    "tags": ["char", "text", "clean"],
+    "formula": "=CLEAN(CHAR(1)&CHAR(2)&CHAR(3)&CHAR(4)&CHAR(5)&CHAR(6)&CHAR(7)&CHAR(8)&CHAR(9)&CHAR(10)&CHAR(11)&CHAR(12)&CHAR(13)&CHAR(14)&CHAR(15)&CHAR(16)&CHAR(17)&CHAR(18)&CHAR(19)&CHAR(20)&CHAR(21)&CHAR(22)&CHAR(23)&CHAR(24)&CHAR(25)&CHAR(26)&CHAR(27)&CHAR(28)&CHAR(29)&CHAR(30)&CHAR(31))",
+    "expected": { "text": "" }
+  },
+  {
+    "id": "fn.char-intersect",
+    "description": "CHAR of a column range implicit-intersects the host row",
+    "tags": ["char", "text"],
+    "quirks": ["implicit-intersection"],
+    "formula": "=CHAR(A1:A3)",
+    "at": "Sheet1!B2",
+    "expected": { "text": "B" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "number": 65 },
+            "A2": { "number": 66 },
+            "A3": { "number": 67 }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.char-array-top-left",
+    "description": "CHAR of an array literal takes the top-left (no CHAR spill)",
+    "tags": ["char", "text"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=CHAR({65,66})",
+    "expected": { "text": "A" }
+  },
+  {
+    "id": "fn.char-arity-0",
+    "description": "CHAR() is #VALUE!",
+    "tags": ["char", "text", "errors"],
+    "formula": "=CHAR()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.char-arity-2",
+    "description": "Two arguments is #VALUE!",
+    "tags": ["char", "text", "errors"],
+    "formula": "=CHAR(65, 66)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.char-err-div0",
+    "description": "Error in number propagates",
+    "tags": ["char", "text", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=CHAR(1/0)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.char-err-na",
+    "description": "#N/A in number propagates",
+    "tags": ["char", "text", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=CHAR(#N/A)",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.char-err-name",
+    "description": "Unknown callee inside CHAR is #NAME?",
+    "tags": ["char", "text", "errors"],
+    "formula": "=CHAR(NOTAFUNCTION(1))",
+    "expected": { "error": "#NAME?" }
+  }
+]

@@ -8,12 +8,18 @@
 //! - [`eval::textbefore`] — Excel `TEXTBEFORE` (nth delimiter, match_end / if_not_found)
 //! - [`eval::proper`] — Excel `PROPER` (ASCII title-case; apostrophe / digit breaks)
 //! - [`text_format`] — Excel `TEXT` for a documented number/date format subset
-//! - [`eval::functions`] also dispatches `SUMIF` / `COUNTIF` / `COUNTIFS` / `SUMPRODUCT` / `SUBSTITUTE` / `CLEAN`
+//! - [`eval::functions`] also dispatches `SUMIF` / `COUNTIF` / `COUNTIFS` / `SUMPRODUCT` / `SUBSTITUTE` / `CLEAN` / `CODE`
 //! - [`eval::concat`] — Excel `CONCAT` (range/array flatten + 32767 cap)
 //! - [`eval::clean`] — Excel `CLEAN` (strip ASCII C0 `0..=31`)
+//! - [`eval::code`] — Excel `CODE` (Windows-1252 first-character code)
+//! - [`eval::excel_char`] — Excel `CHAR` (Windows-1252, 1..=255)
 //! - [`eval::rept`] — Excel `REPT` (repeat + 32767 UTF-16 cap)
+//! - [`dates::edate_serial`] — Excel `EDATE` (same-day month shift + clip)
 //! - [`dates::weekday`] — O(1) Excel `WEEKDAY` on the date serial
+//! - [`dates::weeknum`] — O(1) Excel `WEEKNUM` (System 1 + ISO `return_type` 21)
+//! - [`dates::isoweeknum`] — Excel `ISOWEEKNUM` (ISO 8601 week; Excel weekday)
 //! - [`dates::yearfrac`] — Excel `YEARFRAC` day-count bases 0–4
+//! - [`dates::days360`] — Excel `DAYS360` US (NASD) / European 30/360
 //! - [`dates::workday_serial_intl`] — O(1) Excel `WORKDAY.INTL` weekend mask
 //! - [`dates::networkdays_count_mask`] — O(1) `NETWORKDAYS` / `NETWORKDAYS.INTL`
 //! - [`eval::switch`] — Excel `SWITCH` (exact `=` match, short-circuit vs `IF`)
@@ -47,7 +53,9 @@
 //! - [`eval::trim`] — Excel `TRIM` (ASCII-space collapse + end trim)
 //! - [`eval::upper`] — Excel `UPPER` (SWAR ASCII + Unicode; `ß` kept)
 //! - [`eval::lower`] — Excel `LOWER` (ASCII SWAR fold + Unicode default mapping)
+//! - [`eval::unicode`] — Excel `UNICODE` (first Unicode scalar / code point)
 //! - [`eval::exact`] — Excel `EXACT` (case-sensitive text compare)
+//! - [`eval::value`] — Excel `VALUE` (en-US number / date / time text)
 //! - [`eval::textsplit`] — `TEXTSPLIT` col/row split kernel (pad / `#CALC!`)
 //! - [`eval::textafter`] — Excel `TEXTAFTER` kernel (nth delimiter, `match_end`)
 //! - [`eval::irr`] — Excel `IRR` Newton / secant kernel
@@ -73,7 +81,10 @@ pub use dates::{workday_serial, workday_serial_intl};
 
 pub use ast::{BinOp, Expr, UnaryOp};
 pub use dates::{
-    weekday as excel_weekday, weekday_naive as excel_weekday_naive, yearfrac as excel_yearfrac,
+    days360 as excel_days360, days360_naive as excel_days360_naive, isoweeknum as excel_isoweeknum,
+    isoweeknum_naive as excel_isoweeknum_naive, weekday as excel_weekday,
+    weekday_naive as excel_weekday_naive, weeknum as excel_weeknum,
+    weeknum_naive as excel_weeknum_naive, yearfrac as excel_yearfrac,
     yearfrac_naive as excel_yearfrac_naive,
 };
 pub use eval::bycol::{
@@ -86,9 +97,17 @@ pub use eval::byrow::{
 pub use eval::choosecols::{select as excel_choosecols, select_naive as excel_choosecols_naive};
 pub use eval::chooserows::{select as excel_chooserows, select_naive as excel_chooserows_naive};
 pub use eval::clean::{clean as excel_clean, clean_naive as excel_clean_naive};
+pub use eval::code::{
+    code as excel_code, code_naive as excel_code_naive, code_value as excel_code_value,
+    code_value_naive as excel_code_value_naive,
+};
 pub use eval::concat::{concat_naive_join, eval_concat_formula, ConcatBuilder, CONCAT_MAX_CHARS};
 pub use eval::drop::{apply as excel_drop, apply_naive as excel_drop_naive};
 pub use eval::exact::{exact as excel_exact, exact_naive as excel_exact_naive};
+pub use eval::excel_char::{
+    excel_char, excel_char_naive, excel_char_owned, trunc_code as char_trunc_code,
+    w1252_scalar as char_w1252_scalar,
+};
 pub use eval::excel_let::{
     eval_fast as excel_let_eval_fast, eval_naive as excel_let_eval_naive, FastCalc,
     FastOp as LetFastOp, MAX_PAIRS as LET_MAX_PAIRS,
@@ -174,8 +193,14 @@ pub use eval::torow::{
     parse_ignore as parse_torow_ignore, TorowIgnore,
 };
 pub use eval::trim::{trim as excel_trim, trim_naive as excel_trim_naive};
+pub use eval::unichar::{unichar as excel_unichar, unichar_naive as excel_unichar_naive};
+pub use eval::unicode::{
+    unicode as excel_unicode, unicode_naive as excel_unicode_naive,
+    unicode_value as excel_unicode_value, unicode_value_naive as excel_unicode_value_naive,
+};
 pub use eval::unique::{unique_apply, unique_apply_naive, unique_eq};
 pub use eval::upper::{upper as excel_upper, upper_naive as excel_upper_naive};
+pub use eval::value::{parse as excel_value, parse_naive as excel_value_naive};
 pub use eval::vstack::{
     stack as excel_vstack, stack_naive as excel_vstack_naive, stack_owned as excel_vstack_owned,
 };
@@ -198,6 +223,9 @@ pub use eval::{
     eval_formula_in, eval_sumif_materialized, eval_sumifs_materialized, Evaluator,
 };
 pub use parse::parse;
+pub use text_format::{
+    apply as excel_text, apply_generic as excel_text_generic, apply_naive as excel_text_naive,
+};
 pub use xlsx_types::{
     excel_cumipmt, excel_cumipmt_naive, excel_cumprinc, excel_cumprinc_naive, excel_effect,
     excel_effect_naive, excel_fv, excel_fv_naive, excel_ipmt, excel_ipmt_naive, excel_nominal,

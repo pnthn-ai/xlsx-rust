@@ -1,0 +1,414 @@
+[
+  {
+    "id": "fn.edate.ms-plus-one",
+    "description": "Microsoft example: EDATE(15-Jan-11, 1) is 15-Feb-11",
+    "tags": ["edate", "dates"],
+    "formula": "=EDATE(DATE(2011,1,15),1)",
+    "expected": { "number": 40589 }
+  },
+  {
+    "id": "fn.edate.ms-minus-one",
+    "description": "Microsoft example: EDATE(15-Jan-11, -1) is 15-Dec-10",
+    "tags": ["edate", "dates"],
+    "formula": "=EDATE(DATE(2011,1,15),-1)",
+    "expected": { "number": 40527 }
+  },
+  {
+    "id": "fn.edate.ms-plus-two",
+    "description": "Microsoft example: EDATE(15-Jan-11, 2) is 15-Mar-11",
+    "tags": ["edate", "dates"],
+    "formula": "=EDATE(DATE(2011,1,15),2)",
+    "expected": { "number": 40617 }
+  },
+  {
+    "id": "fn.edate.same-day-zero",
+    "description": "EDATE(start, 0) returns the civil day of start (time discarded)",
+    "tags": ["edate", "dates"],
+    "formula": "=EDATE(DATE(2011,1,15),0)",
+    "expected": { "number": 40558 }
+  },
+  {
+    "id": "fn.edate.ms-2008-may",
+    "description": "Microsoft DATE(2008,5,23) note: plus 1 month is 23-Jun-08",
+    "tags": ["edate", "dates"],
+    "formula": "=EDATE(DATE(2008,5,23),1)",
+    "expected": { "number": 39622 }
+  },
+  {
+    "id": "fn.edate.feb28-not-eomonth",
+    "description": "Feb 28 is kept as day 28, not promoted to March 31",
+    "tags": ["edate", "dates"],
+    "formula": "=EDATE(DATE(2011,2,28),1)",
+    "expected": { "number": 40630 }
+  },
+  {
+    "id": "fn.edate.vs-eomonth-midmonth",
+    "description": "EDATE keeps the 15th; EOMONTH of the same start is month-end",
+    "tags": ["edate", "dates"],
+    "formula": "=EDATE(DATE(2011,1,15),1)=DATE(2011,2,15)",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.edate.clip-jan-nonleap",
+    "description": "Month-end clip: 31-Jan-2011 plus 1 month is 28-Feb-2011",
+    "tags": ["edate", "dates"],
+    "formula": "=EDATE(DATE(2011,1,31),1)",
+    "expected": { "number": 40602 }
+  },
+  {
+    "id": "fn.edate.clip-jan-leap",
+    "description": "Month-end clip: 31-Jan-2012 plus 1 month is 29-Feb-2012",
+    "tags": ["edate", "dates"],
+    "formula": "=EDATE(DATE(2012,1,31),1)",
+    "expected": { "number": 40968 }
+  },
+  {
+    "id": "fn.edate.clip-jan-y2k",
+    "description": "Month-end clip: 31-Jan-2000 plus 1 month is 29-Feb-2000",
+    "tags": ["edate", "dates"],
+    "formula": "=EDATE(DATE(2000,1,31),1)",
+    "expected": { "number": 36585 }
+  },
+  {
+    "id": "fn.edate.clip-mar-nonleap",
+    "description": "Negative months: 31-Mar-2011 minus 1 is 28-Feb-2011",
+    "tags": ["edate", "dates"],
+    "formula": "=EDATE(DATE(2011,3,31),-1)",
+    "expected": { "number": 40602 }
+  },
+  {
+    "id": "fn.edate.clip-mar-leap",
+    "description": "Negative months: 31-Mar-2024 minus 1 is 29-Feb-2024",
+    "tags": ["edate", "dates"],
+    "formula": "=EDATE(DATE(2024,3,31),-1)",
+    "expected": { "number": 45351 }
+  },
+  {
+    "id": "fn.edate.clip-jan-apr",
+    "description": "31-Jan plus 3 months clips to 30-Apr",
+    "tags": ["edate", "dates"],
+    "formula": "=EDATE(DATE(2011,1,31),3)",
+    "expected": { "number": 40663 }
+  },
+  {
+    "id": "fn.edate.clip-may-jun",
+    "description": "31-May plus 1 month clips to 30-Jun",
+    "tags": ["edate", "dates"],
+    "formula": "=EDATE(DATE(2011,5,31),1)",
+    "expected": { "number": 40724 }
+  },
+  {
+    "id": "fn.edate.jan31-chain-mar",
+    "description": "31-Jan-2019 plus 2 months is 31-Mar-2019 (March has 31)",
+    "tags": ["edate", "dates"],
+    "formula": "=EDATE(DATE(2019,1,31),2)",
+    "expected": { "number": 43555 }
+  },
+  {
+    "id": "fn.edate.month-overflow",
+    "description": "13 months after 1-Jan-2000 is 1-Feb-2001",
+    "tags": ["edate", "dates"],
+    "formula": "=EDATE(DATE(2000,1,1),13)",
+    "expected": { "number": 36923 }
+  },
+  {
+    "id": "fn.edate.serial-60-zero",
+    "description": "Serial 60 is the fictitious 1900-02-29; EDATE(60,0) stays 60",
+    "tags": ["edate", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=EDATE(60,0)",
+    "expected": { "number": 60 }
+  },
+  {
+    "id": "fn.edate.serial-59-zero",
+    "description": "EDATE(59,0) stays 59 — same civil day, not month-end",
+    "tags": ["edate", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=EDATE(59,0)",
+    "expected": { "number": 59 }
+  },
+  {
+    "id": "fn.edate.serial-60-plus",
+    "description": "EDATE(60,1) is 29-Mar-1900 (serial 89)",
+    "tags": ["edate", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=EDATE(60,1)",
+    "expected": { "number": 89 }
+  },
+  {
+    "id": "fn.edate.serial-60-minus",
+    "description": "EDATE(60,-1) is 29-Jan-1900 (serial 29)",
+    "tags": ["edate", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=EDATE(60,-1)",
+    "expected": { "number": 29 }
+  },
+  {
+    "id": "fn.edate.jan31-1900-plus",
+    "description": "Month-end clip across the leap bug: 31-Jan-1900 plus 1 is serial 60",
+    "tags": ["edate", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=EDATE(DATE(1900,1,31),1)",
+    "expected": { "number": 60 }
+  },
+  {
+    "id": "fn.edate.mar1-1900-minus",
+    "description": "1-Mar-1900 minus 1 month is 1-Feb-1900 (serial 32)",
+    "tags": ["edate", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=EDATE(DATE(1900,3,1),-1)",
+    "expected": { "number": 32 }
+  },
+  {
+    "id": "fn.edate.mar31-1900-minus",
+    "description": "31-Mar-1900 minus 1 month clips to serial 60",
+    "tags": ["edate", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=EDATE(DATE(1900,3,31),-1)",
+    "expected": { "number": 60 }
+  },
+  {
+    "id": "fn.edate.serial-60-year-wrap",
+    "description": "EDATE(60,12) is 28-Feb-1901 (1901 is not a leap year)",
+    "tags": ["edate", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=EDATE(60,12)",
+    "expected": { "number": 425 }
+  },
+  {
+    "id": "fn.edate.trunc-months-pos",
+    "description": "Non-integer months are truncated toward zero (1.9 → 1)",
+    "tags": ["edate", "dates"],
+    "formula": "=EDATE(DATE(2011,1,15),1.9)",
+    "expected": { "number": 40589 }
+  },
+  {
+    "id": "fn.edate.trunc-months-neg",
+    "description": "Negative non-integer months truncate toward zero (-1.9 → -1)",
+    "tags": ["edate", "dates"],
+    "formula": "=EDATE(DATE(2011,1,15),-1.9)",
+    "expected": { "number": 40527 }
+  },
+  {
+    "id": "fn.edate.trunc-start-frac",
+    "description": "Fractional start serials keep the civil day (time discarded)",
+    "tags": ["edate", "dates"],
+    "formula": "=EDATE(DATE(2011,1,15)+0.9,0)",
+    "expected": { "number": 40558 }
+  },
+  {
+    "id": "fn.edate.serial-zero",
+    "description": "Serial 0 is 1900-01-00; EDATE(0,0) stays 0",
+    "tags": ["edate", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=EDATE(0,0)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.edate.serial-zero-plus",
+    "description": "EDATE(0,1) is DATE(1900,2,0) = 31-Jan-1900",
+    "tags": ["edate", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=EDATE(0,1)",
+    "expected": { "number": 31 }
+  },
+  {
+    "id": "fn.edate.before-epoch",
+    "description": "Months that land in 1899 are #NUM!",
+    "tags": ["edate", "dates", "errors"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=EDATE(DATE(1900,1,1),-1)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.edate.neg-serial",
+    "description": "Negative start serial is not a valid Excel date",
+    "tags": ["edate", "dates", "errors"],
+    "formula": "=EDATE(-1,0)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.edate.past-max",
+    "description": "EDATE past 9999-12-31 is #NUM!",
+    "tags": ["edate", "dates", "errors"],
+    "formula": "=EDATE(DATE(9999,12,31),1)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.edate.near-max",
+    "description": "EDATE(15-Nov-9999, 1) is 15-Dec-9999 (still in range)",
+    "tags": ["edate", "dates"],
+    "formula": "=EDATE(DATE(9999,11,15),1)",
+    "expected": { "number": 2958449 }
+  },
+  {
+    "id": "fn.edate.arity",
+    "description": "EDATE requires two arguments",
+    "tags": ["edate", "errors"],
+    "formula": "=EDATE(1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.edate.arity-extra",
+    "description": "Extra EDATE arguments are #VALUE!",
+    "tags": ["edate", "errors"],
+    "formula": "=EDATE(1,0,0)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.edate.bad-text",
+    "description": "Non-numeric text start date is #VALUE! (coercion)",
+    "tags": ["edate", "errors"],
+    "formula": "=EDATE(\"x\",0)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.edate.bad-months-text",
+    "description": "Non-numeric months is #VALUE!",
+    "tags": ["edate", "errors"],
+    "formula": "=EDATE(1,\"x\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.edate.text-serial",
+    "description": "Numeric text start serial coerces: EDATE(\"60\",0) is 60",
+    "tags": ["edate", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=EDATE(\"60\",0)",
+    "expected": { "number": 60 }
+  },
+  {
+    "id": "fn.edate.text-months",
+    "description": "Numeric text months coerce: EDATE(15-Jan-11,\"1\") is 15-Feb-11",
+    "tags": ["edate", "dates"],
+    "formula": "=EDATE(DATE(2011,1,15),\"1\")",
+    "expected": { "number": 40589 }
+  },
+  {
+    "id": "fn.edate.true-start",
+    "description": "TRUE coerces to serial 1 (1-Jan-1900)",
+    "tags": ["edate", "dates"],
+    "formula": "=EDATE(TRUE,0)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.edate.false-start",
+    "description": "FALSE coerces to serial 0 (1900-01-00)",
+    "tags": ["edate", "dates"],
+    "quirks": ["date-1900-leap-year"],
+    "formula": "=EDATE(FALSE,0)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.edate.empty-start",
+    "description": "Blank start coerces to 0 → EDATE(0,0) is 0",
+    "tags": ["edate", "dates", "empty"],
+    "quirks": ["empty-cell-duality", "date-1900-leap-year"],
+    "formula": "=EDATE(A1,0)",
+    "expected": { "number": 0 },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.edate.empty-start-plus",
+    "description": "Blank start plus 1 month is 31-Jan-1900",
+    "tags": ["edate", "dates", "empty"],
+    "quirks": ["empty-cell-duality", "date-1900-leap-year"],
+    "formula": "=EDATE(A1,1)",
+    "expected": { "number": 31 },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.edate.cell-start",
+    "description": "Start date from a stored serial cell",
+    "tags": ["edate", "dates"],
+    "formula": "=EDATE(A1,1)",
+    "expected": { "number": 40589 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": { "A1": { "number": 40558 } }
+      }]
+    }
+  },
+  {
+    "id": "fn.edate.err-start",
+    "description": "Error in start_date propagates",
+    "tags": ["edate", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=EDATE(1/0,1)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.edate.err-months",
+    "description": "Error in months propagates (start is valid)",
+    "tags": ["edate", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=EDATE(1,NA())",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.edate.err-start-wins",
+    "description": "Left-to-right: start error wins over months error",
+    "tags": ["edate", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=EDATE(1/0,NA())",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.edate.year-month-day",
+    "description": "YEAR/MONTH/DAY of EDATE match the shifted civil date",
+    "tags": ["edate", "dates"],
+    "formula": "=AND(YEAR(EDATE(DATE(2011,1,15),1))=2011,MONTH(EDATE(DATE(2011,1,15),1))=2,DAY(EDATE(DATE(2011,1,15),1))=15)",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.edate.implicit-intersect",
+    "description": "EDATE of a column range implicit-intersects the host row",
+    "tags": ["edate", "dates"],
+    "quirks": ["implicit-intersection"],
+    "at": "Sheet1!B2",
+    "formula": "=EDATE(A1:A3,1)",
+    "expected": { "number": 40589 },
+    "workbook": {
+      "sheets": [{
+        "name": "Sheet1",
+        "cells": {
+          "A1": { "number": 40544 },
+          "A2": { "number": 40558 },
+          "A3": { "number": 40574 }
+        }
+      }]
+    }
+  },
+  {
+    "id": "fn.edate.system-1904",
+    "description": "EDATE(0,0) in the 1904 system is 1-Jan-1904 (serial 0)",
+    "tags": ["edate", "dates"],
+    "quirks": ["date-system"],
+    "formula": "=EDATE(0,0)",
+    "expected": { "number": 0 },
+    "options": { "date_system": "excel1904" }
+  },
+  {
+    "id": "fn.edate.system-1904-jan31",
+    "description": "1904 leap: 31-Jan-1904 plus 1 month is 29-Feb-1904 (serial 59)",
+    "tags": ["edate", "dates"],
+    "quirks": ["date-system"],
+    "formula": "=EDATE(30,1)",
+    "expected": { "number": 59 },
+    "options": { "date_system": "excel1904" }
+  },
+  {
+    "id": "fn.edate.system-1904-before",
+    "description": "EDATE(0,-1) in the 1904 system is #NUM!",
+    "tags": ["edate", "dates", "errors"],
+    "quirks": ["date-system"],
+    "formula": "=EDATE(0,-1)",
+    "expected": { "error": "#NUM!" },
+    "options": { "date_system": "excel1904" }
+  }
+]

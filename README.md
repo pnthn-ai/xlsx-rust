@@ -302,7 +302,7 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 | [`eval/coerce.rs`](crates/xlsx-engine-core/src/eval/coerce.rs) | Arithmetic / `&` / `IF` coercion (`"2"+1` = 3, TRUE → 1, empty → 0) |
 | [`eval/compare.rs`](crates/xlsx-engine-core/src/eval/compare.rs) | 15-digit `=`, case-insensitive text, `TRUE=1`, type ranking (`FALSE>100`) |
 | [`eval/empty.rs`](crates/xlsx-engine-core/src/eval/empty.rs) | Blank ≠ 0 ≠ `""`, but `A1=0` and `A1=""` when `A1` is blank |
-| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Dispatch: aggregators (`SUM`/`SUMIF`/`SUMIFS`/`AVERAGEIF`/`AVERAGEIFS`/`COUNTIF`/`COUNTIFS`/`SUMPRODUCT`), logicals (`IF`/`IFS`/`SWITCH`/`LET`), lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`/`FILTER`/`UNIQUE`/`SORT`/`SORTBY`/`TOCOL`/`TOROW`/`SEQUENCE`/`VSTACK`/`HSTACK`/`WRAPCOLS`/`WRAPROWS`/`TAKE`/`DROP`/`EXPAND`/`CHOOSECOLS`/`CHOOSEROWS`/`MAKEARRAY`/`MAP`/`SCAN`/`BYROW`/`REDUCE`/`BYCOL`), dates (`DATE`/`EOMONTH`/`NETWORKDAYS`/`NETWORKDAYS.INTL`/`WEEKDAY`/`WORKDAY`/`WORKDAY.INTL`/`YEARFRAC`), math (`ROUND`/`ROUNDUP`/`ROUNDDOWN`/`FLOOR`/`CEILING`/`RANDARRAY`), text (`LEFT`/`LOWER`/`UPPER`/`PROPER`/`TRIM`/`CLEAN`/`EXACT`/`SUBSTITUTE`/`REPLACE`/`FIND`/`SEARCH`/`TEXT`/`TEXTJOIN`/`TEXTSPLIT`/`TEXTAFTER`/`TEXTBEFORE`/`CONCAT`/`REPT`), financial (`NPV`/`XNPV`/`PMT`/`FV`/`PV`/`NPER`/`RATE`/`IPMT`/`PPMT`/`CUMPRINC`/`CUMIPMT`/`IRR`/`XIRR`/`MIRR`/`EFFECT`/`NOMINAL`/`PDURATION`/`RRI`), `TYPE` / `IS*` / `ISOMITTED` |
+| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Dispatch: aggregators (`SUM`/`SUMIF`/`SUMIFS`/`AVERAGEIF`/`AVERAGEIFS`/`COUNTIF`/`COUNTIFS`/`SUMPRODUCT`), logicals (`IF`/`IFS`/`SWITCH`/`LET`), lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`/`FILTER`/`UNIQUE`/`SORT`/`SORTBY`/`TOCOL`/`TOROW`/`SEQUENCE`/`VSTACK`/`HSTACK`/`WRAPCOLS`/`WRAPROWS`/`TAKE`/`DROP`/`EXPAND`/`CHOOSECOLS`/`CHOOSEROWS`/`MAKEARRAY`/`MAP`/`SCAN`/`BYROW`/`REDUCE`/`BYCOL`), dates (`DATE`/`EDATE`/`EOMONTH`/`NETWORKDAYS`/`NETWORKDAYS.INTL`/`WEEKDAY`/`WEEKNUM`/`ISOWEEKNUM`/`WORKDAY`/`WORKDAY.INTL`/`YEARFRAC`/`DAYS360`), math (`ROUND`/`ROUNDUP`/`ROUNDDOWN`/`FLOOR`/`CEILING`/`RANDARRAY`), text (`LEFT`/`LOWER`/`UPPER`/`PROPER`/`TRIM`/`CLEAN`/`EXACT`/`SUBSTITUTE`/`REPLACE`/`FIND`/`SEARCH`/`TEXT`/`VALUE`/`TEXTJOIN`/`TEXTSPLIT`/`TEXTAFTER`/`TEXTBEFORE`/`CONCAT`/`REPT`/`CODE`/`CHAR`/`UNICODE`/`UNICHAR`), financial (`NPV`/`XNPV`/`PMT`/`FV`/`PV`/`NPER`/`RATE`/`IPMT`/`PPMT`/`CUMPRINC`/`CUMIPMT`/`IRR`/`XIRR`/`MIRR`/`EFFECT`/`NOMINAL`/`PDURATION`/`RRI`), `TYPE` / `IS*` / `ISOMITTED` |
 | [`eval/sumif.rs`](crates/xlsx-engine-core/src/eval/sumif.rs) | Excel `SUMIF` kernel (criteria walk, reshape `sum_range`, no array literals) |
 | [`eval/sumifs.rs`](crates/xlsx-engine-core/src/eval/sumifs.rs) | Excel `SUMIFS`: multi-criteria AND, same-shape ranges |
 | [`eval/countifs.rs`](crates/xlsx-engine-core/src/eval/countifs.rs) | Excel `COUNTIFS`: multi-criteria AND, same-shape ranges, COUNTIF matcher |
@@ -349,18 +349,23 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 | [`eval/isomitted.rs`](crates/xlsx-engine-core/src/eval/isomitted.rs) | `ISOMITTED` omitted LAMBDA parameter |
 | [`eval/trim.rs`](crates/xlsx-engine-core/src/eval/trim.rs) | Excel `TRIM` (ASCII-space collapse) |
 | [`eval/clean.rs`](crates/xlsx-engine-core/src/eval/clean.rs) | Excel `CLEAN` (strip ASCII C0) |
+| [`eval/code.rs`](crates/xlsx-engine-core/src/eval/code.rs) | Excel `CODE` (Windows-1252 first-character code) |
+| [`eval/excel_char.rs`](crates/xlsx-engine-core/src/eval/excel_char.rs) | Excel `CHAR` (Windows-1252, 1..=255) |
 | [`eval/proper.rs`](crates/xlsx-engine-core/src/eval/proper.rs) | Excel `PROPER` (ASCII title-case) |
 | [`eval/upper.rs`](crates/xlsx-engine-core/src/eval/upper.rs) | Excel `UPPER` |
 | [`eval/lower.rs`](crates/xlsx-engine-core/src/eval/lower.rs) | Excel `LOWER` |
+| [`eval/unicode.rs`](crates/xlsx-engine-core/src/eval/unicode.rs) | Excel `UNICODE` (first Unicode scalar / code point) |
 | [`eval/exact.rs`](crates/xlsx-engine-core/src/eval/exact.rs) | Excel `EXACT` (case-sensitive compare) |
+| [`eval/value.rs`](crates/xlsx-engine-core/src/eval/value.rs) | Excel `VALUE` (en-US number / date / time text; `$` `,` `%` `(…)` ) |
 | [`eval/rept.rs`](crates/xlsx-engine-core/src/eval/rept.rs) | Excel `REPT` (32767 UTF-16 cap) |
+| [`eval/unichar.rs`](crates/xlsx-engine-core/src/eval/unichar.rs) | Excel `UNICHAR` (Unicode scalar; surrogates `#N/A`) |
 | [`eval/npv.rs`](crates/xlsx-engine-core/src/eval/npv.rs) | Excel `NPV` kernel (period-1 discount, range skip of blanks/text/logicals) |
 | [`eval/irr.rs`](crates/xlsx-engine-core/src/eval/irr.rs) | Excel `IRR` Newton / secant kernel (20 tries, `1e-7` rate, `#NUM!` on failure) |
 | [`eval/xnpv.rs`](crates/xlsx-engine-core/src/eval/xnpv.rs) | Excel `XNPV` kernel (365-day year, serial day counts, blank date → 0) |
 | [`eval/xirr.rs`](crates/xlsx-engine-core/src/eval/xirr.rs) | Excel `XIRR` Newton / bisection kernel (100 tries, `1e-8` rate, 365-day serials) |
 | [`eval/mirr.rs`](crates/xlsx-engine-core/src/eval/mirr.rs) | Excel `MIRR` kernel (finance / reinvest NPV closed form; streaming factors) |
 | [`text_format.rs`](crates/xlsx-engine-core/src/text_format.rs) | Excel `TEXT` for a documented number/date format subset |
-| [`dates.rs`](crates/xlsx-engine-core/src/dates.rs) | 1900/1904 serials, leap-year bug, `EOMONTH` / `NETWORKDAYS` / `NETWORKDAYS.INTL` / `WEEKDAY` / `WORKDAY` / `WORKDAY.INTL` / `YEARFRAC` |
+| [`dates.rs`](crates/xlsx-engine-core/src/dates.rs) | 1900/1904 serials, leap-year bug, `EDATE` / `EOMONTH` / `NETWORKDAYS` / `NETWORKDAYS.INTL` / `WEEKDAY` / `WEEKNUM` / `ISOWEEKNUM` / `WORKDAY` / `WORKDAY.INTL` / `YEARFRAC` / `DAYS360` |
 
 **Implemented:** arithmetic and comparison operators (unary `+/-`, `%`, `^`,
 `&`, space intersection), host-aware implicit intersection, cell refs /
@@ -375,12 +380,27 @@ families above. Criterion matching for `SUMIF` / `SUMIFS` / `AVERAGEIF` /
 input is the snippet type in `xlsx-types` (no `.xlsx` IO). Kernels do **not**
 read fixture goldens.
 
+**`VALUE` (en-US)** (see [`eval/value.rs`](crates/xlsx-engine-core/src/eval/value.rs)):
+converts number / date / time text Excel would accept typed into a cell.
+`$` / thousands `,` (groups of 3) / trailing `%` / accounting `(…)`;
+`M/D/Y` and `YYYY-MM-DD`; `H:MM[:SS]` with optional `AM`/`PM`; mixed
+fractions `"1 1/2"`. Blank cell → `0`; stored `""` → `#VALUE!`. Arithmetic
+`"1,000"+0` stays `#VALUE!` (that is not `VALUE`). Not implemented (no
+goldens): month names, current-year incomplete dates (`"1/2"`), non-en-US
+separators.
+
 **`TEXT` subset** (see [`text_format.rs`](crates/xlsx-engine-core/src/text_format.rs)):
-`0` / `#` / `.` / grouping `,` / `%` / `$` and other literals; dates
-`yyyy`/`yy`/`mm`/`m`/`dd`/`d`; `General`. Not implemented (no goldens;
-those codes return `#VALUE!`): scientific, fractions, sections `;`,
-colors/conditions, `*`/`_`/`?`, trailing-comma scaling, time (`h`/`s`),
-month/day names. Non-numeric text is returned unchanged.
+`0` / `#` / `.` / grouping `,` / `%` / `@` (text placeholder, not mixed
+with digits or dates) / `$` and other literals / quoted `"..."` / `\`;
+dates `yyyy`/`yy`/`mm`/`m`/`dd`/`d`; `General`. `#` omits a leading
+integer zero; the minus sign is taken from the **rounded** value.
+Unsupported tokens (scientific, fractions, sections `;`, colors,
+`*`/`_`/`?`, trailing-comma scaling, time, month/day names) are
+documented with `ignore` fixtures — the kernel fails closed (`#VALUE!`)
+so it never emits a fabricated Excel string. Non-numeric text is
+returned unchanged (except `@`, which echoes the original text).
+Unquoted `h`/`s` are reserved as time tokens (so `TEXT(123,"USD")` is
+not treated as the letters USD).
 
 **Deferred / in progress:** full function library, locale argument separators,
 live Excel oracle, and performance bakeoff. The fixture corpus is expanded
@@ -400,6 +420,21 @@ as one or the other. Documented quirk categories:
   `FALSE=0` is `TRUE` but `FALSE>0` / `FALSE<=0` use ranking (`TRUE` / `FALSE`)
 - Equality vs arithmetic coercion (`"2"=2` is false, `"2"+1` is `3`, `--"2"=2`)
 - Case-insensitive text equality (`"A"="a"`) vs case-sensitive `EXACT` / `FIND`; `SEARCH` is case-insensitive; `TEXTAFTER` / `TEXTBEFORE` are case-sensitive unless `match_mode` is TRUE
+- `UNICODE(text)` returns the code point of the **first** Unicode scalar
+  (Compatibility Version 2, matching `LEN` / `MID` / `LEFT` / `RIGHT` /
+  `REPLACE`). `UNICODE("A")` is 65; `UNICODE("😀")` is 128512 (not the
+  UTF-16 high surrogate). Empty text — including a blank cell after `&`
+  coercion — is `#VALUE!`. Later characters are ignored. `CODE` / `UNICHAR`
+  are separate workstreams.
+- `UNICHAR(number)`: Unicode scalar of the truncated code point (`1` ..=
+  `1114111`). `0` / negative / above `U+10FFFF` is `#VALUE!`. UTF-16
+  surrogates `U+D800`–`U+DFFF` are `#N/A` (Microsoft: partial surrogates).
+  Supplementary-plane results are one Compatibility Version 2 scalar
+  (`LEN(UNICHAR(128512))` is 1). `CHAR` / `UNICODE` / `CODE` are separate.
+- `CHAR(number)`: Windows-1252 (Western ANSI), not Latin-1 / Unicode. Codes
+  truncate toward zero; `1..=255` only (`0` / `256` / blank / `FALSE` →
+  `#VALUE!`). `CHAR(128)` is `€`; leftover C1 bytes `129` / `141` / `143` /
+  `144` / `157` exist (CLEAN does not strip them). `UNICHAR` is separate.
 - `TEXTBEFORE(text, delimiter, [instance_num], [match_mode], [match_end], [if_not_found])`:
   Nth non-overlapping delimiter (negative counts from the end); `match_mode`
   0/1; `match_end` 1 treats the unmatched end (or start, when counting
@@ -461,7 +496,9 @@ as one or the other. Documented quirk categories:
   final `TRUE` pair as the default).
 - Error precedence is left-to-right (`#DIV/0!+#VALUE!` keeps `#DIV/0!`)
 - 1900 leap-year bug (`DATE(1900,2,29)` is serial 60); 1904 date system.
-  `EOMONTH` inherits it (`EOMONTH(59,0)` / `EOMONTH(60,0)` are both 60).
+  `EDATE` inherits it (`EDATE(60,0)` is 60; `EDATE(59,0)` stays 59 — same
+  civil day, clipped only when the target month is shorter). `EOMONTH`
+  inherits it (`EOMONTH(59,0)` / `EOMONTH(60,0)` are both 60).
   `NETWORKDAYS` treats serial 60 as a Wednesday workday and weekends as Sat/Sun.
   `NETWORKDAYS.INTL` uses the same inclusive / reverse-sign / holiday rules with
   weekend codes 1–7 / 11–17 (`#NUM!` otherwise) or a 7-character Mon→Sun `0`/`1`
@@ -469,12 +506,27 @@ as one or the other. Documented quirk categories:
   and always returns 0. Omitted weekend is Sat/Sun (same as `NETWORKDAYS`).
   `WEEKDAY` is O(1) on the serial (`serial % 7`); 1900-01-01 is Sunday in
   Excel (historically Monday). `return_type` 1/2/3/11–17; anything else is `#NUM!`.
+  `WEEKNUM` is O(1) on the integer serial. System 1 (`return_type` 1 / 2 /
+  11–17; default 1) numbers the week containing January 1 as week 1. System 2
+  (`return_type` 21) is ISO 8601 (Monday start; week 1 contains the first
+  Thursday). Type 3 is `#NUM!` (unlike `WEEKDAY`). Early-1900 ISO weeks follow
+  Excel's Sunday-on-serial-1 weekday, not civil ISO. A leap year whose January 1
+  is Saturday can reach week 54 (System 1).
+  `ISOWEEKNUM` is the ISO 8601 week (Monday start; week 1 contains the first
+  Thursday) on that same Excel weekday, so `ISOWEEKNUM(1)` is 52. Serial 0 /
+  blank is also 52. Negative / past-9999-12-31 serials are `#NUM!`.
   `WORKDAY` skips Sat/Sun (and optional holidays); `days=0` returns the start
   even on a weekend/holiday; serial 60 is a Wednesday workday.
   `YEARFRAC` day-count bases 0–4 (US 30/360, actual/actual, actual/360,
   actual/365, EU 30/360). Dates swap so the result is ≥ 0. 1900 is a leap
   year (serial 60 is last-of-February; 59 is not). Basis 0 keeps the Excel
   last-day-of-February quirk (Mar 31 is not pulled down to 30).
+  `DAYS360(start, end, [method])` is a signed 30/360 **day count** (not a
+  year fraction). Omitted / `FALSE` / `0` is US (NASD); `TRUE` / nonzero is
+  European (31 → 30 only). NASD rewrites a last-day-of-month start to day 30
+  *before* the end-31st rule, so Feb 28 → Mar 31 is 30 (YEARFRAC basis 0 is
+  31). A February **end** is not rewritten (28-Feb-11 → 28-Feb-12 is 358).
+  Start after end is negative; dates truncate; serial 60 is last-of-February.
   `WORKDAY.INTL` adds weekend codes 1–7 / 11–17 and a Monday-first 7-character
   `0`/`1` string (`"0000011"` = Sat/Sun). Invalid codes are `#NUM!`; invalid
   strings (wrong length, non-`0`/`1`, or `1111111`) are `#VALUE!`. Text `"1"`
