@@ -454,8 +454,6 @@ fn fn_hlookup(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelV
 ///
 /// Third argument is inspected as a LAMBDA (inline or defined name), not
 /// evaluated as a worksheet value. See [`super::makearray`].
-///
-/// Excel `MAP(array1, [array2, …], LAMBDA(…))` lives in [`super::map`].
 fn fn_makearray(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
     if args.len() != 3 {
         return Ok(ExcelValue::Error(ExcelError::Value));
