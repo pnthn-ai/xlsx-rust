@@ -2,539 +2,2150 @@
   {
     "id": "fn.textjoin-ms-sun",
     "description": "Microsoft example: TEXTJOIN(\" \", TRUE, words) joins with spaces",
-    "tags": ["textjoin", "text"],
+    "tags": [
+      "textjoin",
+      "text"
+    ],
     "formula": "=TEXTJOIN(\" \", TRUE, \"The\", \"sun\", \"will\", \"come\", \"up\", \"tomorrow.\")",
-    "expected": { "text": "The sun will come up tomorrow." }
+    "expected": {
+      "text": "The sun will come up tomorrow."
+    }
   },
   {
     "id": "fn.textjoin-ignore-true-empty-literal",
     "description": "ignore_empty TRUE skips stored empty strings",
-    "tags": ["textjoin", "text", "empty"],
-    "quirks": ["empty-cell-duality"],
+    "tags": [
+      "textjoin",
+      "text",
+      "empty"
+    ],
+    "quirks": [
+      "empty-cell-duality"
+    ],
     "formula": "=TEXTJOIN(\",\", TRUE, \"a\", \"\", \"b\")",
-    "expected": { "text": "a,b" }
+    "expected": {
+      "text": "a,b"
+    }
   },
   {
     "id": "fn.textjoin-ignore-false-empty-literal",
     "description": "ignore_empty FALSE keeps empty strings (consecutive delimiters)",
-    "tags": ["textjoin", "text", "empty"],
-    "quirks": ["empty-cell-duality"],
+    "tags": [
+      "textjoin",
+      "text",
+      "empty"
+    ],
+    "quirks": [
+      "empty-cell-duality"
+    ],
     "formula": "=TEXTJOIN(\",\", FALSE, \"a\", \"\", \"b\")",
-    "expected": { "text": "a,,b" }
+    "expected": {
+      "text": "a,,b"
+    }
   },
   {
     "id": "fn.textjoin-ignore-false-two-empties",
     "description": "Two empties with ignore_empty FALSE produce one delimiter",
-    "tags": ["textjoin", "text", "empty"],
+    "tags": [
+      "textjoin",
+      "text",
+      "empty"
+    ],
     "formula": "=TEXTJOIN(\",\", FALSE, \"\", \"\")",
-    "expected": { "text": "," }
+    "expected": {
+      "text": ","
+    }
   },
   {
     "id": "fn.textjoin-ignore-true-two-empties",
     "description": "All-empty with ignore_empty TRUE is empty text",
-    "tags": ["textjoin", "text", "empty"],
+    "tags": [
+      "textjoin",
+      "text",
+      "empty"
+    ],
     "formula": "=TEXTJOIN(\",\", TRUE, \"\", \"\")",
-    "expected": { "text": "" }
+    "expected": {
+      "text": ""
+    }
   },
   {
     "id": "fn.textjoin-single-empty-false",
     "description": "A single empty piece emits no delimiter",
-    "tags": ["textjoin", "text", "empty"],
+    "tags": [
+      "textjoin",
+      "text",
+      "empty"
+    ],
     "formula": "=TEXTJOIN(\",\", FALSE, \"\")",
-    "expected": { "text": "" }
+    "expected": {
+      "text": ""
+    }
   },
   {
     "id": "fn.textjoin-triple-empty-false",
     "description": "Three empties with FALSE yield two delimiters",
-    "tags": ["textjoin", "text", "empty"],
+    "tags": [
+      "textjoin",
+      "text",
+      "empty"
+    ],
     "formula": "=TEXTJOIN(\",\", FALSE, \"\", \"\", \"\")",
-    "expected": { "text": ",," }
+    "expected": {
+      "text": ",,"
+    }
   },
   {
     "id": "fn.textjoin-space-not-empty",
     "description": "A space is not empty and is kept when ignore_empty is TRUE",
-    "tags": ["textjoin", "text", "empty"],
+    "tags": [
+      "textjoin",
+      "text",
+      "empty"
+    ],
     "formula": "=TEXTJOIN(\",\", TRUE, \"a\", \" \", \"b\")",
-    "expected": { "text": "a, ,b" }
+    "expected": {
+      "text": "a, ,b"
+    }
   },
   {
     "id": "fn.textjoin-blank-range-true",
     "description": "ignore_empty TRUE skips blank cells in a range",
-    "tags": ["textjoin", "text", "empty"],
-    "quirks": ["empty-cell-duality"],
+    "tags": [
+      "textjoin",
+      "text",
+      "empty"
+    ],
+    "quirks": [
+      "empty-cell-duality"
+    ],
     "formula": "=TEXTJOIN(\",\", TRUE, A1:A3)",
-    "expected": { "text": "a,b" },
+    "expected": {
+      "text": "a,b"
+    },
     "workbook": {
-      "sheets": [{
-        "name": "Sheet1",
-        "cells": {
-          "A1": { "text": "a" },
-          "A3": { "text": "b" }
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": {
+              "text": "a"
+            },
+            "A3": {
+              "text": "b"
+            }
+          }
         }
-      }]
+      ]
     }
   },
   {
     "id": "fn.textjoin-blank-range-false",
     "description": "ignore_empty FALSE keeps blank cells as empty pieces",
-    "tags": ["textjoin", "text", "empty"],
-    "quirks": ["empty-cell-duality"],
+    "tags": [
+      "textjoin",
+      "text",
+      "empty"
+    ],
+    "quirks": [
+      "empty-cell-duality"
+    ],
     "formula": "=TEXTJOIN(\",\", FALSE, A1:A3)",
-    "expected": { "text": "a,,b" },
+    "expected": {
+      "text": "a,,b"
+    },
     "workbook": {
-      "sheets": [{
-        "name": "Sheet1",
-        "cells": {
-          "A1": { "text": "a" },
-          "A3": { "text": "b" }
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": {
+              "text": "a"
+            },
+            "A3": {
+              "text": "b"
+            }
+          }
         }
-      }]
+      ]
     }
   },
   {
     "id": "fn.textjoin-stored-empty-vs-blank-true",
     "description": "Stored \"\" is skipped the same as a blank when ignore_empty is TRUE",
-    "tags": ["textjoin", "text", "empty"],
-    "quirks": ["empty-cell-duality"],
+    "tags": [
+      "textjoin",
+      "text",
+      "empty"
+    ],
+    "quirks": [
+      "empty-cell-duality"
+    ],
     "formula": "=TEXTJOIN(\",\", TRUE, A1:A3)",
-    "expected": { "text": "a,b" },
+    "expected": {
+      "text": "a,b"
+    },
     "workbook": {
-      "sheets": [{
-        "name": "Sheet1",
-        "cells": {
-          "A1": { "text": "a" },
-          "A2": { "text": "" },
-          "A3": { "text": "b" }
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": {
+              "text": "a"
+            },
+            "A2": {
+              "text": ""
+            },
+            "A3": {
+              "text": "b"
+            }
+          }
         }
-      }]
+      ]
     }
   },
   {
     "id": "fn.textjoin-stored-empty-vs-blank-false",
     "description": "Stored \"\" inserts a delimiter when ignore_empty is FALSE",
-    "tags": ["textjoin", "text", "empty"],
-    "quirks": ["empty-cell-duality"],
+    "tags": [
+      "textjoin",
+      "text",
+      "empty"
+    ],
+    "quirks": [
+      "empty-cell-duality"
+    ],
     "formula": "=TEXTJOIN(\",\", FALSE, A1:A3)",
-    "expected": { "text": "a,,b" },
+    "expected": {
+      "text": "a,,b"
+    },
     "workbook": {
-      "sheets": [{
-        "name": "Sheet1",
-        "cells": {
-          "A1": { "text": "a" },
-          "A2": { "text": "" },
-          "A3": { "text": "b" }
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": {
+              "text": "a"
+            },
+            "A2": {
+              "text": ""
+            },
+            "A3": {
+              "text": "b"
+            }
+          }
         }
-      }]
+      ]
     }
   },
   {
     "id": "fn.textjoin-zero-not-empty",
     "description": "0 is not empty; joins as \"0\"",
-    "tags": ["textjoin", "text"],
+    "tags": [
+      "textjoin",
+      "text"
+    ],
     "formula": "=TEXTJOIN(\",\", TRUE, 0, \"a\")",
-    "expected": { "text": "0,a" }
+    "expected": {
+      "text": "0,a"
+    }
   },
   {
     "id": "fn.textjoin-false-not-empty",
     "description": "FALSE is not empty; joins as \"FALSE\"",
-    "tags": ["textjoin", "text"],
+    "tags": [
+      "textjoin",
+      "text"
+    ],
     "formula": "=TEXTJOIN(\",\", TRUE, FALSE, \"a\")",
-    "expected": { "text": "FALSE,a" }
+    "expected": {
+      "text": "FALSE,a"
+    }
   },
   {
     "id": "fn.textjoin-coerce-number-bool",
     "description": "Numbers and bools coerce like concatenation",
-    "tags": ["textjoin", "text", "coercion"],
+    "tags": [
+      "textjoin",
+      "text",
+      "coercion"
+    ],
     "formula": "=TEXTJOIN(\",\", TRUE, 1, TRUE, \"x\", 12.5)",
-    "expected": { "text": "1,TRUE,x,12.5" }
+    "expected": {
+      "text": "1,TRUE,x,12.5"
+    }
   },
   {
     "id": "fn.textjoin-empty-delimiter",
     "description": "Empty delimiter concatenates with no separator",
-    "tags": ["textjoin", "text"],
+    "tags": [
+      "textjoin",
+      "text"
+    ],
     "formula": "=TEXTJOIN(\"\", TRUE, \"a\", \"b\", \"c\")",
-    "expected": { "text": "abc" }
+    "expected": {
+      "text": "abc"
+    }
   },
   {
     "id": "fn.textjoin-empty-delimiter-keeps-empty",
     "description": "Empty delimiter + ignore_empty FALSE is still invisible between pieces",
-    "tags": ["textjoin", "text", "empty"],
+    "tags": [
+      "textjoin",
+      "text",
+      "empty"
+    ],
     "formula": "=TEXTJOIN(\"\", FALSE, \"a\", \"\", \"b\")",
-    "expected": { "text": "ab" }
+    "expected": {
+      "text": "ab"
+    }
   },
   {
     "id": "fn.textjoin-number-delimiter",
     "description": "A numeric delimiter is treated as text",
-    "tags": ["textjoin", "text", "coercion"],
+    "tags": [
+      "textjoin",
+      "text",
+      "coercion"
+    ],
     "formula": "=TEXTJOIN(1, TRUE, \"a\", \"b\")",
-    "expected": { "text": "a1b" }
+    "expected": {
+      "text": "a1b"
+    }
   },
   {
     "id": "fn.textjoin-bool-delimiter",
     "description": "TRUE as delimiter becomes \"TRUE\"",
-    "tags": ["textjoin", "text", "coercion"],
+    "tags": [
+      "textjoin",
+      "text",
+      "coercion"
+    ],
     "formula": "=TEXTJOIN(TRUE, TRUE, \"a\", \"b\")",
-    "expected": { "text": "aTRUEb" }
+    "expected": {
+      "text": "aTRUEb"
+    }
   },
   {
     "id": "fn.textjoin-blank-delimiter-cell",
     "description": "A blank delimiter cell concatenates with no separator",
-    "tags": ["textjoin", "text", "empty"],
-    "quirks": ["empty-cell-duality"],
+    "tags": [
+      "textjoin",
+      "text",
+      "empty"
+    ],
+    "quirks": [
+      "empty-cell-duality"
+    ],
     "formula": "=TEXTJOIN(A1, TRUE, \"a\", \"b\")",
-    "expected": { "text": "ab" },
+    "expected": {
+      "text": "ab"
+    },
     "workbook": {
-      "sheets": [{
-        "name": "Sheet1",
-        "cells": {}
-      }]
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {}
+        }
+      ]
     }
   },
   {
     "id": "fn.textjoin-multichar-delimiter",
     "description": "Multi-character delimiter \", \"",
-    "tags": ["textjoin", "text"],
+    "tags": [
+      "textjoin",
+      "text"
+    ],
     "formula": "=TEXTJOIN(\", \", TRUE, \"a\", \"b\", \"c\")",
-    "expected": { "text": "a, b, c" }
+    "expected": {
+      "text": "a, b, c"
+    }
   },
   {
     "id": "fn.textjoin-cycle-array",
     "description": "Array delimiter cycles between emitted pieces",
-    "tags": ["textjoin", "text", "array"],
-    "quirks": ["array-eval-mode"],
+    "tags": [
+      "textjoin",
+      "text",
+      "array"
+    ],
+    "quirks": [
+      "array-eval-mode"
+    ],
     "formula": "=TEXTJOIN({\",\",\";\"}, TRUE, \"a\", \"b\", \"c\", \"d\")",
-    "expected": { "text": "a,b;c,d" }
+    "expected": {
+      "text": "a,b;c,d"
+    }
   },
   {
     "id": "fn.textjoin-cycle-skips-empty",
     "description": "Cycling is based on emitted pieces, not skipped empties",
-    "tags": ["textjoin", "text", "array", "empty"],
-    "quirks": ["array-eval-mode", "empty-cell-duality"],
+    "tags": [
+      "textjoin",
+      "text",
+      "array",
+      "empty"
+    ],
+    "quirks": [
+      "array-eval-mode",
+      "empty-cell-duality"
+    ],
     "formula": "=TEXTJOIN({\"-\",\"|\"}, TRUE, \"a\", \"\", \"b\", \"c\")",
-    "expected": { "text": "a-b|c" }
+    "expected": {
+      "text": "a-b|c"
+    }
   },
   {
     "id": "fn.textjoin-cycle-keep-empty",
     "description": "With ignore_empty FALSE, empties consume a delimiter slot",
-    "tags": ["textjoin", "text", "array", "empty"],
-    "quirks": ["array-eval-mode", "empty-cell-duality"],
+    "tags": [
+      "textjoin",
+      "text",
+      "array",
+      "empty"
+    ],
+    "quirks": [
+      "array-eval-mode",
+      "empty-cell-duality"
+    ],
     "formula": "=TEXTJOIN({\"-\",\"|\"}, FALSE, \"a\", \"\", \"b\", \"c\")",
-    "expected": { "text": "a-|b-c" }
+    "expected": {
+      "text": "a-|b-c"
+    }
   },
   {
     "id": "fn.textjoin-array-literal-2d",
     "description": "2-D array literal flattens row-major",
-    "tags": ["textjoin", "text", "array"],
-    "quirks": ["array-eval-mode"],
+    "tags": [
+      "textjoin",
+      "text",
+      "array"
+    ],
+    "quirks": [
+      "array-eval-mode"
+    ],
     "formula": "=TEXTJOIN(\",\", TRUE, {1,2;3,4})",
-    "expected": { "text": "1,2,3,4" }
+    "expected": {
+      "text": "1,2,3,4"
+    }
   },
   {
     "id": "fn.textjoin-two-array-args",
     "description": "Multiple array arguments are concatenated in argument order",
-    "tags": ["textjoin", "text", "array"],
-    "quirks": ["array-eval-mode"],
+    "tags": [
+      "textjoin",
+      "text",
+      "array"
+    ],
+    "quirks": [
+      "array-eval-mode"
+    ],
     "formula": "=TEXTJOIN(\",\", TRUE, {1,2}, {3,4})",
-    "expected": { "text": "1,2,3,4" }
+    "expected": {
+      "text": "1,2,3,4"
+    }
   },
   {
     "id": "fn.textjoin-range-row-major",
     "description": "A 2-D range is flattened left-to-right, then top-to-bottom",
-    "tags": ["textjoin", "text"],
+    "tags": [
+      "textjoin",
+      "text"
+    ],
     "formula": "=TEXTJOIN(\",\", TRUE, A1:B2)",
-    "expected": { "text": "a,b,c,d" },
+    "expected": {
+      "text": "a,b,c,d"
+    },
     "workbook": {
-      "sheets": [{
-        "name": "Sheet1",
-        "cells": {
-          "A1": { "text": "a" },
-          "B1": { "text": "b" },
-          "A2": { "text": "c" },
-          "B2": { "text": "d" }
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": {
+              "text": "a"
+            },
+            "B1": {
+              "text": "b"
+            },
+            "A2": {
+              "text": "c"
+            },
+            "B2": {
+              "text": "d"
+            }
+          }
         }
-      }]
+      ]
     }
   },
   {
     "id": "fn.textjoin-two-ranges",
     "description": "Two column ranges join in argument order (not a 2-D walk)",
-    "tags": ["textjoin", "text"],
+    "tags": [
+      "textjoin",
+      "text"
+    ],
     "formula": "=TEXTJOIN(\",\", TRUE, A1:A2, B1:B2)",
-    "expected": { "text": "a,c,b,d" },
+    "expected": {
+      "text": "a,c,b,d"
+    },
     "workbook": {
-      "sheets": [{
-        "name": "Sheet1",
-        "cells": {
-          "A1": { "text": "a" },
-          "B1": { "text": "b" },
-          "A2": { "text": "c" },
-          "B2": { "text": "d" }
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": {
+              "text": "a"
+            },
+            "B1": {
+              "text": "b"
+            },
+            "A2": {
+              "text": "c"
+            },
+            "B2": {
+              "text": "d"
+            }
+          }
         }
-      }]
+      ]
     }
   },
   {
     "id": "fn.textjoin-ms-ignore-true-2d",
     "description": "Microsoft example 2: A2:B8 with a blank row, ignore_empty TRUE",
-    "tags": ["textjoin", "text", "empty"],
-    "quirks": ["empty-cell-duality"],
+    "tags": [
+      "textjoin",
+      "text",
+      "empty"
+    ],
+    "quirks": [
+      "empty-cell-duality"
+    ],
     "formula": "=TEXTJOIN(\", \", TRUE, A2:B8)",
-    "expected": { "text": "a1, b1, a2, b2, a4, b4, a5, b5, a6, b6, a7, b7" },
+    "expected": {
+      "text": "a1, b1, a2, b2, a4, b4, a5, b5, a6, b6, a7, b7"
+    },
     "workbook": {
-      "sheets": [{
-        "name": "Sheet1",
-        "cells": {
-          "A1": { "text": "A's" },
-          "B1": { "text": "B's" },
-          "A2": { "text": "a1" },
-          "B2": { "text": "b1" },
-          "A3": { "text": "a2" },
-          "B3": { "text": "b2" },
-          "A5": { "text": "a4" },
-          "B5": { "text": "b4" },
-          "A6": { "text": "a5" },
-          "B6": { "text": "b5" },
-          "A7": { "text": "a6" },
-          "B7": { "text": "b6" },
-          "A8": { "text": "a7" },
-          "B8": { "text": "b7" }
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": {
+              "text": "A's"
+            },
+            "B1": {
+              "text": "B's"
+            },
+            "A2": {
+              "text": "a1"
+            },
+            "B2": {
+              "text": "b1"
+            },
+            "A3": {
+              "text": "a2"
+            },
+            "B3": {
+              "text": "b2"
+            },
+            "A5": {
+              "text": "a4"
+            },
+            "B5": {
+              "text": "b4"
+            },
+            "A6": {
+              "text": "a5"
+            },
+            "B6": {
+              "text": "b5"
+            },
+            "A7": {
+              "text": "a6"
+            },
+            "B7": {
+              "text": "b6"
+            },
+            "A8": {
+              "text": "a7"
+            },
+            "B8": {
+              "text": "b7"
+            }
+          }
         }
-      }]
+      ]
     }
   },
   {
     "id": "fn.textjoin-ms-ignore-false-2d",
     "description": "Microsoft example 2: same range with ignore_empty FALSE keeps the blank row",
-    "tags": ["textjoin", "text", "empty"],
-    "quirks": ["empty-cell-duality"],
+    "tags": [
+      "textjoin",
+      "text",
+      "empty"
+    ],
+    "quirks": [
+      "empty-cell-duality"
+    ],
     "formula": "=TEXTJOIN(\", \", FALSE, A2:B8)",
-    "expected": { "text": "a1, b1, a2, b2, , , a4, b4, a5, b5, a6, b6, a7, b7" },
+    "expected": {
+      "text": "a1, b1, a2, b2, , , a4, b4, a5, b5, a6, b6, a7, b7"
+    },
     "workbook": {
-      "sheets": [{
-        "name": "Sheet1",
-        "cells": {
-          "A2": { "text": "a1" },
-          "B2": { "text": "b1" },
-          "A3": { "text": "a2" },
-          "B3": { "text": "b2" },
-          "A5": { "text": "a4" },
-          "B5": { "text": "b4" },
-          "A6": { "text": "a5" },
-          "B6": { "text": "b5" },
-          "A7": { "text": "a6" },
-          "B7": { "text": "b6" },
-          "A8": { "text": "a7" },
-          "B8": { "text": "b7" }
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A2": {
+              "text": "a1"
+            },
+            "B2": {
+              "text": "b1"
+            },
+            "A3": {
+              "text": "a2"
+            },
+            "B3": {
+              "text": "b2"
+            },
+            "A5": {
+              "text": "a4"
+            },
+            "B5": {
+              "text": "b4"
+            },
+            "A6": {
+              "text": "a5"
+            },
+            "B6": {
+              "text": "b5"
+            },
+            "A7": {
+              "text": "a6"
+            },
+            "B7": {
+              "text": "b6"
+            },
+            "A8": {
+              "text": "a7"
+            },
+            "B8": {
+              "text": "b7"
+            }
+          }
         }
-      }]
+      ]
     }
   },
   {
     "id": "fn.textjoin-ms-cycle-cities",
     "description": "Microsoft example 3: delimiter range cycles comma/comma/comma/semicolon",
-    "tags": ["textjoin", "text"],
+    "tags": [
+      "textjoin",
+      "text"
+    ],
     "formula": "=TEXTJOIN(A8:D8, TRUE, A2:D7)",
-    "expected": { "text": "Tulsa,OK,74133,US;Seattle,WA,98109,US;Iselin,NJ,08830,US;Fort Lauderdale,FL,33309,US;Tempe,AZ,85285,US;end" },
+    "expected": {
+      "text": "Tulsa,OK,74133,US;Seattle,WA,98109,US;Iselin,NJ,08830,US;Fort Lauderdale,FL,33309,US;Tempe,AZ,85285,US;end"
+    },
     "workbook": {
-      "sheets": [{
-        "name": "Sheet1",
-        "cells": {
-          "A2": { "text": "Tulsa" },
-          "B2": { "text": "OK" },
-          "C2": { "text": "74133" },
-          "D2": { "text": "US" },
-          "A3": { "text": "Seattle" },
-          "B3": { "text": "WA" },
-          "C3": { "text": "98109" },
-          "D3": { "text": "US" },
-          "A4": { "text": "Iselin" },
-          "B4": { "text": "NJ" },
-          "C4": { "text": "08830" },
-          "D4": { "text": "US" },
-          "A5": { "text": "Fort Lauderdale" },
-          "B5": { "text": "FL" },
-          "C5": { "text": "33309" },
-          "D5": { "text": "US" },
-          "A6": { "text": "Tempe" },
-          "B6": { "text": "AZ" },
-          "C6": { "text": "85285" },
-          "D6": { "text": "US" },
-          "A7": { "text": "end" },
-          "A8": { "text": "," },
-          "B8": { "text": "," },
-          "C8": { "text": "," },
-          "D8": { "text": ";" }
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A2": {
+              "text": "Tulsa"
+            },
+            "B2": {
+              "text": "OK"
+            },
+            "C2": {
+              "text": "74133"
+            },
+            "D2": {
+              "text": "US"
+            },
+            "A3": {
+              "text": "Seattle"
+            },
+            "B3": {
+              "text": "WA"
+            },
+            "C3": {
+              "text": "98109"
+            },
+            "D3": {
+              "text": "US"
+            },
+            "A4": {
+              "text": "Iselin"
+            },
+            "B4": {
+              "text": "NJ"
+            },
+            "C4": {
+              "text": "08830"
+            },
+            "D4": {
+              "text": "US"
+            },
+            "A5": {
+              "text": "Fort Lauderdale"
+            },
+            "B5": {
+              "text": "FL"
+            },
+            "C5": {
+              "text": "33309"
+            },
+            "D5": {
+              "text": "US"
+            },
+            "A6": {
+              "text": "Tempe"
+            },
+            "B6": {
+              "text": "AZ"
+            },
+            "C6": {
+              "text": "85285"
+            },
+            "D6": {
+              "text": "US"
+            },
+            "A7": {
+              "text": "end"
+            },
+            "A8": {
+              "text": ","
+            },
+            "B8": {
+              "text": ","
+            },
+            "C8": {
+              "text": ","
+            },
+            "D8": {
+              "text": ";"
+            }
+          }
         }
-      }]
+      ]
     }
   },
   {
     "id": "fn.textjoin-named-range",
     "description": "TEXTJOIN flattens a defined name that refers to a range",
-    "tags": ["textjoin", "text", "named"],
+    "tags": [
+      "textjoin",
+      "text",
+      "named"
+    ],
     "formula": "=TEXTJOIN(\",\", TRUE, Items)",
-    "expected": { "text": "a,b,c" },
+    "expected": {
+      "text": "a,b,c"
+    },
     "workbook": {
-      "sheets": [{
-        "name": "Sheet1",
-        "cells": {
-          "A1": { "text": "a" },
-          "A2": { "text": "b" },
-          "A3": { "text": "c" }
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": {
+              "text": "a"
+            },
+            "A2": {
+              "text": "b"
+            },
+            "A3": {
+              "text": "c"
+            }
+          }
         }
-      }],
-      "names": [{ "name": "Items", "refers_to": "Sheet1!A1:A3" }]
+      ],
+      "names": [
+        {
+          "name": "Items",
+          "refers_to": "Sheet1!A1:A3"
+        }
+      ]
     }
   },
   {
     "id": "fn.textjoin-formula-cell",
     "description": "A formula cell in the range is evaluated, then joined",
-    "tags": ["textjoin", "text"],
+    "tags": [
+      "textjoin",
+      "text"
+    ],
     "formula": "=TEXTJOIN(\",\", TRUE, A1:A2)",
-    "expected": { "text": "ax,b" },
+    "expected": {
+      "text": "ax,b"
+    },
     "workbook": {
-      "sheets": [{
-        "name": "Sheet1",
-        "cells": {
-          "A1": { "formula": "=\"a\"&\"x\"" },
-          "A2": { "text": "b" }
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": {
+              "formula": "=\"a\"&\"x\""
+            },
+            "A2": {
+              "text": "b"
+            }
+          }
         }
-      }]
+      ]
     }
   },
   {
     "id": "fn.textjoin-ignore-empty-one",
     "description": "Numeric 1 is TRUE for ignore_empty",
-    "tags": ["textjoin", "text", "coercion"],
+    "tags": [
+      "textjoin",
+      "text",
+      "coercion"
+    ],
     "formula": "=TEXTJOIN(\",\", 1, \"a\", \"\", \"b\")",
-    "expected": { "text": "a,b" }
+    "expected": {
+      "text": "a,b"
+    }
   },
   {
     "id": "fn.textjoin-ignore-empty-zero",
     "description": "Numeric 0 is FALSE for ignore_empty",
-    "tags": ["textjoin", "text", "coercion"],
+    "tags": [
+      "textjoin",
+      "text",
+      "coercion"
+    ],
     "formula": "=TEXTJOIN(\",\", 0, \"a\", \"\", \"b\")",
-    "expected": { "text": "a,,b" }
+    "expected": {
+      "text": "a,,b"
+    }
   },
   {
     "id": "fn.textjoin-ignore-empty-blank-cell",
     "description": "A blank ignore_empty cell is FALSE",
-    "tags": ["textjoin", "text", "empty"],
-    "quirks": ["empty-cell-duality"],
+    "tags": [
+      "textjoin",
+      "text",
+      "empty"
+    ],
+    "quirks": [
+      "empty-cell-duality"
+    ],
     "formula": "=TEXTJOIN(\",\", A1, \"a\", \"\", \"b\")",
-    "expected": { "text": "a,,b" },
+    "expected": {
+      "text": "a,,b"
+    },
     "workbook": {
-      "sheets": [{
-        "name": "Sheet1",
-        "cells": {}
-      }]
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {}
+        }
+      ]
     }
   },
   {
     "id": "fn.textjoin-arity-zero",
     "description": "TEXTJOIN() is #VALUE!",
-    "tags": ["textjoin", "errors"],
+    "tags": [
+      "textjoin",
+      "errors"
+    ],
     "formula": "=TEXTJOIN()",
-    "expected": { "error": "#VALUE!" }
+    "expected": {
+      "error": "#VALUE!"
+    }
   },
   {
     "id": "fn.textjoin-arity-one",
     "description": "TEXTJOIN needs ignore_empty and at least one text",
-    "tags": ["textjoin", "errors"],
+    "tags": [
+      "textjoin",
+      "errors"
+    ],
     "formula": "=TEXTJOIN(\",\")",
-    "expected": { "error": "#VALUE!" }
+    "expected": {
+      "error": "#VALUE!"
+    }
   },
   {
     "id": "fn.textjoin-arity-two",
     "description": "TEXTJOIN(\",\", TRUE) without text is #VALUE!",
-    "tags": ["textjoin", "errors"],
+    "tags": [
+      "textjoin",
+      "errors"
+    ],
     "formula": "=TEXTJOIN(\",\", TRUE)",
-    "expected": { "error": "#VALUE!" }
+    "expected": {
+      "error": "#VALUE!"
+    }
   },
   {
     "id": "fn.textjoin-ignore-empty-text",
     "description": "Text ignore_empty is #VALUE! (same as IF)",
-    "tags": ["textjoin", "errors", "coercion"],
+    "tags": [
+      "textjoin",
+      "errors",
+      "coercion"
+    ],
     "formula": "=TEXTJOIN(\",\", \"x\", \"a\")",
-    "expected": { "error": "#VALUE!" }
+    "expected": {
+      "error": "#VALUE!"
+    }
   },
   {
     "id": "fn.textjoin-err-delimiter",
     "description": "Error delimiter propagates",
-    "tags": ["textjoin", "errors"],
-    "quirks": ["error-precedence"],
+    "tags": [
+      "textjoin",
+      "errors"
+    ],
+    "quirks": [
+      "error-precedence"
+    ],
     "formula": "=TEXTJOIN(#DIV/0!, TRUE, \"a\")",
-    "expected": { "error": "#DIV/0!" }
+    "expected": {
+      "error": "#DIV/0!"
+    }
   },
   {
     "id": "fn.textjoin-err-ignore-empty",
     "description": "Error ignore_empty propagates",
-    "tags": ["textjoin", "errors"],
-    "quirks": ["error-precedence"],
+    "tags": [
+      "textjoin",
+      "errors"
+    ],
+    "quirks": [
+      "error-precedence"
+    ],
     "formula": "=TEXTJOIN(\",\", #N/A, \"a\")",
-    "expected": { "error": "#N/A" }
+    "expected": {
+      "error": "#N/A"
+    }
   },
   {
     "id": "fn.textjoin-err-text-arg",
     "description": "Error in a text argument propagates",
-    "tags": ["textjoin", "errors"],
-    "quirks": ["error-precedence"],
+    "tags": [
+      "textjoin",
+      "errors"
+    ],
+    "quirks": [
+      "error-precedence"
+    ],
     "formula": "=TEXTJOIN(\",\", TRUE, \"a\", #N/A, \"b\")",
-    "expected": { "error": "#N/A" }
+    "expected": {
+      "error": "#N/A"
+    }
   },
   {
     "id": "fn.textjoin-err-ltr",
     "description": "Left-to-right: delimiter error wins over ignore_empty error",
-    "tags": ["textjoin", "errors"],
-    "quirks": ["error-precedence"],
+    "tags": [
+      "textjoin",
+      "errors"
+    ],
+    "quirks": [
+      "error-precedence"
+    ],
     "formula": "=TEXTJOIN(#DIV/0!, #N/A, \"a\")",
-    "expected": { "error": "#DIV/0!" }
+    "expected": {
+      "error": "#DIV/0!"
+    }
   },
   {
     "id": "fn.textjoin-err-in-range",
     "description": "First error in a flattened range wins",
-    "tags": ["textjoin", "errors"],
-    "quirks": ["error-precedence"],
+    "tags": [
+      "textjoin",
+      "errors"
+    ],
+    "quirks": [
+      "error-precedence"
+    ],
     "formula": "=TEXTJOIN(\",\", TRUE, A1:A3)",
-    "expected": { "error": "#DIV/0!" },
+    "expected": {
+      "error": "#DIV/0!"
+    },
     "workbook": {
-      "sheets": [{
-        "name": "Sheet1",
-        "cells": {
-          "A1": { "text": "a" },
-          "A2": { "formula": "=1/0" },
-          "A3": { "text": "b" }
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": {
+              "text": "a"
+            },
+            "A2": {
+              "formula": "=1/0"
+            },
+            "A3": {
+              "text": "b"
+            }
+          }
         }
-      }]
+      ]
     }
   },
   {
     "id": "fn.textjoin-err-missing-sheet",
     "description": "A missing-sheet range is #REF!",
-    "tags": ["textjoin", "errors"],
+    "tags": [
+      "textjoin",
+      "errors"
+    ],
     "formula": "=TEXTJOIN(\",\", TRUE, Missing!A1:A2)",
-    "expected": { "error": "#REF!" }
+    "expected": {
+      "error": "#REF!"
+    }
   },
   {
     "id": "fn.textjoin-single-piece",
     "description": "A single non-empty piece is returned unchanged (no trailing delimiter)",
-    "tags": ["textjoin", "text"],
+    "tags": [
+      "textjoin",
+      "text"
+    ],
     "formula": "=TEXTJOIN(\",\", TRUE, \"only\")",
-    "expected": { "text": "only" }
+    "expected": {
+      "text": "only"
+    }
   },
   {
     "id": "fn.textjoin-over-limit",
     "description": "Result longer than 32767 characters is #VALUE!",
-    "tags": ["textjoin", "errors"],
+    "tags": [
+      "textjoin",
+      "errors"
+    ],
     "formula": "=TEXTJOIN(\"\", TRUE, A1, A1, A1, A1, A1, A1, A1, A1, A1, A1, A1, A1, A1, A1, A1, A1, A1, A1, A1, A1, A1, A1, A1, A1, A1, A1, A1, A1, A1, A1, A1, A1, A1)",
-    "expected": { "error": "#VALUE!" },
+    "expected": {
+      "error": "#VALUE!"
+    },
     "workbook": {
-      "sheets": [{
-        "name": "Sheet1",
-        "cells": {
-          "A1": { "text": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" }
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": {
+              "text": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+            }
+          }
         }
-      }]
+      ]
+    }
+  },
+  {
+    "id": "fn.textjoin-no-trim",
+    "description": "TEXTJOIN does not TRIM; leading/trailing spaces are kept",
+    "tags": [
+      "textjoin",
+      "text"
+    ],
+    "formula": "=TEXTJOIN(\",\", TRUE, \" a \", \" b \")",
+    "expected": {
+      "text": " a , b "
+    },
+    "notes": "Excel golden: spaces are not empty; ignore_empty TRUE still keeps them."
+  },
+  {
+    "id": "fn.textjoin-whitespace-only-kept",
+    "description": "A whitespace-only piece is not empty and is kept when ignore_empty is TRUE",
+    "tags": [
+      "textjoin",
+      "text",
+      "empty"
+    ],
+    "formula": "=TEXTJOIN(\",\", TRUE, \"   \", \"x\")",
+    "expected": {
+      "text": "   ,x"
+    }
+  },
+  {
+    "id": "fn.textjoin-tab-kept",
+    "description": "CHAR(9) tab is kept (TEXTJOIN is not TRIM / CLEAN)",
+    "tags": [
+      "textjoin",
+      "text"
+    ],
+    "formula": "=TEXTJOIN(\",\", TRUE, \"a\", CHAR(9), \"b\")",
+    "expected": {
+      "text": "a,\t,b"
+    }
+  },
+  {
+    "id": "fn.textjoin-lf-kept",
+    "description": "CHAR(10) line feed is kept",
+    "tags": [
+      "textjoin",
+      "text"
+    ],
+    "formula": "=TEXTJOIN(\",\", TRUE, \"a\", CHAR(10), \"b\")",
+    "expected": {
+      "text": "a,\n,b"
+    }
+  },
+  {
+    "id": "fn.textjoin-leading-zeros-text",
+    "description": "Text that looks like a number keeps leading zeros",
+    "tags": [
+      "textjoin",
+      "text"
+    ],
+    "formula": "=TEXTJOIN(\",\", TRUE, \"001\", 2)",
+    "expected": {
+      "text": "001,2"
+    }
+  },
+  {
+    "id": "fn.textjoin-int-one",
+    "description": "Integer 1 coerces like & to \"1\"",
+    "tags": [
+      "textjoin",
+      "text",
+      "coercion"
+    ],
+    "formula": "=TEXTJOIN(\",\", TRUE, 1, 2)",
+    "expected": {
+      "text": "1,2"
+    }
+  },
+  {
+    "id": "fn.textjoin-date-serial",
+    "description": "An unformatted date serial joins as its number text, not a locale date string",
+    "tags": [
+      "textjoin",
+      "text",
+      "coercion"
+    ],
+    "formula": "=TEXTJOIN(\",\", TRUE, 44927, \"x\")",
+    "expected": {
+      "text": "44927,x"
+    }
+  },
+  {
+    "id": "fn.textjoin-empty-then-zero",
+    "description": "Empty literal then 0 with ignore_empty TRUE is \"0\" (0 is not empty)",
+    "tags": [
+      "textjoin",
+      "text",
+      "empty",
+      "coercion"
+    ],
+    "formula": "=TEXTJOIN(\",\", TRUE, \"\", 0)",
+    "expected": {
+      "text": "0"
+    }
+  },
+  {
+    "id": "fn.textjoin-single-cell-range",
+    "description": "A one-cell range is the same as the cell",
+    "tags": [
+      "textjoin",
+      "text"
+    ],
+    "formula": "=TEXTJOIN(\",\", TRUE, A1:A1, \"!\")",
+    "expected": {
+      "text": "Hi,!"
+    },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": {
+              "text": "Hi"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.textjoin-all-blanks-true",
+    "description": "An all-blank range with ignore_empty TRUE is empty text",
+    "tags": [
+      "textjoin",
+      "text",
+      "empty"
+    ],
+    "quirks": [
+      "empty-cell-duality"
+    ],
+    "formula": "=TEXTJOIN(\",\", TRUE, A1:A3)",
+    "expected": {
+      "text": ""
+    },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {}
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.textjoin-all-blanks-false",
+    "description": "An all-blank 3-cell range with ignore_empty FALSE yields two delimiters",
+    "tags": [
+      "textjoin",
+      "text",
+      "empty"
+    ],
+    "quirks": [
+      "empty-cell-duality"
+    ],
+    "formula": "=TEXTJOIN(\",\", FALSE, A1:A3)",
+    "expected": {
+      "text": ",,"
+    },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {}
+        }
+      ]
+    },
+    "notes": "Excel golden: three empty pieces → two commas. Occupied gather must not skip these."
+  },
+  {
+    "id": "fn.textjoin-spaces-in-cells",
+    "description": "Stored leading/trailing spaces in cells are kept",
+    "tags": [
+      "textjoin",
+      "text"
+    ],
+    "formula": "=TEXTJOIN(\",\", TRUE, A1, A2)",
+    "expected": {
+      "text": " a , b"
+    },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": {
+              "text": " a "
+            },
+            "A2": {
+              "text": " b"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.textjoin-ampersand",
+    "description": "Concatenation & is flattened as a scalar text argument",
+    "tags": [
+      "textjoin",
+      "text"
+    ],
+    "formula": "=TEXTJOIN(\",\", TRUE, \"a\"&\"b\", \"c\")",
+    "expected": {
+      "text": "ab,c"
+    }
+  },
+  {
+    "id": "fn.textjoin-nested",
+    "description": "Nested TEXTJOIN is flattened as a scalar text argument",
+    "tags": [
+      "textjoin",
+      "text"
+    ],
+    "formula": "=TEXTJOIN(\",\", TRUE, TEXTJOIN(\"-\", TRUE, \"a\", \"b\"), \"c\")",
+    "expected": {
+      "text": "a-b,c"
+    }
+  },
+  {
+    "id": "fn.textjoin-unicode",
+    "description": "Unicode scalars join; emoji is kept",
+    "tags": [
+      "textjoin",
+      "text"
+    ],
+    "formula": "=TEXTJOIN(\"\", TRUE, \"café\", \"🎉\")",
+    "expected": {
+      "text": "café🎉"
+    }
+  },
+  {
+    "id": "fn.textjoin-cjk",
+    "description": "BMP CJK scalars join (one UTF-16 unit each)",
+    "tags": [
+      "textjoin",
+      "text"
+    ],
+    "formula": "=TEXTJOIN(\"\", TRUE, \"你好\", \"世界\")",
+    "expected": {
+      "text": "你好世界"
+    }
+  },
+  {
+    "id": "fn.textjoin-err-after-text",
+    "description": "An error after successful text still wins; no partial result",
+    "tags": [
+      "textjoin",
+      "errors"
+    ],
+    "quirks": [
+      "error-precedence"
+    ],
+    "formula": "=TEXTJOIN(\",\", TRUE, \"ok\", #REF!)",
+    "expected": {
+      "error": "#REF!"
+    }
+  },
+  {
+    "id": "fn.textjoin-err-in-array",
+    "description": "First error in an array literal wins",
+    "tags": [
+      "textjoin",
+      "errors",
+      "array"
+    ],
+    "quirks": [
+      "error-precedence",
+      "array-eval-mode"
+    ],
+    "formula": "=TEXTJOIN(\",\", TRUE, {\"a\", #N/A, \"b\"})",
+    "expected": {
+      "error": "#N/A"
+    }
+  },
+  {
+    "id": "fn.textjoin-err-missing-sheet-cell",
+    "description": "A missing-sheet cell is #REF!",
+    "tags": [
+      "textjoin",
+      "errors"
+    ],
+    "formula": "=TEXTJOIN(\",\", TRUE, Missing!A1)",
+    "expected": {
+      "error": "#REF!"
+    }
+  },
+  {
+    "id": "fn.textjoin-err-unknown-name",
+    "description": "An undefined name is #NAME?",
+    "tags": [
+      "textjoin",
+      "errors"
+    ],
+    "formula": "=TEXTJOIN(\",\", TRUE, NotAName)",
+    "expected": {
+      "error": "#NAME?"
+    }
+  },
+  {
+    "id": "fn.textjoin-err-delim-array",
+    "description": "First error in a delimiter array wins before texts are joined",
+    "tags": [
+      "textjoin",
+      "errors",
+      "array"
+    ],
+    "quirks": [
+      "error-precedence",
+      "array-eval-mode"
+    ],
+    "formula": "=TEXTJOIN({\",\", #N/A}, TRUE, \"a\", \"b\")",
+    "expected": {
+      "error": "#N/A"
+    },
+    "notes": "Excel golden: delimiter is evaluated first; #N/A beats later text errors."
+  },
+  {
+    "id": "fn.textjoin-err-ltr-ignore-vs-text",
+    "description": "Left-to-right: ignore_empty error wins over a later text error",
+    "tags": [
+      "textjoin",
+      "errors"
+    ],
+    "quirks": [
+      "error-precedence"
+    ],
+    "formula": "=TEXTJOIN(\",\", #N/A, #DIV/0!)",
+    "expected": {
+      "error": "#N/A"
+    }
+  },
+  {
+    "id": "fn.textjoin-cross-sheet",
+    "description": "A sheet-qualified range joins that sheet row-major",
+    "tags": [
+      "textjoin",
+      "text"
+    ],
+    "formula": "=TEXTJOIN(\",\", TRUE, Sheet2!A1:A2)",
+    "expected": {
+      "text": "y,z"
+    },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": {
+              "text": "no"
+            }
+          }
+        },
+        {
+          "name": "Sheet2",
+          "cells": {
+            "A1": {
+              "text": "y"
+            },
+            "A2": {
+              "text": "z"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.textjoin-cross-sheet-and-local",
+    "description": "Local cell then other-sheet cell, argument order",
+    "tags": [
+      "textjoin",
+      "text"
+    ],
+    "formula": "=TEXTJOIN(\",\", TRUE, A1, Sheet2!A1)",
+    "expected": {
+      "text": "a,b"
+    },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": {
+              "text": "a"
+            }
+          }
+        },
+        {
+          "name": "Sheet2",
+          "cells": {
+            "A1": {
+              "text": "b"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.textjoin-quoted-sheet",
+    "description": "Quoted sheet name with a space",
+    "tags": [
+      "textjoin",
+      "text"
+    ],
+    "formula": "=TEXTJOIN(\",\", TRUE, 'My Data'!A1:A2)",
+    "expected": {
+      "text": "h,i"
+    },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "My Data",
+          "cells": {
+            "A1": {
+              "text": "h"
+            },
+            "A2": {
+              "text": "i"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.textjoin-case-fold",
+    "description": "Function name is case-insensitive",
+    "tags": [
+      "textjoin",
+      "text"
+    ],
+    "formula": "=textjoin(\",\", TRUE, \"A\", \"B\")",
+    "expected": {
+      "text": "A,B"
+    }
+  },
+  {
+    "id": "fn.textjoin-if-scalar",
+    "description": "IF result is a scalar text argument",
+    "tags": [
+      "textjoin",
+      "text"
+    ],
+    "formula": "=TEXTJOIN(\",\", TRUE, IF(TRUE, \"yes\", \"no\"), \"!\")",
+    "expected": {
+      "text": "yes,!"
+    }
+  },
+  {
+    "id": "fn.textjoin-sequence",
+    "description": "SEQUENCE column flattens row-major as numbers coerced like &",
+    "tags": [
+      "textjoin",
+      "text",
+      "array"
+    ],
+    "quirks": [
+      "array-eval-mode"
+    ],
+    "formula": "=TEXTJOIN(\",\", TRUE, SEQUENCE(3))",
+    "expected": {
+      "text": "1,2,3"
+    }
+  },
+  {
+    "id": "fn.textjoin-column-array",
+    "description": "A column array literal flattens top-to-bottom",
+    "tags": [
+      "textjoin",
+      "text",
+      "array"
+    ],
+    "quirks": [
+      "array-eval-mode"
+    ],
+    "formula": "=TEXTJOIN(\",\", TRUE, {1;2;3})",
+    "expected": {
+      "text": "1,2,3"
+    }
+  },
+  {
+    "id": "fn.textjoin-mixed-range-array",
+    "description": "Range then array then scalar, argument order",
+    "tags": [
+      "textjoin",
+      "text",
+      "array"
+    ],
+    "quirks": [
+      "array-eval-mode"
+    ],
+    "formula": "=TEXTJOIN(\",\", TRUE, A1:A2, {3,4}, \"z\")",
+    "expected": {
+      "text": "1,2,3,4,z"
+    },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": {
+              "number": 1
+            },
+            "A2": {
+              "number": 2
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.textjoin-text-true-and-bool",
+    "description": "Text TRUE and boolean TRUE both emit TRUE",
+    "tags": [
+      "textjoin",
+      "text",
+      "coercion"
+    ],
+    "formula": "=TEXTJOIN(\",\", TRUE, \"TRUE\", TRUE)",
+    "expected": {
+      "text": "TRUE,TRUE"
+    }
+  },
+  {
+    "id": "fn.textjoin-bool-false-delim",
+    "description": "FALSE as delimiter becomes \"FALSE\"",
+    "tags": [
+      "textjoin",
+      "text",
+      "coercion"
+    ],
+    "formula": "=TEXTJOIN(FALSE, TRUE, \"a\", \"b\")",
+    "expected": {
+      "text": "aFALSEb"
+    }
+  },
+  {
+    "id": "fn.textjoin-ignore-true-word",
+    "description": "Text \"TRUE\" as ignore_empty is #VALUE! (same as IF)",
+    "tags": [
+      "textjoin",
+      "errors",
+      "coercion"
+    ],
+    "formula": "=TEXTJOIN(\",\", \"TRUE\", \"a\")",
+    "expected": {
+      "error": "#VALUE!"
+    }
+  },
+  {
+    "id": "fn.textjoin-empty-array-delim",
+    "description": "An empty delimiter array is one empty delimiter (concatenates)",
+    "tags": [
+      "textjoin",
+      "text",
+      "array"
+    ],
+    "quirks": [
+      "array-eval-mode"
+    ],
+    "formula": "=TEXTJOIN({}, TRUE, \"a\", \"b\")",
+    "expected": {
+      "text": "ab"
+    },
+    "notes": "Excel golden: flattened empty array → one \"\" delimiter."
+  },
+  {
+    "id": "fn.textjoin-cycle-empty-delim",
+    "description": "Cycling includes an empty delimiter slot",
+    "tags": [
+      "textjoin",
+      "text",
+      "array"
+    ],
+    "quirks": [
+      "array-eval-mode"
+    ],
+    "formula": "=TEXTJOIN({\",\",\"\"}, TRUE, \"a\", \"b\", \"c\", \"d\")",
+    "expected": {
+      "text": "a,bc,d"
+    },
+    "notes": "Excel golden: emitted a,b,c,d with delims \",\", \"\", \",\" → a,bc,d."
+  },
+  {
+    "id": "fn.textjoin-cycle-2d-delim",
+    "description": "A 2-D delimiter array flattens row-major then cycles",
+    "tags": [
+      "textjoin",
+      "text",
+      "array"
+    ],
+    "quirks": [
+      "array-eval-mode"
+    ],
+    "formula": "=TEXTJOIN({\",\",\";\";\"-\",\"|\"}, TRUE, \"a\", \"b\", \"c\", \"d\", \"e\")",
+    "expected": {
+      "text": "a,b;c-d|e"
+    }
+  },
+  {
+    "id": "fn.textjoin-blank-delim-range",
+    "description": "A delimiter range with a blank cell cycles comma then empty",
+    "tags": [
+      "textjoin",
+      "text",
+      "empty"
+    ],
+    "quirks": [
+      "empty-cell-duality"
+    ],
+    "formula": "=TEXTJOIN(A1:A2, TRUE, \"x\", \"y\", \"z\")",
+    "expected": {
+      "text": "x,yz"
+    },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": {
+              "text": ","
+            }
+          }
+        }
+      ]
+    },
+    "notes": "Excel golden: delims [\",\", \"\"] cycle → x,yz."
+  },
+  {
+    "id": "fn.textjoin-sparse-far-true",
+    "description": "Blanks between far cells are skipped when ignore_empty is TRUE",
+    "tags": [
+      "textjoin",
+      "text",
+      "empty"
+    ],
+    "quirks": [
+      "empty-cell-duality"
+    ],
+    "formula": "=TEXTJOIN(\",\", TRUE, A1:A100)",
+    "expected": {
+      "text": "a,b"
+    },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": {
+              "text": "a"
+            },
+            "A100": {
+              "text": "b"
+            }
+          }
+        }
+      ]
+    },
+    "notes": "Excel golden: occupied gather is equivalent when ignore_empty TRUE."
+  },
+  {
+    "id": "fn.textjoin-sparse-far-false",
+    "description": "Blanks between far cells insert delimiters when ignore_empty is FALSE",
+    "tags": [
+      "textjoin",
+      "text",
+      "empty"
+    ],
+    "quirks": [
+      "empty-cell-duality"
+    ],
+    "formula": "=TEXTJOIN(\",\", FALSE, A1:A100)",
+    "expected": {
+      "text": "a,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,b"
+    },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": {
+              "text": "a"
+            },
+            "A100": {
+              "text": "b"
+            }
+          }
+        }
+      ]
+    },
+    "notes": "Excel golden: 100 pieces, 99 commas. Auto must not use occupied gather."
+  },
+  {
+    "id": "fn.textjoin-occupied-row-major",
+    "description": "Sparse 2-D range is still left-to-right then top-to-bottom (not A1-string key order)",
+    "tags": [
+      "textjoin",
+      "text",
+      "empty"
+    ],
+    "quirks": [
+      "empty-cell-duality"
+    ],
+    "formula": "=TEXTJOIN(\",\", TRUE, A1:B10)",
+    "expected": {
+      "text": "a,b,c,d,e,f"
+    },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": {
+              "text": "a"
+            },
+            "B1": {
+              "text": "b"
+            },
+            "A2": {
+              "text": "c"
+            },
+            "B2": {
+              "text": "d"
+            },
+            "A10": {
+              "text": "e"
+            },
+            "B10": {
+              "text": "f"
+            }
+          }
+        }
+      ]
+    },
+    "notes": "A1-string BTree order is A1,A10,A2,B1,B10,B2; Excel is A1 B1 A2 B2 A10 B10."
+  },
+  {
+    "id": "fn.textjoin-occupied-row-major-false",
+    "description": "ignore_empty FALSE on a sparse 2-D range keeps every blank as an empty piece",
+    "tags": [
+      "textjoin",
+      "text",
+      "empty"
+    ],
+    "quirks": [
+      "empty-cell-duality"
+    ],
+    "formula": "=TEXTJOIN(\",\", FALSE, A1:B10)",
+    "expected": {
+      "text": "a,b,c,d,,,,,,,,,,,,,,,e,f"
+    },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": {
+              "text": "a"
+            },
+            "B1": {
+              "text": "b"
+            },
+            "A2": {
+              "text": "c"
+            },
+            "B2": {
+              "text": "d"
+            },
+            "A10": {
+              "text": "e"
+            },
+            "B10": {
+              "text": "f"
+            }
+          }
+        }
+      ]
+    },
+    "notes": "Excel golden: 4 filled + 14 blanks + 2 filled → 15 commas between d and e (14 empty pieces plus the comma before e)."
+  },
+  {
+    "id": "fn.textjoin-reversed-range",
+    "description": "B2:A1 is the same rectangle as A1:B2 (normalized row-major)",
+    "tags": [
+      "textjoin",
+      "text"
+    ],
+    "formula": "=TEXTJOIN(\",\", TRUE, B2:A1)",
+    "expected": {
+      "text": "a,b,c,d"
+    },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": {
+              "text": "a"
+            },
+            "B1": {
+              "text": "b"
+            },
+            "A2": {
+              "text": "c"
+            },
+            "B2": {
+              "text": "d"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.textjoin-named-2d",
+    "description": "A defined name that refers to a 2-D range flattens row-major",
+    "tags": [
+      "textjoin",
+      "text",
+      "named"
+    ],
+    "formula": "=TEXTJOIN(\",\", TRUE, Grid)",
+    "expected": {
+      "text": "a,b,c,d"
+    },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": {
+              "text": "a"
+            },
+            "B1": {
+              "text": "b"
+            },
+            "A2": {
+              "text": "c"
+            },
+            "B2": {
+              "text": "d"
+            }
+          }
+        }
+      ],
+      "names": [
+        {
+          "name": "Grid",
+          "refers_to": "Sheet1!A1:B2"
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.textjoin-no-implicit-intersect",
+    "description": "TEXTJOIN stays in array context: a column range is fully flattened, not intersected at the host row",
+    "tags": [
+      "textjoin",
+      "text"
+    ],
+    "formula": "=TEXTJOIN(\",\", TRUE, A1:A3)",
+    "at": "Sheet1!C2",
+    "expected": {
+      "text": "a,b,c"
+    },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": {
+              "text": "a"
+            },
+            "A2": {
+              "text": "b"
+            },
+            "A3": {
+              "text": "c"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.textjoin-at-limit",
+    "description": "LEN(TEXTJOIN(\"\", TRUE, REPT(\"a\", 32767))) is 32767 (exactly the UTF-16 cap for ASCII). Microsoft says 32767 characters; that is the cell-width cap, not Compat-v2 LEN scalars.",
+    "tags": [
+      "textjoin",
+      "text"
+    ],
+    "formula": "=LEN(TEXTJOIN(\"\", TRUE, REPT(\"a\", 32767)))",
+    "expected": {
+      "number": 32767
+    },
+    "notes": "Excel golden: one piece of 32767 ASCII units succeeds. Engine must not read this golden."
+  },
+  {
+    "id": "fn.textjoin-over-limit-rept",
+    "description": "One extra ASCII unit past 32767 is #VALUE!",
+    "tags": [
+      "textjoin",
+      "text",
+      "errors"
+    ],
+    "formula": "=TEXTJOIN(\"\", TRUE, REPT(\"a\", 32767), \"y\")",
+    "expected": {
+      "error": "#VALUE!"
+    }
+  },
+  {
+    "id": "fn.textjoin-over-limit-many-args",
+    "description": "Several pieces that sum to 32768 UTF-16 units overflow",
+    "tags": [
+      "textjoin",
+      "text",
+      "errors"
+    ],
+    "formula": "=TEXTJOIN(\"\", TRUE, REPT(\"a\", 16000), REPT(\"a\", 16000), REPT(\"a\", 768))",
+    "expected": {
+      "error": "#VALUE!"
+    }
+  },
+  {
+    "id": "fn.textjoin-over-limit-utf16",
+    "description": "😀 is 2 UTF-16 units: 32766 ASCII + emoji exceeds the cell cap (Compat-v2 LEN of the emoji alone is 1)",
+    "tags": [
+      "textjoin",
+      "text",
+      "errors"
+    ],
+    "formula": "=TEXTJOIN(\"\", TRUE, REPT(\"a\", 32766), \"😀\")",
+    "expected": {
+      "error": "#VALUE!"
+    },
+    "notes": "Excel golden: cap is UTF-16 units, not Unicode scalars."
+  },
+  {
+    "id": "fn.textjoin-at-limit-many-args",
+    "description": "Two REPT pieces that sum to exactly 32767 ASCII units succeed; LEN counts scalars (= UTF-16 here)",
+    "tags": [
+      "textjoin",
+      "text"
+    ],
+    "formula": "=LEN(TEXTJOIN(\"\", TRUE, REPT(\"a\", 16000), REPT(\"a\", 16767)))",
+    "expected": {
+      "number": 32767
+    }
+  },
+  {
+    "id": "fn.textjoin-over-limit-delim",
+    "description": "A one-character delimiter counts toward the cap: 32766 + comma + 1 overflows",
+    "tags": [
+      "textjoin",
+      "text",
+      "errors"
+    ],
+    "formula": "=TEXTJOIN(\",\", TRUE, REPT(\"a\", 32766), \"b\")",
+    "expected": {
+      "error": "#VALUE!"
+    },
+    "notes": "Excel golden: delimiters are included in the 32767 UTF-16 budget."
+  },
+  {
+    "id": "fn.textjoin-at-limit-with-delim",
+    "description": "32765 ASCII + comma + 1 ASCII is exactly 32767 UTF-16 units",
+    "tags": [
+      "textjoin",
+      "text"
+    ],
+    "formula": "=LEN(TEXTJOIN(\",\", TRUE, REPT(\"a\", 32765), \"b\"))",
+    "expected": {
+      "number": 32767
+    }
+  },
+  {
+    "id": "fn.textjoin-len-exact-cap",
+    "description": "LEN of a TEXTJOIN that sits on the ASCII cap is 32767 (UTF-16 units == scalars for ASCII)",
+    "tags": [
+      "textjoin",
+      "text"
+    ],
+    "formula": "=LEN(TEXTJOIN(\"\", TRUE, REPT(\"ab\", 16383), \"a\"))",
+    "expected": {
+      "number": 32767
+    }
+  },
+  {
+    "id": "fn.textjoin-rept-emoji-over",
+    "description": "16383×😀 is 32766 UTF-16 units; one more emoji overflows the cell cap",
+    "tags": [
+      "textjoin",
+      "text",
+      "errors"
+    ],
+    "formula": "=TEXTJOIN(\"\", TRUE, REPT(\"😀\", 16383), \"😀\")",
+    "expected": {
+      "error": "#VALUE!"
+    }
+  },
+  {
+    "id": "fn.textjoin-rept-emoji-under-len",
+    "description": "16383×😀 + ASCII x is 32767 UTF-16 units; Compat-v2 LEN counts 16384 scalars",
+    "tags": [
+      "textjoin",
+      "text"
+    ],
+    "formula": "=LEN(TEXTJOIN(\"\", TRUE, REPT(\"😀\", 16383), \"x\"))",
+    "expected": {
+      "number": 16384
+    },
+    "notes": "Excel golden: LEN is Compat-v2 scalars; the join cap is UTF-16 units."
+  },
+  {
+    "id": "fn.textjoin-sheet-qualified-same",
+    "description": "Sheet1!A1:A2 on the evaluation sheet is the local range",
+    "tags": [
+      "textjoin",
+      "text"
+    ],
+    "formula": "=TEXTJOIN(\",\", TRUE, Sheet1!A1:A2)",
+    "expected": {
+      "text": "a,b"
+    },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": {
+              "text": "a"
+            },
+            "A2": {
+              "text": "b"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.textjoin-range-plus-scalar",
+    "description": "A range argument then a scalar",
+    "tags": [
+      "textjoin",
+      "text"
+    ],
+    "formula": "=TEXTJOIN(\",\", TRUE, A1:A2, \"!\")",
+    "expected": {
+      "text": "a,b,!"
+    },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": {
+              "text": "a"
+            },
+            "A2": {
+              "text": "b"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.textjoin-false-mid",
+    "description": "FALSE in the middle of a range is the letters FALSE, not empty",
+    "tags": [
+      "textjoin",
+      "text",
+      "coercion"
+    ],
+    "formula": "=TEXTJOIN(\",\", TRUE, A1:A3)",
+    "expected": {
+      "text": "a,FALSE,b"
+    },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": {
+              "text": "a"
+            },
+            "A2": {
+              "bool": false
+            },
+            "A3": {
+              "text": "b"
+            }
+          }
+        }
+      ]
     }
   }
 ]

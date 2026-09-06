@@ -9,10 +9,10 @@ use crate::parse::{parse, BinOp, Expr, UnaryOp};
 use std::collections::{HashMap, HashSet};
 use xlsx_types::{
     count_matches, excel_ceiling, excel_ceiling_math, excel_cumipmt, excel_cumprinc, excel_effect,
-    excel_floor, excel_floor_math, excel_fv, excel_int, excel_ipmt, excel_nominal, excel_nper,
-    excel_num_eq, excel_pduration, excel_pmt, excel_ppmt, excel_pv, excel_rate, excel_round,
-    excel_round_15, excel_rri, ArrayMode, CellAddr, CellRef, Criterion, EvalError, EvalSpec,
-    EvalTarget, ExcelError, ExcelValue, RangeRef, Workbook,
+    excel_floor, excel_floor_math, excel_fv, excel_int, excel_ipmt, excel_mround, excel_nominal,
+    excel_nper, excel_num_eq, excel_pduration, excel_pmt, excel_ppmt, excel_pv, excel_rate,
+    excel_round, excel_round_15, excel_rri, ArrayMode, CellAddr, CellRef, Criterion, EvalError,
+    EvalSpec, EvalTarget, ExcelError, ExcelValue, RangeRef, Workbook,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -411,6 +411,7 @@ impl Interpreter {
             "CEILING" => self.fn_floor_ceil(args, ctx, false),
             "FLOOR.MATH" => self.fn_floor_ceil_math(args, ctx, true),
             "CEILING.MATH" => self.fn_floor_ceil_math(args, ctx, false),
+            "MROUND" => self.fn_mround(args, ctx),
             "MOD" => self.fn_mod(args, ctx),
             "SQRT" => self.fn_sqrt(args, ctx),
             "POWER" => self.fn_power(args, ctx),
@@ -465,8 +466,10 @@ impl Interpreter {
             "FIND" => self.fn_find(args, ctx),
             "SEARCH" => self.fn_search(args, ctx),
             "VALUE" => self.fn_value(args, ctx),
+            "FIXED" => self.fn_fixed(args, ctx),
             "SUBSTITUTE" => self.fn_substitute(args, ctx),
             "TEXT" => self.fn_text(args, ctx),
+            "DOLLAR" => self.fn_dollar(args, ctx),
             "REPLACE" => self.fn_replace(args, ctx),
             "TEXTJOIN" => self.fn_textjoin(args, ctx),
             "CONCAT" => self.fn_concat(args, ctx),
@@ -1369,14 +1372,14 @@ impl Interpreter {
     }
 
     fn fn_trunc(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
-        if args.is_empty() {
+        if args.is_empty() || args.len() > 2 {
             return Ok(ExcelValue::Error(ExcelError::Value));
         }
         let n = match self.as_number(&self.eval_scalar(&args[0], ctx)?) {
             Ok(n) => n,
             Err(e) => return Ok(ExcelValue::Error(e)),
         };
-        let digits = if args.len() >= 2 {
+        let digits = if args.len() == 2 && !matches!(args[1], Expr::Missing) {
             match self.as_number(&self.eval_scalar(&args[1], ctx)?) {
                 Ok(d) => d.trunc() as i32,
                 Err(e) => return Ok(ExcelValue::Error(e)),
@@ -1384,7 +1387,7 @@ impl Interpreter {
         } else {
             0
         };
-        Ok(ExcelValue::Number(excel_trunc(n, digits)))
+        Ok(ExcelValue::Number(xlsx_engine_core::excel_trunc(n, digits)))
     }
 
     fn fn_floor_ceil(
@@ -1450,6 +1453,24 @@ impl Interpreter {
             excel_ceiling_math(n, s, mode)
         };
         Ok(match r {
+            Ok(v) => ExcelValue::Number(v),
+            Err(e) => ExcelValue::Error(e),
+        })
+    }
+
+    fn fn_mround(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.len() != 2 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        let n = match self.as_number(&self.eval_scalar(&args[0], ctx)?) {
+            Ok(n) => n,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        let m = match self.as_number(&self.eval_scalar(&args[1], ctx)?) {
+            Ok(n) => n,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        Ok(match excel_mround(n, m) {
             Ok(v) => ExcelValue::Number(v),
             Err(e) => ExcelValue::Error(e),
         })
@@ -2304,6 +2325,34 @@ impl Interpreter {
         }
     }
 
+    fn fn_dollar(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.is_empty() || args.len() > 2 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        let number = self.eval_scalar(&args[0], ctx)?;
+        if let ExcelValue::Error(e) = number {
+            return Ok(ExcelValue::Error(e));
+        }
+        let decimals = if args.len() >= 2 {
+            match &args[1] {
+                Expr::Missing => None,
+                other => {
+                    let d = self.eval_scalar(other, ctx)?;
+                    if let ExcelValue::Error(e) = d {
+                        return Ok(ExcelValue::Error(e));
+                    }
+                    Some(d)
+                }
+            }
+        } else {
+            None
+        };
+        Ok(xlsx_engine_core::excel_dollar_value(
+            &number,
+            decimals.as_ref(),
+        ))
+    }
+
     fn fn_replace(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
         if args.len() != 4 {
             return Ok(ExcelValue::Error(ExcelError::Value));
@@ -2424,6 +2473,39 @@ impl Interpreter {
         }
     }
 
+    fn fn_fixed(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.is_empty() || args.len() > 3 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        let number = self.eval_scalar(&args[0], ctx)?;
+        if let ExcelValue::Error(e) = number {
+            return Ok(ExcelValue::Error(e));
+        }
+        let decimals = if args.len() >= 2 && !matches!(args[1], Expr::Missing) {
+            let v = self.eval_scalar(&args[1], ctx)?;
+            if let ExcelValue::Error(e) = v {
+                return Ok(ExcelValue::Error(e));
+            }
+            Some(v)
+        } else {
+            None
+        };
+        let no_commas = if args.len() >= 3 && !matches!(args[2], Expr::Missing) {
+            let v = self.eval_scalar(&args[2], ctx)?;
+            if let ExcelValue::Error(e) = v {
+                return Ok(ExcelValue::Error(e));
+            }
+            Some(v)
+        } else {
+            None
+        };
+        Ok(xlsx_engine_core::excel_fixed_apply(
+            &number,
+            decimals.as_ref(),
+            no_commas.as_ref(),
+        ))
+    }
+
     fn fn_value(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
         if args.len() != 1 {
             return Ok(ExcelValue::Error(ExcelError::Value));
@@ -2453,19 +2535,16 @@ impl Interpreter {
         if let ExcelValue::Error(e) = delim_v {
             return Ok(ExcelValue::Error(e));
         }
-        let mut delims = Vec::new();
-        if let Err(e) = flatten_join_texts(&delim_v, &mut delims, self) {
-            return Ok(ExcelValue::Error(e));
-        }
-        if delims.is_empty() {
-            delims.push(String::new());
-        }
+        let delims = match xlsx_engine_core::textjoin_collect_delims(&delim_v) {
+            Ok(d) => d,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
         let ie = self.eval_scalar(&args[1], ctx)?;
         let ignore_empty = match self.as_if_cond(&ie) {
             Ok(b) => b,
             Err(e) => return Ok(ExcelValue::Error(e)),
         };
-        let mut parts = Vec::new();
+        let mut builder = xlsx_engine_core::TextJoinBuilder::new(delims);
         for arg in &args[2..] {
             if let Expr::Range(r) = arg {
                 let sheet = r.sheet.as_deref().unwrap_or(ctx.current_sheet.as_str());
@@ -2473,41 +2552,18 @@ impl Interpreter {
                     return Ok(ExcelValue::Error(ExcelError::Ref));
                 }
             }
+            if let Expr::Cell(c) = arg {
+                let sheet = c.sheet.as_deref().unwrap_or(ctx.current_sheet.as_str());
+                if ctx.spec.workbook.sheet(Some(sheet)).is_err() {
+                    return Ok(ExcelValue::Error(ExcelError::Ref));
+                }
+            }
             let v = self.eval_expr(arg, ctx)?;
-            if let Err(e) = flatten_join_texts(&v, &mut parts, self) {
+            if let Err(e) = xlsx_engine_core::textjoin_feed_value(&mut builder, &v, ignore_empty) {
                 return Ok(ExcelValue::Error(e));
             }
         }
-        let kept: Vec<&str> = if ignore_empty {
-            parts
-                .iter()
-                .map(String::as_str)
-                .filter(|s| !s.is_empty())
-                .collect()
-        } else {
-            parts.iter().map(String::as_str).collect()
-        };
-        if kept.is_empty() {
-            return Ok(ExcelValue::Text(String::new()));
-        }
-        let mut out = String::new();
-        let mut utf16 = 0usize;
-        for (i, part) in kept.iter().enumerate() {
-            if i > 0 {
-                let d = delims[(i - 1) % delims.len()].as_str();
-                utf16 += d.encode_utf16().count();
-                if utf16 > 32767 {
-                    return Ok(ExcelValue::Error(ExcelError::Value));
-                }
-                out.push_str(d);
-            }
-            utf16 += part.encode_utf16().count();
-            if utf16 > 32767 {
-                return Ok(ExcelValue::Error(ExcelError::Value));
-            }
-            out.push_str(part);
-        }
-        Ok(ExcelValue::Text(out))
+        Ok(ExcelValue::Text(builder.finish()))
     }
 
     fn fn_concat(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
@@ -4898,11 +4954,6 @@ fn excel_geq(key: &ExcelValue, lookup: &ExcelValue) -> bool {
     )
 }
 
-fn excel_trunc(n: f64, digits: i32) -> f64 {
-    let factor = 10f64.powi(digits);
-    (n * factor).trunc() / factor
-}
-
 fn npv_feed(
     v: &ExcelValue,
     from_range: bool,
@@ -4963,27 +5014,6 @@ fn format_plain(n: f64) -> String {
         format!("{n:.0}")
     } else {
         format!("{n}")
-    }
-}
-
-fn flatten_join_texts(
-    v: &ExcelValue,
-    out: &mut Vec<String>,
-    interp: &Interpreter,
-) -> Result<(), ExcelError> {
-    match v {
-        ExcelValue::Array(rows) => {
-            for row in rows {
-                for c in row {
-                    flatten_join_texts(c, out, interp)?;
-                }
-            }
-            Ok(())
-        }
-        other => {
-            out.push(interp.as_text(other)?);
-            Ok(())
-        }
     }
 }
 

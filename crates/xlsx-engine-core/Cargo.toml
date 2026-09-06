@@ -17,6 +17,10 @@ name = "abs"
 harness = false
 
 [[bench]]
+name = "dollar"
+harness = false
+
+[[bench]]
 name = "substitute"
 harness = false
 
@@ -73,6 +77,10 @@ name = "rounddown"
 harness = false
 
 [[bench]]
+name = "trunc"
+harness = false
+
+[[bench]]
 name = "concat"
 harness = false
 
@@ -102,6 +110,10 @@ harness = false
 
 [[bench]]
 name = "excel_ceiling"
+harness = false
+
+[[bench]]
+name = "excel_mround"
 harness = false
 
 [[bench]]
@@ -370,6 +382,10 @@ harness = false
 
 [[bench]]
 name = "value"
+harness = false
+
+[[bench]]
+name = "fixed"
 harness = false
 
 [[bench]]

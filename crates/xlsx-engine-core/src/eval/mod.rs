@@ -16,6 +16,7 @@ pub mod coerce;
 pub mod compare;
 pub mod concat;
 pub mod countifs;
+pub mod dollar;
 pub mod drop;
 pub mod empty;
 pub mod exact;
@@ -24,6 +25,7 @@ pub mod excel_let;
 pub mod expand;
 pub mod filter;
 pub mod find;
+pub mod fixed;
 pub mod functions;
 pub mod hstack;
 pub mod ifs;
@@ -36,6 +38,7 @@ pub mod makearray;
 pub mod map;
 pub mod mid;
 pub mod mirr;
+pub mod mround;
 pub mod npv;
 pub mod proper;
 pub mod randarray;
@@ -64,6 +67,7 @@ pub mod textsplit;
 pub mod tocol;
 pub mod torow;
 pub mod trim;
+pub mod trunc;
 pub mod unichar;
 pub mod unicode;
 pub mod unique;
@@ -1031,6 +1035,31 @@ mod tests {
         assert_eq!(
             eval_formula_in(&wb, "=TEXT(1234,\"\"\"USD \"\"#,##0\")").unwrap(),
             ExcelValue::Text("USD 1,234".into())
+        );
+    }
+
+    #[test]
+    fn dollar_currency_text() {
+        let wb = Workbook::default();
+        assert_eq!(
+            eval_formula_in(&wb, "=DOLLAR(1234.567, 2)").unwrap(),
+            ExcelValue::Text("$1,234.57".into())
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=DOLLAR(1234.567, -2)").unwrap(),
+            ExcelValue::Text("$1,200".into())
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=DOLLAR(-1234.567, -2)").unwrap(),
+            ExcelValue::Text("($1,200)".into())
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=DOLLAR(99.888)").unwrap(),
+            ExcelValue::Text("$99.89".into())
+        );
+        assert_eq!(
+            eval_formula_in(&wb, "=DOLLAR()").unwrap(),
+            ExcelValue::Error(ExcelError::Value)
         );
     }
 

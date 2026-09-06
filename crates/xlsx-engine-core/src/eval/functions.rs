@@ -2,8 +2,9 @@
 //!
 //! Unknown names return `#NAME?` (an Excel value, not [`EvalError`]).
 //! Dedicated kernels live in sibling modules (`ifs`, `filter`, `sort`,
-//! `xlookup`, `textsplit`, `xnpv`, `map`, `isomitted`, `len`, `unicode`, …). Financial TVM
-//! kernels live in [`xlsx_types`] (`excel_pmt` / `excel_fv` / `excel_pv` / …).
+//! `xlookup`, `textsplit`, `xnpv`, `map`, `isomitted`, `len`, `unicode`,
+//! `trunc`, `mround`, `fixed`, `dollar`, …). Financial TVM kernels live in
+//! [`xlsx_types`] (`excel_pmt` / `excel_fv` / `excel_pv` / …).
 
 use super::{coerce, compare, excel_pow, Ctx, Evaluator};
 use crate::ast::Expr;
@@ -87,7 +88,7 @@ pub(crate) fn dispatch(
             })
         }),
         "INT" => fn_unary_num(ev, args, ctx, |n| ExcelValue::Number(excel_int(n))),
-        "TRUNC" => fn_trunc(ev, args, ctx),
+        "TRUNC" => super::trunc::fn_trunc(ev, args, ctx),
         "ROUND" => fn_round(ev, args, ctx),
         "ROUNDUP" => super::roundup::fn_roundup(ev, args, ctx),
         "ROUNDDOWN" => super::rounddown::fn_rounddown(ev, args, ctx),
@@ -95,6 +96,7 @@ pub(crate) fn dispatch(
         "CEILING" => fn_floor_ceil(ev, args, ctx, FloorCeil::Ceiling),
         "FLOOR.MATH" => fn_floor_ceil_math(ev, args, ctx, FloorCeil::Floor),
         "CEILING.MATH" => fn_floor_ceil_math(ev, args, ctx, FloorCeil::Ceiling),
+        "MROUND" => super::mround::fn_mround(ev, args, ctx),
         "MOD" => fn_mod(ev, args, ctx),
         "SQRT" => fn_unary_num(ev, args, ctx, |n| {
             if n < 0.0 {
@@ -159,8 +161,10 @@ pub(crate) fn dispatch(
         "FIND" => super::find::fn_find(ev, args, ctx),
         "SEARCH" => super::search::fn_search(ev, args, ctx),
         "VALUE" => super::value::eval(ev, args, ctx),
+        "FIXED" => super::fixed::fn_fixed(ev, args, ctx),
         "SUBSTITUTE" => fn_substitute(ev, args, ctx),
         "TEXT" => fn_text(ev, args, ctx),
+        "DOLLAR" => super::dollar::fn_dollar(ev, args, ctx),
         "REPLACE" => super::replace::fn_replace(ev, args, ctx),
         "TEXTJOIN" => super::textjoin::fn_textjoin(ev, args, ctx),
         "TEXTSPLIT" => super::textsplit::fn_textsplit(ev, args, ctx),
@@ -674,25 +678,6 @@ fn fn_unary_num(
         Ok(n) => Ok(f(n)),
         Err(e) => Ok(ExcelValue::Error(e)),
     }
-}
-
-fn fn_trunc(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
-    if args.is_empty() {
-        return Ok(ExcelValue::Error(ExcelError::Value));
-    }
-    let n = match coerce::to_number(&ev.eval_scalar(&args[0], ctx)?) {
-        Ok(n) => n,
-        Err(e) => return Ok(ExcelValue::Error(e)),
-    };
-    let digits = if args.len() >= 2 {
-        match coerce::to_number(&ev.eval_scalar(&args[1], ctx)?) {
-            Ok(d) => d.trunc() as i32,
-            Err(e) => return Ok(ExcelValue::Error(e)),
-        }
-    } else {
-        0
-    };
-    Ok(ExcelValue::Number(excel_trunc(n, digits)))
 }
 
 #[derive(Clone, Copy)]
@@ -2496,9 +2481,4 @@ fn flatten_vector(v: ExcelValue) -> Vec<ExcelValue> {
         }
         other => vec![other],
     }
-}
-
-fn excel_trunc(n: f64, digits: i32) -> f64 {
-    let factor = 10f64.powi(digits);
-    (n * factor).trunc() / factor
 }

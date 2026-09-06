@@ -13,6 +13,7 @@
 //! - [`eval::clean`] — Excel `CLEAN` (strip ASCII C0 `0..=31`)
 //! - [`eval::code`] — Excel `CODE` (Windows-1252 first-character code)
 //! - [`eval::abs`] — Excel `ABS` (sign-bit-clear absolute value)
+//! - [`eval::dollar`] — Excel `DOLLAR` (en-US `$` currency text; parens)
 //! - [`eval::excel_char`] — Excel `CHAR` (Windows-1252, 1..=255)
 //! - [`eval::left`] — Excel `LEFT` (Unicode scalars / Compat v2)
 //! - [`eval::rept`] — Excel `REPT` (repeat + 32767 UTF-16 cap)
@@ -61,6 +62,7 @@
 //! - [`eval::unicode`] — Excel `UNICODE` (first Unicode scalar / code point)
 //! - [`eval::exact`] — Excel `EXACT` (case-sensitive text compare)
 //! - [`eval::value`] — Excel `VALUE` (en-US number / date / time text)
+//! - [`eval::fixed`] — Excel `FIXED` (ROUND + en-US commas / decimals text)
 //! - [`eval::textsplit`] — `TEXTSPLIT` col/row split kernel (pad / `#CALC!`)
 //! - [`eval::textafter`] — Excel `TEXTAFTER` kernel (nth delimiter, `match_end`)
 //! - [`eval::irr`] — Excel `IRR` Newton / secant kernel
@@ -74,8 +76,10 @@
 //! - [`xlsx_types::excel_int`] — Excel `INT` (floor toward −∞; leftover snap)
 //! - [`eval::roundup`] — Excel `ROUNDUP` (away from zero; omitted digits → 0)
 //! - [`eval::rounddown`] — Excel `ROUNDDOWN` (toward zero; omitted `num_digits` = 0)
+//! - [`eval::trunc`] — Excel `TRUNC` (toward zero; omitted `num_digits` = 0)
 //! - [`xlsx_types::excel_floor`] — Excel classic `FLOOR` (sign/zero-sig; leftover snap)
 //! - [`xlsx_types::excel_ceiling`] — Excel classic `CEILING` (sign / zero-sig / 15-digit multiple)
+//! - [`xlsx_types::excel_mround`] — Excel `MROUND` (same-sign / zero-multiple; half-away; shares `ROUND` at `|m|=1`)
 //! - Financial TVM: `PMT` / `RRI` via [`xlsx_types::excel_pmt`] / [`xlsx_types::excel_rri`]
 //!
 //! This crate depends only on [`xlsx_types`]. It never reads fixture expected
@@ -120,6 +124,11 @@ pub use eval::concat::{
     concat_feed_value, concat_naive_join, eval_concat_formula, ConcatBuilder, ConcatWalk,
     CONCAT_MAX_CHARS,
 };
+pub use eval::dollar::{
+    dollar as excel_dollar, dollar_naive as excel_dollar_naive, dollar_slice as excel_dollar_slice,
+    dollar_slice_naive as excel_dollar_slice_naive, dollar_value as excel_dollar_value,
+    dollar_value_naive as excel_dollar_value_naive,
+};
 pub use eval::drop::{apply as excel_drop, apply_naive as excel_drop_naive};
 pub use eval::exact::{exact as excel_exact, exact_naive as excel_exact_naive};
 pub use eval::excel_char::{
@@ -139,6 +148,11 @@ pub use eval::filter::{select as excel_filter, select_naive as excel_filter_naiv
 pub use eval::find::{
     find as excel_find, find_naive as excel_find_naive, find_value as excel_find_value,
     find_value_naive as excel_find_value_naive,
+};
+pub use eval::fixed::{
+    fixed as excel_fixed, fixed_apply as excel_fixed_apply,
+    fixed_apply_naive as excel_fixed_apply_naive, fixed_naive as excel_fixed_naive,
+    fixed_slice as excel_fixed_slice, fixed_slice_naive as excel_fixed_slice_naive,
 };
 pub use eval::hstack::{hstack as excel_hstack, hstack_naive as excel_hstack_naive};
 pub use eval::ifs::{select as excel_ifs, select_naive as excel_ifs_naive};
@@ -229,7 +243,8 @@ pub use eval::textbefore::{
     textbefore as excel_textbefore, textbefore_naive as excel_textbefore_naive,
 };
 pub use eval::textjoin::{
-    eval_textjoin_formula, textjoin_naive_join, TextJoinBuilder, TEXTJOIN_MAX_CHARS,
+    eval_textjoin_formula, textjoin_collect_delims, textjoin_feed_value, textjoin_naive_join,
+    TextJoinBuilder, TextJoinWalk, TEXTJOIN_MAX_CHARS,
 };
 pub use eval::textsplit::{
     apply_values as excel_textsplit_apply, textsplit as excel_textsplit,
@@ -244,6 +259,12 @@ pub use eval::torow::{
     parse_ignore as parse_torow_ignore, TorowIgnore,
 };
 pub use eval::trim::{trim as excel_trim, trim_naive as excel_trim_naive};
+pub use eval::trunc::{
+    trunc as excel_trunc, trunc_naive as excel_trunc_naive, trunc_slice as excel_trunc_slice,
+    trunc_slice_digits as excel_trunc_slice_digits,
+    trunc_slice_digits_naive as excel_trunc_slice_digits_naive,
+    trunc_slice_naive as excel_trunc_slice_naive,
+};
 pub use eval::unichar::{unichar as excel_unichar, unichar_naive as excel_unichar_naive};
 pub use eval::unicode::{
     unicode as excel_unicode, unicode_naive as excel_unicode_naive,
@@ -282,7 +303,8 @@ pub use xlsx_types::{
     excel_ceiling_slice_naive, excel_cumipmt, excel_cumipmt_naive, excel_cumprinc,
     excel_cumprinc_naive, excel_effect, excel_effect_naive, excel_fv, excel_fv_naive, excel_int,
     excel_int_ieee, excel_int_naive, excel_int_slice, excel_int_slice_naive, excel_ipmt,
-    excel_ipmt_naive, excel_nominal, excel_nominal_naive, excel_nper, excel_nper_naive,
+    excel_ipmt_naive, excel_mround, excel_mround_naive, excel_mround_slice,
+    excel_mround_slice_naive, excel_nominal, excel_nominal_naive, excel_nper, excel_nper_naive,
     excel_pduration, excel_pduration_naive, excel_pmt, excel_ppmt, excel_ppmt_naive, excel_pv,
     excel_pv_naive, excel_rate, excel_rate_naive, excel_rri, excel_rri_naive,
 };

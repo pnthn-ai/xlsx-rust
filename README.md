@@ -302,7 +302,7 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 | [`eval/coerce.rs`](crates/xlsx-engine-core/src/eval/coerce.rs) | Arithmetic / `&` / `IF` coercion (`"2"+1` = 3, TRUE → 1, empty → 0) |
 | [`eval/compare.rs`](crates/xlsx-engine-core/src/eval/compare.rs) | 15-digit `=`, case-insensitive text, `TRUE=1`, type ranking (`FALSE>100`) |
 | [`eval/empty.rs`](crates/xlsx-engine-core/src/eval/empty.rs) | Blank ≠ 0 ≠ `""`, but `A1=0` and `A1=""` when `A1` is blank |
-| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Dispatch: aggregators (`SUM`/`SUMIF`/`SUMIFS`/`AVERAGEIF`/`AVERAGEIFS`/`COUNTIF`/`COUNTIFS`/`SUMPRODUCT`), logicals (`IF`/`IFS`/`SWITCH`/`LET`), lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`/`FILTER`/`UNIQUE`/`SORT`/`SORTBY`/`TOCOL`/`TOROW`/`SEQUENCE`/`VSTACK`/`HSTACK`/`WRAPCOLS`/`WRAPROWS`/`TAKE`/`DROP`/`EXPAND`/`CHOOSECOLS`/`CHOOSEROWS`/`MAKEARRAY`/`MAP`/`SCAN`/`BYROW`/`REDUCE`/`BYCOL`), dates (`DATE`/`EDATE`/`EOMONTH`/`NETWORKDAYS`/`NETWORKDAYS.INTL`/`WEEKDAY`/`WEEKNUM`/`ISOWEEKNUM`/`WORKDAY`/`WORKDAY.INTL`/`YEARFRAC`/`DAYS360`), math (`ABS`/`INT`/`ROUND`/`ROUNDUP`/`ROUNDDOWN`/`FLOOR`/`CEILING`/`RANDARRAY`), text (`LEFT`/`RIGHT`/`MID`/`LEN`/`LOWER`/`UPPER`/`PROPER`/`TRIM`/`CLEAN`/`EXACT`/`SUBSTITUTE`/`REPLACE`/`FIND`/`SEARCH`/`TEXT`/`VALUE`/`TEXTJOIN`/`TEXTSPLIT`/`TEXTAFTER`/`TEXTBEFORE`/`CONCAT`/`REPT`/`CODE`/`CHAR`/`UNICODE`/`UNICHAR`), financial (`NPV`/`XNPV`/`PMT`/`FV`/`PV`/`NPER`/`RATE`/`IPMT`/`PPMT`/`CUMPRINC`/`CUMIPMT`/`IRR`/`XIRR`/`MIRR`/`EFFECT`/`NOMINAL`/`PDURATION`/`RRI`), `TYPE` / `IS*` / `ISOMITTED` |
+| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Dispatch: aggregators (`SUM`/`SUMIF`/`SUMIFS`/`AVERAGEIF`/`AVERAGEIFS`/`COUNTIF`/`COUNTIFS`/`SUMPRODUCT`), logicals (`IF`/`IFS`/`SWITCH`/`LET`), lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`/`FILTER`/`UNIQUE`/`SORT`/`SORTBY`/`TOCOL`/`TOROW`/`SEQUENCE`/`VSTACK`/`HSTACK`/`WRAPCOLS`/`WRAPROWS`/`TAKE`/`DROP`/`EXPAND`/`CHOOSECOLS`/`CHOOSEROWS`/`MAKEARRAY`/`MAP`/`SCAN`/`BYROW`/`REDUCE`/`BYCOL`), dates (`DATE`/`EDATE`/`EOMONTH`/`NETWORKDAYS`/`NETWORKDAYS.INTL`/`WEEKDAY`/`WEEKNUM`/`ISOWEEKNUM`/`WORKDAY`/`WORKDAY.INTL`/`YEARFRAC`/`DAYS360`), math (`ABS`/`INT`/`ROUND`/`ROUNDUP`/`ROUNDDOWN`/`FLOOR`/`CEILING`/`RANDARRAY`), text (`LEFT`/`RIGHT`/`MID`/`LEN`/`LOWER`/`UPPER`/`PROPER`/`TRIM`/`CLEAN`/`EXACT`/`SUBSTITUTE`/`REPLACE`/`FIND`/`SEARCH`/`TEXT`/`VALUE`/`FIXED`/`DOLLAR`/`TEXTJOIN`/`TEXTSPLIT`/`TEXTAFTER`/`TEXTBEFORE`/`CONCAT`/`REPT`/`CODE`/`CHAR`/`UNICODE`/`UNICHAR`), financial (`NPV`/`XNPV`/`PMT`/`FV`/`PV`/`NPER`/`RATE`/`IPMT`/`PPMT`/`CUMPRINC`/`CUMIPMT`/`IRR`/`XIRR`/`MIRR`/`EFFECT`/`NOMINAL`/`PDURATION`/`RRI`), `TYPE` / `IS*` / `ISOMITTED` |
 | [`eval/sumif.rs`](crates/xlsx-engine-core/src/eval/sumif.rs) | Excel `SUMIF` kernel (criteria walk, reshape `sum_range`, no array literals) |
 | [`eval/sumifs.rs`](crates/xlsx-engine-core/src/eval/sumifs.rs) | Excel `SUMIFS`: multi-criteria AND, same-shape ranges |
 | [`eval/countifs.rs`](crates/xlsx-engine-core/src/eval/countifs.rs) | Excel `COUNTIFS`: multi-criteria AND, same-shape ranges, COUNTIF matcher |
@@ -317,7 +317,7 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 | [`eval/search.rs`](crates/xlsx-engine-core/src/eval/search.rs) | Excel `SEARCH` kernel (case-insensitive, `*`/`?`/`~` wildcards, `start_num`, Compat v2) |
 | [`eval/textafter.rs`](crates/xlsx-engine-core/src/eval/textafter.rs) | Excel `TEXTAFTER` kernel (nth delimiter, `match_mode` / `match_end` / `if_not_found`) |
 | [`eval/textbefore.rs`](crates/xlsx-engine-core/src/eval/textbefore.rs) | Excel `TEXTBEFORE` (nth delimiter, `match_mode` / `match_end` / `if_not_found`) |
-| [`eval/textjoin.rs`](crates/xlsx-engine-core/src/eval/textjoin.rs) | `TEXTJOIN` with cycling delimiters and `ignore_empty` |
+| [`eval/textjoin.rs`](crates/xlsx-engine-core/src/eval/textjoin.rs) | Excel `TEXTJOIN`: cycling delimiters, `ignore_empty`, occupied sparse walk when skipping empties, 32,767 UTF-16 cap (not Compat-v2 `LEN`) |
 | [`eval/textsplit.rs`](crates/xlsx-engine-core/src/eval/textsplit.rs) | `TEXTSPLIT` col/row split, `ignore_empty`, `match_mode`, `pad_with` |
 | [`eval/concat.rs`](crates/xlsx-engine-core/src/eval/concat.rs) | Excel `CONCAT`: row-major flatten, occupied sparse walk, 32,767 UTF-16 cap (not Compat-v2 `LEN`) |
 | [`eval/round.rs`](crates/xlsx-engine-core/src/eval/round.rs) | Shared `ROUNDUP` / `ROUNDDOWN` table kernel (combined bench) |
@@ -327,6 +327,7 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 | [`xlsx-types/src/excel_int.rs`](crates/xlsx-types/src/excel_int.rs) | Excel `INT` (floor toward −∞; 15-digit leftover snap) |
 | [`xlsx-types/src/excel_floor.rs`](crates/xlsx-types/src/excel_floor.rs) | Excel classic `FLOOR` (sign/zero-significance; leftover snap; shares `INT` at significance 1) |
 | [`xlsx-types/src/excel_ceiling.rs`](crates/xlsx-types/src/excel_ceiling.rs) | Excel classic `CEILING` (sign / zero-sig rules; 15-digit nearly-multiple snap) |
+| [`xlsx-types/src/excel_mround.rs`](crates/xlsx-types/src/excel_mround.rs) | Excel `MROUND` (same-sign / zero-multiple; half-away; shares `ROUND` at `|m|=1`) |
 | [`eval/switch.rs`](crates/xlsx-engine-core/src/eval/switch.rs) | Excel `SWITCH` exact-match kernel (first hit, default / `#N/A`) |
 | [`eval/ifs.rs`](crates/xlsx-engine-core/src/eval/ifs.rs) | `IFS` pair-selection kernel (eager eval, first TRUE, no-match `#N/A`) |
 | [`eval/unique.rs`](crates/xlsx-engine-core/src/eval/unique.rs) | `UNIQUE(array, [by_col], [exactly_once])` hash distinctness |
@@ -359,6 +360,7 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 | [`eval/clean.rs`](crates/xlsx-engine-core/src/eval/clean.rs) | Excel `CLEAN` (strip ASCII C0) |
 | [`eval/code.rs`](crates/xlsx-engine-core/src/eval/code.rs) | Excel `CODE` (Windows-1252 first-character code) |
 | [`eval/abs.rs`](crates/xlsx-engine-core/src/eval/abs.rs) | Excel `ABS` (sign-bit-clear; arithmetic coerce) |
+| [`eval/dollar.rs`](crates/xlsx-engine-core/src/eval/dollar.rs) | Excel `DOLLAR` (en-US `$` currency text; accounting parens; omitted decimals = 2) |
 | [`eval/excel_char.rs`](crates/xlsx-engine-core/src/eval/excel_char.rs) | Excel `CHAR` (Windows-1252, 1..=255) |
 | [`eval/left.rs`](crates/xlsx-engine-core/src/eval/left.rs) | Excel `LEFT` (Unicode scalars / Compat v2; omitted `num_chars` = 1) |
 | [`eval/proper.rs`](crates/xlsx-engine-core/src/eval/proper.rs) | Excel `PROPER` (ASCII title-case) |
@@ -368,6 +370,7 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 | [`eval/unicode.rs`](crates/xlsx-engine-core/src/eval/unicode.rs) | Excel `UNICODE` (first Unicode scalar / code point) |
 | [`eval/exact.rs`](crates/xlsx-engine-core/src/eval/exact.rs) | Excel `EXACT` (case-sensitive compare) |
 | [`eval/value.rs`](crates/xlsx-engine-core/src/eval/value.rs) | Excel `VALUE` (en-US number / date / time text; `$` `,` `%` `(…)` ) |
+| [`eval/fixed.rs`](crates/xlsx-engine-core/src/eval/fixed.rs) | Excel `FIXED` (ROUND + en-US thousands commas / fixed decimals as text) |
 | [`eval/rept.rs`](crates/xlsx-engine-core/src/eval/rept.rs) | Excel `REPT` (32767 UTF-16 cap) |
 | [`eval/unichar.rs`](crates/xlsx-engine-core/src/eval/unichar.rs) | Excel `UNICHAR` (Unicode scalar; surrogates `#N/A`) |
 | [`eval/npv.rs`](crates/xlsx-engine-core/src/eval/npv.rs) | Excel `NPV` kernel (period-1 discount, range skip of blanks/text/logicals) |
@@ -401,6 +404,22 @@ fractions `"1 1/2"`. Blank cell → `0`; stored `""` → `#VALUE!`. Arithmetic
 `"1,000"+0` stays `#VALUE!` (that is not `VALUE`). Not implemented (no
 goldens): month names, current-year incomplete dates (`"1/2"`), non-en-US
 separators.
+
+**`FIXED`** (see [`eval/fixed.rs`](crates/xlsx-engine-core/src/eval/fixed.rs)):
+`FIXED(number, [decimals], [no_commas])` runs `ROUND` then returns **text**
+(en-US `.` decimal, `,` thousands). Microsoft goldens: `FIXED(1234.567, 1)`
+→ `"1,234.6"`; `FIXED(1234.567, -1)` → `"1,230"`;
+`FIXED(-1234.567, -1, TRUE)` → `"-1230"`; `FIXED(44.332)` → `"44.33"`.
+Omitted `decimals` is 2 (a trailing-comma slot is omitted; a blank cell
+is 0). Negative `decimals` rounds left of the point (no decimal in the
+text). Microsoft max `decimals` is 127; `128` after truncate-toward-zero
+is `#VALUE!`. Omitted / FALSE `no_commas` inserts commas; TRUE / nonzero
+suppresses them; text `no_commas` is `#VALUE!`. Arithmetic coerce on
+`number` (blank → `"0.00"`; `"$5"` / `"1,000"` stay `#VALUE!` — that is
+`VALUE`, not `FIXED`). Sign comes from the rounded value
+(`FIXED(-0.001, 2)` → `"0.00"`). `TYPE` is 2; `VALUE(FIXED(…))` parses
+the string back. `seed-compliant` shares the same apply kernel.
+`DOLLAR` / `TEXT` / `ROUND` are unchanged.
 
 **`TEXT` subset** (see [`text_format.rs`](crates/xlsx-engine-core/src/text_format.rs)):
 `0` / `#` / `.` / grouping `,` / `%` / `@` (text placeholder, not mixed
@@ -461,11 +480,21 @@ as one or the other. Documented quirk categories:
   surrogates `U+D800`–`U+DFFF` are `#N/A` (Microsoft: partial surrogates).
   Supplementary-plane results are one Compatibility Version 2 scalar
   (`LEN(UNICHAR(128512))` is 1). `CHAR` / `UNICODE` / `CODE` are separate.
+- `FIXED(number, [decimals], [no_commas])`: `ROUND` then en-US fixed-decimal **text** (`FIXED(1234.567, 1)` → `"1,234.6"`). Omitted decimals is 2; blank decimals is 0. `no_commas` TRUE drops thousands commas. Result is text (`TYPE` 2). Kernel: [`eval/fixed.rs`](crates/xlsx-engine-core/src/eval/fixed.rs). `DOLLAR` / `TEXT` / `ROUND` stay separate.
 - `ABS(number)`: absolute value via a branchless sign-bit clear (`-0` → `0`).
   Arithmetic coerce (empty → `0`, `TRUE` → `1`, numeric text parsed);
   `"$5"` / `"1,000"` / `"50%"` stay `#VALUE!` (that is `VALUE`, not `ABS`).
   Scalar context: range implicit-intersects; array literal is top-left.
   `SIGN` / `INT` / `SQRT` are separate.
+- `DOLLAR(number, [decimals])`: en-US currency **text** (`$1,234.57`).
+  Microsoft format `$#,##0.00_);($#,##0.00)` — thousands commas, **parens**
+  for negatives (`($1,234.57)`), no `_` alignment pad on the text result.
+  That is not `TEXT(n,"$#,##0.00")` (`-$1,234.57`). Omitted `decimals`
+  (including `DOLLAR(n,)`) defaults to 2; a blank cell is 0. Negative
+  `decimals` rounds left of the decimal. Rounding is `ROUND` (half away
+  from zero); sign comes from the rounded value (`DOLLAR(-0.001)` is
+  `$0.00`). Arithmetic coerce (not `VALUE`). `FIXED` / `TEXT` / `ROUND`
+  stay separate.
 - `CHAR(number)`: Windows-1252 (Western ANSI), not Latin-1 / Unicode. Codes
   truncate toward zero; `1..=255` only (`0` / `256` / blank / `FALSE` →
   `#VALUE!`). `CHAR(128)` is `€`; leftover C1 bytes `129` / `141` / `143` /
@@ -480,9 +509,11 @@ as one or the other. Documented quirk categories:
   / `TEXTSPLIT` share the same delimiter / instance conventions.
 - Classic `FLOOR(number, significance)`: arithmetic coerce; errors left-to-right; wrong arity is `#VALUE!`. Positive number + negative significance is `#NUM!`. Significance `0` is `#DIV/0!` except `FLOOR(0, 0)` → `0` (zero number is not a sign clash: `FLOOR(0, -1)` is `0`). Excel 2010+ allows negative number + positive significance (toward −∞). Both negative: toward zero. `FLOOR(n, 1)` matches `INT(n)` leftover snap (ten `+0.1` → `1`; `0.3-0.1-0.2` → `0`). Kernel: [`excel_floor`](crates/xlsx-types/src/excel_floor.rs). `FLOOR.MATH` / `CEILING.MATH` ignore significance sign, treat significance `0` as `0`, and take an optional mode.
 - Classic `CEILING(number, significance)`: Microsoft examples (`CEILING(2.5,1)=3`, `CEILING(-2.5,-2)=-4`, `CEILING(-2.5,2)=-2`, nickel `CEILING(4.42,0.05)=4.45`). Both negative rounds away from zero; negative + positive significance rounds toward zero; positive + negative significance is `#NUM!`. Significance `0` is `#DIV/0!` except `CEILING(0,0)` → `0`. IEEE nearly-multiples such as `CEILING(1.2,0.1)` stay `1.2`. Arithmetic coerce; errors LTR; arity ≠ 2 is `#VALUE!`. Shared kernel: [`excel_ceiling`](crates/xlsx-types/src/excel_ceiling.rs).
+- `MROUND(number, multiple)`: nearest multiple, half away from zero (`MROUND(1.5,1)=2`, `MROUND(2.5,5)=5` not banker `0`). Microsoft examples (`MROUND(10,3)=9`, `MROUND(-10,-3)=-9`, `MROUND(1.3,0.2)=1.4`, `MROUND(5,-2)=#NUM!`). Opposite signs are `#NUM!`; zero number is not a clash (`MROUND(0,-3)=0`). Multiple `0` is `0` (not `FLOOR`/`CEILING` `#DIV/0!`). Leftover midpoints: `MROUND(6.05,0.1)=6` and `MROUND(7.05,0.1)=7.1` (raw `n/m` half-away, not `ROUND` snap). `MROUND(n,±1)` shares [`excel_round`](crates/xlsx-types/src/excel_round.rs). Arithmetic coerce; errors LTR; arity ≠ 2 is `#VALUE!`. Shared kernel: [`excel_mround`](crates/xlsx-types/src/excel_mround.rs). `ROUND` / `FLOOR` / `CEILING` are separate.
 - `INT(number)`: floor toward −∞ (`INT(-8.9)` is `-9`). That is not `TRUNC` (toward zero: `TRUNC(-8.9)` is `-8`). `INT(n)` matches classic `FLOOR(n, 1)`. Excel's 15-significant-digit leftover snap treats repeated `+0.1` (IEEE `0.999…9`) as `1` and `0.3-0.1-0.2` (tiny negative) as `0`. Wrong arity / non-numeric text is `#VALUE!`. TVM / `FLOOR` kernels live in `xlsx-types`; `INT` is [`excel_int`](crates/xlsx-types/src/excel_int.rs).
 - `ROUNDUP(number, [num_digits])`: always away from zero (`ROUNDUP(-3.2, 0)` is `-4`). Omitted `num_digits` defaults to `0`. Negative `num_digits` rounds left of the decimal (`ROUNDUP(123, -1)` is `130`). Fractional digits truncate toward zero. Arithmetic coerce; errors left-to-right; `ROUNDUP()` / extra args are `#VALUE!`. IEEE leftovers that agree to 15 significant digits do not bump (`ROUNDUP(1.1, 2)` stays `1.1`). Dedicated kernel: [`eval/roundup.rs`](crates/xlsx-engine-core/src/eval/roundup.rs). `ROUND` / `ROUNDDOWN` / `TRUNC` are separate.
 - `ROUNDDOWN(number, [num_digits])`: always toward zero (`ROUNDDOWN(-3.2, 0)` is `-3`; that is `TRUNC`, not `INT`). Omitted `num_digits` (one-arg form, trailing-comma slot, or blank) is 0. Negative `num_digits` rounds left of the decimal (`31415.92654` / `-2` → `31400`). Arithmetic coerce; errors left-to-right; 0 or 3+ args is `#VALUE!`. A 15-digit snap keeps `ROUNDDOWN(1.15, 2)` at `1.15`. Kernel: [`eval/rounddown.rs`](crates/xlsx-engine-core/src/eval/rounddown.rs). `ROUND` / `ROUNDUP` / `TRUNC` are separate.
+- `TRUNC(number, [num_digits])`: always toward zero (`TRUNC(-8.9)` is `-8`; that is not `INT(-8.9)` = `-9`). Omitted `num_digits` (one-arg form, trailing-comma slot, or blank) is 0 and matches `ROUNDDOWN(n)`. Negative `num_digits` truncates left of the decimal (`31415.92654` / `-2` → `31400`). Arithmetic coerce; errors left-to-right; 0 or 3+ args is `#VALUE!`. A 15-digit snap keeps `TRUNC(1.15, 2)` at `1.15`. Dedicated kernel: [`eval/trunc.rs`](crates/xlsx-engine-core/src/eval/trunc.rs), shared with `seed-compliant`. `INT` / `ROUNDDOWN` / `ROUND` / `FLOOR` are unchanged.
 - `TRUE=1` / `FALSE=0` in `=` and in arithmetic; `ISNUMBER(TRUE)` is still false
 - `SUM` / `AVERAGE` / `COUNT` / `PRODUCT` / `MIN` / `MAX`: skip logicals/text
   in ranges and array literals; coerce scalar arguments (`SUM(TRUE)` is 1,
