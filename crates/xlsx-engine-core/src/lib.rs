@@ -56,6 +56,7 @@
 //! - [`eval::upper`] — Excel `UPPER` (SWAR ASCII + Unicode; `ß` kept)
 //! - [`eval::lower`] — Excel `LOWER` (ASCII SWAR fold + Unicode default mapping)
 //! - [`eval::len`] — Excel `LEN` (Unicode scalar count / Compat v2)
+//! - [`eval::mid`] — Excel `MID` (1-based Unicode-scalar slice / Compat v2)
 //! - [`eval::unicode`] — Excel `UNICODE` (first Unicode scalar / code point)
 //! - [`eval::exact`] — Excel `EXACT` (case-sensitive text compare)
 //! - [`eval::value`] — Excel `VALUE` (en-US number / date / time text)
@@ -144,6 +145,11 @@ pub use eval::makearray::{
     LambdaError, Local,
 };
 pub use eval::map::{fill_fast as excel_map, fill_naive as excel_map_naive, MapFast, MapOp};
+pub use eval::mid::{
+    mid as excel_mid, mid_naive as excel_mid_naive, mid_value as excel_mid_value,
+    mid_value_naive as excel_mid_value_naive, trunc_num_chars as excel_mid_trunc_num_chars,
+    trunc_start_num as excel_mid_trunc_start_num,
+};
 pub use eval::mirr::{mirr as excel_mirr, mirr_naive as excel_mirr_naive};
 pub use eval::npv::{npv as excel_npv, npv_naive as excel_npv_naive};
 pub use eval::proper::{proper as excel_proper, proper_naive as excel_proper_naive};

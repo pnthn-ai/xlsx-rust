@@ -145,7 +145,7 @@ pub(crate) fn dispatch(
         "YEARFRAC" => fn_yearfrac(ev, args, ctx),
         "LEFT" => super::left::fn_left(ev, args, ctx),
         "RIGHT" => super::right::fn_right(ev, args, ctx),
-        "MID" => fn_mid(ev, args, ctx),
+        "MID" => super::mid::fn_mid(ev, args, ctx),
         "LEN" => super::len::fn_len(ev, args, ctx),
         "UNICODE" => super::unicode::fn_unicode(ev, args, ctx),
         "LOWER" => fn_lower(ev, args, ctx),
@@ -1403,72 +1403,6 @@ fn fn_ymd(
         })),
         Err(e) => Ok(ExcelValue::Error(e)),
     }
-}
-
-fn fn_left_right(
-    ev: &Evaluator,
-    args: &[Expr],
-    ctx: &mut Ctx<'_>,
-    left: bool,
-) -> Result<ExcelValue, EvalError> {
-    if args.is_empty() {
-        return Ok(ExcelValue::Error(ExcelError::Value));
-    }
-    let s = match coerce::to_text(&ev.eval_scalar(&args[0], ctx)?) {
-        Ok(s) => s,
-        Err(e) => return Ok(ExcelValue::Error(e)),
-    };
-    let n = if args.len() >= 2 {
-        match coerce::to_number(&ev.eval_scalar(&args[1], ctx)?) {
-            Ok(n) => n.trunc() as i64,
-            Err(e) => return Ok(ExcelValue::Error(e)),
-        }
-    } else {
-        1
-    };
-    if n < 0 {
-        return Ok(ExcelValue::Error(ExcelError::Value));
-    }
-    let chars: Vec<char> = s.chars().collect();
-    let take = (n as usize).min(chars.len());
-    let out: String = if left {
-        chars.iter().take(take).collect()
-    } else {
-        chars
-            .iter()
-            .skip(chars.len().saturating_sub(take))
-            .collect()
-    };
-    Ok(ExcelValue::Text(out))
-}
-
-fn fn_mid(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
-    if args.len() != 3 {
-        return Ok(ExcelValue::Error(ExcelError::Value));
-    }
-    let s = match coerce::to_text(&ev.eval_scalar(&args[0], ctx)?) {
-        Ok(s) => s,
-        Err(e) => return Ok(ExcelValue::Error(e)),
-    };
-    let start = match coerce::to_number(&ev.eval_scalar(&args[1], ctx)?) {
-        Ok(n) => n.trunc() as i64,
-        Err(e) => return Ok(ExcelValue::Error(e)),
-    };
-    let len = match coerce::to_number(&ev.eval_scalar(&args[2], ctx)?) {
-        Ok(n) => n.trunc() as i64,
-        Err(e) => return Ok(ExcelValue::Error(e)),
-    };
-    if start < 1 || len < 0 {
-        return Ok(ExcelValue::Error(ExcelError::Value));
-    }
-    let chars: Vec<char> = s.chars().collect();
-    let i = (start as usize) - 1;
-    if i >= chars.len() {
-        return Ok(ExcelValue::Text(String::new()));
-    }
-    Ok(ExcelValue::Text(
-        chars.iter().skip(i).take(len as usize).collect(),
-    ))
 }
 
 fn fn_proper(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {

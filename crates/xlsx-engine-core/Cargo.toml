@@ -325,6 +325,10 @@ name = "lower"
 harness = false
 
 [[bench]]
+name = "mid"
+harness = false
+
+[[bench]]
 name = "unicode"
 harness = false
 
