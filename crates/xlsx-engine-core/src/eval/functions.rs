@@ -8,8 +8,8 @@
 use super::{coerce, compare, excel_pow, Ctx, Evaluator};
 use crate::ast::Expr;
 use crate::dates::{
-    date_serial, eomonth_serial, networkdays_count, networkdays_count_mask, parse_weekend_mask,
-    isoweeknum, serial_to_ymd, time_fraction, weekday, weekend_mask_from_code,
+    date_serial, eomonth_serial, isoweeknum, networkdays_count, networkdays_count_mask,
+    parse_weekend_mask, serial_to_ymd, time_fraction, weekday, weekend_mask_from_code,
     weekend_mask_from_string, workday_serial, workday_serial_intl, yearfrac, WEEKEND_SAT_SUN,
 };
 use crate::text_format;
@@ -1217,7 +1217,11 @@ fn fn_weekday(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelV
     }
 }
 
-fn fn_isoweeknum(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+fn fn_isoweeknum(
+    ev: &Evaluator,
+    args: &[Expr],
+    ctx: &mut Ctx<'_>,
+) -> Result<ExcelValue, EvalError> {
     if args.len() != 1 {
         return Ok(ExcelValue::Error(ExcelError::Value));
     }
