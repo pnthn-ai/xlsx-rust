@@ -346,8 +346,8 @@ mod tests {
     fn nominal_inverts_openformula_effect() {
         // EFFECT(r, n) = (1 + r/n)^n − 1; NOMINAL of that is r.
         // Evaluated here so this workstream does not call EFFECT.
-        let r = 0.0525;
-        let n = 4.0;
+        let r = 0.0525_f64;
+        let n = 4.0_f64;
         let effect = (1.0 + r / n).powf(n) - 1.0;
         close_rel(nominal(effect, n).unwrap(), r);
     }
