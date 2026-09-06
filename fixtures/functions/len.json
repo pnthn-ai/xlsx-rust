@@ -1,0 +1,444 @@
+[
+  {
+    "id": "fn.len-microsoft-phoenix",
+    "description": "Microsoft example: LEN(\"Phoenix, AZ\") is 11",
+    "tags": ["text", "len"],
+    "formula": "=LEN(\"Phoenix, AZ\")",
+    "expected": { "number": 11 }
+  },
+  {
+    "id": "fn.len-empty",
+    "description": "LEN(\"\") is 0",
+    "tags": ["text", "len"],
+    "formula": "=LEN(\"\")",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.len-space",
+    "description": "A single space counts as one character",
+    "tags": ["text", "len"],
+    "formula": "=LEN(\" \")",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.len-leading-trailing-spaces",
+    "description": "Leading and trailing spaces are counted",
+    "tags": ["text", "len"],
+    "formula": "=LEN(\"  abc  \")",
+    "expected": { "number": 7 }
+  },
+  {
+    "id": "fn.len-blank-cell",
+    "description": "Blank cell coerces like & to empty text → 0",
+    "tags": ["text", "len", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=LEN(A1)",
+    "expected": { "number": 0 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {}
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.len-stored-empty",
+    "description": "Stored \"\" is empty text → 0",
+    "tags": ["text", "len"],
+    "formula": "=LEN(A1)",
+    "expected": { "number": 0 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.len-cell",
+    "description": "LEN of a stored text cell counts all scalars",
+    "tags": ["text", "len"],
+    "formula": "=LEN(A1)",
+    "expected": { "number": 5 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "Hello" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.len-formula-cell",
+    "description": "LEN of a formula cell that yields text",
+    "tags": ["text", "len"],
+    "formula": "=LEN(A1)",
+    "expected": { "number": 3 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "formula": "=\"ABC\"" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.len-named",
+    "description": "LEN of a defined name referring to a cell",
+    "tags": ["text", "len", "named"],
+    "formula": "=LEN(Title)",
+    "expected": { "number": 5 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "Hello" }
+          }
+        }
+      ],
+      "names": [{ "name": "Title", "refers_to": "Sheet1!A1" }]
+    }
+  },
+  {
+    "id": "fn.len-number-zero",
+    "description": "LEN(0) coerces to \"0\" then 1",
+    "tags": ["text", "len", "coercion"],
+    "formula": "=LEN(0)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.len-number-decimal",
+    "description": "LEN(1.5) coerces to \"1.5\" then 3",
+    "tags": ["text", "len", "coercion"],
+    "formula": "=LEN(1.5)",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.len-number-neg",
+    "description": "LEN(-12) coerces to \"-12\" then 3",
+    "tags": ["text", "len", "coercion"],
+    "formula": "=LEN(-12)",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.len-false",
+    "description": "LEN(FALSE) is 5",
+    "tags": ["text", "len", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=LEN(FALSE)",
+    "expected": { "number": 5 }
+  },
+  {
+    "id": "fn.len-true-text",
+    "description": "LEN of the letters T-R-U-E (already a string)",
+    "tags": ["text", "len"],
+    "formula": "=LEN(\"TRUE\")",
+    "expected": { "number": 4 }
+  },
+  {
+    "id": "fn.len-latin1-e-acute",
+    "description": "Precomposed é is one Compat v2 scalar",
+    "tags": ["text", "len"],
+    "formula": "=LEN(\"é\")",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.len-cafe",
+    "description": "LEN(\"café\") is 4 (é is one scalar, not two UTF-8 bytes)",
+    "tags": ["text", "len"],
+    "formula": "=LEN(\"café\")",
+    "expected": { "number": 4 }
+  },
+  {
+    "id": "fn.len-euro",
+    "description": "Euro sign is one scalar",
+    "tags": ["text", "len"],
+    "formula": "=LEN(\"€\")",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.len-greek",
+    "description": "Two Greek letters are two scalars",
+    "tags": ["text", "len"],
+    "formula": "=LEN(\"αβ\")",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.len-cjk",
+    "description": "Two CJK ideographs are two scalars",
+    "tags": ["text", "len"],
+    "formula": "=LEN(\"中文\")",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.len-emoji-compat-v2",
+    "description": "Grinning face is one scalar (Compat v2), not two UTF-16 units",
+    "tags": ["text", "len"],
+    "formula": "=LEN(A1)",
+    "expected": { "number": 1 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "😀" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.len-emoji-plus-ascii",
+    "description": "Emoji plus ASCII is two scalars",
+    "tags": ["text", "len"],
+    "formula": "=LEN(A1)",
+    "expected": { "number": 2 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "😀x" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.len-three-emoji",
+    "description": "Three supplementary-plane emoji are three scalars",
+    "tags": ["text", "len"],
+    "formula": "=LEN(A1)",
+    "expected": { "number": 3 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "😀🎉🦄" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.len-tab",
+    "description": "Tab is one character",
+    "tags": ["text", "len"],
+    "formula": "=LEN(A1)",
+    "expected": { "number": 1 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "\t" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.len-lf",
+    "description": "Line feed is one character",
+    "tags": ["text", "len"],
+    "formula": "=LEN(A1)",
+    "expected": { "number": 1 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "\n" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.len-nbsp",
+    "description": "NBSP is one scalar (not a trim target)",
+    "tags": ["text", "len"],
+    "formula": "=LEN(A1)",
+    "expected": { "number": 3 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "a\u00a0b" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.len-combining",
+    "description": "Combining acute after e is its own scalar: LEN is 2",
+    "tags": ["text", "len"],
+    "formula": "=LEN(A1)",
+    "expected": { "number": 2 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "e\u0301" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.len-decomposed-cafe",
+    "description": "Decomposed café (e + combining acute) is 5 scalars",
+    "tags": ["text", "len"],
+    "formula": "=LEN(A1)",
+    "expected": { "number": 5 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "cafe\u0301" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.len-nested-lower",
+    "description": "LEN(LOWER(\"AbC\")) is 3",
+    "tags": ["text", "len"],
+    "formula": "=LEN(LOWER(\"AbC\"))",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.len-nested-left",
+    "description": "LEN(LEFT(\"xyz\",2)) is 2",
+    "tags": ["text", "len"],
+    "formula": "=LEN(LEFT(\"xyz\",2))",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.len-nested-unichar",
+    "description": "LEN(UNICHAR(128512)) is 1 (Compat v2)",
+    "tags": ["text", "len"],
+    "formula": "=LEN(UNICHAR(128512))",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.len-plus-one",
+    "description": "The count is a number: LEN(\"A\")+1 is 2",
+    "tags": ["text", "len"],
+    "formula": "=LEN(\"A\")+1",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.len-concat",
+    "description": "LEN of concatenated pieces is the sum of the pieces",
+    "tags": ["text", "len"],
+    "formula": "=LEN(\"A\"&\"BC\")",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.len-array-literal",
+    "description": "LEN of an array literal scalarizes to the top-left",
+    "tags": ["text", "len"],
+    "formula": "=LEN({\"XY\",\"Z\"})",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.len-implicit-intersect",
+    "description": "LEN(A1:A3) from host B2 uses implicit intersection (same row → A2)",
+    "tags": ["text", "len"],
+    "quirks": ["implicit-intersection"],
+    "at": "Sheet1!B2",
+    "formula": "=LEN(A1:A3)",
+    "expected": { "number": 3 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "ONE" },
+            "A2": { "text": "TWO" },
+            "A3": { "text": "THREE" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.len-err-div0",
+    "description": "Error argument propagates #DIV/0!",
+    "tags": ["text", "len", "errors"],
+    "formula": "=LEN(1/0)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.len-err-na",
+    "description": "NA() propagates #N/A",
+    "tags": ["text", "len", "errors"],
+    "formula": "=LEN(NA())",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.len-err-cell",
+    "description": "Error in the referenced cell propagates",
+    "tags": ["text", "len", "errors"],
+    "formula": "=LEN(A1)",
+    "expected": { "error": "#VALUE!" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "error": "#VALUE!" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.len-arity-zero",
+    "description": "LEN() with no arguments is #VALUE!",
+    "tags": ["text", "len", "errors"],
+    "formula": "=LEN()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.len-arity-two",
+    "description": "LEN with two arguments is #VALUE!",
+    "tags": ["text", "len", "errors"],
+    "formula": "=LEN(\"a\",\"b\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.len-map-sum",
+    "description": "SUM(MAP(array, LAMBDA(x, LEN(x)))) adds scalar counts",
+    "tags": ["text", "len", "map"],
+    "formula": "=SUM(MAP({\"A\";\"BB\";\"CCC\"},LAMBDA(x,LEN(x))))",
+    "expected": { "number": 6 }
+  },
+  {
+    "id": "fn.len-mid-roundtrip",
+    "description": "LEN(MID(text,1,LEN(text))) equals LEN(text)",
+    "tags": ["text", "len"],
+    "formula": "=LEN(MID(\"café\",1,LEN(\"café\")))",
+    "expected": { "number": 4 }
+  }
+]

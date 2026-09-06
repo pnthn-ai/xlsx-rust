@@ -116,6 +116,10 @@ name = "fn_unicode"
 harness = false
 
 [[bench]]
+name = "fn_len"
+harness = false
+
+[[bench]]
 name = "fn_char"
 harness = false
 

@@ -2,7 +2,7 @@
 //!
 //! Unknown names return `#NAME?` (an Excel value, not [`EvalError`]).
 //! Dedicated kernels live in sibling modules (`ifs`, `filter`, `sort`,
-//! `xlookup`, `textsplit`, `xnpv`, `map`, `isomitted`, `unicode`, …). Financial TVM
+//! `xlookup`, `textsplit`, `xnpv`, `map`, `isomitted`, `len`, `unicode`, …). Financial TVM
 //! kernels live in [`xlsx_types`] (`excel_pmt` / `excel_fv` / `excel_pv` / …).
 
 use super::{coerce, compare, excel_pow, Ctx, Evaluator};
@@ -146,7 +146,7 @@ pub(crate) fn dispatch(
         "LEFT" => fn_left_right(ev, args, ctx, true),
         "RIGHT" => fn_left_right(ev, args, ctx, false),
         "MID" => fn_mid(ev, args, ctx),
-        "LEN" => fn_len(ev, args, ctx),
+        "LEN" => super::len::fn_len(ev, args, ctx),
         "UNICODE" => super::unicode::fn_unicode(ev, args, ctx),
         "LOWER" => fn_lower(ev, args, ctx),
         "UPPER" => fn_upper(ev, args, ctx),
@@ -1469,16 +1469,6 @@ fn fn_mid(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue
     Ok(ExcelValue::Text(
         chars.iter().skip(i).take(len as usize).collect(),
     ))
-}
-
-fn fn_len(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
-    if args.len() != 1 {
-        return Ok(ExcelValue::Error(ExcelError::Value));
-    }
-    match coerce::to_text(&ev.eval_scalar(&args[0], ctx)?) {
-        Ok(s) => Ok(ExcelValue::Number(s.chars().count() as f64)),
-        Err(e) => Ok(ExcelValue::Error(e)),
-    }
 }
 
 fn fn_proper(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {

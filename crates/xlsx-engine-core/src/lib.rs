@@ -53,6 +53,7 @@
 //! - [`eval::trim`] — Excel `TRIM` (ASCII-space collapse + end trim)
 //! - [`eval::upper`] — Excel `UPPER` (SWAR ASCII + Unicode; `ß` kept)
 //! - [`eval::lower`] — Excel `LOWER` (ASCII SWAR fold + Unicode default mapping)
+//! - [`eval::len`] — Excel `LEN` (Unicode scalar count / Compat v2)
 //! - [`eval::unicode`] — Excel `UNICODE` (first Unicode scalar / code point)
 //! - [`eval::exact`] — Excel `EXACT` (case-sensitive text compare)
 //! - [`eval::value`] — Excel `VALUE` (en-US number / date / time text)
@@ -124,6 +125,10 @@ pub use eval::ifs::{select as excel_ifs, select_naive as excel_ifs_naive};
 pub use eval::irr::{irr as excel_irr, irr_naive as excel_irr_naive, MAX_ITERS as IRR_MAX_ITERS};
 pub use eval::isomitted::{
     is_omitted as excel_isomitted, is_omitted_naive as excel_isomitted_naive,
+};
+pub use eval::len::{
+    len as excel_len, len_naive as excel_len_naive, len_value as excel_len_value,
+    len_value_naive as excel_len_value_naive,
 };
 pub use eval::lower::{
     lower as excel_lower, lower_naive as excel_lower_naive, lower_owned as excel_lower_owned,
