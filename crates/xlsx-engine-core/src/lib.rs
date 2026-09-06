@@ -61,6 +61,7 @@
 //! - [`eval::unicode`] — Excel `UNICODE` (first Unicode scalar / code point)
 //! - [`eval::exact`] — Excel `EXACT` (case-sensitive text compare)
 //! - [`eval::value`] — Excel `VALUE` (en-US number / date / time text)
+//! - [`eval::fixed`] — Excel `FIXED` (ROUND + en-US commas / decimals text)
 //! - [`eval::textsplit`] — `TEXTSPLIT` col/row split kernel (pad / `#CALC!`)
 //! - [`eval::textafter`] — Excel `TEXTAFTER` kernel (nth delimiter, `match_end`)
 //! - [`eval::irr`] — Excel `IRR` Newton / secant kernel
@@ -141,6 +142,11 @@ pub use eval::filter::{select as excel_filter, select_naive as excel_filter_naiv
 pub use eval::find::{
     find as excel_find, find_naive as excel_find_naive, find_value as excel_find_value,
     find_value_naive as excel_find_value_naive,
+};
+pub use eval::fixed::{
+    fixed as excel_fixed, fixed_apply as excel_fixed_apply,
+    fixed_apply_naive as excel_fixed_apply_naive, fixed_naive as excel_fixed_naive,
+    fixed_slice as excel_fixed_slice, fixed_slice_naive as excel_fixed_slice_naive,
 };
 pub use eval::hstack::{hstack as excel_hstack, hstack_naive as excel_hstack_naive};
 pub use eval::ifs::{select as excel_ifs, select_naive as excel_ifs_naive};

@@ -466,6 +466,7 @@ impl Interpreter {
             "FIND" => self.fn_find(args, ctx),
             "SEARCH" => self.fn_search(args, ctx),
             "VALUE" => self.fn_value(args, ctx),
+            "FIXED" => self.fn_fixed(args, ctx),
             "SUBSTITUTE" => self.fn_substitute(args, ctx),
             "TEXT" => self.fn_text(args, ctx),
             "REPLACE" => self.fn_replace(args, ctx),
@@ -2441,6 +2442,39 @@ impl Interpreter {
             Some(r) => Ok(ExcelValue::Number(r)),
             None => Ok(ExcelValue::Error(ExcelError::Num)),
         }
+    }
+
+    fn fn_fixed(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.is_empty() || args.len() > 3 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        let number = self.eval_scalar(&args[0], ctx)?;
+        if let ExcelValue::Error(e) = number {
+            return Ok(ExcelValue::Error(e));
+        }
+        let decimals = if args.len() >= 2 && !matches!(args[1], Expr::Missing) {
+            let v = self.eval_scalar(&args[1], ctx)?;
+            if let ExcelValue::Error(e) = v {
+                return Ok(ExcelValue::Error(e));
+            }
+            Some(v)
+        } else {
+            None
+        };
+        let no_commas = if args.len() >= 3 && !matches!(args[2], Expr::Missing) {
+            let v = self.eval_scalar(&args[2], ctx)?;
+            if let ExcelValue::Error(e) = v {
+                return Ok(ExcelValue::Error(e));
+            }
+            Some(v)
+        } else {
+            None
+        };
+        Ok(xlsx_engine_core::excel_fixed_apply(
+            &number,
+            decimals.as_ref(),
+            no_commas.as_ref(),
+        ))
     }
 
     fn fn_value(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {

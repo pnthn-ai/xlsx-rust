@@ -3,8 +3,8 @@
 //! Unknown names return `#NAME?` (an Excel value, not [`EvalError`]).
 //! Dedicated kernels live in sibling modules (`ifs`, `filter`, `sort`,
 //! `xlookup`, `textsplit`, `xnpv`, `map`, `isomitted`, `len`, `unicode`,
-//! `trunc`, …). Financial TVM kernels live in [`xlsx_types`] (`excel_pmt` /
-//! `excel_fv` / `excel_pv` / …).
+//! `trunc`, `mround`, `fixed`, …). Financial TVM kernels live in
+//! [`xlsx_types`] (`excel_pmt` / `excel_fv` / `excel_pv` / …).
 
 use super::{coerce, compare, excel_pow, Ctx, Evaluator};
 use crate::ast::Expr;
@@ -161,6 +161,7 @@ pub(crate) fn dispatch(
         "FIND" => super::find::fn_find(ev, args, ctx),
         "SEARCH" => super::search::fn_search(ev, args, ctx),
         "VALUE" => super::value::eval(ev, args, ctx),
+        "FIXED" => super::fixed::fn_fixed(ev, args, ctx),
         "SUBSTITUTE" => fn_substitute(ev, args, ctx),
         "TEXT" => fn_text(ev, args, ctx),
         "REPLACE" => super::replace::fn_replace(ev, args, ctx),
