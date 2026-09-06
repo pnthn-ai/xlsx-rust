@@ -1,0 +1,412 @@
+[
+  {
+    "id": "fn.lower-microsoft-cummings",
+    "description": "Microsoft example: LOWER(\"E. E. Cummings\")",
+    "tags": ["text", "lower"],
+    "formula": "=LOWER(\"E. E. Cummings\")",
+    "expected": { "text": "e. e. cummings" }
+  },
+  {
+    "id": "fn.lower-microsoft-apt",
+    "description": "Microsoft example: LOWER(\"Apt. 2B\")",
+    "tags": ["text", "lower"],
+    "formula": "=LOWER(\"Apt. 2B\")",
+    "expected": { "text": "apt. 2b" }
+  },
+  {
+    "id": "fn.lower-empty",
+    "description": "LOWER(\"\") is empty text",
+    "tags": ["text", "lower"],
+    "formula": "=LOWER(\"\")",
+    "expected": { "text": "" }
+  },
+  {
+    "id": "fn.lower-already",
+    "description": "Already-lowercase ASCII is unchanged (identity)",
+    "tags": ["text", "lower"],
+    "formula": "=LOWER(\"already lower\")",
+    "expected": { "text": "already lower" }
+  },
+  {
+    "id": "fn.lower-all-upper",
+    "description": "All-ASCII-uppercase becomes lowercase",
+    "tags": ["text", "lower"],
+    "formula": "=LOWER(\"HELLO\")",
+    "expected": { "text": "hello" }
+  },
+  {
+    "id": "fn.lower-mixed",
+    "description": "Mixed-case ASCII folds only the uppercase letters",
+    "tags": ["text", "lower"],
+    "formula": "=LOWER(\"AbC\")",
+    "expected": { "text": "abc" }
+  },
+  {
+    "id": "fn.lower-digits",
+    "description": "Digits are not letters and stay",
+    "tags": ["text", "lower"],
+    "formula": "=LOWER(\"12345\")",
+    "expected": { "text": "12345" }
+  },
+  {
+    "id": "fn.lower-punct",
+    "description": "Punctuation around the A/@ and Z/[ edges is unchanged",
+    "tags": ["text", "lower"],
+    "formula": "=LOWER(\"@A[`Z{\")",
+    "expected": { "text": "@a[`z{" }
+  },
+  {
+    "id": "fn.lower-spaces-kept",
+    "description": "LOWER does not trim; leading/trailing/internal spaces stay",
+    "tags": ["text", "lower"],
+    "formula": "=LOWER(\"  Hello  World  \")",
+    "expected": { "text": "  hello  world  " }
+  },
+  {
+    "id": "fn.lower-alnum",
+    "description": "Letters fold; digits and hyphens stay",
+    "tags": ["text", "lower"],
+    "formula": "=LOWER(\"ABC-123-XYZ\")",
+    "expected": { "text": "abc-123-xyz" }
+  },
+  {
+    "id": "fn.lower-nested",
+    "description": "LOWER is idempotent: LOWER(LOWER(…)) matches LOWER",
+    "tags": ["text", "lower"],
+    "formula": "=LOWER(LOWER(\"AbC\"))",
+    "expected": { "text": "abc" }
+  },
+  {
+    "id": "fn.lower-of-upper",
+    "description": "LOWER(UPPER(text)) is the lowercase form",
+    "tags": ["text", "lower"],
+    "formula": "=LOWER(UPPER(\"abc\"))",
+    "expected": { "text": "abc" }
+  },
+  {
+    "id": "fn.lower-len",
+    "description": "LEN(LOWER(\"AbC\")) is 3",
+    "tags": ["text", "lower"],
+    "formula": "=LEN(LOWER(\"AbC\"))",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.lower-exact",
+    "description": "EXACT confirms the lowered text",
+    "tags": ["text", "lower"],
+    "formula": "=EXACT(LOWER(\"AbC\"), \"abc\")",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.lower-concat",
+    "description": "LOWER of concatenated mixed-case pieces",
+    "tags": ["text", "lower"],
+    "formula": "=LOWER(\"Ab\"&\"C\")",
+    "expected": { "text": "abc" }
+  },
+  {
+    "id": "fn.lower-cell",
+    "description": "LOWER of a stored mixed-case cell",
+    "tags": ["text", "lower"],
+    "formula": "=LOWER(A1)",
+    "expected": { "text": "hello" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "HeLLo" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.lower-blank-cell",
+    "description": "Blank cell coerces like & to empty text",
+    "tags": ["text", "lower", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=LOWER(A1)",
+    "expected": { "text": "" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {}
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.lower-stored-empty",
+    "description": "Stored \"\" is already empty after LOWER",
+    "tags": ["text", "lower"],
+    "formula": "=LOWER(A1)",
+    "expected": { "text": "" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.lower-formula-cell",
+    "description": "LOWER of a formula cell that yields mixed-case text",
+    "tags": ["text", "lower"],
+    "formula": "=LOWER(A1)",
+    "expected": { "text": "abc" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "formula": "=\"AbC\"" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.lower-named",
+    "description": "LOWER of a defined name referring to a cell",
+    "tags": ["text", "lower", "named"],
+    "formula": "=LOWER(Title)",
+    "expected": { "text": "hello" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "HELLO" }
+          }
+        }
+      ],
+      "names": [{ "name": "Title", "refers_to": "Sheet1!A1" }]
+    }
+  },
+  {
+    "id": "fn.lower-number",
+    "description": "LOWER(123) coerces to text \"123\"",
+    "tags": ["text", "lower", "coercion"],
+    "formula": "=LOWER(123)",
+    "expected": { "text": "123" }
+  },
+  {
+    "id": "fn.lower-number-decimal",
+    "description": "LOWER(1.5) coerces to \"1.5\"",
+    "tags": ["text", "lower", "coercion"],
+    "formula": "=LOWER(1.5)",
+    "expected": { "text": "1.5" }
+  },
+  {
+    "id": "fn.lower-number-neg",
+    "description": "LOWER(-2) coerces to \"-2\"",
+    "tags": ["text", "lower", "coercion"],
+    "formula": "=LOWER(-2)",
+    "expected": { "text": "-2" }
+  },
+  {
+    "id": "fn.lower-numeric-text",
+    "description": "LOWER of numeric text stays text \"42\"",
+    "tags": ["text", "lower"],
+    "formula": "=LOWER(\"42\")",
+    "expected": { "text": "42" }
+  },
+  {
+    "id": "fn.lower-true",
+    "description": "LOWER(TRUE) coerces to \"TRUE\" then folds to \"true\"",
+    "tags": ["text", "lower", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=LOWER(TRUE)",
+    "expected": { "text": "true" }
+  },
+  {
+    "id": "fn.lower-false",
+    "description": "LOWER(FALSE) coerces to \"FALSE\" then folds to \"false\"",
+    "tags": ["text", "lower", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=LOWER(FALSE)",
+    "expected": { "text": "false" }
+  },
+  {
+    "id": "fn.lower-true-text",
+    "description": "LOWER of the letters T-R-U-E (already a string)",
+    "tags": ["text", "lower"],
+    "formula": "=LOWER(\"TRUE\")",
+    "expected": { "text": "true" }
+  },
+  {
+    "id": "fn.lower-unicode-cafe",
+    "description": "Latin capital É is a letter and folds (invariant mapping)",
+    "tags": ["text", "lower"],
+    "formula": "=LOWER(\"CAFÉ\")",
+    "expected": { "text": "café" }
+  },
+  {
+    "id": "fn.lower-unicode-already",
+    "description": "Already-lowercase Latin-1 is unchanged",
+    "tags": ["text", "lower"],
+    "formula": "=LOWER(\"café\")",
+    "expected": { "text": "café" }
+  },
+  {
+    "id": "fn.lower-unicode-aou",
+    "description": "German umlaut capitals fold 1:1",
+    "tags": ["text", "lower"],
+    "formula": "=LOWER(\"ÄÖÜ\")",
+    "expected": { "text": "äöü" }
+  },
+  {
+    "id": "fn.lower-cjk",
+    "description": "CJK is not cased and is unchanged",
+    "tags": ["text", "lower"],
+    "formula": "=LOWER(\"日本語\")",
+    "expected": { "text": "日本語" }
+  },
+  {
+    "id": "fn.lower-emoji",
+    "description": "Emoji scalars are not letters and stay",
+    "tags": ["text", "lower"],
+    "formula": "=LOWER(A1)",
+    "expected": { "text": "😀🎉" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "😀🎉" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.lower-tab-kept",
+    "description": "Tab is not a letter and is kept",
+    "tags": ["text", "lower"],
+    "formula": "=LOWER(A1)",
+    "expected": { "text": "\ta\t" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "\tA\t" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.lower-lf-kept",
+    "description": "Line feed is not a letter and is kept",
+    "tags": ["text", "lower"],
+    "formula": "=LOWER(A1)",
+    "expected": { "text": "\na\n" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "\nA\n" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.lower-nbsp-kept",
+    "description": "NBSP is not a letter and is kept",
+    "tags": ["text", "lower"],
+    "formula": "=LOWER(A1)",
+    "expected": { "text": "a\u00a0b" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "A\u00a0B" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.lower-implicit-intersect",
+    "description": "LOWER(A1:A3) from host B1 uses implicit intersection (same row → A1)",
+    "tags": ["text", "lower"],
+    "quirks": ["implicit-intersection"],
+    "at": "Sheet1!B1",
+    "formula": "=LOWER(A1:A3)",
+    "expected": { "text": "one" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "ONE" },
+            "A2": { "text": "TWO" },
+            "A3": { "text": "THREE" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.lower-err-div0",
+    "description": "Error argument propagates #DIV/0!",
+    "tags": ["text", "lower", "errors"],
+    "formula": "=LOWER(1/0)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.lower-err-na",
+    "description": "NA() propagates #N/A",
+    "tags": ["text", "lower", "errors"],
+    "formula": "=LOWER(NA())",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.lower-err-cell",
+    "description": "Error in the referenced cell propagates",
+    "tags": ["text", "lower", "errors"],
+    "formula": "=LOWER(A1)",
+    "expected": { "error": "#VALUE!" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "error": "#VALUE!" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.lower-arity-zero",
+    "description": "LOWER() with no arguments is #VALUE!",
+    "tags": ["text", "lower", "errors"],
+    "formula": "=LOWER()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.lower-arity-two",
+    "description": "LOWER with two arguments is #VALUE!",
+    "tags": ["text", "lower", "errors"],
+    "formula": "=LOWER(\"a\",\"b\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.lower-locale-dotted-i",
+    "description": "Capital dotted I (U+0130) case mapping is locale-dependent",
+    "tags": ["text", "lower", "locale"],
+    "formula": "=LOWER(\"İ\")",
+    "ignore": "Turkish İ → i vs i+combining-dot depends on workbook locale. Do not invent a golden."
+  }
+]

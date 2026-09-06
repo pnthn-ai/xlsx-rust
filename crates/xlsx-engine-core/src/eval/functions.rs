@@ -135,8 +135,8 @@ pub(crate) fn dispatch(
         "RIGHT" => fn_left_right(ev, args, ctx, false),
         "MID" => fn_mid(ev, args, ctx),
         "LEN" => fn_len(ev, args, ctx),
-        "LOWER" => fn_case(ev, args, ctx, true),
-        "UPPER" => fn_case(ev, args, ctx, false),
+        "LOWER" => fn_lower(ev, args, ctx),
+        "UPPER" => fn_upper(ev, args, ctx),
         "TRIM" => fn_trim(ev, args, ctx),
         "EXACT" => fn_exact(ev, args, ctx),
         "FIND" => fn_find(ev, args, ctx),
@@ -1333,21 +1333,22 @@ fn fn_len(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue
     }
 }
 
-fn fn_case(
-    ev: &Evaluator,
-    args: &[Expr],
-    ctx: &mut Ctx<'_>,
-    lower: bool,
-) -> Result<ExcelValue, EvalError> {
+fn fn_lower(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
     if args.len() != 1 {
         return Ok(ExcelValue::Error(ExcelError::Value));
     }
     match coerce::to_text(&ev.eval_scalar(&args[0], ctx)?) {
-        Ok(s) => Ok(ExcelValue::Text(if lower {
-            s.to_ascii_lowercase()
-        } else {
-            s.to_ascii_uppercase()
-        })),
+        Ok(s) => Ok(ExcelValue::Text(super::lower::lower_owned(s))),
+        Err(e) => Ok(ExcelValue::Error(e)),
+    }
+}
+
+fn fn_upper(ev: &Evaluator, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+    if args.len() != 1 {
+        return Ok(ExcelValue::Error(ExcelError::Value));
+    }
+    match coerce::to_text(&ev.eval_scalar(&args[0], ctx)?) {
+        Ok(s) => Ok(ExcelValue::Text(s.to_ascii_uppercase())),
         Err(e) => Ok(ExcelValue::Error(e)),
     }
 }

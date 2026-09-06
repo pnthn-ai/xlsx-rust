@@ -443,8 +443,8 @@ impl Interpreter {
             "RIGHT" => self.fn_left_right(args, ctx, false),
             "MID" => self.fn_mid(args, ctx),
             "LEN" => self.fn_len(args, ctx),
-            "LOWER" => self.fn_case(args, ctx, true),
-            "UPPER" => self.fn_case(args, ctx, false),
+            "LOWER" => self.fn_lower(args, ctx),
+            "UPPER" => self.fn_upper(args, ctx),
             "TRIM" => self.fn_trim(args, ctx),
             "EXACT" => self.fn_exact(args, ctx),
             "FIND" => self.fn_find(args, ctx),
@@ -1878,21 +1878,22 @@ impl Interpreter {
         }
     }
 
-    fn fn_case(
-        &self,
-        args: &[Expr],
-        ctx: &mut Ctx<'_>,
-        lower: bool,
-    ) -> Result<ExcelValue, EvalError> {
+    fn fn_lower(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
         if args.len() != 1 {
             return Ok(ExcelValue::Error(ExcelError::Value));
         }
         match self.as_text(&self.eval_scalar(&args[0], ctx)?) {
-            Ok(s) => Ok(ExcelValue::Text(if lower {
-                s.to_ascii_lowercase()
-            } else {
-                s.to_ascii_uppercase()
-            })),
+            Ok(s) => Ok(ExcelValue::Text(xlsx_engine_core::excel_lower_owned(s))),
+            Err(e) => Ok(ExcelValue::Error(e)),
+        }
+    }
+
+    fn fn_upper(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.len() != 1 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        match self.as_text(&self.eval_scalar(&args[0], ctx)?) {
+            Ok(s) => Ok(ExcelValue::Text(s.to_ascii_uppercase())),
             Err(e) => Ok(ExcelValue::Error(e)),
         }
     }

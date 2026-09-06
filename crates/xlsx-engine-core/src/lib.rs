@@ -36,6 +36,7 @@
 //! - [`eval::makearray`] — `MAKEARRAY(rows, cols, LAMBDA(r, c, body))`
 //! - [`eval::textsplit`] — `TEXTSPLIT` col/row split kernel (pad / `#CALC!`)
 //! - [`eval::textafter`] — Excel `TEXTAFTER` kernel (nth delimiter, `match_end`)
+//! - [`eval::lower`] — Excel `LOWER` (ASCII SWAR fold + Unicode default mapping)
 //! - [`eval::irr`] — Excel `IRR` Newton / secant kernel
 //! - [`xlsx_types::excel_nper`] — Excel `NPER` closed form (`ln1p`)
 //! - [`eval::xnpv`] — Excel `XNPV` irregular-date NPV kernel
@@ -111,6 +112,9 @@ pub use eval::take::{take as excel_take, take_naive as excel_take_naive};
 pub use eval::textafter::{textafter as excel_textafter, textafter_naive as excel_textafter_naive};
 pub use eval::textbefore::{
     textbefore as excel_textbefore, textbefore_naive as excel_textbefore_naive,
+};
+pub use eval::lower::{
+    lower as excel_lower, lower_naive as excel_lower_naive, lower_owned as excel_lower_owned,
 };
 pub use eval::textjoin::{
     eval_textjoin_formula, textjoin_naive_join, TextJoinBuilder, TEXTJOIN_MAX_CHARS,
