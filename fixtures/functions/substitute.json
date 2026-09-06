@@ -507,7 +507,7 @@
     "description": "All four arguments from cells",
     "tags": ["text", "substitute"],
     "formula": "=SUBSTITUTE(A1, B1, C1, D1)",
-    "expected": { "text": "a-x-c" },
+    "expected": { "text": "axb-c" },
     "workbook": {
       "sheets": [{
         "name": "Sheet1",
