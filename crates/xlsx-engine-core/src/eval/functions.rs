@@ -16,7 +16,7 @@ use crate::dates::{
 use crate::text_format;
 use xlsx_types::{
     count_matches, excel_ceiling, excel_ceiling_math, excel_cumipmt, excel_cumprinc, excel_effect,
-    excel_floor, excel_floor_math, excel_fv, excel_ipmt, excel_nominal, excel_nper,
+    excel_floor, excel_floor_math, excel_fv, excel_int, excel_ipmt, excel_nominal, excel_nper,
     excel_pduration, excel_pmt, excel_ppmt, excel_pv, excel_rate, excel_rri, Criterion, EvalError,
     ExcelError, ExcelValue,
 };
@@ -86,7 +86,7 @@ pub(crate) fn dispatch(
                 0.0
             })
         }),
-        "INT" => fn_unary_num(ev, args, ctx, |n| ExcelValue::Number(n.floor())),
+        "INT" => fn_unary_num(ev, args, ctx, |n| ExcelValue::Number(excel_int(n))),
         "TRUNC" => fn_trunc(ev, args, ctx),
         "ROUND" => fn_round(ev, args, ctx),
         "ROUNDUP" => fn_round_dir(ev, args, ctx, RoundDir::Up),

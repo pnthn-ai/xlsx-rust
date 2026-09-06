@@ -9,10 +9,10 @@ use crate::parse::{parse, BinOp, Expr, UnaryOp};
 use std::collections::{HashMap, HashSet};
 use xlsx_types::{
     count_matches, excel_ceiling, excel_ceiling_math, excel_cumipmt, excel_cumprinc, excel_effect,
-    excel_floor, excel_floor_math, excel_fv, excel_ipmt, excel_nominal, excel_nper, excel_num_eq,
-    excel_pduration, excel_pmt, excel_ppmt, excel_pv, excel_rate, excel_round_15, excel_rri,
-    ArrayMode, CellAddr, CellRef, Criterion, EvalError, EvalSpec, EvalTarget, ExcelError,
-    ExcelValue, RangeRef, Workbook,
+    excel_floor, excel_floor_math, excel_fv, excel_int, excel_ipmt, excel_nominal, excel_nper,
+    excel_num_eq, excel_pduration, excel_pmt, excel_ppmt, excel_pv, excel_rate, excel_round_15,
+    excel_rri, ArrayMode, CellAddr, CellRef, Criterion, EvalError, EvalSpec, EvalTarget,
+    ExcelError, ExcelValue, RangeRef, Workbook,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -1365,7 +1365,7 @@ impl Interpreter {
     }
 
     fn fn_int(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
-        self.fn_unary_num(args, ctx, |n| ExcelValue::Number(n.floor()))
+        self.fn_unary_num(args, ctx, |n| ExcelValue::Number(excel_int(n)))
     }
 
     fn fn_trunc(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
