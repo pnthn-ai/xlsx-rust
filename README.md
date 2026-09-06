@@ -810,8 +810,9 @@ as one or the other. Documented quirk categories:
 - Immediately-invoked `LAMBDA(...)(args)` is not parsed. Optional LAMBDA
   parameters and `LET` helpers are out of scope. Parameter names that
   tokenize as A1 refs are `#VALUE!`.
-- Eta reduction covers stock one-arg aggregators only. Other function names
-  (`BYROW(a, LEN)`) are `#CALC!` unless they resolve as a defined LAMBDA.
+- Eta reduction covers stock one-arg aggregators only. A bare name that is
+  not an eta aggregator and not a defined LAMBDA is evaluated: unknown
+  names are `#NAME?`; a computed number/text is `#CALC!`.
 - Scalar operators (`BYROW(...)+1`) take the top-left element (`scalarize`).
   Consume with `INDEX` / `SUM` / `COUNTA` / `TYPE`.
 

@@ -482,10 +482,10 @@
   },
   {
     "id": "fn.byrow.unknown-name",
-    "description": "Unknown name as the LAMBDA argument is #CALC! (not a LAMBDA)",
+    "description": "Unknown name as the LAMBDA argument is #NAME? (name resolves first)",
     "tags": ["byrow", "errors"],
     "formula": "=BYROW({1,2},Nope)",
-    "expected": { "error": "#CALC!" }
+    "expected": { "error": "#NAME?" }
   },
   {
     "id": "fn.byrow.spill-occupancy-not-modeled",
