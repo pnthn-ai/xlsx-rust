@@ -3,6 +3,7 @@
 //! Operators call into [`coerce`] / [`compare`] / [`empty`] for Excel quirks.
 //! Worksheet functions live in [`functions`].
 
+pub mod abs;
 pub mod averageif;
 pub mod averageifs;
 pub mod bycol;
@@ -28,9 +29,12 @@ pub mod hstack;
 pub mod ifs;
 pub mod irr;
 pub mod isomitted;
+pub mod left;
+pub mod len;
 pub mod lower;
 pub mod makearray;
 pub mod map;
+pub mod mid;
 pub mod mirr;
 pub mod npv;
 pub mod proper;
@@ -38,6 +42,7 @@ pub mod randarray;
 pub mod reduce;
 pub mod replace;
 pub mod rept;
+pub mod right;
 pub mod round;
 pub mod scan;
 pub mod search;

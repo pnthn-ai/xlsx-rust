@@ -20,6 +20,10 @@ name = "xlsx-bench-snapshot"
 path = "src/bin/xlsx-bench-snapshot.rs"
 
 [[bench]]
+name = "fn_abs"
+harness = false
+
+[[bench]]
 name = "fn_sum"
 harness = false
 
@@ -112,7 +116,15 @@ name = "fn_proper"
 harness = false
 
 [[bench]]
+name = "fn_mid"
+harness = false
+
+[[bench]]
 name = "fn_unicode"
+harness = false
+
+[[bench]]
+name = "fn_len"
 harness = false
 
 [[bench]]
@@ -121,5 +133,25 @@ harness = false
 
 [[bench]]
 name = "fn_text"
+harness = false
+
+[[bench]]
+name = "fn_left"
+harness = false
+
+[[bench]]
+name = "fn_right"
+harness = false
+
+[[bench]]
+name = "fn_find"
+harness = false
+
+[[bench]]
+name = "fn_search"
+harness = false
+
+[[bench]]
+name = "fn_replace"
 harness = false
 

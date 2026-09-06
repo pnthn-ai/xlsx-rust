@@ -1,0 +1,547 @@
+[
+  {
+    "id": "fn.left-ms-sale",
+    "description": "Microsoft example: LEFT(\"Sale Price\", 4) is \"Sale\"",
+    "tags": ["left", "text"],
+    "formula": "=LEFT(\"Sale Price\", 4)",
+    "expected": { "text": "Sale" }
+  },
+  {
+    "id": "fn.left-ms-sweden",
+    "description": "Microsoft example: LEFT(\"Sweden\") defaults to 1 → \"S\"",
+    "tags": ["left", "text"],
+    "formula": "=LEFT(\"Sweden\")",
+    "expected": { "text": "S" }
+  },
+  {
+    "id": "fn.left-one",
+    "description": "LEFT(\"abc\", 1) is \"a\"",
+    "tags": ["left", "text"],
+    "formula": "=LEFT(\"abc\", 1)",
+    "expected": { "text": "a" }
+  },
+  {
+    "id": "fn.left-all",
+    "description": "num_chars equal to LEN returns the whole string",
+    "tags": ["left", "text"],
+    "formula": "=LEFT(\"abc\", 3)",
+    "expected": { "text": "abc" }
+  },
+  {
+    "id": "fn.left-past-end",
+    "description": "num_chars past LEN returns the whole string (no pad)",
+    "tags": ["left", "text"],
+    "formula": "=LEFT(\"abc\", 10)",
+    "expected": { "text": "abc" }
+  },
+  {
+    "id": "fn.left-zero",
+    "description": "LEFT(\"abc\", 0) is the empty string",
+    "tags": ["left", "text"],
+    "formula": "=LEFT(\"abc\", 0)",
+    "expected": { "text": "" }
+  },
+  {
+    "id": "fn.left-empty-text",
+    "description": "LEFT of empty text is empty",
+    "tags": ["left", "text"],
+    "formula": "=LEFT(\"\", 3)",
+    "expected": { "text": "" }
+  },
+  {
+    "id": "fn.left-empty-default",
+    "description": "LEFT(\"\") defaults to 1 and stays empty",
+    "tags": ["left", "text"],
+    "formula": "=LEFT(\"\")",
+    "expected": { "text": "" }
+  },
+  {
+    "id": "fn.left-spaces",
+    "description": "Leading spaces are characters",
+    "tags": ["left", "text"],
+    "formula": "=LEFT(\"  abc\", 2)",
+    "expected": { "text": "  " }
+  },
+  {
+    "id": "fn.left-trunc-2-9",
+    "description": "2.9 truncates toward zero → 2",
+    "tags": ["left", "text"],
+    "formula": "=LEFT(\"abc\", 2.9)",
+    "expected": { "text": "ab" }
+  },
+  {
+    "id": "fn.left-trunc-0-9",
+    "description": "0.9 truncates toward zero → 0 → empty",
+    "tags": ["left", "text"],
+    "formula": "=LEFT(\"abc\", 0.9)",
+    "expected": { "text": "" }
+  },
+  {
+    "id": "fn.left-trunc-neg-frac",
+    "description": "-0.9 truncates toward zero → 0 → empty (not #VALUE!)",
+    "tags": ["left", "text"],
+    "formula": "=LEFT(\"abc\", -0.9)",
+    "expected": { "text": "" }
+  },
+  {
+    "id": "fn.left-neg-1",
+    "description": "LEFT(\"abc\", -1) is #VALUE!",
+    "tags": ["left", "text", "errors"],
+    "formula": "=LEFT(\"abc\", -1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.left-neg-1-9",
+    "description": "-1.9 truncates toward zero → -1 → #VALUE!",
+    "tags": ["left", "text", "errors"],
+    "formula": "=LEFT(\"abc\", -1.9)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.left-true-n",
+    "description": "TRUE as num_chars coerces to 1",
+    "tags": ["left", "text", "coercion"],
+    "formula": "=LEFT(\"abc\", TRUE)",
+    "expected": { "text": "a" }
+  },
+  {
+    "id": "fn.left-false-n",
+    "description": "FALSE as num_chars coerces to 0 → empty",
+    "tags": ["left", "text", "coercion"],
+    "formula": "=LEFT(\"abc\", FALSE)",
+    "expected": { "text": "" }
+  },
+  {
+    "id": "fn.left-text-num",
+    "description": "Numeric text num_chars coerces",
+    "tags": ["left", "text", "coercion"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=LEFT(\"abc\", \"2\")",
+    "expected": { "text": "ab" }
+  },
+  {
+    "id": "fn.left-text-num-frac",
+    "description": "\"2.9\" coerces then truncates toward zero",
+    "tags": ["left", "text", "coercion"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=LEFT(\"abc\", \"2.9\")",
+    "expected": { "text": "ab" }
+  },
+  {
+    "id": "fn.left-text-bad",
+    "description": "Non-numeric text num_chars is #VALUE!",
+    "tags": ["left", "text", "errors", "coercion"],
+    "formula": "=LEFT(\"abc\", \"x\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.left-blank-n",
+    "description": "Blank num_chars cell is 0 → empty (not the omitted default 1)",
+    "tags": ["left", "text", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=LEFT(\"abc\", A1)",
+    "expected": { "text": "" },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.left-omitted-comma",
+    "description": "Omitted optional num_chars (LEFT(t,)) uses the default 1, not blank-as-0",
+    "tags": ["left", "text"],
+    "formula": "=LEFT(\"abc\",)",
+    "expected": { "text": "a" }
+  },
+  {
+    "id": "fn.left-percent-200",
+    "description": "LEFT(\"hello\", 200%) is LEFT(..., 2)",
+    "tags": ["left", "text"],
+    "quirks": ["percent-unary"],
+    "formula": "=LEFT(\"hello\", 200%)",
+    "expected": { "text": "he" }
+  },
+  {
+    "id": "fn.left-percent-below-one",
+    "description": "LEFT(\"hello\", 50%) is LEFT(..., 0.5) → trunc 0 → empty",
+    "tags": ["left", "text"],
+    "quirks": ["percent-unary"],
+    "formula": "=LEFT(\"hello\", 50%)",
+    "expected": { "text": "" }
+  },
+  {
+    "id": "fn.left-huge-n",
+    "description": "Huge finite num_chars returns the whole string",
+    "tags": ["left", "text"],
+    "formula": "=LEFT(\"abc\", 1E+20)",
+    "expected": { "text": "abc" }
+  },
+  {
+    "id": "fn.left-number",
+    "description": "Number text-coerces via General (12345 → \"12345\")",
+    "tags": ["left", "text", "coercion"],
+    "formula": "=LEFT(12345, 2)",
+    "expected": { "text": "12" }
+  },
+  {
+    "id": "fn.left-number-frac",
+    "description": "LEFT(1234.5, 6) includes the decimal point",
+    "tags": ["left", "text", "coercion"],
+    "formula": "=LEFT(1234.5, 6)",
+    "expected": { "text": "1234.5" }
+  },
+  {
+    "id": "fn.left-true-text",
+    "description": "TRUE text-coerces to \"TRUE\"",
+    "tags": ["left", "text", "coercion"],
+    "formula": "=LEFT(TRUE, 2)",
+    "expected": { "text": "TR" }
+  },
+  {
+    "id": "fn.left-false-text",
+    "description": "FALSE text-coerces to \"FALSE\"",
+    "tags": ["left", "text", "coercion"],
+    "formula": "=LEFT(FALSE, 3)",
+    "expected": { "text": "FAL" }
+  },
+  {
+    "id": "fn.left-blank-text",
+    "description": "Blank text cell is empty (not \"0\")",
+    "tags": ["left", "text", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=LEFT(A1, 2)",
+    "expected": { "text": "" },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.left-cell",
+    "description": "LEFT of a stored text cell",
+    "tags": ["left", "text"],
+    "formula": "=LEFT(A1, 3)",
+    "expected": { "text": "abc" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": { "A1": { "text": "abcdef" } }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.left-defined-name",
+    "description": "LEFT of a defined name that refers to text",
+    "tags": ["left", "text"],
+    "formula": "=LEFT(Label, 4)",
+    "expected": { "text": "Sale" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": { "A1": { "text": "Sale Price" } }
+        }
+      ],
+      "names": [{ "name": "Label", "refers_to": "Sheet1!A1" }]
+    }
+  },
+  {
+    "id": "fn.left-unicode-cafe",
+    "description": "Precomposed é is one Unicode scalar (same as LEN/MID)",
+    "tags": ["left", "text"],
+    "formula": "=LEFT(\"café\", 3)",
+    "expected": { "text": "caf" }
+  },
+  {
+    "id": "fn.left-unicode-cafe-all",
+    "description": "LEFT(\"café\", 4) keeps the precomposed é",
+    "tags": ["left", "text"],
+    "formula": "=LEFT(\"café\", 4)",
+    "expected": { "text": "café" }
+  },
+  {
+    "id": "fn.left-unicode-cjk",
+    "description": "CJK ideographs are one scalar each",
+    "tags": ["left", "text"],
+    "formula": "=LEFT(\"日本語\", 2)",
+    "expected": { "text": "日本" }
+  },
+  {
+    "id": "fn.left-emoji-scalar",
+    "description": "Surrogate-pair emoji is one character (Excel Compatibility Version 2). Version 1 counted UTF-16 units (😀=2) and is not the calc-core default.",
+    "tags": ["left", "text"],
+    "notes": "Microsoft Compatibility Version 2: LEN/MID/FIND/SEARCH/REPLACE/LEFT count a surrogate pair as one character. Version 1 (legacy UTF-16) is deferred.",
+    "formula": "=LEFT(\"😀abc\", 1)",
+    "expected": { "text": "😀" }
+  },
+  {
+    "id": "fn.left-emoji-after",
+    "description": "Prefix through a surrogate-pair emoji is 2 characters under Version 2",
+    "tags": ["left", "text"],
+    "formula": "=LEFT(\"a😀b\", 2)",
+    "expected": { "text": "a😀" }
+  },
+  {
+    "id": "fn.left-emoji-len",
+    "description": "LEN(LEFT(emoji, 1)) is 1 under Compat v2 (not 2 UTF-16 units)",
+    "tags": ["left", "text"],
+    "formula": "=LEN(LEFT(\"😀abc\", 1))",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.left-combining-mark",
+    "description": "Combining marks stay separate characters (not clustered into a grapheme)",
+    "tags": ["left", "text"],
+    "formula": "=LEFT(A1, 1)",
+    "expected": { "text": "e" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": { "A1": { "text": "e\u0301" } }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.left-combining-both",
+    "description": "LEFT of e+combining-acute by 2 keeps the mark",
+    "tags": ["left", "text"],
+    "formula": "=LEFT(A1, 2)",
+    "expected": { "text": "e\u0301" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": { "A1": { "text": "e\u0301" } }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.left-variation-selector",
+    "description": "Emoji variation selector is its own scalar (❤ + VS16)",
+    "tags": ["left", "text"],
+    "formula": "=LEFT(A1, 1)",
+    "expected": { "text": "❤" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": { "A1": { "text": "❤\uFE0F" } }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.left-unichar-emoji",
+    "description": "LEFT(UNICHAR(128512), 1) is the grinning face (one scalar)",
+    "tags": ["left", "text"],
+    "formula": "=LEFT(UNICHAR(128512), 1)",
+    "expected": { "text": "😀" }
+  },
+  {
+    "id": "fn.left-nested",
+    "description": "LEFT(LEFT(\"hello\", 4), 2) is \"he\"",
+    "tags": ["left", "text"],
+    "formula": "=LEFT(LEFT(\"hello\", 4), 2)",
+    "expected": { "text": "he" }
+  },
+  {
+    "id": "fn.left-mid-identity",
+    "description": "LEFT(s, n) matches MID(s, 1, n)",
+    "tags": ["left", "text"],
+    "formula": "=EXACT(LEFT(\"Sale Price\", 4), MID(\"Sale Price\", 1, 4))",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.left-len-identity",
+    "description": "LEN(LEFT(s, n)) is MIN(n, LEN(s))",
+    "tags": ["left", "text"],
+    "formula": "=LEN(LEFT(\"abcdef\", 3))",
+    "expected": { "number": 3 }
+  },
+  {
+    "id": "fn.left-concat",
+    "description": "LEFT then concatenate",
+    "tags": ["left", "text"],
+    "formula": "=LEFT(\"Sale Price\", 4)&\"s\"",
+    "expected": { "text": "Sales" }
+  },
+  {
+    "id": "fn.left-code",
+    "description": "CODE(LEFT(...)) reads the first kept character",
+    "tags": ["left", "text"],
+    "formula": "=CODE(LEFT(\"xyz\", 2))",
+    "expected": { "number": 120 }
+  },
+  {
+    "id": "fn.left-intersect-text",
+    "description": "LEFT of a column range implicit-intersects the host row",
+    "tags": ["left", "text"],
+    "quirks": ["implicit-intersection"],
+    "formula": "=LEFT(A1:A3, 2)",
+    "at": "Sheet1!B2",
+    "expected": { "text": "bb" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "aaa" },
+            "A2": { "text": "bbb" },
+            "A3": { "text": "ccc" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.left-intersect-n",
+    "description": "num_chars range implicit-intersects the host row",
+    "tags": ["left", "text"],
+    "quirks": ["implicit-intersection"],
+    "formula": "=LEFT(\"abcd\", A1:A3)",
+    "at": "Sheet1!B2",
+    "expected": { "text": "ab" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "number": 1 },
+            "A2": { "number": 2 },
+            "A3": { "number": 3 }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.left-array-top-left",
+    "description": "LEFT of an array literal takes the top-left (no LEFT spill)",
+    "tags": ["left", "text"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=LEFT({\"hello\",\"world\"}, 2)",
+    "expected": { "text": "he" }
+  },
+  {
+    "id": "fn.left-array-n-top-left",
+    "description": "Array num_chars takes the top-left",
+    "tags": ["left", "text"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=LEFT(\"abcd\", {2,3})",
+    "expected": { "text": "ab" }
+  },
+  {
+    "id": "fn.left-arity-0",
+    "description": "LEFT() is #VALUE!",
+    "tags": ["left", "text", "errors"],
+    "formula": "=LEFT()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.left-arity-3",
+    "description": "Three arguments is #VALUE!",
+    "tags": ["left", "text", "errors"],
+    "formula": "=LEFT(\"abc\", 1, 2)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.left-err-text-div0",
+    "description": "Error in text propagates",
+    "tags": ["left", "text", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=LEFT(1/0, 1)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.left-err-n-div0",
+    "description": "Error in num_chars propagates",
+    "tags": ["left", "text", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=LEFT(\"abc\", 1/0)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.left-err-na",
+    "description": "#N/A in text propagates",
+    "tags": ["left", "text", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=LEFT(#N/A, 1)",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.left-err-ltr",
+    "description": "Text error wins left-to-right over a num_chars error",
+    "tags": ["left", "text", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=LEFT(#N/A, #DIV/0!)",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.left-err-name",
+    "description": "Unknown callee inside LEFT is #NAME?",
+    "tags": ["left", "text", "errors"],
+    "formula": "=LEFT(NOTAFUNCTION(), 1)",
+    "expected": { "error": "#NAME?" }
+  },
+  {
+    "id": "fn.left-iferror",
+    "description": "IFERROR swallows LEFT #VALUE! from a negative count",
+    "tags": ["left", "text", "errors"],
+    "formula": "=IFERROR(LEFT(\"abc\", -1), \"x\")",
+    "expected": { "text": "x" }
+  },
+  {
+    "id": "fn.left-date-serial",
+    "description": "DATE result is a serial number; LEFT uses General text of that number (not a locale date string)",
+    "tags": ["left", "text", "coercion"],
+    "formula": "=LEFT(DATE(2024,1,1), 1)",
+    "expected": { "text": "4" }
+  },
+  {
+    "id": "fn.left-rept",
+    "description": "LEFT of REPT is a short ASCII prefix",
+    "tags": ["left", "text"],
+    "formula": "=LEFT(REPT(\"ab\", 50), 3)",
+    "expected": { "text": "aba" }
+  },
+  {
+    "id": "fn.left-lower",
+    "description": "Nested LOWER then LEFT",
+    "tags": ["left", "text"],
+    "formula": "=LEFT(LOWER(\"ABC\"), 2)",
+    "expected": { "text": "ab" }
+  },
+  {
+    "id": "fn.left-tab",
+    "description": "CHAR(9) tab is one character",
+    "tags": ["left", "text"],
+    "formula": "=LEFT(CHAR(9)&\"Monthly\", 1)",
+    "expected": { "text": "\t" }
+  },
+  {
+    "id": "fn.left-exact",
+    "description": "EXACT is case-sensitive on a LEFT prefix",
+    "tags": ["left", "text"],
+    "formula": "=EXACT(LEFT(\"Abc\", 2), \"Ab\")",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.left-date-format-cell",
+    "description": "Live Excel LEFT of a date-formatted cell uses the displayed date text (locale-sensitive). This engine has no cell number format; do not invent a date-string golden.",
+    "tags": ["left", "text"],
+    "ignore": "Cell number formats are not applied by LEFT. Live Excel uses the displayed text of a date-formatted cell. Do not invent a locale-sensitive date-string golden.",
+    "formula": "=LEFT(A1, 2)",
+    "expected": { "text": "1/" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": { "A1": { "number": 45292 } }
+        }
+      ]
+    }
+  }
+]

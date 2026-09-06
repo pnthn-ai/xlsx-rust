@@ -9,10 +9,10 @@ use crate::parse::{parse, BinOp, Expr, UnaryOp};
 use std::collections::{HashMap, HashSet};
 use xlsx_types::{
     count_matches, excel_ceiling, excel_ceiling_math, excel_cumipmt, excel_cumprinc, excel_effect,
-    excel_floor, excel_floor_math, excel_fv, excel_ipmt, excel_nominal, excel_nper, excel_num_eq,
-    excel_pduration, excel_pmt, excel_ppmt, excel_pv, excel_rate, excel_round_15, excel_rri,
-    ArrayMode, CellAddr, CellRef, Criterion, EvalError, EvalSpec, EvalTarget, ExcelError,
-    ExcelValue, RangeRef, Workbook,
+    excel_floor, excel_floor_math, excel_fv, excel_int, excel_ipmt, excel_nominal, excel_nper,
+    excel_num_eq, excel_pduration, excel_pmt, excel_ppmt, excel_pv, excel_rate, excel_round_15,
+    excel_rri, ArrayMode, CellAddr, CellRef, Criterion, EvalError, EvalSpec, EvalTarget,
+    ExcelError, ExcelValue, RangeRef, Workbook,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -449,8 +449,8 @@ impl Interpreter {
             "WEEKNUM" => self.fn_weeknum(args, ctx),
             "ISOWEEKNUM" => self.fn_isoweeknum(args, ctx),
             "DAYS360" => self.fn_days360(args, ctx),
-            "LEFT" => self.fn_left_right(args, ctx, true),
-            "RIGHT" => self.fn_left_right(args, ctx, false),
+            "LEFT" => self.fn_left(args, ctx),
+            "RIGHT" => self.fn_right(args, ctx),
             "MID" => self.fn_mid(args, ctx),
             "LEN" => self.fn_len(args, ctx),
             "UNICODE" => self.fn_unicode(args, ctx),
@@ -1344,7 +1344,12 @@ impl Interpreter {
     }
 
     fn fn_abs(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
-        self.fn_unary_num(args, ctx, |n| ExcelValue::Number(n.abs()))
+        if args.len() != 1 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        Ok(xlsx_engine_core::excel_abs_value(
+            &self.eval_scalar(&args[0], ctx)?,
+        ))
     }
 
     fn fn_sign(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
@@ -1360,7 +1365,7 @@ impl Interpreter {
     }
 
     fn fn_int(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
-        self.fn_unary_num(args, ctx, |n| ExcelValue::Number(n.floor()))
+        self.fn_unary_num(args, ctx, |n| ExcelValue::Number(excel_int(n)))
     }
 
     fn fn_trunc(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
@@ -1946,13 +1951,8 @@ impl Interpreter {
         }
     }
 
-    fn fn_left_right(
-        &self,
-        args: &[Expr],
-        ctx: &mut Ctx<'_>,
-        left: bool,
-    ) -> Result<ExcelValue, EvalError> {
-        if args.is_empty() {
+    fn fn_left(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.is_empty() || args.len() > 2 {
             return Ok(ExcelValue::Error(ExcelError::Value));
         }
         let s = match self.as_text(&self.eval_scalar(&args[0], ctx)?) {
@@ -1960,64 +1960,80 @@ impl Interpreter {
             Err(e) => return Ok(ExcelValue::Error(e)),
         };
         let n = if args.len() >= 2 {
+            match &args[1] {
+                Expr::Missing => 1,
+                other => match self.as_number(&self.eval_scalar(other, ctx)?) {
+                    Ok(n) => match xlsx_engine_core::left_trunc_num_chars(n) {
+                        Ok(n) => n,
+                        Err(e) => return Ok(ExcelValue::Error(e)),
+                    },
+                    Err(e) => return Ok(ExcelValue::Error(e)),
+                },
+            }
+        } else {
+            1
+        };
+        Ok(ExcelValue::Text(xlsx_engine_core::excel_left_owned(s, n)))
+    }
+
+    fn fn_right(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
+        if args.is_empty() || args.len() > 2 {
+            return Ok(ExcelValue::Error(ExcelError::Value));
+        }
+        let text = match self.as_text(&self.eval_scalar(&args[0], ctx)?) {
+            Ok(s) => s,
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        let n = if args.len() == 2 {
             match self.as_number(&self.eval_scalar(&args[1], ctx)?) {
-                Ok(n) => n.trunc() as i64,
+                Ok(n) => match xlsx_engine_core::right_trunc_num_chars(n) {
+                    Ok(n) => n,
+                    Err(e) => return Ok(ExcelValue::Error(e)),
+                },
                 Err(e) => return Ok(ExcelValue::Error(e)),
             }
         } else {
             1
         };
-        if n < 0 {
-            return Ok(ExcelValue::Error(ExcelError::Value));
-        }
-        let chars: Vec<char> = s.chars().collect();
-        let take = (n as usize).min(chars.len());
-        let out: String = if left {
-            chars.iter().take(take).collect()
-        } else {
-            chars
-                .iter()
-                .skip(chars.len().saturating_sub(take))
-                .collect()
-        };
-        Ok(ExcelValue::Text(out))
+        Ok(ExcelValue::Text(xlsx_engine_core::excel_right_owned(
+            text, n,
+        )))
     }
 
     fn fn_mid(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
         if args.len() != 3 {
             return Ok(ExcelValue::Error(ExcelError::Value));
         }
-        let s = match self.as_text(&self.eval_scalar(&args[0], ctx)?) {
-            Ok(s) => s,
-            Err(e) => return Ok(ExcelValue::Error(e)),
-        };
-        let start = match self.as_number(&self.eval_scalar(&args[1], ctx)?) {
-            Ok(n) => n.trunc() as i64,
-            Err(e) => return Ok(ExcelValue::Error(e)),
-        };
-        let len = match self.as_number(&self.eval_scalar(&args[2], ctx)?) {
-            Ok(n) => n.trunc() as i64,
-            Err(e) => return Ok(ExcelValue::Error(e)),
-        };
-        if start < 1 || len < 0 {
-            return Ok(ExcelValue::Error(ExcelError::Value));
+        let text = self.eval_scalar(&args[0], ctx)?;
+        if let ExcelValue::Error(e) = text {
+            return Ok(ExcelValue::Error(e));
         }
-        let chars: Vec<char> = s.chars().collect();
-        let i = (start as usize) - 1;
-        if i >= chars.len() {
-            return Ok(ExcelValue::Text(String::new()));
+        let start_num = match self.as_number(&self.eval_scalar(&args[1], ctx)?) {
+            Ok(n) => match xlsx_engine_core::excel_mid_trunc_start_num(n) {
+                Ok(n) => n,
+                Err(e) => return Ok(ExcelValue::Error(e)),
+            },
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        let num_chars = match self.as_number(&self.eval_scalar(&args[2], ctx)?) {
+            Ok(n) => match xlsx_engine_core::excel_mid_trunc_num_chars(n) {
+                Ok(n) => n,
+                Err(e) => return Ok(ExcelValue::Error(e)),
+            },
+            Err(e) => return Ok(ExcelValue::Error(e)),
+        };
+        match xlsx_engine_core::excel_mid_value(&text, start_num, num_chars) {
+            Ok(s) => Ok(ExcelValue::Text(s)),
+            Err(e) => Ok(ExcelValue::Error(e)),
         }
-        Ok(ExcelValue::Text(
-            chars.iter().skip(i).take(len as usize).collect(),
-        ))
     }
 
     fn fn_len(&self, args: &[Expr], ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
         if args.len() != 1 {
             return Ok(ExcelValue::Error(ExcelError::Value));
         }
-        match self.as_text(&self.eval_scalar(&args[0], ctx)?) {
-            Ok(s) => Ok(ExcelValue::Number(s.chars().count() as f64)),
+        match xlsx_engine_core::excel_len_value(&self.eval_scalar(&args[0], ctx)?) {
+            Ok(n) => Ok(ExcelValue::Number(n)),
             Err(e) => Ok(ExcelValue::Error(e)),
         }
     }
@@ -2196,15 +2212,9 @@ impl Interpreter {
         if args.len() < 2 || args.len() > 3 {
             return Ok(ExcelValue::Error(ExcelError::Value));
         }
-        let find_text = match self.as_text(&self.eval_scalar(&args[0], ctx)?) {
-            Ok(s) => s,
-            Err(e) => return Ok(ExcelValue::Error(e)),
-        };
-        let within_text = match self.as_text(&self.eval_scalar(&args[1], ctx)?) {
-            Ok(s) => s,
-            Err(e) => return Ok(ExcelValue::Error(e)),
-        };
-        let start_num = if args.len() == 3 {
+        let find_text = self.eval_scalar(&args[0], ctx)?;
+        let within_text = self.eval_scalar(&args[1], ctx)?;
+        let start_num = if args.len() == 3 && !matches!(args[2], Expr::Missing) {
             match self.as_number(&self.eval_scalar(&args[2], ctx)?) {
                 Ok(n) => {
                     if !n.is_finite() {
@@ -2217,7 +2227,7 @@ impl Interpreter {
         } else {
             1
         };
-        match excel_find(&find_text, &within_text, start_num) {
+        match xlsx_engine_core::excel_find_value(&find_text, &within_text, start_num) {
             Ok(pos) => Ok(ExcelValue::Number(pos)),
             Err(e) => Ok(ExcelValue::Error(e)),
         }
@@ -2227,15 +2237,9 @@ impl Interpreter {
         if args.len() < 2 || args.len() > 3 {
             return Ok(ExcelValue::Error(ExcelError::Value));
         }
-        let find_text = match self.as_text(&self.eval_scalar(&args[0], ctx)?) {
-            Ok(s) => s,
-            Err(e) => return Ok(ExcelValue::Error(e)),
-        };
-        let within_text = match self.as_text(&self.eval_scalar(&args[1], ctx)?) {
-            Ok(s) => s,
-            Err(e) => return Ok(ExcelValue::Error(e)),
-        };
-        let start_num = if args.len() == 3 {
+        let find_text = self.eval_scalar(&args[0], ctx)?;
+        let within_text = self.eval_scalar(&args[1], ctx)?;
+        let start_num = if args.len() == 3 && !matches!(args[2], Expr::Missing) {
             match self.as_number(&self.eval_scalar(&args[2], ctx)?) {
                 Ok(n) => {
                     if !n.is_finite() {
@@ -2248,7 +2252,7 @@ impl Interpreter {
         } else {
             1
         };
-        match excel_search(&find_text, &within_text, start_num) {
+        match xlsx_engine_core::excel_search_value(&find_text, &within_text, start_num) {
             Ok(pos) => Ok(ExcelValue::Number(pos)),
             Err(e) => Ok(ExcelValue::Error(e)),
         }
@@ -2302,7 +2306,7 @@ impl Interpreter {
             Ok(s) => s,
             Err(e) => return Ok(ExcelValue::Error(e)),
         };
-        Ok(ExcelValue::Text(excel_replace(
+        Ok(ExcelValue::Text(xlsx_engine_core::excel_replace(
             &old_text, start_num, num_chars, &new_text,
         )))
     }
@@ -2486,8 +2490,7 @@ impl Interpreter {
         if args.is_empty() {
             return Ok(ExcelValue::Error(ExcelError::Value));
         }
-        let mut out = String::new();
-        let mut utf16 = 0usize;
+        let mut builder = xlsx_engine_core::ConcatBuilder::new();
         for arg in args {
             if let Expr::Range(r) = arg {
                 let sheet = r.sheet.as_deref().unwrap_or(ctx.current_sheet.as_str());
@@ -2502,22 +2505,11 @@ impl Interpreter {
                 }
             }
             let v = self.eval_expr(arg, ctx)?;
-            let mut parts = Vec::new();
-            if let Err(e) = flatten_concat_texts(&v, &mut parts, self) {
+            if let Err(e) = xlsx_engine_core::concat_feed_value(&mut builder, &v) {
                 return Ok(ExcelValue::Error(e));
             }
-            for part in parts {
-                if part.is_empty() {
-                    continue;
-                }
-                utf16 += part.encode_utf16().count();
-                if utf16 > 32767 {
-                    return Ok(ExcelValue::Error(ExcelError::Value));
-                }
-                out.push_str(&part);
-            }
         }
-        Ok(ExcelValue::Text(out))
+        Ok(ExcelValue::Text(builder.finish()))
     }
 
     fn eval_scalar(&self, expr: &Expr, ctx: &mut Ctx<'_>) -> Result<ExcelValue, EvalError> {
@@ -5061,14 +5053,6 @@ fn flatten_join_texts(
     }
 }
 
-fn flatten_concat_texts(
-    v: &ExcelValue,
-    out: &mut Vec<String>,
-    interp: &Interpreter,
-) -> Result<(), ExcelError> {
-    flatten_join_texts(v, out, interp)
-}
-
 fn excel_eq(l: &ExcelValue, r: &ExcelValue) -> ExcelValue {
     if let ExcelValue::Error(e) = l {
         return ExcelValue::Error(*e);
@@ -5342,36 +5326,6 @@ fn sumproduct_product_sum(arrays: &[ExcelValue]) -> ExcelValue {
     };
     ExcelValue::Number(acc)
 }
-/// Excel `REPLACE` kernel (same semantics as `xlsx-engine-core`).
-fn excel_replace(old_text: &str, start_num: u64, num_chars: u64, new_text: &str) -> String {
-    let chars: Vec<char> = old_text.chars().collect();
-    let start0 = match usize::try_from(start_num.saturating_sub(1)) {
-        Ok(n) => n,
-        Err(_) => {
-            let mut out = String::with_capacity(old_text.len() + new_text.len());
-            out.push_str(old_text);
-            out.push_str(new_text);
-            return out;
-        }
-    };
-    if start0 >= chars.len() {
-        let mut out = String::with_capacity(old_text.len() + new_text.len());
-        out.push_str(old_text);
-        out.push_str(new_text);
-        return out;
-    }
-    let take = match usize::try_from(num_chars) {
-        Ok(n) => n,
-        Err(_) => chars.len() - start0,
-    };
-    let end = start0.saturating_add(take).min(chars.len());
-    let mut out = String::new();
-    out.extend(chars[..start0].iter());
-    out.push_str(new_text);
-    out.extend(chars[end..].iter());
-    out
-}
-
 fn trunc_start_num(n: f64) -> Result<u64, ExcelError> {
     if !n.is_finite() {
         return Err(ExcelError::Value);
@@ -5400,114 +5354,6 @@ fn trunc_num_chars(n: f64) -> Result<u64, ExcelError> {
     } else {
         Ok(t as u64)
     }
-}
-/// Excel `FIND` kernel (same semantics as `xlsx-engine-core`).
-fn excel_find(find_text: &str, within_text: &str, start_num: i64) -> Result<f64, ExcelError> {
-    if start_num < 1 {
-        return Err(ExcelError::Value);
-    }
-    if start_num as u64 > within_text.len() as u64 + 1 {
-        return Err(ExcelError::Value);
-    }
-    let skip = (start_num as usize) - 1;
-    let suffix = if within_text.is_ascii() {
-        if skip > within_text.len() {
-            return Err(ExcelError::Value);
-        }
-        &within_text[skip..]
-    } else {
-        let mut iter = within_text.chars();
-        for _ in 0..skip {
-            if iter.next().is_none() {
-                return Err(ExcelError::Value);
-            }
-        }
-        iter.as_str()
-    };
-    if find_text.is_empty() {
-        return Ok(start_num as f64);
-    }
-    let Some(byte_off) = suffix.find(find_text) else {
-        return Err(ExcelError::Value);
-    };
-    let extra = if suffix.is_ascii() {
-        byte_off
-    } else {
-        suffix[..byte_off].chars().count()
-    };
-    Ok((start_num as usize + extra) as f64)
-}
-/// Excel `SEARCH` kernel (same semantics as `xlsx-engine-core`).
-fn excel_search(find_text: &str, within_text: &str, start_num: i64) -> Result<f64, ExcelError> {
-    if start_num < 1 {
-        return Err(ExcelError::Value);
-    }
-    if start_num as u64 > within_text.len() as u64 {
-        return Err(ExcelError::Value);
-    }
-    let hay: Vec<char> = within_text.chars().collect();
-    let start = (start_num as usize) - 1;
-    if start >= hay.len() {
-        return Err(ExcelError::Value);
-    }
-    if find_text.is_empty() {
-        return Ok(start_num as f64);
-    }
-    let pat: Vec<char> = find_text.chars().collect();
-    for i in start..hay.len() {
-        if search_match_here(&pat, &hay[i..]) {
-            return Ok((i + 1) as f64);
-        }
-    }
-    Err(ExcelError::Value)
-}
-
-fn search_match_here(pat: &[char], hay: &[char]) -> bool {
-    fn rec(p: &[char], t: &[char]) -> bool {
-        if p.is_empty() {
-            return true;
-        }
-        if p[0] == '~' {
-            if p.len() >= 2 {
-                return !t.is_empty() && search_ci_eq(p[1], t[0]) && rec(&p[2..], &t[1..]);
-            }
-            return !t.is_empty() && search_ci_eq('~', t[0]) && rec(&p[1..], &t[1..]);
-        }
-        if p[0] == '*' {
-            let mut rest = p;
-            while rest.first() == Some(&'*') {
-                rest = &rest[1..];
-            }
-            let mut cur = t;
-            loop {
-                if rec(rest, cur) {
-                    return true;
-                }
-                if cur.is_empty() {
-                    return false;
-                }
-                cur = &cur[1..];
-            }
-        }
-        if p[0] == '?' {
-            return !t.is_empty() && rec(&p[1..], &t[1..]);
-        }
-        !t.is_empty() && search_ci_eq(p[0], t[0]) && rec(&p[1..], &t[1..])
-    }
-    rec(pat, hay)
-}
-
-fn search_ci_eq(a: char, b: char) -> bool {
-    if a == b {
-        return true;
-    }
-    if a.is_ascii() && b.is_ascii() {
-        return a.eq_ignore_ascii_case(&b);
-    }
-    if a.is_ascii() || b.is_ascii() {
-        return false;
-    }
-    a.to_lowercase().eq(b.to_lowercase())
 }
 fn unique_to_grid(v: ExcelValue) -> Result<Vec<Vec<ExcelValue>>, ExcelError> {
     match v {

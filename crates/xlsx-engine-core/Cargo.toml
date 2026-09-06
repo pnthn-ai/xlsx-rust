@@ -13,6 +13,10 @@ xlsx-types = { workspace = true }
 criterion = { workspace = true }
 
 [[bench]]
+name = "abs"
+harness = false
+
+[[bench]]
 name = "substitute"
 harness = false
 
@@ -74,6 +78,10 @@ harness = false
 
 [[bench]]
 name = "floor_ceiling"
+harness = false
+
+[[bench]]
+name = "excel_int"
 harness = false
 
 [[bench]]
@@ -325,7 +333,15 @@ name = "lower"
 harness = false
 
 [[bench]]
+name = "mid"
+harness = false
+
+[[bench]]
 name = "unicode"
+harness = false
+
+[[bench]]
+name = "len"
 harness = false
 
 [[bench]]
@@ -358,5 +374,13 @@ harness = false
 
 [[bench]]
 name = "text"
+harness = false
+
+[[bench]]
+name = "left"
+harness = false
+
+[[bench]]
+name = "right"
 harness = false
 

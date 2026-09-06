@@ -9,11 +9,14 @@
 //! - [`eval::proper`] — Excel `PROPER` (ASCII title-case; apostrophe / digit breaks)
 //! - [`text_format`] — Excel `TEXT` for a documented number/date format subset
 //! - [`eval::functions`] also dispatches `SUMIF` / `COUNTIF` / `COUNTIFS` / `SUMPRODUCT` / `SUBSTITUTE` / `CLEAN` / `CODE`
-//! - [`eval::concat`] — Excel `CONCAT` (range/array flatten + 32767 cap)
+//! - [`eval::concat`] — Excel `CONCAT` (row-major flatten + 32767 UTF-16 cap)
 //! - [`eval::clean`] — Excel `CLEAN` (strip ASCII C0 `0..=31`)
 //! - [`eval::code`] — Excel `CODE` (Windows-1252 first-character code)
+//! - [`eval::abs`] — Excel `ABS` (sign-bit-clear absolute value)
 //! - [`eval::excel_char`] — Excel `CHAR` (Windows-1252, 1..=255)
+//! - [`eval::left`] — Excel `LEFT` (Unicode scalars / Compat v2)
 //! - [`eval::rept`] — Excel `REPT` (repeat + 32767 UTF-16 cap)
+//! - [`eval::right`] — Excel `RIGHT` (Compat v2 Unicode-scalar suffix)
 //! - [`dates::edate_serial`] — Excel `EDATE` (same-day month shift + clip)
 //! - [`dates::weekday`] — O(1) Excel `WEEKDAY` on the date serial
 //! - [`dates::weeknum`] — O(1) Excel `WEEKNUM` (System 1 + ISO `return_type` 21)
@@ -53,6 +56,8 @@
 //! - [`eval::trim`] — Excel `TRIM` (ASCII-space collapse + end trim)
 //! - [`eval::upper`] — Excel `UPPER` (SWAR ASCII + Unicode; `ß` kept)
 //! - [`eval::lower`] — Excel `LOWER` (ASCII SWAR fold + Unicode default mapping)
+//! - [`eval::len`] — Excel `LEN` (Unicode scalar count / Compat v2)
+//! - [`eval::mid`] — Excel `MID` (1-based Unicode-scalar slice / Compat v2)
 //! - [`eval::unicode`] — Excel `UNICODE` (first Unicode scalar / code point)
 //! - [`eval::exact`] — Excel `EXACT` (case-sensitive text compare)
 //! - [`eval::value`] — Excel `VALUE` (en-US number / date / time text)
@@ -66,6 +71,7 @@
 //! - [`xlsx_types::excel_effect`] — Excel `EFFECT` (nominal → effective annual)
 //! - [`xlsx_types::excel_nominal`] — Excel `NOMINAL` (effective → nominal annual)
 //! - [`xlsx_types::excel_pduration`] — Excel `PDURATION` (lump-sum periods)
+//! - [`xlsx_types::excel_int`] — Excel `INT` (floor toward −∞; leftover snap)
 //! - Financial TVM: `PMT` / `RRI` via [`xlsx_types::excel_pmt`] / [`xlsx_types::excel_rri`]
 //!
 //! This crate depends only on [`xlsx_types`]. It never reads fixture expected
@@ -87,6 +93,11 @@ pub use dates::{
     weeknum_naive as excel_weeknum_naive, yearfrac as excel_yearfrac,
     yearfrac_naive as excel_yearfrac_naive,
 };
+pub use eval::abs::{
+    abs as excel_abs, abs_naive as excel_abs_naive, abs_slice as excel_abs_slice,
+    abs_slice_naive as excel_abs_slice_naive, abs_value as excel_abs_value,
+    abs_value_naive as excel_abs_value_naive,
+};
 pub use eval::bycol::{
     reduce_fast as excel_bycol, reduce_naive as excel_bycol_naive, ColOp as BycolOp,
 };
@@ -101,7 +112,10 @@ pub use eval::code::{
     code as excel_code, code_naive as excel_code_naive, code_value as excel_code_value,
     code_value_naive as excel_code_value_naive,
 };
-pub use eval::concat::{concat_naive_join, eval_concat_formula, ConcatBuilder, CONCAT_MAX_CHARS};
+pub use eval::concat::{
+    concat_feed_value, concat_naive_join, eval_concat_formula, ConcatBuilder, ConcatWalk,
+    CONCAT_MAX_CHARS,
+};
 pub use eval::drop::{apply as excel_drop, apply_naive as excel_drop_naive};
 pub use eval::exact::{exact as excel_exact, exact_naive as excel_exact_naive};
 pub use eval::excel_char::{
@@ -118,12 +132,23 @@ pub use eval::expand::{
     resolve_dim as expand_resolve_dim, EXPAND_MAX_COLS, EXPAND_MAX_ROWS,
 };
 pub use eval::filter::{select as excel_filter, select_naive as excel_filter_naive};
-pub use eval::find::{find as excel_find, find_naive as excel_find_naive};
+pub use eval::find::{
+    find as excel_find, find_naive as excel_find_naive, find_value as excel_find_value,
+    find_value_naive as excel_find_value_naive,
+};
 pub use eval::hstack::{hstack as excel_hstack, hstack_naive as excel_hstack_naive};
 pub use eval::ifs::{select as excel_ifs, select_naive as excel_ifs_naive};
 pub use eval::irr::{irr as excel_irr, irr_naive as excel_irr_naive, MAX_ITERS as IRR_MAX_ITERS};
 pub use eval::isomitted::{
     is_omitted as excel_isomitted, is_omitted_naive as excel_isomitted_naive,
+};
+pub use eval::left::{
+    left as excel_left, left_naive as excel_left_naive, left_owned as excel_left_owned,
+    trunc_num_chars as left_trunc_num_chars,
+};
+pub use eval::len::{
+    len as excel_len, len_naive as excel_len_naive, len_value as excel_len_value,
+    len_value_naive as excel_len_value_naive,
 };
 pub use eval::lower::{
     lower as excel_lower, lower_naive as excel_lower_naive, lower_owned as excel_lower_owned,
@@ -133,6 +158,11 @@ pub use eval::makearray::{
     LambdaError, Local,
 };
 pub use eval::map::{fill_fast as excel_map, fill_naive as excel_map_naive, MapFast, MapOp};
+pub use eval::mid::{
+    mid as excel_mid, mid_naive as excel_mid_naive, mid_value as excel_mid_value,
+    mid_value_naive as excel_mid_value_naive, trunc_num_chars as excel_mid_trunc_num_chars,
+    trunc_start_num as excel_mid_trunc_start_num,
+};
 pub use eval::mirr::{mirr as excel_mirr, mirr_naive as excel_mirr_naive};
 pub use eval::npv::{npv as excel_npv, npv_naive as excel_npv_naive};
 pub use eval::proper::{proper as excel_proper, proper_naive as excel_proper_naive};
@@ -143,10 +173,17 @@ pub use eval::randarray::{
 pub use eval::reduce::{
     fold_fast as excel_reduce, fold_naive as excel_reduce_naive, ReduceOp, ReducePlan,
 };
-pub use eval::replace::{replace as excel_replace, replace_naive as excel_replace_naive};
+pub use eval::replace::{
+    replace as excel_replace, replace_naive as excel_replace_naive,
+    replace_value as excel_replace_value, replace_value_naive as excel_replace_value_naive,
+};
 pub use eval::rept::{
     rept as excel_rept, rept_naive as excel_rept_naive, trunc_times as rept_trunc_times,
     REPT_MAX_CHARS,
+};
+pub use eval::right::{
+    right as excel_right, right_naive as excel_right_naive, right_owned as excel_right_owned,
+    trunc_num_chars as right_trunc_num_chars,
 };
 pub use eval::round::{
     rounddown as excel_rounddown, rounddown_naive as excel_rounddown_naive,
@@ -155,7 +192,10 @@ pub use eval::round::{
 pub use eval::scan::{
     classify as classify_scan, scan_fast as excel_scan, scan_naive as excel_scan_naive, FastScan,
 };
-pub use eval::search::{search as excel_search, search_naive as excel_search_naive};
+pub use eval::search::{
+    search as excel_search, search_naive as excel_search_naive, search_value as excel_search_value,
+    search_value_naive as excel_search_value_naive,
+};
 pub use eval::sequence::{
     sequence as excel_sequence, sequence_naive as excel_sequence_naive,
     MAX_CELLS as SEQUENCE_MAX_CELLS,
@@ -228,7 +268,8 @@ pub use text_format::{
 };
 pub use xlsx_types::{
     excel_cumipmt, excel_cumipmt_naive, excel_cumprinc, excel_cumprinc_naive, excel_effect,
-    excel_effect_naive, excel_fv, excel_fv_naive, excel_ipmt, excel_ipmt_naive, excel_nominal,
+    excel_effect_naive, excel_fv, excel_fv_naive, excel_int, excel_int_ieee, excel_int_naive,
+    excel_int_slice, excel_int_slice_naive, excel_ipmt, excel_ipmt_naive, excel_nominal,
     excel_nominal_naive, excel_nper, excel_nper_naive, excel_pduration, excel_pduration_naive,
     excel_pmt, excel_ppmt, excel_ppmt_naive, excel_pv, excel_pv_naive, excel_rate,
     excel_rate_naive, excel_rri, excel_rri_naive,

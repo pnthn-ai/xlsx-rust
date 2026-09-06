@@ -1,0 +1,492 @@
+[
+  {
+    "id": "fn.right-ms-sale-price",
+    "description": "Microsoft example: RIGHT(\"Sale Price\", 5) is Price",
+    "tags": ["right", "text"],
+    "formula": "=RIGHT(\"Sale Price\", 5)",
+    "expected": { "text": "Price" }
+  },
+  {
+    "id": "fn.right-ms-stock-number",
+    "description": "Microsoft example: RIGHT(\"Stock Number\") defaults to 1 → r",
+    "tags": ["right", "text"],
+    "formula": "=RIGHT(\"Stock Number\")",
+    "expected": { "text": "r" }
+  },
+  {
+    "id": "fn.right-default-abc",
+    "description": "RIGHT(\"abc\") is c",
+    "tags": ["right", "text"],
+    "formula": "=RIGHT(\"abc\")",
+    "expected": { "text": "c" }
+  },
+  {
+    "id": "fn.right-one",
+    "description": "RIGHT(\"abc\", 1) is c",
+    "tags": ["right", "text"],
+    "formula": "=RIGHT(\"abc\", 1)",
+    "expected": { "text": "c" }
+  },
+  {
+    "id": "fn.right-three-all",
+    "description": "RIGHT(\"abc\", 3) is the whole string",
+    "tags": ["right", "text"],
+    "formula": "=RIGHT(\"abc\", 3)",
+    "expected": { "text": "abc" }
+  },
+  {
+    "id": "fn.right-past-end",
+    "description": "num_chars past LEN(text) returns all of text",
+    "tags": ["right", "text"],
+    "formula": "=RIGHT(\"abc\", 10)",
+    "expected": { "text": "abc" }
+  },
+  {
+    "id": "fn.right-zero",
+    "description": "RIGHT(\"abc\", 0) is empty",
+    "tags": ["right", "text"],
+    "formula": "=RIGHT(\"abc\", 0)",
+    "expected": { "text": "" }
+  },
+  {
+    "id": "fn.right-empty-text",
+    "description": "RIGHT of empty text is empty",
+    "tags": ["right", "text"],
+    "formula": "=RIGHT(\"\", 3)",
+    "expected": { "text": "" }
+  },
+  {
+    "id": "fn.right-empty-default",
+    "description": "RIGHT(\"\") defaults to 1 and is still empty",
+    "tags": ["right", "text"],
+    "formula": "=RIGHT(\"\")",
+    "expected": { "text": "" }
+  },
+  {
+    "id": "fn.right-trunc-4-9",
+    "description": "num_chars truncates toward zero: 4.9 → 4",
+    "tags": ["right", "text"],
+    "formula": "=RIGHT(\"Sale Price\", 4.9)",
+    "expected": { "text": "rice" }
+  },
+  {
+    "id": "fn.right-trunc-0-9",
+    "description": "0.9 truncates to 0 → empty",
+    "tags": ["right", "text"],
+    "formula": "=RIGHT(\"abc\", 0.9)",
+    "expected": { "text": "" }
+  },
+  {
+    "id": "fn.right-trunc-neg-0-9",
+    "description": "Sign is checked after truncate: −0.9 → 0 → empty",
+    "tags": ["right", "text"],
+    "formula": "=RIGHT(\"abc\", -0.9)",
+    "expected": { "text": "" }
+  },
+  {
+    "id": "fn.right-neg",
+    "description": "RIGHT(\"abc\", -1) is #VALUE!",
+    "tags": ["right", "text", "errors"],
+    "formula": "=RIGHT(\"abc\", -1)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.right-neg-1-9",
+    "description": "−1.9 truncates to −1 → #VALUE!",
+    "tags": ["right", "text", "errors"],
+    "formula": "=RIGHT(\"abc\", -1.9)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.right-huge",
+    "description": "1E+20 is past LEN and returns all of text (no overflow)",
+    "tags": ["right", "text"],
+    "formula": "=RIGHT(\"abc\", 1E+20)",
+    "expected": { "text": "abc" }
+  },
+  {
+    "id": "fn.right-nan",
+    "description": "NaN num_chars is #VALUE!",
+    "tags": ["right", "text", "errors"],
+    "formula": "=RIGHT(\"abc\", 0/0)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.right-number",
+    "description": "RIGHT(12345, 2) coerces like & → 45",
+    "tags": ["right", "text", "coercion"],
+    "formula": "=RIGHT(12345, 2)",
+    "expected": { "text": "45" }
+  },
+  {
+    "id": "fn.right-number-frac",
+    "description": "RIGHT(1234.5, 2) uses plain number text",
+    "tags": ["right", "text", "coercion"],
+    "formula": "=RIGHT(1234.5, 2)",
+    "expected": { "text": ".5" }
+  },
+  {
+    "id": "fn.right-neg-number",
+    "description": "RIGHT(-12, 3) includes the minus sign",
+    "tags": ["right", "text", "coercion"],
+    "formula": "=RIGHT(-12, 3)",
+    "expected": { "text": "-12" }
+  },
+  {
+    "id": "fn.right-true-text",
+    "description": "RIGHT(TRUE, 2) is UE",
+    "tags": ["right", "text", "coercion"],
+    "formula": "=RIGHT(TRUE, 2)",
+    "expected": { "text": "UE" }
+  },
+  {
+    "id": "fn.right-false-text",
+    "description": "RIGHT(FALSE, 3) is LSE",
+    "tags": ["right", "text", "coercion"],
+    "formula": "=RIGHT(FALSE, 3)",
+    "expected": { "text": "LSE" }
+  },
+  {
+    "id": "fn.right-true-n",
+    "description": "TRUE num_chars coerces to 1",
+    "tags": ["right", "text", "coercion"],
+    "formula": "=RIGHT(\"abc\", TRUE)",
+    "expected": { "text": "c" }
+  },
+  {
+    "id": "fn.right-false-n",
+    "description": "FALSE num_chars coerces to 0 → empty",
+    "tags": ["right", "text", "coercion"],
+    "formula": "=RIGHT(\"abc\", FALSE)",
+    "expected": { "text": "" }
+  },
+  {
+    "id": "fn.right-text-n",
+    "description": "Numeric text num_chars coerces: \"2\" → 2",
+    "tags": ["right", "text", "coercion"],
+    "formula": "=RIGHT(\"abc\", \"2\")",
+    "expected": { "text": "bc" }
+  },
+  {
+    "id": "fn.right-text-n-spaces",
+    "description": "VALUE-style trim on numeric text: \"  2  \" → 2",
+    "tags": ["right", "text", "coercion"],
+    "formula": "=RIGHT(\"abc\", \"  2  \")",
+    "expected": { "text": "bc" }
+  },
+  {
+    "id": "fn.right-text-n-bad",
+    "description": "Non-numeric text num_chars is #VALUE!",
+    "tags": ["right", "text", "errors", "coercion"],
+    "formula": "=RIGHT(\"abc\", \"x\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.right-percent-n",
+    "description": "150% truncates to 1",
+    "tags": ["right", "text", "coercion"],
+    "formula": "=RIGHT(\"Hello\", 150%)",
+    "expected": { "text": "o" }
+  },
+  {
+    "id": "fn.right-percent-zero",
+    "description": "50% truncates to 0 → empty",
+    "tags": ["right", "text", "coercion"],
+    "formula": "=RIGHT(\"Hello\", 50%)",
+    "expected": { "text": "" }
+  },
+  {
+    "id": "fn.right-omitted-n",
+    "description": "Omitted second argument is blank → 0 → empty (not the default-1 form)",
+    "tags": ["right", "text", "coercion"],
+    "formula": "=RIGHT(\"abc\",)",
+    "expected": { "text": "" }
+  },
+  {
+    "id": "fn.right-blank-cell-text",
+    "description": "Blank cell text coerces to empty",
+    "tags": ["right", "text", "coercion"],
+    "formula": "=RIGHT(A1, 1)",
+    "expected": { "text": "" },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.right-blank-cell-n",
+    "description": "Blank cell num_chars coerces to 0",
+    "tags": ["right", "text", "coercion"],
+    "formula": "=RIGHT(\"abc\", A1)",
+    "expected": { "text": "" },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.right-cell-text",
+    "description": "RIGHT of a stored text cell",
+    "tags": ["right", "text"],
+    "formula": "=RIGHT(A1, 2)",
+    "expected": { "text": "lo" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": { "A1": { "text": "Hello" } }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.right-cell-n",
+    "description": "RIGHT with num_chars from a cell",
+    "tags": ["right", "text"],
+    "formula": "=RIGHT(\"Hello\", A1)",
+    "expected": { "text": "llo" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": { "A1": { "number": 3 } }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.right-cafe",
+    "description": "Compat v2: RIGHT(\"café\", 1) is é (one scalar)",
+    "tags": ["right", "text"],
+    "formula": "=RIGHT(\"café\", 1)",
+    "expected": { "text": "é" }
+  },
+  {
+    "id": "fn.right-cjk",
+    "description": "RIGHT(\"日本語\", 2) is 本語",
+    "tags": ["right", "text"],
+    "formula": "=RIGHT(\"日本語\", 2)",
+    "expected": { "text": "本語" }
+  },
+  {
+    "id": "fn.right-emoji-one",
+    "description": "Compat v2: emoji is one scalar, not two UTF-16 units",
+    "tags": ["right", "text"],
+    "formula": "=RIGHT(\"a😀b\", 1)",
+    "expected": { "text": "b" }
+  },
+  {
+    "id": "fn.right-emoji-two",
+    "description": "RIGHT(\"a😀b\", 2) keeps the emoji as one character",
+    "tags": ["right", "text"],
+    "formula": "=RIGHT(\"a😀b\", 2)",
+    "expected": { "text": "😀b" }
+  },
+  {
+    "id": "fn.right-emoji-len",
+    "description": "LEN(RIGHT(\"x😀\", 1)) is 1 (Compat v2)",
+    "tags": ["right", "text", "len"],
+    "formula": "=LEN(RIGHT(\"x😀\", 1))",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.right-emoji-len-two",
+    "description": "LEN(RIGHT(\"x😀\", 2)) is 2",
+    "tags": ["right", "text", "len"],
+    "formula": "=LEN(RIGHT(\"x😀\", 2))",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.right-unichar-emoji",
+    "description": "RIGHT(UNICHAR(128512), 1) is the grinning face",
+    "tags": ["right", "text", "unichar"],
+    "formula": "=RIGHT(UNICHAR(128512), 1)",
+    "expected": { "text": "😀" }
+  },
+  {
+    "id": "fn.right-combining",
+    "description": "Combining acute is its own Compat v2 scalar",
+    "tags": ["right", "text"],
+    "formula": "=RIGHT(\"e\u0301\", 1)",
+    "expected": { "text": "\u0301" }
+  },
+  {
+    "id": "fn.right-combining-len",
+    "description": "LEN of the combining-mark suffix is 1",
+    "tags": ["right", "text", "len"],
+    "formula": "=LEN(RIGHT(\"e\u0301\", 1))",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.right-spaces",
+    "description": "Trailing spaces are kept",
+    "tags": ["right", "text"],
+    "formula": "=RIGHT(\"ab  \", 2)",
+    "expected": { "text": "  " }
+  },
+  {
+    "id": "fn.right-tab-lf",
+    "description": "Controls at the end are kept (not CLEAN)",
+    "tags": ["right", "text"],
+    "formula": "=RIGHT(\"a\t\n\", 2)",
+    "expected": { "text": "\t\n" }
+  },
+  {
+    "id": "fn.right-nested-left",
+    "description": "LEFT(RIGHT(\"abcdef\", 4), 2) is cd",
+    "tags": ["right", "text"],
+    "formula": "=LEFT(RIGHT(\"abcdef\", 4), 2)",
+    "expected": { "text": "cd" }
+  },
+  {
+    "id": "fn.right-nested-mid",
+    "description": "MID(RIGHT(\"abcdef\", 4), 2, 1) is d (RIGHT → cdef)",
+    "tags": ["right", "text"],
+    "formula": "=MID(RIGHT(\"abcdef\", 4), 2, 1)",
+    "expected": { "text": "d" }
+  },
+  {
+    "id": "fn.right-nested-len",
+    "description": "LEN(RIGHT(\"Hello\", 2)) is 2",
+    "tags": ["right", "text", "len"],
+    "formula": "=LEN(RIGHT(\"Hello\", 2))",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.right-nested-upper",
+    "description": "UPPER(RIGHT(\"Hello\", 2)) is LO",
+    "tags": ["right", "text"],
+    "formula": "=UPPER(RIGHT(\"Hello\", 2))",
+    "expected": { "text": "LO" }
+  },
+  {
+    "id": "fn.right-nested-exact",
+    "description": "EXACT(RIGHT(\"ABC\", 2), \"BC\") is TRUE",
+    "tags": ["right", "text"],
+    "formula": "=EXACT(RIGHT(\"ABC\", 2), \"BC\")",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.right-from-left",
+    "description": "RIGHT(LEFT(\"Hello\", 3), 2) is el",
+    "tags": ["right", "text"],
+    "formula": "=RIGHT(LEFT(\"Hello\", 3), 2)",
+    "expected": { "text": "el" }
+  },
+  {
+    "id": "fn.right-rept-len",
+    "description": "LEN(RIGHT(REPT(\"a\", 1000), 5)) is 5 (no giant expected string)",
+    "tags": ["right", "text", "rept"],
+    "formula": "=LEN(RIGHT(REPT(\"a\", 1000), 5))",
+    "expected": { "number": 5 }
+  },
+  {
+    "id": "fn.right-rept-exact",
+    "description": "EXACT(RIGHT(REPT(\"ab\", 50), 3), \"bab\")",
+    "tags": ["right", "text", "rept"],
+    "formula": "=EXACT(RIGHT(REPT(\"ab\", 50), 3), \"bab\")",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.right-date-serial",
+    "description": "DATE serial coerces like & before the suffix",
+    "tags": ["right", "text", "coercion"],
+    "formula": "=RIGHT(DATE(2024,3,15), 2)",
+    "expected": { "text": "66" }
+  },
+  {
+    "id": "fn.right-map-index",
+    "description": "INDEX of MAP(..., RIGHT) takes the last scalar of the second row",
+    "tags": ["right", "text", "map"],
+    "formula": "=INDEX(MAP({\"xy\";\"zw\"},LAMBDA(t,RIGHT(t))),2)",
+    "expected": { "text": "w" }
+  },
+  {
+    "id": "fn.right-intersect",
+    "description": "RIGHT of a column range implicit-intersects the host row",
+    "tags": ["right", "text"],
+    "quirks": ["implicit-intersection"],
+    "formula": "=RIGHT(A1:A3, 2)",
+    "at": "Sheet1!B2",
+    "expected": { "text": "cd" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "ab" },
+            "A2": { "text": "cd" },
+            "A3": { "text": "ef" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.right-array-top-left",
+    "description": "RIGHT of an array literal takes the top-left (no RIGHT spill)",
+    "tags": ["right", "text"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=RIGHT({\"abc\",\"def\"}, 2)",
+    "expected": { "text": "bc" }
+  },
+  {
+    "id": "fn.right-arity-0",
+    "description": "RIGHT() is #VALUE!",
+    "tags": ["right", "text", "errors"],
+    "formula": "=RIGHT()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.right-arity-3",
+    "description": "Three arguments is #VALUE!",
+    "tags": ["right", "text", "errors"],
+    "formula": "=RIGHT(\"a\", 1, 2)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.right-err-div0-text",
+    "description": "Error in text propagates",
+    "tags": ["right", "text", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=RIGHT(1/0, 1)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.right-err-div0-n",
+    "description": "Error in num_chars propagates",
+    "tags": ["right", "text", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=RIGHT(\"abc\", 1/0)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.right-err-na",
+    "description": "#N/A in text propagates",
+    "tags": ["right", "text", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=RIGHT(#N/A)",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.right-err-na-n",
+    "description": "#N/A in num_chars propagates",
+    "tags": ["right", "text", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=RIGHT(\"abc\", #N/A)",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.right-err-name",
+    "description": "Unknown callee inside RIGHT is #NAME?",
+    "tags": ["right", "text", "errors"],
+    "formula": "=RIGHT(NOTAFUNCTION(1))",
+    "expected": { "error": "#NAME?" }
+  },
+  {
+    "id": "fn.right-err-left-first",
+    "description": "First error wins: text #N/A before num_chars #DIV/0!",
+    "tags": ["right", "text", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=RIGHT(#N/A, 1/0)",
+    "expected": { "error": "#N/A" }
+  }
+]

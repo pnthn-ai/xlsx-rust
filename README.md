@@ -302,7 +302,7 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 | [`eval/coerce.rs`](crates/xlsx-engine-core/src/eval/coerce.rs) | Arithmetic / `&` / `IF` coercion (`"2"+1` = 3, TRUE → 1, empty → 0) |
 | [`eval/compare.rs`](crates/xlsx-engine-core/src/eval/compare.rs) | 15-digit `=`, case-insensitive text, `TRUE=1`, type ranking (`FALSE>100`) |
 | [`eval/empty.rs`](crates/xlsx-engine-core/src/eval/empty.rs) | Blank ≠ 0 ≠ `""`, but `A1=0` and `A1=""` when `A1` is blank |
-| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Dispatch: aggregators (`SUM`/`SUMIF`/`SUMIFS`/`AVERAGEIF`/`AVERAGEIFS`/`COUNTIF`/`COUNTIFS`/`SUMPRODUCT`), logicals (`IF`/`IFS`/`SWITCH`/`LET`), lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`/`FILTER`/`UNIQUE`/`SORT`/`SORTBY`/`TOCOL`/`TOROW`/`SEQUENCE`/`VSTACK`/`HSTACK`/`WRAPCOLS`/`WRAPROWS`/`TAKE`/`DROP`/`EXPAND`/`CHOOSECOLS`/`CHOOSEROWS`/`MAKEARRAY`/`MAP`/`SCAN`/`BYROW`/`REDUCE`/`BYCOL`), dates (`DATE`/`EDATE`/`EOMONTH`/`NETWORKDAYS`/`NETWORKDAYS.INTL`/`WEEKDAY`/`WEEKNUM`/`ISOWEEKNUM`/`WORKDAY`/`WORKDAY.INTL`/`YEARFRAC`/`DAYS360`), math (`ROUND`/`ROUNDUP`/`ROUNDDOWN`/`FLOOR`/`CEILING`/`RANDARRAY`), text (`LEFT`/`LOWER`/`UPPER`/`PROPER`/`TRIM`/`CLEAN`/`EXACT`/`SUBSTITUTE`/`REPLACE`/`FIND`/`SEARCH`/`TEXT`/`VALUE`/`TEXTJOIN`/`TEXTSPLIT`/`TEXTAFTER`/`TEXTBEFORE`/`CONCAT`/`REPT`/`CODE`/`CHAR`/`UNICODE`/`UNICHAR`), financial (`NPV`/`XNPV`/`PMT`/`FV`/`PV`/`NPER`/`RATE`/`IPMT`/`PPMT`/`CUMPRINC`/`CUMIPMT`/`IRR`/`XIRR`/`MIRR`/`EFFECT`/`NOMINAL`/`PDURATION`/`RRI`), `TYPE` / `IS*` / `ISOMITTED` |
+| [`eval/functions.rs`](crates/xlsx-engine-core/src/eval/functions.rs) | Dispatch: aggregators (`SUM`/`SUMIF`/`SUMIFS`/`AVERAGEIF`/`AVERAGEIFS`/`COUNTIF`/`COUNTIFS`/`SUMPRODUCT`), logicals (`IF`/`IFS`/`SWITCH`/`LET`), lookup (`VLOOKUP`/`HLOOKUP`/`XLOOKUP`/`INDEX`/`MATCH`/`FILTER`/`UNIQUE`/`SORT`/`SORTBY`/`TOCOL`/`TOROW`/`SEQUENCE`/`VSTACK`/`HSTACK`/`WRAPCOLS`/`WRAPROWS`/`TAKE`/`DROP`/`EXPAND`/`CHOOSECOLS`/`CHOOSEROWS`/`MAKEARRAY`/`MAP`/`SCAN`/`BYROW`/`REDUCE`/`BYCOL`), dates (`DATE`/`EDATE`/`EOMONTH`/`NETWORKDAYS`/`NETWORKDAYS.INTL`/`WEEKDAY`/`WEEKNUM`/`ISOWEEKNUM`/`WORKDAY`/`WORKDAY.INTL`/`YEARFRAC`/`DAYS360`), math (`ABS`/`INT`/`ROUND`/`ROUNDUP`/`ROUNDDOWN`/`FLOOR`/`CEILING`/`RANDARRAY`), text (`LEFT`/`RIGHT`/`MID`/`LEN`/`LOWER`/`UPPER`/`PROPER`/`TRIM`/`CLEAN`/`EXACT`/`SUBSTITUTE`/`REPLACE`/`FIND`/`SEARCH`/`TEXT`/`VALUE`/`TEXTJOIN`/`TEXTSPLIT`/`TEXTAFTER`/`TEXTBEFORE`/`CONCAT`/`REPT`/`CODE`/`CHAR`/`UNICODE`/`UNICHAR`), financial (`NPV`/`XNPV`/`PMT`/`FV`/`PV`/`NPER`/`RATE`/`IPMT`/`PPMT`/`CUMPRINC`/`CUMIPMT`/`IRR`/`XIRR`/`MIRR`/`EFFECT`/`NOMINAL`/`PDURATION`/`RRI`), `TYPE` / `IS*` / `ISOMITTED` |
 | [`eval/sumif.rs`](crates/xlsx-engine-core/src/eval/sumif.rs) | Excel `SUMIF` kernel (criteria walk, reshape `sum_range`, no array literals) |
 | [`eval/sumifs.rs`](crates/xlsx-engine-core/src/eval/sumifs.rs) | Excel `SUMIFS`: multi-criteria AND, same-shape ranges |
 | [`eval/countifs.rs`](crates/xlsx-engine-core/src/eval/countifs.rs) | Excel `COUNTIFS`: multi-criteria AND, same-shape ranges, COUNTIF matcher |
@@ -311,14 +311,17 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 | [`eval/sumproduct.rs`](crates/xlsx-engine-core/src/eval/sumproduct.rs) | `SUMPRODUCT`: array-context args, boolean 0/1 via `--`/`*`, packed f64 hot path |
 | [`eval/substitute.rs`](crates/xlsx-engine-core/src/eval/substitute.rs) | Excel `SUBSTITUTE` kernel (case-sensitive, nth instance, empty `old_text` no-op) |
 | [`eval/replace.rs`](crates/xlsx-engine-core/src/eval/replace.rs) | Excel `REPLACE` kernel (1-based span, Unicode scalars / Compat v2) |
-| [`eval/find.rs`](crates/xlsx-engine-core/src/eval/find.rs) | Excel `FIND` kernel (case-sensitive, `start_num`, empty `find_text`) |
-| [`eval/search.rs`](crates/xlsx-engine-core/src/eval/search.rs) | Excel `SEARCH` kernel (case-insensitive, `*`/`?`/`~` wildcards, `start_num`) |
+| [`eval/right.rs`](crates/xlsx-engine-core/src/eval/right.rs) | Excel `RIGHT` (Compat v2 Unicode-scalar suffix; ASCII slice / UTF-8 walk) |
+| [`eval/mid.rs`](crates/xlsx-engine-core/src/eval/mid.rs) | Excel `MID` kernel (1-based slice, Unicode scalars / Compat v2) |
+| [`eval/find.rs`](crates/xlsx-engine-core/src/eval/find.rs) | Excel `FIND` kernel (case-sensitive, Compat v2 scalars, omitted `start_num` = 1, empty `find_text`) |
+| [`eval/search.rs`](crates/xlsx-engine-core/src/eval/search.rs) | Excel `SEARCH` kernel (case-insensitive, `*`/`?`/`~` wildcards, `start_num`, Compat v2) |
 | [`eval/textafter.rs`](crates/xlsx-engine-core/src/eval/textafter.rs) | Excel `TEXTAFTER` kernel (nth delimiter, `match_mode` / `match_end` / `if_not_found`) |
 | [`eval/textbefore.rs`](crates/xlsx-engine-core/src/eval/textbefore.rs) | Excel `TEXTBEFORE` (nth delimiter, `match_mode` / `match_end` / `if_not_found`) |
 | [`eval/textjoin.rs`](crates/xlsx-engine-core/src/eval/textjoin.rs) | `TEXTJOIN` with cycling delimiters and `ignore_empty` |
 | [`eval/textsplit.rs`](crates/xlsx-engine-core/src/eval/textsplit.rs) | `TEXTSPLIT` col/row split, `ignore_empty`, `match_mode`, `pad_with` |
-| [`eval/concat.rs`](crates/xlsx-engine-core/src/eval/concat.rs) | Excel `CONCAT`: row-major flatten, blanks/`""` add nothing, 32,767 UTF-16 cap |
+| [`eval/concat.rs`](crates/xlsx-engine-core/src/eval/concat.rs) | Excel `CONCAT`: row-major flatten, occupied sparse walk, 32,767 UTF-16 cap (not Compat-v2 `LEN`) |
 | [`eval/round.rs`](crates/xlsx-engine-core/src/eval/round.rs) | Excel `ROUNDUP` / `ROUNDDOWN` (away / toward zero, negative `num_digits`) |
+| [`xlsx-types/src/excel_int.rs`](crates/xlsx-types/src/excel_int.rs) | Excel `INT` (floor toward −∞; 15-digit leftover snap) |
 | [`eval/switch.rs`](crates/xlsx-engine-core/src/eval/switch.rs) | Excel `SWITCH` exact-match kernel (first hit, default / `#N/A`) |
 | [`eval/ifs.rs`](crates/xlsx-engine-core/src/eval/ifs.rs) | `IFS` pair-selection kernel (eager eval, first TRUE, no-match `#N/A`) |
 | [`eval/unique.rs`](crates/xlsx-engine-core/src/eval/unique.rs) | `UNIQUE(array, [by_col], [exactly_once])` hash distinctness |
@@ -350,10 +353,13 @@ formula text ──parse──▶ AST ──eval──▶ ExcelValue
 | [`eval/trim.rs`](crates/xlsx-engine-core/src/eval/trim.rs) | Excel `TRIM` (ASCII-space collapse) |
 | [`eval/clean.rs`](crates/xlsx-engine-core/src/eval/clean.rs) | Excel `CLEAN` (strip ASCII C0) |
 | [`eval/code.rs`](crates/xlsx-engine-core/src/eval/code.rs) | Excel `CODE` (Windows-1252 first-character code) |
+| [`eval/abs.rs`](crates/xlsx-engine-core/src/eval/abs.rs) | Excel `ABS` (sign-bit-clear; arithmetic coerce) |
 | [`eval/excel_char.rs`](crates/xlsx-engine-core/src/eval/excel_char.rs) | Excel `CHAR` (Windows-1252, 1..=255) |
+| [`eval/left.rs`](crates/xlsx-engine-core/src/eval/left.rs) | Excel `LEFT` (Unicode scalars / Compat v2; omitted `num_chars` = 1) |
 | [`eval/proper.rs`](crates/xlsx-engine-core/src/eval/proper.rs) | Excel `PROPER` (ASCII title-case) |
 | [`eval/upper.rs`](crates/xlsx-engine-core/src/eval/upper.rs) | Excel `UPPER` |
 | [`eval/lower.rs`](crates/xlsx-engine-core/src/eval/lower.rs) | Excel `LOWER` |
+| [`eval/len.rs`](crates/xlsx-engine-core/src/eval/len.rs) | Excel `LEN` (Unicode scalar count / Compat v2) |
 | [`eval/unicode.rs`](crates/xlsx-engine-core/src/eval/unicode.rs) | Excel `UNICODE` (first Unicode scalar / code point) |
 | [`eval/exact.rs`](crates/xlsx-engine-core/src/eval/exact.rs) | Excel `EXACT` (case-sensitive compare) |
 | [`eval/value.rs`](crates/xlsx-engine-core/src/eval/value.rs) | Excel `VALUE` (en-US number / date / time text; `$` `,` `%` `(…)` ) |
@@ -376,7 +382,9 @@ families above. Criterion matching for `SUMIF` / `SUMIFS` / `AVERAGEIF` /
 (`compile` vs `parse`). TVM helpers (`PMT` / `FV` / `PV` / `NPER` / `RATE` /
 `IPMT` / `PPMT` / `CUMPRINC` / `CUMIPMT` / `EFFECT` / `NOMINAL` / `PDURATION`
 / `RRI`) live in
-[`xlsx-types/src/financial.rs`](crates/xlsx-types/src/financial.rs). Workbook
+[`xlsx-types/src/financial.rs`](crates/xlsx-types/src/financial.rs).
+`INT` lives in
+[`xlsx-types/src/excel_int.rs`](crates/xlsx-types/src/excel_int.rs). Workbook
 input is the snippet type in `xlsx-types` (no `.xlsx` IO). Kernels do **not**
 read fixture goldens.
 
@@ -419,7 +427,24 @@ as one or the other. Documented quirk categories:
 - Type ranking for `<`/`>` (logical > text > number). Signature split:
   `FALSE=0` is `TRUE` but `FALSE>0` / `FALSE<=0` use ranking (`TRUE` / `FALSE`)
 - Equality vs arithmetic coercion (`"2"=2` is false, `"2"+1` is `3`, `--"2"=2`)
-- Case-insensitive text equality (`"A"="a"`) vs case-sensitive `EXACT` / `FIND`; `SEARCH` is case-insensitive; `TEXTAFTER` / `TEXTBEFORE` are case-sensitive unless `match_mode` is TRUE
+- Case-insensitive text equality (`"A"="a"`) vs case-sensitive `EXACT` / `FIND`; `SEARCH` is case-insensitive; `TEXTAFTER` / `TEXTBEFORE` are case-sensitive unless `match_mode` is TRUE. `FIND` indexes Unicode scalars (Compatibility Version 2, matching `LEN` / `MID`); omitted `start_num` (including a trailing-comma slot) defaults to 1, while a blank cell is 0 → `#VALUE!`.
+- `LEN(text)` returns the Unicode **scalar** count (Compatibility Version 2,
+  matching `MID` / `LEFT` / `RIGHT` / `REPLACE` / `UNICODE`). `LEN("café")`
+  is 4; `LEN("😀")` is 1 (not 2 UTF-16 units). Combining marks are separate
+  scalars. Empty text — including a blank cell after `&` coercion — is `0`.
+  Numbers / bools coerce like `&`. `LENB` is not implemented.
+- `RIGHT(text, [num_chars])` returns the last `num_chars` characters of
+  `text` (Compatibility Version 2 Unicode scalars, matching `LEN` / `MID` /
+  `LEFT` / `REPLACE`). `num_chars` omitted defaults to 1; truncate toward
+  zero (`4.9` → 4); sign is checked after truncate (`−0.9` → `""`, `−1` →
+  `#VALUE!`). Past `LEN(text)` returns all of `text`. `😀` is one character.
+- `MID(text, start_num, num_chars)`: 1-based Unicode-scalar slice
+  (Compatibility Version 2, matching `LEN` / `LEFT` / `RIGHT` / `REPLACE`).
+  `start_num < 1` or `num_chars < 0` is `#VALUE!`; `start_num` past `LEN`
+  is `""`; `num_chars` past the end returns the remainder. Non-integers
+  truncate toward zero (`0.9` start → `#VALUE!`, `0.9` count → `""`).
+  A surrogate-pair emoji is one character (`MID("a😀b", 2, 1)` is `😀`).
+  Version 1 UTF-16 (`😀` = 2) is deferred. `MIDB` is out of scope.
 - `UNICODE(text)` returns the code point of the **first** Unicode scalar
   (Compatibility Version 2, matching `LEN` / `MID` / `LEFT` / `RIGHT` /
   `REPLACE`). `UNICODE("A")` is 65; `UNICODE("😀")` is 128512 (not the
@@ -431,6 +456,11 @@ as one or the other. Documented quirk categories:
   surrogates `U+D800`–`U+DFFF` are `#N/A` (Microsoft: partial surrogates).
   Supplementary-plane results are one Compatibility Version 2 scalar
   (`LEN(UNICHAR(128512))` is 1). `CHAR` / `UNICODE` / `CODE` are separate.
+- `ABS(number)`: absolute value via a branchless sign-bit clear (`-0` → `0`).
+  Arithmetic coerce (empty → `0`, `TRUE` → `1`, numeric text parsed);
+  `"$5"` / `"1,000"` / `"50%"` stay `#VALUE!` (that is `VALUE`, not `ABS`).
+  Scalar context: range implicit-intersects; array literal is top-left.
+  `SIGN` / `INT` / `SQRT` are separate.
 - `CHAR(number)`: Windows-1252 (Western ANSI), not Latin-1 / Unicode. Codes
   truncate toward zero; `1..=255` only (`0` / `256` / blank / `FALSE` →
   `#VALUE!`). `CHAR(128)` is `€`; leftover C1 bytes `129` / `141` / `143` /
@@ -444,6 +474,7 @@ as one or the other. Documented quirk categories:
   `#VALUE!`. Array delimiters take the leftmost / longest match. `TEXTAFTER`
   / `TEXTSPLIT` share the same delimiter / instance conventions.
 - Classic `FLOOR` / `CEILING`: same-sign multiples; positive number + negative significance is `#NUM!`; significance `0` is `#DIV/0!` except `(0, 0)` → `0`. Negative number + positive significance is allowed (Excel 2010+). `FLOOR.MATH` / `CEILING.MATH` ignore significance sign, treat significance `0` as `0`, and take an optional mode.
+- `INT(number)`: floor toward −∞ (`INT(-8.9)` is `-9`). That is not `TRUNC` (toward zero: `TRUNC(-8.9)` is `-8`). `INT(n)` matches classic `FLOOR(n, 1)`. Excel's 15-significant-digit leftover snap treats repeated `+0.1` (IEEE `0.999…9`) as `1` and `0.3-0.1-0.2` (tiny negative) as `0`. Wrong arity / non-numeric text is `#VALUE!`. TVM / `FLOOR` kernels live in `xlsx-types`; `INT` is [`excel_int`](crates/xlsx-types/src/excel_int.rs).
 - `TRUE=1` / `FALSE=0` in `=` and in arithmetic; `ISNUMBER(TRUE)` is still false
 - `SUM` / `AVERAGE` / `COUNT` / `PRODUCT` / `MIN` / `MAX`: skip logicals/text
   in ranges and array literals; coerce scalar arguments (`SUM(TRUE)` is 1,

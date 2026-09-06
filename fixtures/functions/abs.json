@@ -1,0 +1,465 @@
+[
+  {
+    "id": "fn.abs-ms-pos",
+    "description": "Microsoft example: ABS(2) is 2",
+    "tags": ["abs", "math"],
+    "formula": "=ABS(2)",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.abs-ms-neg",
+    "description": "Microsoft example: ABS(-2) is 2",
+    "tags": ["abs", "math"],
+    "formula": "=ABS(-2)",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.abs-ms-neg4",
+    "description": "Microsoft example shape: ABS(-4) is 4",
+    "tags": ["abs", "math"],
+    "formula": "=ABS(-4)",
+    "expected": { "number": 4 }
+  },
+  {
+    "id": "fn.abs-zero",
+    "description": "ABS(0) is 0",
+    "tags": ["abs", "math"],
+    "formula": "=ABS(0)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.abs-neg-zero",
+    "description": "ABS(-0) is 0 (sign stripped)",
+    "tags": ["abs", "math"],
+    "formula": "=ABS(-0)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.abs-pos-frac",
+    "description": "ABS(1.5) is 1.5",
+    "tags": ["abs", "math"],
+    "formula": "=ABS(1.5)",
+    "expected": { "number": 1.5 }
+  },
+  {
+    "id": "fn.abs-neg-frac",
+    "description": "ABS(-1.5) is 1.5",
+    "tags": ["abs", "math"],
+    "formula": "=ABS(-1.5)",
+    "expected": { "number": 1.5 }
+  },
+  {
+    "id": "fn.abs-pi",
+    "description": "ABS(PI()) is PI",
+    "tags": ["abs", "math"],
+    "formula": "=ABS(PI())",
+    "expected": { "number": 3.141592653589793 }
+  },
+  {
+    "id": "fn.abs-neg-pi",
+    "description": "ABS(-PI()) is PI",
+    "tags": ["abs", "math"],
+    "formula": "=ABS(-PI())",
+    "expected": { "number": 3.141592653589793 }
+  },
+  {
+    "id": "fn.abs-scientific",
+    "description": "ABS(-1.23E-4) is 0.000123",
+    "tags": ["abs", "math"],
+    "formula": "=ABS(-1.23E-4)",
+    "expected": { "number": 0.000123 }
+  },
+  {
+    "id": "fn.abs-large",
+    "description": "ABS(-1E+20) is 1E+20",
+    "tags": ["abs", "math"],
+    "formula": "=ABS(-1E+20)",
+    "expected": { "number": 1e20 }
+  },
+  {
+    "id": "fn.abs-tiny",
+    "description": "ABS(-1E-20) is 1E-20",
+    "tags": ["abs", "math"],
+    "formula": "=ABS(-1E-20)",
+    "expected": { "number": 1e-20 }
+  },
+  {
+    "id": "fn.abs-true",
+    "description": "ABS(TRUE) coerces to 1",
+    "tags": ["abs", "math", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=ABS(TRUE)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.abs-false",
+    "description": "ABS(FALSE) coerces to 0",
+    "tags": ["abs", "math", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=ABS(FALSE)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.abs-text-neg",
+    "description": "ABS(\"-7\") parses numeric text",
+    "tags": ["abs", "math", "coercion"],
+    "formula": "=ABS(\"-7\")",
+    "expected": { "number": 7 }
+  },
+  {
+    "id": "fn.abs-text-pos",
+    "description": "ABS(\"7\") parses numeric text",
+    "tags": ["abs", "math", "coercion"],
+    "formula": "=ABS(\"7\")",
+    "expected": { "number": 7 }
+  },
+  {
+    "id": "fn.abs-text-plus",
+    "description": "ABS(\"+9\") drops the plus",
+    "tags": ["abs", "math", "coercion"],
+    "formula": "=ABS(\"+9\")",
+    "expected": { "number": 9 }
+  },
+  {
+    "id": "fn.abs-text-spaces",
+    "description": "ABS trims ASCII spaces on numeric text",
+    "tags": ["abs", "math", "coercion"],
+    "formula": "=ABS(\"  -3.5  \")",
+    "expected": { "number": 3.5 }
+  },
+  {
+    "id": "fn.abs-text-scientific",
+    "description": "ABS(\"-1E3\") is 1000",
+    "tags": ["abs", "math", "coercion"],
+    "formula": "=ABS(\"-1E3\")",
+    "expected": { "number": 1000 }
+  },
+  {
+    "id": "fn.abs-text-junk",
+    "description": "Non-numeric text is #VALUE!",
+    "tags": ["abs", "math", "errors"],
+    "formula": "=ABS(\"x\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.abs-text-empty",
+    "description": "Stored empty string is #VALUE! (not blank)",
+    "tags": ["abs", "math", "errors"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=ABS(\"\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.abs-text-currency",
+    "description": "ABS(\"$5\") is #VALUE! — arithmetic coerce is not VALUE",
+    "tags": ["abs", "math", "errors", "coercion"],
+    "formula": "=ABS(\"$5\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.abs-text-comma",
+    "description": "ABS(\"1,000\") is #VALUE! — thousands comma is VALUE-only",
+    "tags": ["abs", "math", "errors", "coercion"],
+    "formula": "=ABS(\"1,000\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.abs-text-percent",
+    "description": "ABS(\"50%\") is #VALUE! — % text is VALUE-only",
+    "tags": ["abs", "math", "errors", "coercion"],
+    "formula": "=ABS(\"50%\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.abs-blank-cell",
+    "description": "Blank cell coerces to 0",
+    "tags": ["abs", "math", "coercion"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=ABS(A1)",
+    "expected": { "number": 0 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {}
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.abs-stored-empty",
+    "description": "Cell storing \"\" is #VALUE! (COUNTA 1, not blank)",
+    "tags": ["abs", "math", "errors"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=ABS(A1)",
+    "expected": { "error": "#VALUE!" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": { "A1": { "text": "" } }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.abs-percent",
+    "description": "ABS(-50%) is 0.5",
+    "tags": ["abs", "math"],
+    "formula": "=ABS(-50%)",
+    "expected": { "number": 0.5 }
+  },
+  {
+    "id": "fn.abs-percent-diff",
+    "description": "ABS(1%-2%) is 0.01",
+    "tags": ["abs", "math"],
+    "formula": "=ABS(1%-2%)",
+    "expected": { "number": 0.01 }
+  },
+  {
+    "id": "fn.abs-unary-plusplus",
+    "description": "ABS(--5) is 5",
+    "tags": ["abs", "math"],
+    "formula": "=ABS(--5)",
+    "expected": { "number": 5 }
+  },
+  {
+    "id": "fn.abs-double-unary-text",
+    "description": "ABS(--\"-5\") is 5 (arith coerce then abs)",
+    "tags": ["abs", "math", "coercion"],
+    "formula": "=ABS(--\"-5\")",
+    "expected": { "number": 5 }
+  },
+  {
+    "id": "fn.abs-nested",
+    "description": "ABS(ABS(-5)) is 5",
+    "tags": ["abs", "math"],
+    "formula": "=ABS(ABS(-5))",
+    "expected": { "number": 5 }
+  },
+  {
+    "id": "fn.abs-pow",
+    "description": "ABS(-2^3) is 8 because ^ binds tighter than unary minus",
+    "tags": ["abs", "math"],
+    "formula": "=ABS(-2^3)",
+    "expected": { "number": 8 }
+  },
+  {
+    "id": "fn.abs-sum",
+    "description": "ABS(-SUM(1,2,3)) is 6",
+    "tags": ["abs", "math"],
+    "formula": "=ABS(-SUM(1,2,3))",
+    "expected": { "number": 6 }
+  },
+  {
+    "id": "fn.abs-int-neg",
+    "description": "ABS(INT(-1.5)) is 2 (INT toward -∞)",
+    "tags": ["abs", "math"],
+    "formula": "=ABS(INT(-1.5))",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.abs-sign-product",
+    "description": "ABS(n)*SIGN(n) restores a nonzero n",
+    "tags": ["abs", "math"],
+    "formula": "=ABS(-5)*SIGN(-5)",
+    "expected": { "number": -5 }
+  },
+  {
+    "id": "fn.abs-eq-pos",
+    "description": "ABS(-7)=7 is TRUE",
+    "tags": ["abs", "math"],
+    "formula": "=ABS(-7)=7",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.abs-n-true",
+    "description": "ABS(N(TRUE)) is 1",
+    "tags": ["abs", "math", "coercion"],
+    "formula": "=ABS(N(TRUE))",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.abs-date",
+    "description": "ABS of a date serial is the serial (already ≥ 0)",
+    "tags": ["abs", "math", "dates"],
+    "formula": "=ABS(DATE(2020,1,1))=DATE(2020,1,1)",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.abs-time",
+    "description": "ABS(TIME(12,0,0)) is 0.5",
+    "tags": ["abs", "math"],
+    "formula": "=ABS(TIME(12,0,0))",
+    "expected": { "number": 0.5 }
+  },
+  {
+    "id": "fn.abs-cell-neg",
+    "description": "ABS of a negative number cell",
+    "tags": ["abs", "math"],
+    "formula": "=ABS(A1)",
+    "expected": { "number": 7 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": { "A1": { "number": -7 } }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.abs-cell-text",
+    "description": "ABS of numeric text in a cell",
+    "tags": ["abs", "math", "coercion"],
+    "formula": "=ABS(A1)",
+    "expected": { "number": 12 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": { "A1": { "text": "-12" } }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.abs-cell-true",
+    "description": "ABS of a TRUE cell is 1",
+    "tags": ["abs", "math", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=ABS(A1)",
+    "expected": { "number": 1 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": { "A1": { "bool": true } }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.abs-diff-cells",
+    "description": "ABS(A1-A2) of 3 and 10 is 7",
+    "tags": ["abs", "math"],
+    "formula": "=ABS(A1-A2)",
+    "expected": { "number": 7 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "number": 3 },
+            "A2": { "number": 10 }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.abs-named",
+    "description": "ABS of a defined name pointing at -7",
+    "tags": ["abs", "math", "named"],
+    "formula": "=ABS(Neg)",
+    "expected": { "number": 7 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": { "A1": { "number": -7 } }
+        }
+      ],
+      "names": [{ "name": "Neg", "refers_to": "Sheet1!A1" }]
+    }
+  },
+  {
+    "id": "fn.abs-iferror",
+    "description": "IFERROR(ABS(\"x\"), 0) is 0",
+    "tags": ["abs", "math", "errors"],
+    "formula": "=IFERROR(ABS(\"x\"), 0)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.abs-intersect",
+    "description": "ABS of a column range implicit-intersects the host row",
+    "tags": ["abs", "math"],
+    "quirks": ["implicit-intersection"],
+    "formula": "=ABS(A1:A3)",
+    "at": "Sheet1!B2",
+    "expected": { "number": 20 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "number": -10 },
+            "A2": { "number": -20 },
+            "A3": { "number": -30 }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.abs-array-top-left",
+    "description": "ABS of an array literal takes the top-left (no ABS spill)",
+    "tags": ["abs", "math"],
+    "quirks": ["array-eval-mode"],
+    "formula": "=ABS({-7,3})",
+    "expected": { "number": 7 }
+  },
+  {
+    "id": "fn.abs-arity-0",
+    "description": "ABS() is #VALUE!",
+    "tags": ["abs", "math", "errors"],
+    "formula": "=ABS()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.abs-arity-2",
+    "description": "Two arguments is #VALUE!",
+    "tags": ["abs", "math", "errors"],
+    "formula": "=ABS(-1, 2)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.abs-err-div0",
+    "description": "Error in number propagates",
+    "tags": ["abs", "math", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=ABS(1/0)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.abs-err-na",
+    "description": "#N/A in number propagates",
+    "tags": ["abs", "math", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=ABS(#N/A)",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.abs-err-value",
+    "description": "#VALUE! in number propagates",
+    "tags": ["abs", "math", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=ABS(#VALUE!)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.abs-err-num",
+    "description": "#NUM! in number propagates",
+    "tags": ["abs", "math", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=ABS(#NUM!)",
+    "expected": { "error": "#NUM!" }
+  },
+  {
+    "id": "fn.abs-err-name",
+    "description": "Unknown callee inside ABS is #NAME?",
+    "tags": ["abs", "math", "errors"],
+    "formula": "=ABS(NOTAFUNCTION(1))",
+    "expected": { "error": "#NAME?" }
+  }
+]

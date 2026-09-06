@@ -1,0 +1,350 @@
+[
+  {
+    "id": "fn.int-ms-8.9",
+    "description": "Microsoft: INT(8.9) is 8",
+    "tags": ["math", "int"],
+    "formula": "=INT(8.9)",
+    "expected": { "number": 8 }
+  },
+  {
+    "id": "fn.int-ms-neg-8.9",
+    "description": "Microsoft: INT(-8.9) is -9 (toward −∞, not TRUNC)",
+    "tags": ["math", "int"],
+    "formula": "=INT(-8.9)",
+    "expected": { "number": -9 }
+  },
+  {
+    "id": "fn.int-pos-frac",
+    "description": "INT(1.9) is 1",
+    "tags": ["math", "int"],
+    "formula": "=INT(1.9)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.int-neg-1.5",
+    "description": "INT(-1.5) is -2 (toward −∞)",
+    "tags": ["math", "int"],
+    "formula": "=INT(-1.5)",
+    "expected": { "number": -2 }
+  },
+  {
+    "id": "fn.int-neg-tiny",
+    "description": "INT(-0.01) is -1 — any negative fraction floors to −1",
+    "tags": ["math", "int"],
+    "formula": "=INT(-0.01)",
+    "expected": { "number": -1 }
+  },
+  {
+    "id": "fn.int-neg-half",
+    "description": "INT(-0.5) is -1",
+    "tags": ["math", "int"],
+    "formula": "=INT(-0.5)",
+    "expected": { "number": -1 }
+  },
+  {
+    "id": "fn.int-pos-half",
+    "description": "INT(0.5) is 0",
+    "tags": ["math", "int"],
+    "formula": "=INT(0.5)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.int-pos-below-one",
+    "description": "INT(0.99) is 0",
+    "tags": ["math", "int"],
+    "formula": "=INT(0.99)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.int-zero",
+    "description": "INT(0) is 0",
+    "tags": ["math", "int"],
+    "formula": "=INT(0)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.int-already-pos",
+    "description": "INT(8) is 8 — already an integer, identity",
+    "tags": ["math", "int"],
+    "formula": "=INT(8)",
+    "expected": { "number": 8 }
+  },
+  {
+    "id": "fn.int-already-neg",
+    "description": "INT(-3) is -3",
+    "tags": ["math", "int"],
+    "formula": "=INT(-3)",
+    "expected": { "number": -3 }
+  },
+  {
+    "id": "fn.int-vs-trunc-neg",
+    "description": "INT(-8.9) is -9 while TRUNC(-8.9) is -8",
+    "tags": ["math", "int"],
+    "formula": "=INT(-8.9)-TRUNC(-8.9)",
+    "expected": { "number": -1 }
+  },
+  {
+    "id": "fn.int-eq-floor-pos",
+    "description": "INT(8.9) equals FLOOR(8.9, 1)",
+    "tags": ["math", "int"],
+    "formula": "=INT(8.9)=FLOOR(8.9,1)",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.int-eq-floor-neg",
+    "description": "INT(-8.9) equals FLOOR(-8.9, 1)",
+    "tags": ["math", "int"],
+    "formula": "=INT(-8.9)=FLOOR(-8.9,1)",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.int-thirds-identity",
+    "description": "INT(1/3+1/3+1/3) is 1 — IEEE sum is already exact",
+    "tags": ["math", "int"],
+    "formula": "=INT(1/3+1/3+1/3)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.int-tenths-snap",
+    "description": "INT of ten 0.1 addends is 1 — IEEE sum sits just below 1",
+    "tags": ["math", "int"],
+    "quirks": ["ieee-vs-excel-precision"],
+    "formula": "=INT(0.1+0.1+0.1+0.1+0.1+0.1+0.1+0.1+0.1+0.1)",
+    "expected": { "number": 1 },
+    "notes": "Repeated IEEE +0.1 is 0.999…9; Excel INT / FLOOR(n,1) snap to 1. Documented model; live Excel not in CI."
+  },
+  {
+    "id": "fn.int-point-three-leftover",
+    "description": "INT(0.3-0.1-0.2) is 0 — tiny negative leftover snaps, not IEEE floor −1",
+    "tags": ["math", "int"],
+    "quirks": ["ieee-vs-excel-precision"],
+    "formula": "=INT(0.3-0.1-0.2)",
+    "expected": { "number": 0 },
+    "notes": "IEEE 0.3-0.1-0.2 is ≈ −2.8e-17; FLOOR toward −∞ would be −1. Excel INT matches FLOOR(n,1) leftover snap. Documented model; live Excel not in CI."
+  },
+  {
+    "id": "fn.int-tenths-eq-floor",
+    "description": "INT of ten 0.1 addends matches FLOOR(..., 1)",
+    "tags": ["math", "int"],
+    "quirks": ["ieee-vs-excel-precision"],
+    "formula": "=INT(0.1+0.1+0.1+0.1+0.1+0.1+0.1+0.1+0.1+0.1)=FLOOR(0.1+0.1+0.1+0.1+0.1+0.1+0.1+0.1+0.1+0.1,1)",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.int-datetime-date",
+    "description": "INT of a date+time serial keeps the civil day (2012-01-01 = 40909)",
+    "tags": ["math", "int", "dates"],
+    "formula": "=INT(DATE(2012,1,1)+0.75)",
+    "expected": { "number": 40909 }
+  },
+  {
+    "id": "fn.int-datetime-eq-date",
+    "description": "INT(DATE+frac) equals DATE (time discarded toward −∞)",
+    "tags": ["math", "int", "dates"],
+    "formula": "=INT(DATE(2012,1,1)+0.75)=DATE(2012,1,1)",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.int-true",
+    "description": "INT(TRUE) coerces TRUE → 1",
+    "tags": ["math", "int", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=INT(TRUE)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.int-false",
+    "description": "INT(FALSE) coerces FALSE → 0",
+    "tags": ["math", "int", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=INT(FALSE)",
+    "expected": { "number": 0 }
+  },
+  {
+    "id": "fn.int-numeric-text",
+    "description": "INT(\"8.9\") coerces numeric text",
+    "tags": ["math", "int", "coercion"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=INT(\"8.9\")",
+    "expected": { "number": 8 }
+  },
+  {
+    "id": "fn.int-numeric-text-neg",
+    "description": "INT(\"-8.9\") is -9",
+    "tags": ["math", "int", "coercion"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=INT(\"-8.9\")",
+    "expected": { "number": -9 }
+  },
+  {
+    "id": "fn.int-numeric-text-ws",
+    "description": "INT trims numeric text: INT(\"  8.9  \") is 8",
+    "tags": ["math", "int", "coercion"],
+    "quirks": ["equality-vs-arithmetic-coercion"],
+    "formula": "=INT(\"  8.9  \")",
+    "expected": { "number": 8 }
+  },
+  {
+    "id": "fn.int-text",
+    "description": "INT(\"x\") is #VALUE!",
+    "tags": ["math", "int", "errors"],
+    "formula": "=INT(\"x\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.int-empty-string",
+    "description": "INT(\"\") is #VALUE! — empty text is not numeric",
+    "tags": ["math", "int", "errors"],
+    "formula": "=INT(\"\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.int-percent-pos",
+    "description": "INT(150%) is INT(1.5) = 1",
+    "tags": ["math", "int"],
+    "quirks": ["percent-unary"],
+    "formula": "=INT(150%)",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.int-percent-neg",
+    "description": "INT(-150%) is INT(-1.5) = -2",
+    "tags": ["math", "int"],
+    "quirks": ["percent-unary"],
+    "formula": "=INT(-150%)",
+    "expected": { "number": -2 }
+  },
+  {
+    "id": "fn.int-arity-zero",
+    "description": "INT() is #VALUE!",
+    "tags": ["math", "int", "errors"],
+    "formula": "=INT()",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.int-arity-two",
+    "description": "INT(1, 2) is #VALUE! — only one argument",
+    "tags": ["math", "int", "errors"],
+    "formula": "=INT(1,2)",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.int-err-div0",
+    "description": "INT(1/0) propagates #DIV/0!",
+    "tags": ["math", "int", "errors"],
+    "formula": "=INT(1/0)",
+    "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.int-err-na",
+    "description": "INT(NA()) propagates #N/A",
+    "tags": ["math", "int", "errors"],
+    "formula": "=INT(NA())",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.int-blank-cell",
+    "description": "Blank cell coerces to 0, so INT(A1) is 0",
+    "tags": ["math", "int", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=INT(A1)",
+    "expected": { "number": 0 },
+    "workbook": {
+      "sheets": [{ "name": "Sheet1", "cells": {} }]
+    }
+  },
+  {
+    "id": "fn.int-cell-frac",
+    "description": "INT of a cell holding 8.9 is 8",
+    "tags": ["math", "int"],
+    "formula": "=INT(A1)",
+    "expected": { "number": 8 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "number": 8.9 }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.int-cell-neg",
+    "description": "INT of a cell holding -8.9 is -9",
+    "tags": ["math", "int"],
+    "formula": "=INT(A1)",
+    "expected": { "number": -9 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "number": -8.9 }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.int-named",
+    "description": "INT of a defined name holding 1.9 is 1",
+    "tags": ["math", "int"],
+    "formula": "=INT(Amt)",
+    "expected": { "number": 1 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "number": 1.9 }
+          }
+        }
+      ],
+      "names": [{ "name": "Amt", "refers_to": "Sheet1!A1" }]
+    }
+  },
+  {
+    "id": "fn.int-implicit-intersect",
+    "description": "INT(A1:A3) from host B2 uses implicit intersection (same row → A2 = -1.5 → -2)",
+    "tags": ["math", "int"],
+    "quirks": ["implicit-intersection"],
+    "at": "Sheet1!B2",
+    "formula": "=INT(A1:A3)",
+    "expected": { "number": -2 },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "number": 1.9 },
+            "A2": { "number": -1.5 },
+            "A3": { "number": 8.9 }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.int-array-literal",
+    "description": "Scalar INT takes the top-left of an array literal: INT({1.9,-1.5}) is 1",
+    "tags": ["math", "int"],
+    "formula": "=INT({1.9,-1.5})",
+    "expected": { "number": 1 }
+  },
+  {
+    "id": "fn.int-large-int",
+    "description": "INT of 2^53 (exact integer) is identity",
+    "tags": ["math", "int"],
+    "formula": "=INT(9007199254740992)",
+    "expected": { "number": 9007199254740992 }
+  },
+  {
+    "id": "fn.int-neg-large-frac",
+    "description": "INT(-1000000.1) is -1000001",
+    "tags": ["math", "int"],
+    "formula": "=INT(-1000000.1)",
+    "expected": { "number": -1000001 }
+  }
+]

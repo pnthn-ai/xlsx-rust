@@ -385,5 +385,259 @@
     "quirks": ["error-precedence"],
     "formula": "=REPLACE(#DIV/0!, #N/A, 1, \"X\")",
     "expected": { "error": "#DIV/0!" }
+  },
+  {
+    "id": "fn.replace-num-trunc-zero",
+    "description": "num_chars 0.9 truncates toward zero to 0 (insert)",
+    "tags": ["text", "replace"],
+    "formula": "=REPLACE(\"abc\", 2, 0.9, \"X\")",
+    "expected": { "text": "aXbc" }
+  },
+  {
+    "id": "fn.replace-num-trunc-neg-frac",
+    "description": "num_chars -0.9 truncates toward zero to 0 (insert, not #VALUE!)",
+    "tags": ["text", "replace"],
+    "formula": "=REPLACE(\"abc\", 2, -0.9, \"X\")",
+    "expected": { "text": "aXbc" }
+  },
+  {
+    "id": "fn.replace-start-percent",
+    "description": "200% coerces to start_num 2",
+    "tags": ["text", "replace", "coercion"],
+    "formula": "=REPLACE(\"abc\", 200%, 1, \"X\")",
+    "expected": { "text": "aXc" }
+  },
+  {
+    "id": "fn.replace-start-huge",
+    "description": "1E+20 start_num is past LEN and appends",
+    "tags": ["text", "replace"],
+    "formula": "=REPLACE(\"abc\", 1E+20, 1, \"X\")",
+    "expected": { "text": "abcX" }
+  },
+  {
+    "id": "fn.replace-grow",
+    "description": "new_text longer than the span grows the string",
+    "tags": ["text", "replace"],
+    "formula": "=REPLACE(\"abc\", 2, 1, \"XYZ\")",
+    "expected": { "text": "aXYZc" }
+  },
+  {
+    "id": "fn.replace-space",
+    "description": "A space is a character that can be overwritten",
+    "tags": ["text", "replace"],
+    "formula": "=REPLACE(\"a b\", 2, 1, \"-\")",
+    "expected": { "text": "a-b" }
+  },
+  {
+    "id": "fn.replace-omit-start",
+    "description": "Omitted start_num is blank → 0 → #VALUE!",
+    "tags": ["text", "replace", "errors", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=REPLACE(\"abc\",, 1, \"X\")",
+    "expected": { "error": "#VALUE!" }
+  },
+  {
+    "id": "fn.replace-omit-num",
+    "description": "Omitted num_chars is blank → 0 (insert at start_num)",
+    "tags": ["text", "replace", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=REPLACE(\"abc\", 1,, \"X\")",
+    "expected": { "text": "Xabc" }
+  },
+  {
+    "id": "fn.replace-omit-new",
+    "description": "Omitted new_text is blank → delete the span",
+    "tags": ["text", "replace", "empty"],
+    "quirks": ["empty-cell-duality"],
+    "formula": "=REPLACE(\"abc\", 1, 1,)",
+    "expected": { "text": "bc" }
+  },
+  {
+    "id": "fn.replace-bool-new",
+    "description": "TRUE as new_text coerces to \"TRUE\"",
+    "tags": ["text", "replace", "coercion"],
+    "quirks": ["bool-number-equality"],
+    "formula": "=REPLACE(\"abc\", 2, 1, TRUE)",
+    "expected": { "text": "aTRUEc" }
+  },
+  {
+    "id": "fn.replace-named",
+    "description": "REPLACE of a defined name referring to a cell",
+    "tags": ["text", "replace", "named"],
+    "formula": "=REPLACE(Title, 2, 3, \"i\")",
+    "expected": { "text": "Hio" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "Hello" }
+          }
+        }
+      ],
+      "names": [{ "name": "Title", "refers_to": "Sheet1!A1" }]
+    }
+  },
+  {
+    "id": "fn.replace-formula-cell",
+    "description": "REPLACE of a formula cell that yields text",
+    "tags": ["text", "replace"],
+    "formula": "=REPLACE(A1, 1, 1, \"Y\")",
+    "expected": { "text": "Yello" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "formula": "=\"Hello\"" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.replace-nested-left",
+    "description": "REPLACE(LEFT(\"hello\", 3), 2, 1, \"X\") → \"hXl\"",
+    "tags": ["text", "replace"],
+    "formula": "=REPLACE(LEFT(\"hello\", 3), 2, 1, \"X\")",
+    "expected": { "text": "hXl" }
+  },
+  {
+    "id": "fn.replace-len-last",
+    "description": "start_num = LEN(old_text) replaces the last character",
+    "tags": ["text", "replace"],
+    "formula": "=REPLACE(\"abc\", LEN(\"abc\"), 1, \"Z\")",
+    "expected": { "text": "abZ" }
+  },
+  {
+    "id": "fn.replace-len-after",
+    "description": "LEN after a one-char delete is LEN-1",
+    "tags": ["text", "replace"],
+    "formula": "=LEN(REPLACE(\"abc\", 2, 1, \"\"))",
+    "expected": { "number": 2 }
+  },
+  {
+    "id": "fn.replace-exact-noop",
+    "description": "Empty insert at start is a no-op (EXACT)",
+    "tags": ["text", "replace"],
+    "formula": "=EXACT(REPLACE(\"abc\", 1, 0, \"\"), \"abc\")",
+    "expected": { "bool": true }
+  },
+  {
+    "id": "fn.replace-concat",
+    "description": "REPLACE of concatenated pieces uses the joined text",
+    "tags": ["text", "replace"],
+    "formula": "=REPLACE(\"abc\"&\"def\", 4, 1, \"X\")",
+    "expected": { "text": "abcXef" }
+  },
+  {
+    "id": "fn.replace-array-literal",
+    "description": "REPLACE of an array literal scalarizes to the top-left",
+    "tags": ["text", "replace"],
+    "formula": "=REPLACE({\"abc\",\"xyz\"}, 1, 1, \"X\")",
+    "expected": { "text": "Xbc" }
+  },
+  {
+    "id": "fn.replace-implicit-intersect",
+    "description": "REPLACE(A1:A3, …) from host B2 uses implicit intersection (same row → A2)",
+    "tags": ["text", "replace"],
+    "quirks": ["implicit-intersection"],
+    "at": "Sheet1!B2",
+    "formula": "=REPLACE(A1:A3, 1, 1, \"X\")",
+    "expected": { "text": "XWO" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "ONE" },
+            "A2": { "text": "TWO" },
+            "A3": { "text": "THREE" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.replace-variation-selector",
+    "description": "Variation selector is its own scalar (Compat v2; not clustered into a grapheme)",
+    "tags": ["text", "replace"],
+    "formula": "=REPLACE(A1, 2, 1, \"X\")",
+    "expected": { "text": "aXb" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "a\ufe0fb" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.replace-emoji-equal-width",
+    "description": "Replacing one surrogate-pair emoji with another is still one Compat v2 character",
+    "tags": ["text", "replace"],
+    "formula": "=REPLACE(A1, 2, 1, B1)",
+    "expected": { "text": "a🎉b" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "text": "a😀b" },
+            "B1": { "text": "🎉" }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fn.replace-iferror",
+    "description": "IFERROR wraps start_num 0 → #VALUE!",
+    "tags": ["text", "replace", "errors"],
+    "formula": "=IFERROR(REPLACE(\"abc\", 0, 1, \"X\"), \"bad\")",
+    "expected": { "text": "bad" }
+  },
+  {
+    "id": "fn.replace-err-na",
+    "description": "NA() in start_num propagates #N/A",
+    "tags": ["text", "replace", "errors"],
+    "quirks": ["error-precedence"],
+    "formula": "=REPLACE(\"abc\", NA(), 1, \"X\")",
+    "expected": { "error": "#N/A" }
+  },
+  {
+    "id": "fn.replace-replaceb-name",
+    "description": "REPLACEB is a different function and is not implemented (#NAME!)",
+    "tags": ["text", "replace", "errors"],
+    "formula": "=REPLACEB(\"abc\", 1, 1, \"X\")",
+    "expected": { "error": "#NAME!" }
+  },
+  {
+    "id": "fn.replace-map",
+    "description": "MAP applies REPLACE to each text cell",
+    "tags": ["text", "replace", "map"],
+    "formula": "=TEXTJOIN(\",\", TRUE, MAP({\"abc\";\"def\"}, LAMBDA(x, REPLACE(x, 1, 1, \"X\"))))",
+    "expected": { "text": "Xbc,Xef" }
+  },
+  {
+    "id": "fn.replace-date-format-cell",
+    "description": "REPLACE of a date-formatted cell uses the displayed locale string in live Excel. This engine has no cell number format.",
+    "tags": ["text", "replace"],
+    "ignore": "Cell number formats are not modeled. Do not invent a date-string golden. REPLACE(DATE(...), n, …) uses General text of the serial.",
+    "formula": "=REPLACE(A1, 1, 1, \"X\")",
+    "expected": { "text": "X" },
+    "workbook": {
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "cells": {
+            "A1": { "number": 45321 }
+          }
+        }
+      ]
+    }
   }
 ]
